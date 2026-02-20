@@ -60,9 +60,6 @@ class AppViewModel {
     var offlineStorage = OfflineStorageService()
     var cloudSync = CloudSyncService()
 
-    // MARK: - Watch Connectivity
-    var phoneConnectivity = PhoneConnectivityService()
-
     var gpa: Double {
         guard !grades.isEmpty else { return 0 }
         return grades.reduce(0) { $0 + $1.numericGrade } / Double(grades.count)
@@ -424,7 +421,6 @@ class AppViewModel {
             isDataLoading = false
             cacheDataForSiri()
             saveDataToOfflineStorage()
-            sendWatchData()
             notificationService.scheduleAllAssignmentReminders(assignments: assignments)
         } catch {
             isDataLoading = false
@@ -466,7 +462,6 @@ class AppViewModel {
         children = mockService.sampleChildren()
         schoolMetrics = mockService.sampleSchoolMetrics()
         cacheDataForSiri()
-        sendWatchData()
     }
 
     // MARK: - Offline Storage Helpers
@@ -480,17 +475,6 @@ class AppViewModel {
             offlineStorage.saveUserProfile(user)
         }
         offlineStorage.lastSyncDate = Date()
-    }
-
-    // MARK: - Watch Data Sync
-
-    /// Sends current assignments, schedule (courses), and grades to the paired Apple Watch.
-    private func sendWatchData() {
-        phoneConnectivity.sendDataToWatch(
-            assignments: assignments,
-            courses: courses,
-            grades: grades
-        )
     }
 
     private func loadOfflineData() {

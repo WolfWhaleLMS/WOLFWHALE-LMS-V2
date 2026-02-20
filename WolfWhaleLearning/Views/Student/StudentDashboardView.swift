@@ -249,34 +249,6 @@ struct StudentDashboardView: View {
             .accessibilityLabel("Classroom Finder")
             .accessibilityHint("Double tap to find your classroom on the map")
 
-            // Study Wellness
-            NavigationLink {
-                WellnessView()
-            } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: "heart.fill")
-                        .font(.title3)
-                        .foregroundStyle(.pink)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Study Wellness")
-                            .font(.subheadline.bold())
-                            .foregroundStyle(.primary)
-                        Text("Track your health & study habits")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-                }
-                .padding(14)
-                .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Study Wellness")
-            .accessibilityHint("Double tap to track your health and study habits")
-
             // Study Groups
             NavigationLink {
                 StudyGroupView()
@@ -304,62 +276,6 @@ struct StudentDashboardView: View {
             .buttonStyle(.plain)
             .accessibilityLabel("Study Groups")
             .accessibilityHint("Double tap to find and join nearby study groups")
-
-            // Study Calls
-            NavigationLink {
-                StudyCallView()
-            } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: "phone.fill")
-                        .font(.title3)
-                        .foregroundStyle(.green)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Study Calls")
-                            .font(.subheadline.bold())
-                            .foregroundStyle(.primary)
-                        Text("Voice chat with classmates")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-                }
-                .padding(14)
-                .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Study Calls")
-            .accessibilityHint("Double tap to start a voice call with classmates")
-
-            // My Files
-            NavigationLink {
-                FileManagerView(viewModel: viewModel)
-            } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: "folder.fill")
-                        .font(.title3)
-                        .foregroundStyle(.blue)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("My Files")
-                            .font(.subheadline.bold())
-                            .foregroundStyle(.primary)
-                        Text("Documents & course materials")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-                }
-                .padding(14)
-                .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("My Files")
-            .accessibilityHint("Double tap to manage your documents and course materials")
 
             HStack(spacing: 12) {
                 // Radio button
@@ -392,34 +308,6 @@ struct StudentDashboardView: View {
                 .accessibilityLabel("Campus Radio")
                 .accessibilityHint("Double tap to open the radio player")
             }
-
-            // Game Center
-            NavigationLink {
-                GameCenterView()
-            } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: "gamecontroller.fill")
-                        .font(.title3)
-                        .foregroundStyle(.orange)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Game Center")
-                            .font(.subheadline.bold())
-                            .foregroundStyle(.primary)
-                        Text("Educational mini-games")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-                }
-                .padding(14)
-                .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
-            }
-            .buttonStyle(.plain)
-            .accessibilityLabel("Game Center")
-            .accessibilityHint("Double tap to open educational mini-games")
 
             // Widget gallery link
             Button {
