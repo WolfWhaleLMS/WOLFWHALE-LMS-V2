@@ -1,6 +1,7 @@
 import SwiftUI
+import Supabase
 
-nonisolated struct ManageModulesView: View, Sendable {
+struct ManageModulesView: View {
     let course: Course
     @Bindable var viewModel: AppViewModel
 

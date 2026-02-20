@@ -1,6 +1,6 @@
 import SwiftUI
 
-nonisolated struct OfflineBannerView: View, Sendable {
+struct OfflineBannerView: View {
     let isConnected: Bool
 
     var body: some View {

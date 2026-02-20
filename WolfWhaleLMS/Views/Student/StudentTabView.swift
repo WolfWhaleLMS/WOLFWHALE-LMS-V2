@@ -11,9 +11,6 @@ struct StudentTabView: View {
             Tab("Courses", systemImage: "book.fill") {
                 CoursesListView(viewModel: viewModel)
             }
-            Tab("Calendar", systemImage: "calendar") {
-                CalendarView(viewModel: viewModel)
-            }
             Tab("Messages", systemImage: "message.fill") {
                 MessagesListView(viewModel: viewModel)
             }

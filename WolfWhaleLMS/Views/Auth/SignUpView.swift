@@ -1,4 +1,5 @@
 import SwiftUI
+import Supabase
 
 struct SignUpView: View {
     @Environment(\.dismiss) private var dismiss

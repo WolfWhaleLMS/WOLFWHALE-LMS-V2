@@ -1,6 +1,6 @@
 import SwiftUI
 
-nonisolated struct EditAssignmentView: View, Sendable {
+struct EditAssignmentView: View {
     let assignment: Assignment
     @Bindable var viewModel: AppViewModel
 

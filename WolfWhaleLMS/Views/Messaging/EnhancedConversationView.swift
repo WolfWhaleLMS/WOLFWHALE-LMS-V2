@@ -125,12 +125,11 @@ struct EnhancedConversationView: View {
         }
     }
 
-    @ViewBuilder
-    private func bubbleBackground(isCurrentUser: Bool) -> some ShapeStyle {
+    private func bubbleBackground(isCurrentUser: Bool) -> AnyShapeStyle {
         if isCurrentUser {
-            AnyShapeStyle(.pink)
+            return AnyShapeStyle(.pink)
         } else {
-            AnyShapeStyle(.ultraThinMaterial)
+            return AnyShapeStyle(.ultraThinMaterial)
         }
     }
 

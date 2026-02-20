@@ -1,6 +1,6 @@
 import SwiftUI
 
-nonisolated struct AttendanceHistoryView: View, Sendable {
+struct AttendanceHistoryView: View {
     @Bindable var viewModel: AppViewModel
 
     @State private var selectedCourse: String = "All"

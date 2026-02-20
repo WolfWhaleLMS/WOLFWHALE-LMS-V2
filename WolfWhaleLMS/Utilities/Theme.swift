@@ -27,12 +27,6 @@ struct Theme {
         case "purple": .purple
         case "red": .red
         case "pink": .pink
-        case "indigo": .indigo
-        case "teal": .teal
-        case "mint": .mint
-        case "cyan": .cyan
-        case "brown": .brown
-        case "yellow": .yellow
         default: .blue
         }
     }
