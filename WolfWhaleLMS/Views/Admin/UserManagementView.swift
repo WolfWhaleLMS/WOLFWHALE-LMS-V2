@@ -5,23 +5,15 @@ struct UserManagementView: View {
     @State private var searchText = ""
     @State private var selectedRole: UserRole? = nil
     @State private var showAddUser = false
+    @State private var userToDelete: ProfileDTO?
+    @State private var showDeleteConfirmation = false
 
-    private let sampleUsers: [(String, UserRole, String)] = [
-        ("Alex Rivera", .student, "10th Grade"),
-        ("Jordan Kim", .student, "10th Grade"),
-        ("Sam Patel", .student, "11th Grade"),
-        ("Taylor Brooks", .student, "10th Grade"),
-        ("Dr. Sarah Chen", .teacher, "Mathematics"),
-        ("Mr. David Park", .teacher, "Biology"),
-        ("Ms. Emily Torres", .teacher, "History"),
-        ("Maria Rivera", .parent, "Parent of Alex"),
-        ("James Wilson", .admin, "Administrator"),
-    ]
-
-    private var filtered: [(String, UserRole, String)] {
-        sampleUsers.filter { user in
-            let matchesRole = selectedRole == nil || user.1 == selectedRole
-            let matchesSearch = searchText.isEmpty || user.0.localizedStandardContains(searchText)
+    private var filteredUsers: [ProfileDTO] {
+        viewModel.allUsers.filter { user in
+            let role = UserRole(rawValue: user.role)
+            let matchesRole = selectedRole == nil || role == selectedRole
+            let fullName = "\(user.firstName) \(user.lastName)"
+            let matchesSearch = searchText.isEmpty || fullName.localizedStandardContains(searchText) || user.email.localizedStandardContains(searchText)
             return matchesRole && matchesSearch
         }
     }
@@ -40,11 +32,24 @@ struct UserManagementView: View {
                 .listRowInsets(EdgeInsets())
 
                 Section {
-                    ForEach(Array(filtered.enumerated()), id: \.offset) { _, user in
-                        userRow(user)
+                    if filteredUsers.isEmpty && !viewModel.allUsers.isEmpty {
+                        ContentUnavailableView.search(text: searchText)
+                    } else if viewModel.allUsers.isEmpty {
+                        HStack {
+                            Image(systemName: "person.3")
+                                .foregroundStyle(.secondary)
+                            Text("No users yet. Add your first user.")
+                                .foregroundStyle(.secondary)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                    } else {
+                        ForEach(filteredUsers, id: \.id) { user in
+                            userRow(user)
+                        }
                     }
                 } header: {
-                    Text("\(filtered.count) user\(filtered.count == 1 ? "" : "s")")
+                    Text("\(filteredUsers.count) user\(filteredUsers.count == 1 ? "" : "s")")
                         .font(.caption.bold())
                         .foregroundStyle(.secondary)
                         .textCase(nil)
@@ -64,6 +69,23 @@ struct UserManagementView: View {
             }
             .sheet(isPresented: $showAddUser) {
                 AddUserView(viewModel: viewModel)
+            }
+            .alert("Remove User", isPresented: $showDeleteConfirmation) {
+                Button("Remove", role: .destructive) {
+                    if let user = userToDelete {
+                        Task {
+                            try? await viewModel.deleteUser(userId: user.id)
+                        }
+                    }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                if let user = userToDelete {
+                    Text("Are you sure you want to remove \(user.firstName) \(user.lastName)? This action cannot be undone.")
+                }
+            }
+            .refreshable {
+                viewModel.refreshData()
             }
         }
     }
@@ -129,36 +151,39 @@ struct UserManagementView: View {
         .padding(.bottom, 4)
     }
 
-    private func userRow(_ user: (String, UserRole, String)) -> some View {
-        HStack(spacing: 12) {
+    private func userRow(_ user: ProfileDTO) -> some View {
+        let role = UserRole(rawValue: user.role) ?? .student
+        return HStack(spacing: 12) {
             Circle()
-                .fill(Theme.roleColor(user.1).opacity(0.15))
+                .fill(Theme.roleColor(role).opacity(0.15))
                 .frame(width: 42, height: 42)
                 .overlay {
-                    Image(systemName: user.1.iconName)
+                    Image(systemName: role.iconName)
                         .font(.subheadline)
-                        .foregroundStyle(Theme.roleColor(user.1))
+                        .foregroundStyle(Theme.roleColor(role))
                 }
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(user.0)
+                Text("\(user.firstName) \(user.lastName)")
                     .font(.subheadline.bold())
-                Text(user.2)
+                Text(user.email)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
             Spacer()
 
-            Text(user.1.rawValue)
+            Text(user.role)
                 .font(.caption.bold())
                 .padding(.horizontal, 9)
                 .padding(.vertical, 4)
-                .background(Theme.roleColor(user.1).opacity(0.12), in: Capsule())
-                .foregroundStyle(Theme.roleColor(user.1))
+                .background(Theme.roleColor(role).opacity(0.12), in: Capsule())
+                .foregroundStyle(Theme.roleColor(role))
         }
         .swipeActions(edge: .trailing) {
             Button(role: .destructive) {
+                userToDelete = user
+                showDeleteConfirmation = true
             } label: {
                 Label("Remove", systemImage: "person.badge.minus")
             }

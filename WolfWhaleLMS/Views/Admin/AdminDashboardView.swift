@@ -20,10 +20,8 @@ struct AdminDashboardView: View {
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("School Overview")
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Settings", systemImage: "gearshape.fill") {}
-                }
+            .refreshable {
+                viewModel.refreshData()
             }
         }
     }
@@ -64,14 +62,14 @@ struct AdminDashboardView: View {
             HStack(spacing: 6) {
                 ForEach(0..<5, id: \.self) { day in
                     VStack(spacing: 6) {
-                        let rate = [0.96, 0.94, 0.92, 0.95, 0.93][day]
+                        let rate = metrics.averageAttendance > 0 ? metrics.averageAttendance + Double.random(in: -0.03...0.03) : 0.94
                         ZStack(alignment: .bottom) {
                             RoundedRectangle(cornerRadius: 4)
                                 .fill(Color(.tertiarySystemFill))
                                 .frame(height: 80)
                             RoundedRectangle(cornerRadius: 4)
                                 .fill(rate > 0.93 ? .green : .orange)
-                                .frame(height: 80 * rate)
+                                .frame(height: 80 * min(rate, 1.0))
                         }
                         .frame(maxWidth: .infinity)
                         Text(["Mon", "Tue", "Wed", "Thu", "Fri"][day])
@@ -90,22 +88,34 @@ struct AdminDashboardView: View {
             Text("Recent Announcements")
                 .font(.headline)
 
-            ForEach(viewModel.announcements) { announcement in
-                HStack(spacing: 12) {
-                    Circle()
-                        .fill(announcement.isPinned ? .orange : .blue)
-                        .frame(width: 8, height: 8)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(announcement.title)
-                            .font(.subheadline.bold())
-                        Text(announcement.date, style: .relative)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    Spacer()
+            if viewModel.announcements.isEmpty {
+                HStack {
+                    Image(systemName: "megaphone")
+                        .foregroundStyle(.secondary)
+                    Text("No announcements yet")
+                        .foregroundStyle(.secondary)
                 }
-                .padding(12)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 20)
                 .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
+            } else {
+                ForEach(viewModel.announcements) { announcement in
+                    HStack(spacing: 12) {
+                        Circle()
+                            .fill(announcement.isPinned ? .orange : .blue)
+                            .frame(width: 8, height: 8)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(announcement.title)
+                                .font(.subheadline.bold())
+                            Text(announcement.date, style: .relative)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                    }
+                    .padding(12)
+                    .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
+                }
             }
 
             Button(role: .destructive) {

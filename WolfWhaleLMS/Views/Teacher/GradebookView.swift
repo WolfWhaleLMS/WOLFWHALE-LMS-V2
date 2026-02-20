@@ -4,9 +4,22 @@ struct GradebookView: View {
     let course: Course
     let viewModel: AppViewModel
     @State private var showAddAssignment = false
+    @State private var newTitle = ""
+    @State private var newInstructions = ""
+    @State private var newDueDate = Date().addingTimeInterval(7 * 86400)
+    @State private var newPoints: Int = 100
+    @State private var isCreating = false
 
     private var courseAssignments: [Assignment] {
-        viewModel.assignments.filter { $0.courseName == course.title }
+        viewModel.assignments.filter { $0.courseName == course.title || $0.courseId == course.id }
+    }
+
+    private var submittedCount: Int {
+        courseAssignments.filter(\.isSubmitted).count
+    }
+
+    private var pendingCount: Int {
+        courseAssignments.filter { $0.isSubmitted && $0.grade == nil }.count
     }
 
     var body: some View {
@@ -14,7 +27,7 @@ struct GradebookView: View {
             VStack(spacing: 16) {
                 courseHeader
                 statsSection
-                studentsSection
+                enrolledStudentsSection
                 assignmentsSection
             }
             .padding(.horizontal)
@@ -63,9 +76,9 @@ struct GradebookView: View {
 
     private var statsSection: some View {
         HStack(spacing: 12) {
-            statCard(label: "Avg Grade", value: "88%", color: .green)
-            statCard(label: "Completion", value: "\(Int(course.progress * 100))%", color: .blue)
-            statCard(label: "Pending", value: "\(viewModel.pendingGradingCount)", color: .orange)
+            statCard(label: "Assignments", value: "\(courseAssignments.count)", color: .blue)
+            statCard(label: "Submitted", value: "\(submittedCount)", color: .green)
+            statCard(label: "Pending", value: "\(pendingCount)", color: .orange)
         }
     }
 
@@ -83,29 +96,30 @@ struct GradebookView: View {
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
     }
 
-    private var studentsSection: some View {
+    private var enrolledStudentsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Student Roster")
-                .font(.headline)
+            HStack {
+                Text("Enrolled Students")
+                    .font(.headline)
+                Spacer()
+                Text("\(course.enrolledStudentCount) total")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
 
-            ForEach(Array(sampleStudents.enumerated()), id: \.offset) { index, student in
-                HStack(spacing: 12) {
-                    Circle()
-                        .fill(Color.purple.opacity(0.2))
-                        .frame(width: 36, height: 36)
-                        .overlay {
-                            Text(String(student.prefix(1)))
-                                .font(.subheadline.bold())
-                                .foregroundStyle(.purple)
-                        }
-                    Text(student)
-                        .font(.subheadline)
-                    Spacer()
-                    Text(sampleGrades[index])
-                        .font(.subheadline.bold())
-                        .foregroundStyle(Theme.gradeColor(sampleNumericGrades[index]))
+            if course.enrolledStudentCount == 0 {
+                HStack {
+                    Image(systemName: "person.badge.plus")
+                        .foregroundStyle(.secondary)
+                    Text("No students enrolled yet")
+                        .foregroundStyle(.secondary)
                 }
-                .padding(.vertical, 4)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 20)
+            } else {
+                Text("Share class code **\(course.classCode)** with students to enroll them.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
         .padding(14)
@@ -138,9 +152,16 @@ struct GradebookView: View {
                                 .foregroundStyle(.secondary)
                         }
                         Spacer()
-                        Text("\(assignment.points) pts")
-                            .font(.caption.bold())
-                            .foregroundStyle(.secondary)
+                        VStack(alignment: .trailing, spacing: 2) {
+                            Text("\(assignment.points) pts")
+                                .font(.caption.bold())
+                                .foregroundStyle(.secondary)
+                            if assignment.isSubmitted {
+                                Text("Submitted")
+                                    .font(.caption2)
+                                    .foregroundStyle(.green)
+                            }
+                        }
                     }
                     .padding(12)
                     .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
@@ -153,27 +174,66 @@ struct GradebookView: View {
         NavigationStack {
             Form {
                 Section("Assignment Details") {
-                    TextField("Title", text: .constant(""))
-                    TextField("Instructions", text: .constant(""), axis: .vertical)
+                    TextField("Title", text: $newTitle)
+                    TextField("Instructions", text: $newInstructions, axis: .vertical)
                         .lineLimit(3...)
-                    DatePicker("Due Date", selection: .constant(Date()), displayedComponents: .date)
-                    Stepper("Points: 100", value: .constant(100), in: 10...500, step: 10)
+                    DatePicker("Due Date", selection: $newDueDate, displayedComponents: .date)
+                    Stepper("Points: \(newPoints)", value: $newPoints, in: 10...500, step: 10)
                 }
             }
             .navigationTitle("New Assignment")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { showAddAssignment = false }
+                    Button("Cancel") {
+                        resetAssignmentForm()
+                        showAddAssignment = false
+                    }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Create") { showAddAssignment = false }
+                    Button("Create") {
+                        createAssignment()
+                    }
+                    .fontWeight(.semibold)
+                    .disabled(newTitle.trimmingCharacters(in: .whitespaces).isEmpty || isCreating)
+                }
+            }
+            .overlay {
+                if isCreating {
+                    ZStack {
+                        Color.black.opacity(0.3).ignoresSafeArea()
+                        ProgressView("Creating...")
+                            .padding(24)
+                            .background(.regularMaterial, in: .rect(cornerRadius: 16))
+                    }
                 }
             }
         }
     }
 
-    private let sampleStudents = ["Alex Rivera", "Jordan Kim", "Sam Patel", "Taylor Brooks", "Casey Nguyen"]
-    private let sampleGrades = ["A-", "B+", "A", "B", "A-"]
-    private let sampleNumericGrades: [Double] = [91, 87, 95, 83, 90]
+    private func createAssignment() {
+        isCreating = true
+        Task {
+            do {
+                try await viewModel.createAssignment(
+                    courseId: course.id,
+                    title: newTitle.trimmingCharacters(in: .whitespaces),
+                    instructions: newInstructions.trimmingCharacters(in: .whitespaces),
+                    dueDate: newDueDate,
+                    points: newPoints
+                )
+                resetAssignmentForm()
+                showAddAssignment = false
+            } catch {
+            }
+            isCreating = false
+        }
+    }
+
+    private func resetAssignmentForm() {
+        newTitle = ""
+        newInstructions = ""
+        newDueDate = Date().addingTimeInterval(7 * 86400)
+        newPoints = 100
+    }
 }

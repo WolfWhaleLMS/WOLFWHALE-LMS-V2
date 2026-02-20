@@ -3,6 +3,10 @@ import SwiftUI
 struct TeacherCoursesView: View {
     let viewModel: AppViewModel
     @State private var showCreateCourse = false
+    @State private var newCourseTitle = ""
+    @State private var newCourseDescription = ""
+    @State private var newCourseColor = "blue"
+    @State private var isCreating = false
 
     var body: some View {
         NavigationStack {
@@ -32,6 +36,11 @@ struct TeacherCoursesView: View {
             }
             .sheet(isPresented: $showCreateCourse) {
                 createCourseSheet
+            }
+            .overlay {
+                if viewModel.courses.isEmpty {
+                    ContentUnavailableView("No Courses", systemImage: "book.fill", description: Text("Create your first course to get started"))
+                }
             }
         }
     }
@@ -77,16 +86,18 @@ struct TeacherCoursesView: View {
         NavigationStack {
             Form {
                 Section("Course Details") {
-                    TextField("Course Title", text: .constant(""))
-                    TextField("Description", text: .constant(""), axis: .vertical)
+                    TextField("Course Title", text: $newCourseTitle)
+                    TextField("Description", text: $newCourseDescription, axis: .vertical)
                         .lineLimit(3...)
                 }
                 Section("Settings") {
-                    Picker("Color", selection: .constant("blue")) {
+                    Picker("Color", selection: $newCourseColor) {
                         Text("Blue").tag("blue")
                         Text("Green").tag("green")
                         Text("Orange").tag("orange")
                         Text("Purple").tag("purple")
+                        Text("Pink").tag("pink")
+                        Text("Red").tag("red")
                     }
                 }
             }
@@ -94,12 +105,52 @@ struct TeacherCoursesView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { showCreateCourse = false }
+                    Button("Cancel") {
+                        resetCourseForm()
+                        showCreateCourse = false
+                    }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Create") { showCreateCourse = false }
+                    Button("Create") {
+                        createCourse()
+                    }
+                    .fontWeight(.semibold)
+                    .disabled(newCourseTitle.trimmingCharacters(in: .whitespaces).isEmpty || isCreating)
+                }
+            }
+            .overlay {
+                if isCreating {
+                    ZStack {
+                        Color.black.opacity(0.3).ignoresSafeArea()
+                        ProgressView("Creating course...")
+                            .padding(24)
+                            .background(.regularMaterial, in: .rect(cornerRadius: 16))
+                    }
                 }
             }
         }
+    }
+
+    private func createCourse() {
+        isCreating = true
+        Task {
+            do {
+                try await viewModel.createCourse(
+                    title: newCourseTitle.trimmingCharacters(in: .whitespaces),
+                    description: newCourseDescription.trimmingCharacters(in: .whitespaces),
+                    colorName: newCourseColor
+                )
+                resetCourseForm()
+                showCreateCourse = false
+            } catch {
+            }
+            isCreating = false
+        }
+    }
+
+    private func resetCourseForm() {
+        newCourseTitle = ""
+        newCourseDescription = ""
+        newCourseColor = "blue"
     }
 }

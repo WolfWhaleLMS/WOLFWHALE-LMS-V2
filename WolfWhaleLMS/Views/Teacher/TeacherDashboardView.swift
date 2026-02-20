@@ -2,6 +2,9 @@ import SwiftUI
 
 struct TeacherDashboardView: View {
     let viewModel: AppViewModel
+    @State private var showCreateCourse = false
+    @State private var showCreateAssignment = false
+    @State private var showCreateAnnouncement = false
 
     var body: some View {
         NavigationStack {
@@ -17,6 +20,9 @@ struct TeacherDashboardView: View {
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Dashboard")
+            .refreshable {
+                viewModel.refreshData()
+            }
         }
     }
 
@@ -52,11 +58,19 @@ struct TeacherDashboardView: View {
                 .font(.headline)
 
             HStack(spacing: 12) {
-                quickActionButton(icon: "plus.circle.fill", label: "New Course", color: .pink) {}
-                quickActionButton(icon: "doc.badge.plus", label: "Assignment", color: .blue) {}
-                quickActionButton(icon: "questionmark.circle.fill", label: "Quiz", color: .purple) {}
-                quickActionButton(icon: "megaphone.fill", label: "Announce", color: .orange) {}
+                quickActionButton(icon: "plus.circle.fill", label: "New Course", color: .pink) {
+                    showCreateCourse = true
+                }
+                quickActionButton(icon: "megaphone.fill", label: "Announce", color: .orange) {
+                    showCreateAnnouncement = true
+                }
             }
+        }
+        .sheet(isPresented: $showCreateCourse) {
+            CreateCourseSheet(viewModel: viewModel)
+        }
+        .sheet(isPresented: $showCreateAnnouncement) {
+            CreateAnnouncementSheet(viewModel: viewModel)
         }
     }
 
@@ -81,39 +95,51 @@ struct TeacherDashboardView: View {
             Text("Recent Submissions")
                 .font(.headline)
 
-            ForEach(viewModel.assignments.filter(\.isSubmitted).prefix(3)) { assignment in
-                HStack(spacing: 12) {
-                    Circle()
-                        .fill(.blue.gradient)
-                        .frame(width: 36, height: 36)
-                        .overlay {
-                            Image(systemName: "doc.text.fill")
-                                .font(.caption)
-                                .foregroundStyle(.white)
-                        }
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(assignment.title)
-                            .font(.subheadline.bold())
-                            .lineLimit(1)
-                        Text(assignment.courseName)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    Spacer()
-                    if assignment.grade != nil {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundStyle(.green)
-                    } else {
-                        Text("Grade")
-                            .font(.caption.bold())
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 4)
-                            .background(.orange.opacity(0.15), in: Capsule())
-                            .foregroundStyle(.orange)
-                    }
+            if viewModel.assignments.filter(\.isSubmitted).isEmpty {
+                HStack {
+                    Image(systemName: "tray")
+                        .foregroundStyle(.secondary)
+                    Text("No submissions yet")
+                        .foregroundStyle(.secondary)
                 }
-                .padding(12)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 20)
                 .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
+            } else {
+                ForEach(viewModel.assignments.filter(\.isSubmitted).prefix(3)) { assignment in
+                    HStack(spacing: 12) {
+                        Circle()
+                            .fill(.blue.gradient)
+                            .frame(width: 36, height: 36)
+                            .overlay {
+                                Image(systemName: "doc.text.fill")
+                                    .font(.caption)
+                                    .foregroundStyle(.white)
+                            }
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(assignment.title)
+                                .font(.subheadline.bold())
+                                .lineLimit(1)
+                            Text(assignment.courseName)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        if assignment.grade != nil {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(.green)
+                        } else {
+                            Text("Grade")
+                                .font(.caption.bold())
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 4)
+                                .background(.orange.opacity(0.15), in: Capsule())
+                                .foregroundStyle(.orange)
+                        }
+                    }
+                    .padding(12)
+                    .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
+                }
             }
         }
     }
@@ -123,28 +149,127 @@ struct TeacherDashboardView: View {
             Text("Announcements")
                 .font(.headline)
 
-            ForEach(viewModel.announcements.prefix(2)) { announcement in
-                VStack(alignment: .leading, spacing: 6) {
-                    HStack {
-                        if announcement.isPinned {
-                            Image(systemName: "pin.fill")
+            if viewModel.announcements.isEmpty {
+                HStack {
+                    Image(systemName: "megaphone")
+                        .foregroundStyle(.secondary)
+                    Text("No announcements")
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 20)
+                .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
+            } else {
+                ForEach(viewModel.announcements.prefix(2)) { announcement in
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack {
+                            if announcement.isPinned {
+                                Image(systemName: "pin.fill")
+                                    .font(.caption)
+                                    .foregroundStyle(.orange)
+                            }
+                            Text(announcement.title)
+                                .font(.subheadline.bold())
+                            Spacer()
+                            Text(announcement.date, style: .relative)
                                 .font(.caption)
-                                .foregroundStyle(.orange)
+                                .foregroundStyle(.secondary)
                         }
-                        Text(announcement.title)
-                            .font(.subheadline.bold())
-                        Spacer()
-                        Text(announcement.date, style: .relative)
+                        Text(announcement.content)
                             .font(.caption)
                             .foregroundStyle(.secondary)
+                            .lineLimit(2)
                     }
-                    Text(announcement.content)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(2)
+                    .padding(12)
+                    .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
                 }
-                .padding(12)
-                .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
+            }
+        }
+    }
+}
+
+struct CreateCourseSheet: View {
+    let viewModel: AppViewModel
+    @Environment(\.dismiss) private var dismiss
+    @State private var title = ""
+    @State private var description = ""
+    @State private var colorName = "blue"
+    @State private var isCreating = false
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Course Details") {
+                    TextField("Course Title", text: $title)
+                    TextField("Description", text: $description, axis: .vertical)
+                        .lineLimit(3...)
+                }
+                Section("Settings") {
+                    Picker("Color", selection: $colorName) {
+                        Text("Blue").tag("blue")
+                        Text("Green").tag("green")
+                        Text("Orange").tag("orange")
+                        Text("Purple").tag("purple")
+                    }
+                }
+            }
+            .navigationTitle("New Course")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Create") {
+                        isCreating = true
+                        Task {
+                            try? await viewModel.createCourse(title: title, description: description, colorName: colorName)
+                            isCreating = false
+                            dismiss()
+                        }
+                    }
+                    .fontWeight(.semibold)
+                    .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty || isCreating)
+                }
+            }
+        }
+    }
+}
+
+struct CreateAnnouncementSheet: View {
+    let viewModel: AppViewModel
+    @Environment(\.dismiss) private var dismiss
+    @State private var title = ""
+    @State private var content = ""
+    @State private var isPinned = false
+    @State private var isCreating = false
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                TextField("Title", text: $title)
+                TextField("Content", text: $content, axis: .vertical)
+                    .lineLimit(4...)
+                Toggle("Pin to top", isOn: $isPinned)
+            }
+            .navigationTitle("New Announcement")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Post") {
+                        isCreating = true
+                        Task {
+                            try? await viewModel.createAnnouncement(title: title, content: content, isPinned: isPinned)
+                            isCreating = false
+                            dismiss()
+                        }
+                    }
+                    .fontWeight(.semibold)
+                    .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty || isCreating)
+                }
             }
         }
     }

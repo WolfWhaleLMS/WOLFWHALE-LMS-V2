@@ -46,24 +46,10 @@ struct AnnouncementsView: View {
                 }
             }
             .sheet(isPresented: $showCreate) {
-                NavigationStack {
-                    Form {
-                        TextField("Title", text: .constant(""))
-                        TextField("Content", text: .constant(""), axis: .vertical)
-                            .lineLimit(4...)
-                        Toggle("Pin to top", isOn: .constant(false))
-                    }
-                    .navigationTitle("New Announcement")
-                    .navigationBarTitleDisplayMode(.inline)
-                    .toolbar {
-                        ToolbarItem(placement: .cancellationAction) {
-                            Button("Cancel") { showCreate = false }
-                        }
-                        ToolbarItem(placement: .confirmationAction) {
-                            Button("Post") { showCreate = false }
-                        }
-                    }
-                }
+                CreateAnnouncementSheet(viewModel: viewModel)
+            }
+            .refreshable {
+                viewModel.refreshData()
             }
         }
     }

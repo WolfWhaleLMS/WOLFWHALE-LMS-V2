@@ -23,8 +23,12 @@ class AppViewModel {
     var announcements: [Announcement] = []
     var children: [ChildInfo] = []
     var schoolMetrics: SchoolMetrics?
+    var allUsers: [ProfileDTO] = []
+    var dataError: String?
 
-    private let dataService = MockDataService.shared
+    var isDemoMode = false
+    private let mockService = MockDataService.shared
+    private let dataService = DataService.shared
 
     var gpa: Double {
         guard !grades.isEmpty else { return 0 }
@@ -55,10 +59,9 @@ class AppViewModel {
             do {
                 let session = try await supabaseClient.auth.session
                 try await fetchProfile(userId: session.user.id)
-                loadData()
+                await loadData()
                 isAuthenticated = true
             } catch {
-                // No valid session
             }
         }
     }
@@ -77,7 +80,7 @@ class AppViewModel {
                 try await supabaseClient.auth.signIn(email: email, password: password)
                 let session = try await supabaseClient.auth.session
                 try await fetchProfile(userId: session.user.id)
-                loadData()
+                await loadData()
                 isAuthenticated = true
             } catch {
                 loginError = mapAuthError(error)
@@ -86,12 +89,10 @@ class AppViewModel {
         }
     }
 
-    var isDemoMode = false
-
     func loginAsDemo(role: UserRole) {
         isDemoMode = true
-        currentUser = dataService.sampleUser(role: role)
-        loadData()
+        currentUser = mockService.sampleUser(role: role)
+        loadMockData()
         withAnimation(.smooth) {
             isAuthenticated = true
         }
@@ -109,6 +110,18 @@ class AppViewModel {
             currentUser = nil
             email = ""
             password = ""
+            courses = []
+            assignments = []
+            quizzes = []
+            grades = []
+            attendance = []
+            achievements = []
+            leaderboard = []
+            conversations = []
+            announcements = []
+            children = []
+            schoolMetrics = nil
+            allUsers = []
         }
     }
 
@@ -124,7 +137,7 @@ class AppViewModel {
     }
 
     func syncProfile() {
-        guard let user = currentUser else { return }
+        guard let user = currentUser, !isDemoMode else { return }
         Task {
             let update = UpdateProfileDTO(
                 xp: user.xp,
@@ -132,26 +145,79 @@ class AppViewModel {
                 coins: user.coins,
                 streak: user.streak
             )
-            try? await supabaseClient
-                .from("profiles")
-                .update(update)
-                .eq("id", value: user.id.uuidString)
-                .execute()
+            try? await dataService.updateProfile(userId: user.id, update: update)
         }
     }
 
-    func loadData() {
-        courses = dataService.sampleCourses()
-        assignments = dataService.sampleAssignments()
-        quizzes = dataService.sampleQuizzes()
-        grades = dataService.sampleGrades()
-        attendance = dataService.sampleAttendance()
-        achievements = dataService.sampleAchievements()
-        leaderboard = dataService.sampleLeaderboard()
-        conversations = dataService.sampleConversations()
-        announcements = dataService.sampleAnnouncements()
-        children = dataService.sampleChildren()
-        schoolMetrics = dataService.sampleSchoolMetrics()
+    func loadData() async {
+        guard let user = currentUser else { return }
+        if isDemoMode {
+            loadMockData()
+            return
+        }
+
+        dataError = nil
+
+        do {
+            courses = try await dataService.fetchCourses(for: user.id, role: user.role)
+            let courseIds = courses.map(\.id)
+
+            async let assignmentsTask = dataService.fetchAssignments(for: user.id, role: user.role, courseIds: courseIds)
+            async let announcementsTask = dataService.fetchAnnouncements()
+            async let conversationsTask = dataService.fetchConversations(for: user.id)
+
+            assignments = try await assignmentsTask
+            announcements = try await announcementsTask
+            conversations = try await conversationsTask
+
+            switch user.role {
+            case .student:
+                async let quizzesTask = dataService.fetchQuizzes(for: user.id, courseIds: courseIds)
+                async let gradesTask = dataService.fetchGrades(for: user.id, courseIds: courseIds)
+                async let attendanceTask = dataService.fetchAttendance(for: user.id)
+                async let achievementsTask = dataService.fetchAchievements(for: user.id)
+                async let leaderboardTask = dataService.fetchLeaderboard()
+
+                quizzes = try await quizzesTask
+                grades = try await gradesTask
+                attendance = try await attendanceTask
+                achievements = try await achievementsTask
+                leaderboard = try await leaderboardTask
+
+            case .teacher:
+                break
+
+            case .parent:
+                children = try await dataService.fetchChildren(for: user.id)
+
+            case .admin:
+                allUsers = try await dataService.fetchAllUsers(schoolId: user.schoolId)
+                schoolMetrics = try await dataService.fetchSchoolMetrics(schoolId: user.schoolId)
+            }
+        } catch {
+            dataError = "Could not load data. Using offline mode."
+            loadMockData()
+        }
+    }
+
+    private func loadMockData() {
+        courses = mockService.sampleCourses()
+        assignments = mockService.sampleAssignments()
+        quizzes = mockService.sampleQuizzes()
+        grades = mockService.sampleGrades()
+        attendance = mockService.sampleAttendance()
+        achievements = mockService.sampleAchievements()
+        leaderboard = mockService.sampleLeaderboard()
+        conversations = mockService.sampleConversations()
+        announcements = mockService.sampleAnnouncements()
+        children = mockService.sampleChildren()
+        schoolMetrics = mockService.sampleSchoolMetrics()
+    }
+
+    func refreshData() {
+        Task {
+            await loadData()
+        }
     }
 
     // MARK: - Admin: Create User
@@ -200,6 +266,105 @@ class AppViewModel {
             .execute()
 
         currentUser?.userSlotsUsed += 1
+        allUsers = try await dataService.fetchAllUsers(schoolId: admin.schoolId)
+    }
+
+    func deleteUser(userId: UUID) async throws {
+        guard let admin = currentUser, admin.role == .admin else {
+            throw UserManagementError.unauthorized
+        }
+        try await dataService.deleteUser(userId: userId)
+        allUsers.removeAll { $0.id == userId }
+        if currentUser!.userSlotsUsed > 0 {
+            currentUser?.userSlotsUsed -= 1
+            let slotUpdate = UpdateSlotsDTO(userSlotsUsed: currentUser!.userSlotsUsed)
+            try? await supabaseClient
+                .from("profiles")
+                .update(slotUpdate)
+                .eq("id", value: admin.id.uuidString)
+                .execute()
+        }
+    }
+
+    // MARK: - Teacher: Create Course
+    func createCourse(title: String, description: String, colorName: String) async throws {
+        guard let user = currentUser else { return }
+        let classCode = "\(title.prefix(4).uppercased())-\(Int.random(in: 1000...9999))"
+        let dto = InsertCourseDTO(
+            title: title,
+            description: description,
+            teacherId: user.id,
+            iconSystemName: "book.fill",
+            colorName: colorName,
+            classCode: classCode,
+            tenantId: nil
+        )
+        if !isDemoMode {
+            _ = try await dataService.createCourse(dto)
+            courses = try await dataService.fetchCourses(for: user.id, role: user.role)
+        } else {
+            let newCourse = Course(
+                id: UUID(), title: title, description: description,
+                teacherName: user.fullName, iconSystemName: "book.fill",
+                colorName: colorName, modules: [], enrolledStudentCount: 0,
+                progress: 0, classCode: classCode
+            )
+            courses.append(newCourse)
+        }
+    }
+
+    // MARK: - Teacher: Create Assignment
+    func createAssignment(courseId: UUID, title: String, instructions: String, dueDate: Date, points: Int) async throws {
+        guard let user = currentUser else { return }
+        let xpReward = points / 2
+
+        if !isDemoMode {
+            let formatter = ISO8601DateFormatter()
+            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            let dto = InsertAssignmentDTO(
+                courseId: courseId,
+                title: title,
+                instructions: instructions,
+                dueDate: formatter.string(from: dueDate),
+                points: points,
+                xpReward: xpReward
+            )
+            try await dataService.createAssignment(dto)
+            let courseIds = courses.map(\.id)
+            assignments = try await dataService.fetchAssignments(for: user.id, role: user.role, courseIds: courseIds)
+        } else {
+            let courseName = courses.first(where: { $0.id == courseId })?.title ?? "Unknown"
+            let newAssignment = Assignment(
+                id: UUID(), title: title, courseId: courseId, courseName: courseName,
+                instructions: instructions, dueDate: dueDate, points: points,
+                isSubmitted: false, submission: nil, grade: nil, feedback: nil, xpReward: xpReward
+            )
+            assignments.append(newAssignment)
+        }
+    }
+
+    // MARK: - Create Announcement
+    func createAnnouncement(title: String, content: String, isPinned: Bool) async throws {
+        guard let user = currentUser else { return }
+
+        if !isDemoMode {
+            let dto = InsertAnnouncementDTO(
+                title: title,
+                content: content,
+                authorId: user.id,
+                authorName: user.fullName,
+                isPinned: isPinned,
+                tenantId: nil
+            )
+            try await dataService.createAnnouncement(dto)
+            announcements = try await dataService.fetchAnnouncements()
+        } else {
+            let newAnnouncement = Announcement(
+                id: UUID(), title: title, content: content,
+                authorName: user.fullName, date: Date(), isPinned: isPinned
+            )
+            announcements.insert(newAnnouncement, at: 0)
+        }
     }
 
     // MARK: - Student Actions
@@ -210,6 +375,12 @@ class AppViewModel {
                 courses[courseIndex].modules[moduleIndex].lessons[lessonIndex].isCompleted = true
                 currentUser?.xp += lesson.xpReward
                 currentUser?.coins += lesson.xpReward / 5
+
+                if !isDemoMode, let user = currentUser {
+                    Task {
+                        try? await dataService.completeLesson(studentId: user.id, lessonId: lesson.id)
+                    }
+                }
                 syncProfile()
                 break
             }
@@ -222,6 +393,12 @@ class AppViewModel {
         assignments[index].submission = text
         currentUser?.xp += assignment.xpReward
         currentUser?.coins += assignment.xpReward / 5
+
+        if !isDemoMode, let user = currentUser {
+            Task {
+                try? await dataService.submitAssignment(assignmentId: assignment.id, studentId: user.id, content: text)
+            }
+        }
         syncProfile()
     }
 
@@ -238,6 +415,12 @@ class AppViewModel {
         quizzes[index].score = score
         currentUser?.xp += quiz.xpReward
         currentUser?.coins += quiz.xpReward / 5
+
+        if !isDemoMode, let user = currentUser {
+            Task {
+                try? await dataService.submitQuizAttempt(quizId: quiz.id, studentId: user.id, score: score)
+            }
+        }
         syncProfile()
         return score
     }
@@ -248,6 +431,17 @@ class AppViewModel {
         conversations[index].messages.append(message)
         conversations[index].lastMessage = text
         conversations[index].lastMessageDate = Date()
+
+        if !isDemoMode, let user = currentUser {
+            Task {
+                try? await dataService.sendMessage(
+                    conversationId: conversationId,
+                    senderId: user.id,
+                    senderName: user.fullName,
+                    content: text
+                )
+            }
+        }
     }
 
     private func mapAuthError(_ error: Error) -> String {
@@ -269,7 +463,7 @@ nonisolated enum UserManagementError: LocalizedError, Sendable {
 
     var errorDescription: String? {
         switch self {
-        case .unauthorized: "Only admins can create users."
+        case .unauthorized: "Only admins can manage users."
         case .noSlotsRemaining: "You have used all available user slots. Upgrade your plan to add more users."
         }
     }

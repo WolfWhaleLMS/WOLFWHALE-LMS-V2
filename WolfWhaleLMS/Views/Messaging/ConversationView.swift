@@ -12,16 +12,26 @@ struct ConversationView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            ScrollView {
-                LazyVStack(spacing: 8) {
-                    ForEach(messages) { message in
-                        messageBubble(message)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(spacing: 8) {
+                        ForEach(messages) { message in
+                            messageBubble(message)
+                                .id(message.id)
+                        }
+                    }
+                    .padding(.horizontal)
+                    .padding(.vertical, 8)
+                }
+                .scrollDismissesKeyboard(.interactively)
+                .onChange(of: messages.count) { _, _ in
+                    if let last = messages.last {
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            proxy.scrollTo(last.id, anchor: .bottom)
+                        }
                     }
                 }
-                .padding(.horizontal)
-                .padding(.vertical, 8)
             }
-            .scrollDismissesKeyboard(.interactively)
 
             inputBar
         }

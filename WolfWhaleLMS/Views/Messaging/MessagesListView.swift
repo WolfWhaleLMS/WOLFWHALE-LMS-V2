@@ -2,7 +2,6 @@ import SwiftUI
 
 struct MessagesListView: View {
     @Bindable var viewModel: AppViewModel
-    @State private var showNewMessage = false
 
     var body: some View {
         NavigationStack {
@@ -14,22 +13,18 @@ struct MessagesListView: View {
                 }
             }
             .navigationTitle("Messages")
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("New", systemImage: "square.and.pencil") {
-                        showNewMessage = true
-                    }
-                }
-            }
             .overlay {
                 if viewModel.conversations.isEmpty {
-                    ContentUnavailableView("No Messages", systemImage: "message", description: Text("Start a conversation"))
+                    ContentUnavailableView("No Messages", systemImage: "message", description: Text("Conversations will appear here"))
                 }
             }
             .navigationDestination(for: UUID.self) { id in
                 if let conversation = viewModel.conversations.first(where: { $0.id == id }) {
                     ConversationView(conversation: conversation, viewModel: viewModel)
                 }
+            }
+            .refreshable {
+                viewModel.refreshData()
             }
         }
     }
