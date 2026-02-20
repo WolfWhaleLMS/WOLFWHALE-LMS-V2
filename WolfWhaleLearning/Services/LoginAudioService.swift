@@ -31,6 +31,12 @@ class LoginAudioService {
 
         configureAudioSession()
 
+        // Remove any lingering loop observer to prevent leaks
+        if let old = loopObserver {
+            NotificationCenter.default.removeObserver(old)
+            loopObserver = nil
+        }
+
         let playerItem = AVPlayerItem(url: mozartURL)
         player = AVPlayer(playerItem: playerItem)
         player?.volume = 0 // Start silent for fade-in
@@ -90,7 +96,9 @@ class LoginAudioService {
             try AVAudioSession.sharedInstance().setActive(true)
         } catch {
             // Non-fatal: audio just won't play
+            #if DEBUG
             print("[LoginAudioService] Audio session error: \(error.localizedDescription)")
+            #endif
         }
     }
 

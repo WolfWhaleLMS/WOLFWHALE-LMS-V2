@@ -104,22 +104,28 @@ class PeerService: NSObject {
     // MARK: - Messaging
 
     func sendMessage(_ text: String) {
-        guard let session, !session.connectedPeers.isEmpty else { return }
+        guard let session else { return }
+        let peers = session.connectedPeers
+        guard !peers.isEmpty else { return }
         let message = PeerMessage(sender: peerID?.displayName ?? "Me", text: text)
         if let data = try? JSONEncoder().encode(message) {
-            try? session.send(data, toPeers: session.connectedPeers, with: .reliable)
+            try? session.send(data, toPeers: peers, with: .reliable)
         }
         receivedMessages.append(message)
     }
 
     func sendFile(_ data: Data, name: String) {
         guard let session else { return }
-        for peer in session.connectedPeers {
+        let peers = session.connectedPeers
+        guard !peers.isEmpty else { return }
+        for peer in peers {
             session.sendResource(at: saveTemporaryFile(data: data, name: name),
                                  withName: name,
                                  toPeer: peer) { error in
                 if let error {
+                    #if DEBUG
                     print("PeerService: file send error — \(error.localizedDescription)")
+                    #endif
                 }
             }
         }
@@ -190,7 +196,9 @@ extension PeerService: MCNearbyServiceAdvertiserDelegate {
     }
 
     nonisolated func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didNotStartAdvertisingPeer error: Error) {
+        #if DEBUG
         print("PeerService: advertising failed — \(error.localizedDescription)")
+        #endif
         Task { @MainActor in
             isAdvertising = false
         }
@@ -215,7 +223,9 @@ extension PeerService: MCNearbyServiceBrowserDelegate {
     }
 
     nonisolated func browser(_ browser: MCNearbyServiceBrowser, didNotStartBrowsingForPeers error: Error) {
+        #if DEBUG
         print("PeerService: browsing failed — \(error.localizedDescription)")
+        #endif
         Task { @MainActor in
             isBrowsing = false
         }

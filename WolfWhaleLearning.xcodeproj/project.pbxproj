@@ -421,6 +421,10 @@
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "WolfWhale uses your location to verify campus attendance and show campus maps.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "WolfWhale uses your photo library to set your profile picture and attach images to assignments.";
 				INFOPLIST_KEY_NSUserNotificationsUsageDescription = "WolfWhale sends notifications for assignments, grades, and school announcements.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "WolfWhale uses the microphone for study group voice calls.";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "WolfWhale uses the local network to connect with nearby classmates for study groups.";
+				INFOPLIST_KEY_NSAppleMusicUsageDescription = "WolfWhale provides study playlists from Apple Music to help you focus.";
+				INFOPLIST_KEY_NSBonjourServices = "_wolfwhale-study._tcp";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -465,6 +469,10 @@
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "WolfWhale uses your location to verify campus attendance and show campus maps.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "WolfWhale uses your photo library to set your profile picture and attach images to assignments.";
 				INFOPLIST_KEY_NSUserNotificationsUsageDescription = "WolfWhale sends notifications for assignments, grades, and school announcements.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "WolfWhale uses the microphone for study group voice calls.";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "WolfWhale uses the local network to connect with nearby classmates for study groups.";
+				INFOPLIST_KEY_NSAppleMusicUsageDescription = "WolfWhale provides study playlists from Apple Music to help you focus.";
+				INFOPLIST_KEY_NSBonjourServices = "_wolfwhale-study._tcp";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

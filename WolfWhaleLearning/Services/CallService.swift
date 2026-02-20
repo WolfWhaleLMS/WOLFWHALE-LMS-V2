@@ -55,15 +55,37 @@ final class CallService: NSObject {
         startAction.contactIdentifier = displayName
         let transaction = CXTransaction(action: startAction)
         callController.request(transaction) { [weak self] error in
+<<<<<<< HEAD
             if error == nil {
                 Task { @MainActor in
                     self?.activeCallUUID = uuid
                     self?.remoteParticipantName = displayName
+=======
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                if let error {
+                    #if DEBUG
+                    print("CallService: start call failed — \(error.localizedDescription)")
+                    #endif
+                    self.resetCallState()
+                } else {
+                    // Update the provider with caller info so the system UI shows the name
+                    self.provider.reportCall(with: uuid, updated: CXCallUpdate().apply {
+                        $0.remoteHandle = handle
+                        $0.localizedCallerName = displayName
+                        $0.hasVideo = false
+                        $0.supportsHolding = false
+                        $0.supportsGrouping = false
+                        $0.supportsUngrouping = false
+                        $0.supportsDTMF = false
+                    })
+>>>>>>> 8913cc2 (App Store audit fixes: privacy keys, entitlements, thread safety, production hardening)
                 }
             }
         }
     }
 
+<<<<<<< HEAD
     func endCall() {
         guard let uuid = activeCallUUID else { return }
         let endAction = CXEndCallAction(call: uuid)
@@ -71,6 +93,175 @@ final class CallService: NSObject {
         callController.request(transaction, completion: { _ in })
     }
 
+=======
+    // MARK: - Incoming Call
+
+    func reportIncomingCall(from peerID: String, displayName: String) {
+        let uuid = UUID()
+        callUUID = uuid
+        callerName = displayName
+        isRinging = true
+
+        let update = CXCallUpdate()
+        update.remoteHandle = CXHandle(type: .generic, value: peerID)
+        update.localizedCallerName = displayName
+        update.hasVideo = false
+        update.supportsHolding = false
+        update.supportsGrouping = false
+        update.supportsUngrouping = false
+        update.supportsDTMF = false
+
+        provider.reportNewIncomingCall(with: uuid, update: update) { [weak self] error in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                if let error {
+                    #if DEBUG
+                    print("CallService: incoming call report failed — \(error.localizedDescription)")
+                    #endif
+                    self.resetCallState()
+                }
+            }
+        }
+    }
+
+    // MARK: - End Call
+
+    func endCall() {
+        guard let uuid = callUUID else { return }
+
+        let endCallAction = CXEndCallAction(call: uuid)
+        let transaction = CXTransaction(action: endCallAction)
+        callController.request(transaction) { [weak self] error in
+            Task { @MainActor [weak self] in
+                if let error {
+                    #if DEBUG
+                    print("CallService: end call failed — \(error.localizedDescription)")
+                    #endif
+                    // Force cleanup even if the transaction fails
+                    self?.cleanupCall()
+                }
+            }
+        }
+    }
+
+    // MARK: - Mute / Speaker
+
+    func toggleMute() {
+        guard let uuid = callUUID else { return }
+        isMuted.toggle()
+
+        let muteAction = CXSetMutedCallAction(call: uuid, muted: isMuted)
+        let transaction = CXTransaction(action: muteAction)
+        callController.request(transaction) { error in
+            if let error {
+                #if DEBUG
+                print("CallService: mute toggle failed — \(error.localizedDescription)")
+                #endif
+            }
+        }
+
+        // Also mute the audio engine input
+        audioEngine?.inputNode.volume = isMuted ? 0.0 : 1.0
+    }
+
+    func toggleSpeaker() {
+        isSpeakerOn.toggle()
+        configureSpeakerOutput()
+    }
+
+    // MARK: - Audio Session
+
+    private func configureAudioSession() {
+        do {
+            let session = AVAudioSession.sharedInstance()
+            try session.setCategory(.playAndRecord, mode: .voiceChat, options: [.allowBluetooth, .defaultToSpeaker])
+            try session.setActive(true, options: .notifyOthersOnDeactivation)
+            configureSpeakerOutput()
+        } catch {
+            #if DEBUG
+            print("CallService: audio session configuration failed — \(error.localizedDescription)")
+            #endif
+        }
+    }
+
+    private func configureSpeakerOutput() {
+        do {
+            let session = AVAudioSession.sharedInstance()
+            if isSpeakerOn {
+                try session.overrideOutputAudioPort(.speaker)
+            } else {
+                try session.overrideOutputAudioPort(.none)
+            }
+        } catch {
+            #if DEBUG
+            print("CallService: speaker toggle failed — \(error.localizedDescription)")
+            #endif
+        }
+    }
+
+    private func deactivateAudioSession() {
+        do {
+            try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        } catch {
+            #if DEBUG
+            print("CallService: audio session deactivation failed — \(error.localizedDescription)")
+            #endif
+        }
+    }
+
+    // MARK: - Audio Engine
+
+    /// Sets up AVAudioEngine for voice capture and playback.
+    /// In production, captured audio buffers would be sent to the remote peer
+    /// via WebRTC or MultipeerConnectivity, and received audio buffers would be
+    /// scheduled on the playerNode. For now this configures the pipeline correctly.
+    private func startAudioEngine() {
+        let engine = AVAudioEngine()
+        audioEngine = engine
+
+        let inputNode = engine.inputNode
+        let inputFormat = inputNode.outputFormat(forBus: 0)
+
+        // Install a tap on the microphone input to capture audio buffers
+        inputNode.installTap(onBus: 0, bufferSize: 1024, format: inputFormat) { buffer, time in
+            // TODO: Send audio buffer to remote peer via WebRTC or MultipeerConnectivity
+            // Example: peerService.sendAudioBuffer(buffer, at: time)
+            _ = buffer
+            _ = time
+        }
+
+        // Create a player node for receiving remote audio
+        let playerNode = AVAudioPlayerNode()
+        engine.attach(playerNode)
+        engine.connect(playerNode, to: engine.mainMixerNode, format: inputFormat)
+
+        // TODO: When receiving audio buffers from remote peer, schedule them:
+        // playerNode.scheduleBuffer(receivedBuffer, completionHandler: nil)
+
+        do {
+            try engine.start()
+            playerNode.play()
+        } catch {
+            audioEngine?.stop()
+            audioEngine = nil
+            #if DEBUG
+            print("CallService: audio engine start failed — \(error.localizedDescription)")
+            #endif
+        }
+
+        // Apply current mute state
+        inputNode.volume = isMuted ? 0.0 : 1.0
+    }
+
+    private func stopAudioEngine() {
+        audioEngine?.inputNode.removeTap(onBus: 0)
+        audioEngine?.stop()
+        audioEngine = nil
+    }
+
+    // MARK: - Call Timer
+
+>>>>>>> 8913cc2 (App Store audit fixes: privacy keys, entitlements, thread safety, production hardening)
     private func startCallTimer() {
         callTimer?.invalidate()
         callDuration = 0
