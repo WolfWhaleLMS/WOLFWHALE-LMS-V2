@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// A reusable component that displays attached files and provides an "Add Attachment" button.
-nonisolated struct FileAttachmentView: View, Sendable {
+struct FileAttachmentView: View {
     @Binding var attachments: [PickedFile]
     @State private var showFilePicker = false
 

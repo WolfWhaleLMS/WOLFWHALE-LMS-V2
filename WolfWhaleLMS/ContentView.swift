@@ -2,14 +2,10 @@ import SwiftUI
 
 struct ContentView: View {
     @State private var viewModel = AppViewModel()
-    @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
 
     var body: some View {
         Group {
-            if !hasCompletedOnboarding {
-                OnboardingView()
-                    .transition(.opacity)
-            } else if viewModel.isCheckingSession {
+            if viewModel.isCheckingSession {
                 splashView
             } else if viewModel.isAuthenticated {
                 authenticatedView
@@ -19,18 +15,10 @@ struct ContentView: View {
                     .transition(.opacity)
             }
         }
-        .animation(.smooth(duration: 0.4), value: hasCompletedOnboarding)
         .animation(.smooth(duration: 0.4), value: viewModel.isAuthenticated)
         .animation(.smooth(duration: 0.4), value: viewModel.isCheckingSession)
         .task {
-            if hasCompletedOnboarding {
-                viewModel.checkSession()
-            }
-        }
-        .onChange(of: hasCompletedOnboarding) {
-            if hasCompletedOnboarding {
-                viewModel.checkSession()
-            }
+            viewModel.checkSession()
         }
     }
 

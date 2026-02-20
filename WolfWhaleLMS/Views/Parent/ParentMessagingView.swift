@@ -1,6 +1,6 @@
 import SwiftUI
 
-nonisolated struct ParentMessagingView: View, Sendable {
+struct ParentMessagingView: View {
     @Bindable var viewModel: AppViewModel
     let child: ChildInfo
 

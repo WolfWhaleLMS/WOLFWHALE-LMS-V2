@@ -1,6 +1,6 @@
 import SwiftUI
 
-nonisolated struct AttendanceReportView: View, Sendable {
+struct AttendanceReportView: View {
     let course: Course
     @Bindable var viewModel: AppViewModel
 

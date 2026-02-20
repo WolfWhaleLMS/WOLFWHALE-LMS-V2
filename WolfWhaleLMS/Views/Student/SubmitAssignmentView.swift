@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// A full-screen view for students to submit an assignment with text and file attachments.
-nonisolated struct SubmitAssignmentView: View, Sendable {
+struct SubmitAssignmentView: View {
     let assignment: Assignment
     @Bindable var viewModel: AppViewModel
     @Environment(\.dismiss) private var dismiss

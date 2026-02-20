@@ -2,7 +2,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 /// Result returned when a user picks a file from the document picker.
-nonisolated struct PickedFile: Identifiable, Hashable, Sendable {
+struct PickedFile: Identifiable, Hashable, Sendable {
     let id: UUID
     let url: URL
     let name: String
@@ -71,7 +71,7 @@ private let supportedTypes: [UTType] = [
 ]
 
 /// A SwiftUI wrapper around `UIDocumentPickerViewController` for selecting files.
-nonisolated struct FilePickerView: UIViewControllerRepresentable, Sendable {
+struct FilePickerView: UIViewControllerRepresentable {
     let allowedTypes: [UTType]
     let onPick: @Sendable (PickedFile) -> Void
     let onCancel: @Sendable () -> Void
