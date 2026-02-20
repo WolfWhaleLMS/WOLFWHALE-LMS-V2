@@ -16,27 +16,27 @@
 			containerPortal = 105FC5722E9EAD3100EA8BCF /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 105FC5792E9EAD3100EA8BCF;
-			remoteInfo = WolfWhaleLMS;
+			remoteInfo = WolfWhaleLearning;
 		};
 		105FC5942E9EAD3200EA8BCF /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 105FC5722E9EAD3100EA8BCF /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 105FC5792E9EAD3100EA8BCF;
-			remoteInfo = WolfWhaleLMS;
+			remoteInfo = WolfWhaleLearning;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		105FC57A2E9EAD3100EA8BCF /* WolfWhaleLMS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WolfWhaleLMS.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		105FC5892E9EAD3200EA8BCF /* WolfWhaleLMSTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WolfWhaleLMSTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		105FC5932E9EAD3200EA8BCF /* WolfWhaleLMSUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WolfWhaleLMSUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		105FC57A2E9EAD3100EA8BCF /* WolfWhaleLearning.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WolfWhaleLearning.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		105FC5892E9EAD3200EA8BCF /* WolfWhaleLearningTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WolfWhaleLearningTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		105FC5932E9EAD3200EA8BCF /* WolfWhaleLearningUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WolfWhaleLearningUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		105FC57C2E9EAD3100EA8BCF /* WolfWhaleLMS */ = {
+		105FC57C2E9EAD3100EA8BCF /* WolfWhaleLearning */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = WolfWhaleLMS;
+			path = WolfWhaleLearning;
 			sourceTree = "<group>";
 		};
 		105FC58C2E9EAD3200EA8BCF /* WolfWhaleLMSTests */ = {
@@ -80,7 +80,7 @@
 		105FC5712E9EAD3100EA8BCF = {
 			isa = PBXGroup;
 			children = (
-				105FC57C2E9EAD3100EA8BCF /* WolfWhaleLMS */,
+				105FC57C2E9EAD3100EA8BCF /* WolfWhaleLearning */,
 				105FC58C2E9EAD3200EA8BCF /* WolfWhaleLMSTests */,
 				105FC5962E9EAD3200EA8BCF /* WolfWhaleLMSUITests */,
 				105FC57B2E9EAD3100EA8BCF /* Products */,
@@ -90,9 +90,9 @@
 		105FC57B2E9EAD3100EA8BCF /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				105FC57A2E9EAD3100EA8BCF /* WolfWhaleLMS.app */,
-				105FC5892E9EAD3200EA8BCF /* WolfWhaleLMSTests.xctest */,
-				105FC5932E9EAD3200EA8BCF /* WolfWhaleLMSUITests.xctest */,
+				105FC57A2E9EAD3100EA8BCF /* WolfWhaleLearning.app */,
+				105FC5892E9EAD3200EA8BCF /* WolfWhaleLearningTests.xctest */,
+				105FC5932E9EAD3200EA8BCF /* WolfWhaleLearningUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -100,9 +100,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		105FC5792E9EAD3100EA8BCF /* WolfWhaleLMS */ = {
+		105FC5792E9EAD3100EA8BCF /* WolfWhaleLearning */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 105FC59D2E9EAD3200EA8BCF /* Build configuration list for PBXNativeTarget "WolfWhaleLMS" */;
+			buildConfigurationList = 105FC59D2E9EAD3200EA8BCF /* Build configuration list for PBXNativeTarget "WolfWhaleLearning" */;
 			buildPhases = (
 				105FC5762E9EAD3100EA8BCF /* Sources */,
 				105FC5772E9EAD3100EA8BCF /* Frameworks */,
@@ -113,19 +113,19 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				105FC57C2E9EAD3100EA8BCF /* WolfWhaleLMS */,
+				105FC57C2E9EAD3100EA8BCF /* WolfWhaleLearning */,
 			);
-			name = WolfWhaleLMS;
+			name = WolfWhaleLearning;
 			packageProductDependencies = (
 				XX1C9FF110ABBCE8BF456CXX /* Supabase */,
 			);
-			productName = WolfWhaleLMS;
-			productReference = 105FC57A2E9EAD3100EA8BCF /* WolfWhaleLMS.app */;
+			productName = WolfWhaleLearning;
+			productReference = 105FC57A2E9EAD3100EA8BCF /* WolfWhaleLearning.app */;
 			productType = "com.apple.product-type.application";
 		};
-		105FC5882E9EAD3200EA8BCF /* WolfWhaleLMSTests */ = {
+		105FC5882E9EAD3200EA8BCF /* WolfWhaleLearning */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 105FC5A02E9EAD3200EA8BCF /* Build configuration list for PBXNativeTarget "WolfWhaleLMSTests" */;
+			buildConfigurationList = 105FC5A02E9EAD3200EA8BCF /* Build configuration list for PBXNativeTarget "WolfWhaleLearning" */;
 			buildPhases = (
 				105FC5852E9EAD3200EA8BCF /* Sources */,
 				105FC5862E9EAD3200EA8BCF /* Frameworks */,
@@ -139,16 +139,16 @@
 			fileSystemSynchronizedGroups = (
 				105FC58C2E9EAD3200EA8BCF /* WolfWhaleLMSTests */,
 			);
-			name = WolfWhaleLMSTests;
+			name = WolfWhaleLearning;
 			packageProductDependencies = (
 			);
-			productName = WolfWhaleLMSTests;
-			productReference = 105FC5892E9EAD3200EA8BCF /* WolfWhaleLMSTests.xctest */;
+			productName = WolfWhaleLearning;
+			productReference = 105FC5892E9EAD3200EA8BCF /* WolfWhaleLearningTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		105FC5922E9EAD3200EA8BCF /* WolfWhaleLMSUITests */ = {
+		105FC5922E9EAD3200EA8BCF /* WolfWhaleLearning */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 105FC5A32E9EAD3200EA8BCF /* Build configuration list for PBXNativeTarget "WolfWhaleLMSUITests" */;
+			buildConfigurationList = 105FC5A32E9EAD3200EA8BCF /* Build configuration list for PBXNativeTarget "WolfWhaleLearning" */;
 			buildPhases = (
 				105FC58F2E9EAD3200EA8BCF /* Sources */,
 				105FC5902E9EAD3200EA8BCF /* Frameworks */,
@@ -162,11 +162,11 @@
 			fileSystemSynchronizedGroups = (
 				105FC5962E9EAD3200EA8BCF /* WolfWhaleLMSUITests */,
 			);
-			name = WolfWhaleLMSUITests;
+			name = WolfWhaleLearning;
 			packageProductDependencies = (
 			);
-			productName = WolfWhaleLMSUITests;
-			productReference = 105FC5932E9EAD3200EA8BCF /* WolfWhaleLMSUITests.xctest */;
+			productName = WolfWhaleLearning;
+			productReference = 105FC5932E9EAD3200EA8BCF /* WolfWhaleLearningUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -192,7 +192,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 105FC5752E9EAD3100EA8BCF /* Build configuration list for PBXProject "WolfWhaleLMS" */;
+			buildConfigurationList = 105FC5752E9EAD3100EA8BCF /* Build configuration list for PBXProject "WolfWhaleLearning" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -206,9 +206,9 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				105FC5792E9EAD3100EA8BCF /* WolfWhaleLMS */,
-				105FC5882E9EAD3200EA8BCF /* WolfWhaleLMSTests */,
-				105FC5922E9EAD3200EA8BCF /* WolfWhaleLMSUITests */,
+				105FC5792E9EAD3100EA8BCF /* WolfWhaleLearning */,
+				105FC5882E9EAD3200EA8BCF /* WolfWhaleLearning */,
+				105FC5922E9EAD3200EA8BCF /* WolfWhaleLearning */,
 			);
 			packageReferences = (
 				XX20EB7F6EA71E9F2E096CXX /* XCRemoteSwiftPackageReference "supabase-swift" */,
@@ -267,12 +267,12 @@
 /* Begin PBXTargetDependency section */
 		105FC58B2E9EAD3200EA8BCF /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 105FC5792E9EAD3100EA8BCF /* WolfWhaleLMS */;
+			target = 105FC5792E9EAD3100EA8BCF /* WolfWhaleLearning */;
 			targetProxy = 105FC58A2E9EAD3200EA8BCF /* PBXContainerItemProxy */;
 		};
 		105FC5952E9EAD3200EA8BCF /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = 105FC5792E9EAD3100EA8BCF /* WolfWhaleLMS */;
+			target = 105FC5792E9EAD3100EA8BCF /* WolfWhaleLearning */;
 			targetProxy = 105FC5942E9EAD3200EA8BCF /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -556,7 +556,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		105FC5752E9EAD3100EA8BCF /* Build configuration list for PBXProject "WolfWhaleLMS" */ = {
+		105FC5752E9EAD3100EA8BCF /* Build configuration list for PBXProject "WolfWhaleLearning" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				105FC59B2E9EAD3200EA8BCF /* Debug */,
@@ -565,7 +565,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		105FC59D2E9EAD3200EA8BCF /* Build configuration list for PBXNativeTarget "WolfWhaleLMS" */ = {
+		105FC59D2E9EAD3200EA8BCF /* Build configuration list for PBXNativeTarget "WolfWhaleLearning" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				105FC59E2E9EAD3200EA8BCF /* Debug */,
@@ -574,7 +574,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		105FC5A02E9EAD3200EA8BCF /* Build configuration list for PBXNativeTarget "WolfWhaleLMSTests" */ = {
+		105FC5A02E9EAD3200EA8BCF /* Build configuration list for PBXNativeTarget "WolfWhaleLearning" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				105FC5A12E9EAD3200EA8BCF /* Debug */,
@@ -583,7 +583,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		105FC5A32E9EAD3200EA8BCF /* Build configuration list for PBXNativeTarget "WolfWhaleLMSUITests" */ = {
+		105FC5A32E9EAD3200EA8BCF /* Build configuration list for PBXNativeTarget "WolfWhaleLearning" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				105FC5A42E9EAD3200EA8BCF /* Debug */,
