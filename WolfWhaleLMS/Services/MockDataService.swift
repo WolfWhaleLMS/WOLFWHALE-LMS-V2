@@ -102,15 +102,16 @@ struct MockDataService {
 
     func sampleConversations() -> [Conversation] {
         let cal = Calendar.current
+        let now = Date()
         return [
-            Conversation(id: UUID(), participantNames: ["Dr. Sarah Chen"], title: "Dr. Sarah Chen", lastMessage: "Don't forget the homework is due Friday!", lastMessageDate: cal.date(byAdding: .hour, value: -2, to: Date())!, unreadCount: 1, messages: [
-                ChatMessage(id: UUID(), senderName: "Dr. Sarah Chen", content: "Hi Alex, how's the assignment going?", timestamp: cal.date(byAdding: .hour, value: -5, to: Date())!, isFromCurrentUser: false),
-                ChatMessage(id: UUID(), senderName: "Alex Rivera", content: "Going well! Almost done with the problem set.", timestamp: cal.date(byAdding: .hour, value: -4, to: Date())!, isFromCurrentUser: true),
-                ChatMessage(id: UUID(), senderName: "Dr. Sarah Chen", content: "Don't forget the homework is due Friday!", timestamp: cal.date(byAdding: .hour, value: -2, to: Date())!, isFromCurrentUser: false),
+            Conversation(id: UUID(), participantNames: ["Dr. Sarah Chen"], title: "Dr. Sarah Chen", lastMessage: "Don't forget the homework is due Friday!", lastMessageDate: cal.date(byAdding: .hour, value: -2, to: now) ?? now, unreadCount: 1, messages: [
+                ChatMessage(id: UUID(), senderName: "Dr. Sarah Chen", content: "Hi Alex, how's the assignment going?", timestamp: cal.date(byAdding: .hour, value: -5, to: now) ?? now, isFromCurrentUser: false),
+                ChatMessage(id: UUID(), senderName: "Alex Rivera", content: "Going well! Almost done with the problem set.", timestamp: cal.date(byAdding: .hour, value: -4, to: now) ?? now, isFromCurrentUser: true),
+                ChatMessage(id: UUID(), senderName: "Dr. Sarah Chen", content: "Don't forget the homework is due Friday!", timestamp: cal.date(byAdding: .hour, value: -2, to: now) ?? now, isFromCurrentUser: false),
             ], avatarSystemName: "person.crop.circle.fill"),
-            Conversation(id: UUID(), participantNames: ["Study Group"], title: "Bio Study Group", lastMessage: "Can someone explain mitosis?", lastMessageDate: cal.date(byAdding: .hour, value: -6, to: Date())!, unreadCount: 3, messages: [
-                ChatMessage(id: UUID(), senderName: "Jordan Kim", content: "Hey everyone, studying for the bio test tomorrow", timestamp: cal.date(byAdding: .hour, value: -8, to: Date())!, isFromCurrentUser: false),
-                ChatMessage(id: UUID(), senderName: "Sam Patel", content: "Can someone explain mitosis?", timestamp: cal.date(byAdding: .hour, value: -6, to: Date())!, isFromCurrentUser: false),
+            Conversation(id: UUID(), participantNames: ["Study Group"], title: "Bio Study Group", lastMessage: "Can someone explain mitosis?", lastMessageDate: cal.date(byAdding: .hour, value: -6, to: now) ?? now, unreadCount: 3, messages: [
+                ChatMessage(id: UUID(), senderName: "Jordan Kim", content: "Hey everyone, studying for the bio test tomorrow", timestamp: cal.date(byAdding: .hour, value: -8, to: now) ?? now, isFromCurrentUser: false),
+                ChatMessage(id: UUID(), senderName: "Sam Patel", content: "Can someone explain mitosis?", timestamp: cal.date(byAdding: .hour, value: -6, to: now) ?? now, isFromCurrentUser: false),
             ], avatarSystemName: "person.3.fill"),
         ]
     }

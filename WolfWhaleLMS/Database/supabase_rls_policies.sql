@@ -190,6 +190,14 @@ USING (
     AND is_parent_of(auth.uid(), profiles.id)
 );
 
+-- SELECT: All users can read profiles in their school (for leaderboard/XP rankings)
+-- Only exposes rows in the same school; the client selects only the columns needed
+-- (e.g., display_name, avatar_url, xp) so sensitive fields stay hidden by column-level grants.
+CREATE POLICY "profiles_select_school_leaderboard"
+ON profiles FOR SELECT
+TO authenticated
+USING (school_id = get_user_school_id());
+
 -- UPDATE: Users can update their own profile only
 CREATE POLICY "profiles_update_own"
 ON profiles FOR UPDATE
@@ -221,7 +229,7 @@ USING (
 -- =============================================================================
 -- Teachers can CRUD their own courses.
 -- Students can read courses they are enrolled in.
--- Admins can read all courses (within tenant).
+-- Admins can CRUD courses within their school (tenant_id scoping).
 -- Parents can read courses their children are enrolled in.
 
 -- SELECT: Teachers can read their own courses
@@ -242,11 +250,14 @@ USING (
     AND is_enrolled_in_course(auth.uid(), courses.id)
 );
 
--- SELECT: Admins can read all courses
+-- SELECT: Admins can read courses in their school
 CREATE POLICY "courses_select_admin"
 ON courses FOR SELECT
 TO authenticated
-USING (get_user_role() = 'Admin');
+USING (
+    get_user_role() = 'Admin'
+    AND tenant_id::text = get_user_school_id()
+);
 
 -- SELECT: Parents can read courses their children are enrolled in
 CREATE POLICY "courses_select_parent_children"
@@ -266,11 +277,14 @@ WITH CHECK (
     AND teacher_id = auth.uid()
 );
 
--- INSERT: Admins can create courses
+-- INSERT: Admins can create courses in their school
 CREATE POLICY "courses_insert_admin"
 ON courses FOR INSERT
 TO authenticated
-WITH CHECK (get_user_role() = 'Admin');
+WITH CHECK (
+    get_user_role() = 'Admin'
+    AND tenant_id::text = get_user_school_id()
+);
 
 -- UPDATE: Teachers can update their own courses
 CREATE POLICY "courses_update_teacher_own"
@@ -285,12 +299,18 @@ WITH CHECK (
     AND teacher_id = auth.uid()
 );
 
--- UPDATE: Admins can update any course
+-- UPDATE: Admins can update courses in their school
 CREATE POLICY "courses_update_admin"
 ON courses FOR UPDATE
 TO authenticated
-USING (get_user_role() = 'Admin')
-WITH CHECK (get_user_role() = 'Admin');
+USING (
+    get_user_role() = 'Admin'
+    AND tenant_id::text = get_user_school_id()
+)
+WITH CHECK (
+    get_user_role() = 'Admin'
+    AND tenant_id::text = get_user_school_id()
+);
 
 -- DELETE: Teachers can delete their own courses
 CREATE POLICY "courses_delete_teacher_own"
@@ -301,11 +321,14 @@ USING (
     AND teacher_id = auth.uid()
 );
 
--- DELETE: Admins can delete any course
+-- DELETE: Admins can delete courses in their school
 CREATE POLICY "courses_delete_admin"
 ON courses FOR DELETE
 TO authenticated
-USING (get_user_role() = 'Admin');
+USING (
+    get_user_role() = 'Admin'
+    AND tenant_id::text = get_user_school_id()
+);
 
 -- =============================================================================
 -- SECTION 6: MODULES
@@ -842,11 +865,19 @@ USING (
     )
 );
 
--- SELECT: Admins can read all quiz attempts
+-- SELECT: Admins can read quiz attempts in their school
 CREATE POLICY "quiz_attempts_select_admin"
 ON quiz_attempts FOR SELECT
 TO authenticated
-USING (get_user_role() = 'Admin');
+USING (
+    get_user_role() = 'Admin'
+    AND EXISTS (
+        SELECT 1 FROM quizzes q
+        JOIN courses c ON c.id = q.course_id
+        WHERE q.id = quiz_attempts.quiz_id
+          AND c.tenant_id::text = get_user_school_id()
+    )
+);
 
 -- SELECT: Parents can read their children's quiz attempts
 CREATE POLICY "quiz_attempts_select_parent"
@@ -927,21 +958,24 @@ USING (is_course_teacher(auth.uid(), course_id));
 -- =============================================================================
 -- SECTION 17: ANNOUNCEMENTS
 -- =============================================================================
--- Everyone authenticated can read announcements.
--- Admins and teachers can create announcements.
+-- Users can read announcements within their own school (tenant_id scoping).
+-- Admins and teachers can create announcements (scoped to their school).
 -- Authors can update/delete their own announcements.
 
--- SELECT: All authenticated users can read announcements
-CREATE POLICY "announcements_select_all"
+-- SELECT: Authenticated users can read announcements in their school
+CREATE POLICY "announcements_select_school"
 ON announcements FOR SELECT
 TO authenticated
-USING (true);
+USING (tenant_id::text = get_user_school_id());
 
--- INSERT: Admins can create announcements
+-- INSERT: Admins can create announcements in their school
 CREATE POLICY "announcements_insert_admin"
 ON announcements FOR INSERT
 TO authenticated
-WITH CHECK (get_user_role() = 'Admin');
+WITH CHECK (
+    get_user_role() = 'Admin'
+    AND tenant_id::text = get_user_school_id()
+);
 
 -- INSERT: Teachers can create announcements
 CREATE POLICY "announcements_insert_teacher"
@@ -959,12 +993,18 @@ TO authenticated
 USING (author_id = auth.uid())
 WITH CHECK (author_id = auth.uid());
 
--- UPDATE: Admins can update any announcement
+-- UPDATE: Admins can update announcements in their school
 CREATE POLICY "announcements_update_admin"
 ON announcements FOR UPDATE
 TO authenticated
-USING (get_user_role() = 'Admin')
-WITH CHECK (get_user_role() = 'Admin');
+USING (
+    get_user_role() = 'Admin'
+    AND tenant_id::text = get_user_school_id()
+)
+WITH CHECK (
+    get_user_role() = 'Admin'
+    AND tenant_id::text = get_user_school_id()
+);
 
 -- DELETE: Authors can delete their own announcements
 CREATE POLICY "announcements_delete_author"
@@ -972,11 +1012,14 @@ ON announcements FOR DELETE
 TO authenticated
 USING (author_id = auth.uid());
 
--- DELETE: Admins can delete any announcement
+-- DELETE: Admins can delete announcements in their school
 CREATE POLICY "announcements_delete_admin"
 ON announcements FOR DELETE
 TO authenticated
-USING (get_user_role() = 'Admin');
+USING (
+    get_user_role() = 'Admin'
+    AND tenant_id::text = get_user_school_id()
+);
 
 -- =============================================================================
 -- SECTION 18: CONVERSATIONS

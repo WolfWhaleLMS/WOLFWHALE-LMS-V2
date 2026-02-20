@@ -10,14 +10,27 @@ struct TeacherDashboardView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 16) {
-                    overviewCards
-                    quickActions
-                    recentActivity
-                    announcementsSection
+                if viewModel.isDataLoading && viewModel.courses.isEmpty {
+                    VStack(spacing: 20) {
+                        ShimmerLoadingView(rowCount: 4)
+                        LoadingStateView(
+                            icon: "person.crop.rectangle.stack.fill",
+                            title: "Loading Dashboard",
+                            message: "Fetching your courses, submissions, and announcements..."
+                        )
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 40)
+                } else {
+                    VStack(spacing: 16) {
+                        overviewCards
+                        quickActions
+                        recentActivity
+                        announcementsSection
+                    }
+                    .padding(.horizontal)
+                    .padding(.bottom, 20)
                 }
-                .padding(.horizontal)
-                .padding(.bottom, 20)
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Dashboard")

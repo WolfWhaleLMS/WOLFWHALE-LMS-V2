@@ -99,8 +99,9 @@ USING (
     AND (storage.foldername(name))[1] = auth.uid()::text
 );
 
--- Teachers can read all submissions in their courses
--- We check via the assignment -> course -> teacher_id chain
+-- Teachers can read submissions only for assignments in courses they teach
+-- Folder path: {student_id}/{assignment_id}/{filename}
+-- Validates via assignment_id (2nd folder segment) -> course -> teacher_id chain
 CREATE POLICY "Teachers can read course submissions"
 ON storage.objects FOR SELECT
 TO authenticated
@@ -109,6 +110,12 @@ USING (
     AND (
         SELECT role FROM profiles WHERE id = auth.uid()
     ) = 'Teacher'
+    AND EXISTS (
+        SELECT 1 FROM assignments a
+        JOIN courses c ON c.id = a.course_id
+        WHERE a.id::text = (storage.foldername(name))[2]
+          AND c.teacher_id = auth.uid()
+    )
 );
 
 -- Admins can read all submissions

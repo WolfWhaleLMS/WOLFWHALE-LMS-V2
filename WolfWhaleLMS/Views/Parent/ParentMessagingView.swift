@@ -206,7 +206,7 @@ nonisolated struct ParentMessagingView: View, Sendable {
         }
         .navigationDestination(for: UUID.self) { id in
             if let conversation = viewModel.conversations.first(where: { $0.id == id }) {
-                ConversationView(conversation: conversation, viewModel: viewModel)
+                EnhancedConversationView(conversation: conversation, viewModel: viewModel)
             }
         }
     }

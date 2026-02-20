@@ -10,6 +10,7 @@ class AppViewModel {
     var password = ""
     var isLoading = false
     var isCheckingSession = true
+    var isDataLoading = false
     var loginError: String?
 
     var courses: [Course] = []
@@ -96,7 +97,7 @@ class AppViewModel {
         let trimmedName = name.trimmingCharacters(in: .whitespaces)
         let nameComponents = trimmedName.split(separator: " ", maxSplits: 1)
         let firstName = String(nameComponents.first ?? "")
-        let lastName = nameComponents.count > 1 ? String(nameComponents.last!) : ""
+        let lastName = nameComponents.count > 1 ? String(nameComponents.last ?? "") : ""
         let trimmedEmail = email.trimmingCharacters(in: .whitespaces).lowercased()
 
         let result = try await supabaseClient.auth.signUp(
@@ -196,6 +197,7 @@ class AppViewModel {
             return
         }
 
+        isDataLoading = true
         dataError = nil
 
         do {
@@ -235,7 +237,9 @@ class AppViewModel {
                 allUsers = try await dataService.fetchAllUsers(schoolId: user.schoolId)
                 schoolMetrics = try await dataService.fetchSchoolMetrics(schoolId: user.schoolId)
             }
+            isDataLoading = false
         } catch {
+            isDataLoading = false
             dataError = "Could not load data. Using offline mode."
             loadMockData()
         }
@@ -316,9 +320,9 @@ class AppViewModel {
         }
         try await dataService.deleteUser(userId: userId)
         allUsers.removeAll { $0.id == userId }
-        if currentUser!.userSlotsUsed > 0 {
+        if let slotsUsed = currentUser?.userSlotsUsed, slotsUsed > 0 {
             currentUser?.userSlotsUsed -= 1
-            let slotUpdate = UpdateSlotsDTO(userSlotsUsed: currentUser!.userSlotsUsed)
+            let slotUpdate = UpdateSlotsDTO(userSlotsUsed: slotsUsed - 1)
             try? await supabaseClient
                 .from("profiles")
                 .update(slotUpdate)

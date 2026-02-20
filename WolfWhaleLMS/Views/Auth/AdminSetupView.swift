@@ -316,7 +316,7 @@ struct AdminSetupView: View {
                 let trimmedAdmin = adminName.trimmingCharacters(in: .whitespaces)
                 let nameComponents = trimmedAdmin.split(separator: " ", maxSplits: 1)
                 let firstName = String(nameComponents.first ?? "")
-                let lastName = nameComponents.count > 1 ? String(nameComponents.last!) : ""
+                let lastName = nameComponents.count > 1 ? String(nameComponents.last ?? "") : ""
                 let trimmedEmail = email.trimmingCharacters(in: .whitespaces).lowercased()
 
                 // Generate a unique school code from the school name

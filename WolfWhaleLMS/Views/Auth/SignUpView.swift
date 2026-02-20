@@ -11,9 +11,46 @@ struct SignUpView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var successMessage: String?
+    @State private var hasAttemptedSubmit = false
     @FocusState private var focusedField: Field?
 
     private enum Field { case fullName, email, password, confirmPassword, schoolCode }
+
+    // MARK: - Inline Validation
+
+    private var emailError: String? {
+        guard hasAttemptedSubmit || !email.isEmpty else { return nil }
+        let pattern = #"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"#
+        if email.range(of: pattern, options: .regularExpression) == nil {
+            return "Enter a valid email (e.g. name@school.edu)"
+        }
+        return nil
+    }
+
+    private var passwordError: String? {
+        guard hasAttemptedSubmit || !password.isEmpty else { return nil }
+        if password.count < 8 {
+            return "At least 8 characters"
+        }
+        if password.range(of: #"[A-Z]"#, options: .regularExpression) == nil {
+            return "Include at least 1 uppercase letter"
+        }
+        if password.range(of: #"[a-z]"#, options: .regularExpression) == nil {
+            return "Include at least 1 lowercase letter"
+        }
+        if password.range(of: #"[0-9]"#, options: .regularExpression) == nil {
+            return "Include at least 1 number"
+        }
+        return nil
+    }
+
+    private var confirmPasswordError: String? {
+        guard hasAttemptedSubmit || !confirmPassword.isEmpty else { return nil }
+        if confirmPassword != password {
+            return "Passwords do not match"
+        }
+        return nil
+    }
 
     /// Roles available for self-registration (admin requires separate onboarding)
     private let selectableRoles: [UserRole] = [.student, .teacher, .parent]
@@ -100,61 +137,106 @@ struct SignUpView: View {
             )
 
             // Email
-            HStack(spacing: 12) {
-                Image(systemName: "envelope.fill")
-                    .foregroundStyle(.tertiary)
-                    .frame(width: 20)
-                TextField("School Email", text: $email)
-                    .textContentType(.emailAddress)
-                    .keyboardType(.emailAddress)
-                    .autocorrectionDisabled()
-                    .textInputAutocapitalization(.never)
-                    .focused($focusedField, equals: .email)
-                    .submitLabel(.next)
-                    .onSubmit { focusedField = .password }
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 12) {
+                    Image(systemName: "envelope.fill")
+                        .foregroundStyle(.tertiary)
+                        .frame(width: 20)
+                    TextField("School Email", text: $email)
+                        .textContentType(.emailAddress)
+                        .keyboardType(.emailAddress)
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.never)
+                        .focused($focusedField, equals: .email)
+                        .submitLabel(.next)
+                        .onSubmit { focusedField = .password }
+                }
+                .padding(14)
+                .background(Color(.systemBackground), in: .rect(cornerRadius: 12))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(
+                            emailError != nil ? Color.red.opacity(0.5)
+                            : focusedField == .email ? Color.purple.opacity(0.5)
+                            : Color(.separator).opacity(0.3),
+                            lineWidth: 1
+                        )
+                )
+
+                if let emailError {
+                    Text(emailError)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                        .padding(.leading, 4)
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                }
             }
-            .padding(14)
-            .background(Color(.systemBackground), in: .rect(cornerRadius: 12))
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .strokeBorder(focusedField == .email ? Color.purple.opacity(0.5) : Color(.separator).opacity(0.3), lineWidth: 1)
-            )
 
             // Password
-            HStack(spacing: 12) {
-                Image(systemName: "lock.fill")
-                    .foregroundStyle(.tertiary)
-                    .frame(width: 20)
-                SecureField("Password (min 8 characters)", text: $password)
-                    .textContentType(.newPassword)
-                    .focused($focusedField, equals: .password)
-                    .submitLabel(.next)
-                    .onSubmit { focusedField = .confirmPassword }
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 12) {
+                    Image(systemName: "lock.fill")
+                        .foregroundStyle(.tertiary)
+                        .frame(width: 20)
+                    SecureField("Password (min 8 characters)", text: $password)
+                        .textContentType(.newPassword)
+                        .focused($focusedField, equals: .password)
+                        .submitLabel(.next)
+                        .onSubmit { focusedField = .confirmPassword }
+                }
+                .padding(14)
+                .background(Color(.systemBackground), in: .rect(cornerRadius: 12))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(
+                            passwordError != nil ? Color.red.opacity(0.5)
+                            : focusedField == .password ? Color.purple.opacity(0.5)
+                            : Color(.separator).opacity(0.3),
+                            lineWidth: 1
+                        )
+                )
+
+                if let passwordError {
+                    Text(passwordError)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                        .padding(.leading, 4)
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                }
             }
-            .padding(14)
-            .background(Color(.systemBackground), in: .rect(cornerRadius: 12))
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .strokeBorder(focusedField == .password ? Color.purple.opacity(0.5) : Color(.separator).opacity(0.3), lineWidth: 1)
-            )
 
             // Confirm Password
-            HStack(spacing: 12) {
-                Image(systemName: "lock.badge.checkmark")
-                    .foregroundStyle(.tertiary)
-                    .frame(width: 20)
-                SecureField("Confirm Password", text: $confirmPassword)
-                    .textContentType(.newPassword)
-                    .focused($focusedField, equals: .confirmPassword)
-                    .submitLabel(.next)
-                    .onSubmit { focusedField = .schoolCode }
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 12) {
+                    Image(systemName: "lock.badge.checkmark")
+                        .foregroundStyle(.tertiary)
+                        .frame(width: 20)
+                    SecureField("Confirm Password", text: $confirmPassword)
+                        .textContentType(.newPassword)
+                        .focused($focusedField, equals: .confirmPassword)
+                        .submitLabel(.next)
+                        .onSubmit { focusedField = .schoolCode }
+                }
+                .padding(14)
+                .background(Color(.systemBackground), in: .rect(cornerRadius: 12))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(
+                            confirmPasswordError != nil ? Color.red.opacity(0.5)
+                            : focusedField == .confirmPassword ? Color.purple.opacity(0.5)
+                            : Color(.separator).opacity(0.3),
+                            lineWidth: 1
+                        )
+                )
+
+                if let confirmPasswordError {
+                    Text(confirmPasswordError)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                        .padding(.leading, 4)
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                }
             }
-            .padding(14)
-            .background(Color(.systemBackground), in: .rect(cornerRadius: 12))
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .strokeBorder(focusedField == .confirmPassword ? Color.purple.opacity(0.5) : Color(.separator).opacity(0.3), lineWidth: 1)
-            )
 
             // Role Picker
             VStack(alignment: .leading, spacing: 8) {
@@ -296,9 +378,10 @@ struct SignUpView: View {
 
     private var isFormValid: Bool {
         !fullName.trimmingCharacters(in: .whitespaces).isEmpty
-        && !email.isEmpty
-        && !password.isEmpty
-        && !confirmPassword.isEmpty
+        && emailError == nil && !email.isEmpty
+        && passwordError == nil && !password.isEmpty
+        && confirmPasswordError == nil && !confirmPassword.isEmpty
+        && (selectedRole == .parent || !schoolCode.trimmingCharacters(in: .whitespaces).isEmpty)
     }
 
     private func validate() -> String? {
@@ -306,14 +389,14 @@ struct SignUpView: View {
         if trimmedName.isEmpty {
             return "Please enter your full name"
         }
-        if !email.contains("@") || !email.contains(".") {
-            return "Please enter a valid email address"
+        if let emailError {
+            return emailError
         }
-        if password.count < 8 {
-            return "Password must be at least 8 characters"
+        if let passwordError {
+            return passwordError
         }
-        if password != confirmPassword {
-            return "Passwords do not match"
+        if let confirmPasswordError {
+            return confirmPasswordError
         }
         if (selectedRole == .student || selectedRole == .teacher) && schoolCode.trimmingCharacters(in: .whitespaces).isEmpty {
             return "Please enter your school code"
@@ -325,6 +408,7 @@ struct SignUpView: View {
 
     private func signUp() {
         withAnimation(.smooth) {
+            hasAttemptedSubmit = true
             errorMessage = nil
             successMessage = nil
         }
@@ -343,7 +427,7 @@ struct SignUpView: View {
                 let trimmedName = fullName.trimmingCharacters(in: .whitespaces)
                 let nameComponents = trimmedName.split(separator: " ", maxSplits: 1)
                 let firstName = String(nameComponents.first ?? "")
-                let lastName = nameComponents.count > 1 ? String(nameComponents.last!) : ""
+                let lastName = nameComponents.count > 1 ? String(nameComponents.last ?? "") : ""
                 let code: String? = (selectedRole == .student || selectedRole == .teacher)
                     ? schoolCode.trimmingCharacters(in: .whitespaces)
                     : nil

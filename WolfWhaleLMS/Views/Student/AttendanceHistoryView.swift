@@ -305,7 +305,7 @@ nonisolated struct AttendanceHistoryView: View, Sendable {
                         }
                         Text("\(dayNumber)")
                             .font(.caption2.bold())
-                            .foregroundStyle(status != nil ? statusColor(status!) : .primary)
+                            .foregroundStyle(status.map { statusColor($0) } ?? .primary)
                     }
                     .frame(height: 32)
                 }

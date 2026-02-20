@@ -45,15 +45,28 @@ struct StudentDashboardView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 20) {
-                    activitySection
-                    statsRow
-                    xpSection
-                    upcomingSection
-                    coursesSection
+                if viewModel.isDataLoading && viewModel.courses.isEmpty {
+                    VStack(spacing: 20) {
+                        ShimmerLoadingView(rowCount: 4)
+                        LoadingStateView(
+                            icon: "graduationcap.fill",
+                            title: "Loading Dashboard",
+                            message: "Fetching your courses, assignments, and progress..."
+                        )
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 40)
+                } else {
+                    VStack(spacing: 20) {
+                        activitySection
+                        statsRow
+                        xpSection
+                        upcomingSection
+                        coursesSection
+                    }
+                    .padding(.horizontal)
+                    .padding(.bottom, 20)
                 }
-                .padding(.horizontal)
-                .padding(.bottom, 20)
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("\(greeting), \(viewModel.currentUser?.firstName ?? "Student")")
