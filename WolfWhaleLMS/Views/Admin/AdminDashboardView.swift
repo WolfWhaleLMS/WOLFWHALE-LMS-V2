@@ -54,15 +54,49 @@ struct AdminDashboardView: View {
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 14))
     }
 
+    private var weeklyAttendanceRates: [Double] {
+        let fallback = [0.96, 0.94, 0.92, 0.95, 0.93]
+        guard !viewModel.attendance.isEmpty else { return fallback }
+
+        let calendar = Calendar.current
+        let today = Date()
+
+        // Find the most recent Monday (or today if Monday)
+        let weekday = calendar.component(.weekday, from: today)
+        let daysFromMonday = (weekday + 5) % 7 // Sunday=1 -> 6, Monday=2 -> 0, etc.
+        guard let monday = calendar.date(byAdding: .day, value: -daysFromMonday, to: today) else {
+            return fallback
+        }
+
+        var rates: [Double] = []
+        for dayOffset in 0..<5 {
+            guard let dayDate = calendar.date(byAdding: .day, value: dayOffset, to: monday) else {
+                rates.append(fallback[dayOffset])
+                continue
+            }
+            let dayRecords = viewModel.attendance.filter {
+                calendar.isDate($0.date, inSameDayAs: dayDate)
+            }
+            if dayRecords.isEmpty {
+                rates.append(fallback[dayOffset])
+            } else {
+                let presentCount = dayRecords.filter { $0.status == .present || $0.status == .tardy }.count
+                rates.append(Double(presentCount) / Double(dayRecords.count))
+            }
+        }
+        return rates
+    }
+
     private var attendanceCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Attendance This Week")
                 .font(.headline)
 
+            let rates = weeklyAttendanceRates
             HStack(spacing: 6) {
                 ForEach(0..<5, id: \.self) { day in
                     VStack(spacing: 6) {
-                        let rate = metrics.averageAttendance > 0 ? metrics.averageAttendance + Double.random(in: -0.03...0.03) : 0.94
+                        let rate = rates[day]
                         ZStack(alignment: .bottom) {
                             RoundedRectangle(cornerRadius: 4)
                                 .fill(Color(.tertiarySystemFill))

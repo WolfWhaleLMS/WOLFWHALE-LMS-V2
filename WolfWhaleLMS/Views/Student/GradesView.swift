@@ -9,13 +9,25 @@ struct GradesView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                gpaCard
-                gradesList
+        Group {
+            if viewModel.isLoading {
+                ProgressView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+                ScrollView {
+                    VStack(spacing: 16) {
+                        gpaCard
+                        gradesList
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 8)
+                }
+                .overlay {
+                    if viewModel.grades.isEmpty {
+                        ContentUnavailableView("No Grades Yet", systemImage: "chart.bar", description: Text("Grades will appear here once assignments are graded"))
+                    }
+                }
             }
-            .padding(.horizontal)
-            .padding(.top, 8)
         }
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Grades")

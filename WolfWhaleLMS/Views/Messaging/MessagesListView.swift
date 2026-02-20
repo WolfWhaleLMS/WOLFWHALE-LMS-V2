@@ -2,6 +2,7 @@ import SwiftUI
 
 struct MessagesListView: View {
     @Bindable var viewModel: AppViewModel
+    @State private var showNewConversation = false
 
     var body: some View {
         NavigationStack {
@@ -25,6 +26,18 @@ struct MessagesListView: View {
             }
             .refreshable {
                 viewModel.refreshData()
+            }
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showNewConversation = true
+                    } label: {
+                        Image(systemName: "square.and.pencil")
+                    }
+                }
+            }
+            .sheet(isPresented: $showNewConversation) {
+                NewConversationSheet(viewModel: viewModel)
             }
         }
     }
@@ -66,5 +79,176 @@ struct MessagesListView: View {
             }
         }
         .padding(.vertical, 2)
+    }
+}
+
+// MARK: - New Conversation Sheet
+
+struct NewConversationSheet: View {
+    let viewModel: AppViewModel
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var title = ""
+    @State private var recipientText = ""
+    @State private var recipients: [String] = []
+    @State private var isCreating = false
+    @State private var errorMessage: String?
+    @State private var searchResults: [ProfileDTO] = []
+
+    private var filteredProfiles: [ProfileDTO] {
+        guard !recipientText.isEmpty else { return [] }
+        let currentUserId = viewModel.currentUser?.id
+        return viewModel.allUsers.filter { profile in
+            let fullName = "\(profile.firstName) \(profile.lastName)"
+            let alreadyAdded = recipients.contains(where: { $0.localizedStandardContains(fullName) })
+            let isSelf = profile.id == currentUserId
+            return !alreadyAdded && !isSelf &&
+                (fullName.localizedStandardContains(recipientText) ||
+                 profile.email.localizedStandardContains(recipientText))
+        }
+    }
+
+    private var canCreate: Bool {
+        !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        !recipients.isEmpty &&
+        !isCreating
+    }
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    TextField("Subject", text: $title)
+                } header: {
+                    Text("Conversation Title")
+                }
+
+                Section {
+                    // Display added recipients as chips
+                    if !recipients.isEmpty {
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 8) {
+                                ForEach(recipients, id: \.self) { name in
+                                    HStack(spacing: 4) {
+                                        Text(name)
+                                            .font(.subheadline)
+                                        Button {
+                                            recipients.removeAll { $0 == name }
+                                        } label: {
+                                            Image(systemName: "xmark.circle.fill")
+                                                .font(.caption)
+                                                .foregroundStyle(.secondary)
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 6)
+                                    .background(.blue.opacity(0.15), in: Capsule())
+                                }
+                            }
+                        }
+                    }
+
+                    // Search field for recipients
+                    TextField("Search by name or email...", text: $recipientText)
+                        .textInputAutocapitalization(.never)
+
+                    // Show matching profiles
+                    if !filteredProfiles.isEmpty {
+                        ForEach(filteredProfiles.prefix(5)) { profile in
+                            Button {
+                                let fullName = "\(profile.firstName) \(profile.lastName)"
+                                recipients.append(fullName)
+                                recipientText = ""
+                            } label: {
+                                HStack(spacing: 10) {
+                                    Circle()
+                                        .fill(LinearGradient(colors: [.blue, .purple], startPoint: .topLeading, endPoint: .bottomTrailing))
+                                        .frame(width: 32, height: 32)
+                                        .overlay {
+                                            Image(systemName: "person.fill")
+                                                .font(.caption)
+                                                .foregroundStyle(.white)
+                                        }
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text("\(profile.firstName) \(profile.lastName)")
+                                            .font(.subheadline)
+                                            .foregroundStyle(.primary)
+                                        Text(profile.role)
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                            }
+                        }
+                    } else if !recipientText.isEmpty && viewModel.allUsers.isEmpty {
+                        // If allUsers is empty, allow manual entry
+                        Button {
+                            let trimmed = recipientText.trimmingCharacters(in: .whitespacesAndNewlines)
+                            if !trimmed.isEmpty {
+                                recipients.append(trimmed)
+                                recipientText = ""
+                            }
+                        } label: {
+                            Label("Add \"\(recipientText)\"", systemImage: "plus.circle.fill")
+                                .font(.subheadline)
+                        }
+                    }
+                } header: {
+                    Text("Recipients")
+                }
+
+                if let errorMessage {
+                    Section {
+                        HStack(spacing: 8) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.orange)
+                            Text(errorMessage)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            }
+            .navigationTitle("New Conversation")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .disabled(isCreating)
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    if isCreating {
+                        ProgressView()
+                    } else {
+                        Button("Create") {
+                            createConversation()
+                        }
+                        .bold()
+                        .disabled(!canCreate)
+                    }
+                }
+            }
+        }
+    }
+
+    private func createConversation() {
+        isCreating = true
+        errorMessage = nil
+
+        Task {
+            do {
+                try await viewModel.createConversation(
+                    title: title.trimmingCharacters(in: .whitespacesAndNewlines),
+                    recipientNames: recipients
+                )
+                dismiss()
+            } catch {
+                errorMessage = "Could not create conversation. Please try again."
+            }
+            isCreating = false
+        }
     }
 }

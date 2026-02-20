@@ -4,6 +4,7 @@ struct LoginView: View {
     @Bindable var viewModel: AppViewModel
     @State private var appeared = false
     @State private var showDemoSection = false
+    @State private var showForgotPassword = false
     @FocusState private var focusedField: Field?
 
     private enum Field { case email, password }
@@ -33,6 +34,9 @@ struct LoginView: View {
         }
         .scrollDismissesKeyboard(.interactively)
         .background(Color(.systemGroupedBackground).ignoresSafeArea())
+        .sheet(isPresented: $showForgotPassword) {
+            ForgotPasswordView()
+        }
         .opacity(appeared ? 1 : 0)
         .offset(y: appeared ? 0 : 20)
         .onAppear {
@@ -144,6 +148,14 @@ struct LoginView: View {
             .clipShape(.rect(cornerRadius: 12))
             .disabled(viewModel.isLoading || viewModel.email.isEmpty || viewModel.password.isEmpty)
             .sensoryFeedback(.impact(weight: .medium), trigger: viewModel.isAuthenticated)
+
+            Button {
+                showForgotPassword = true
+            } label: {
+                Text("Forgot Password?")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.purple)
+            }
         }
     }
 

@@ -444,3 +444,182 @@ nonisolated struct SchoolMetricsDTO: Codable, Sendable {
         case activeUsers = "active_users"
     }
 }
+
+// MARK: - Insert DTOs
+
+nonisolated struct InsertLessonDTO: Encodable, Sendable {
+    let moduleId: UUID
+    let title: String
+    let content: String
+    let duration: Int
+    let type: String
+    let xpReward: Int
+    let orderIndex: Int
+
+    enum CodingKeys: String, CodingKey {
+        case title, content, duration, type
+        case moduleId = "module_id"
+        case xpReward = "xp_reward"
+        case orderIndex = "order_index"
+    }
+}
+
+nonisolated struct InsertQuizDTO: Encodable, Sendable {
+    let courseId: UUID
+    let title: String
+    let timeLimit: Int
+    let dueDate: String?
+    let xpReward: Int
+
+    enum CodingKeys: String, CodingKey {
+        case title
+        case courseId = "course_id"
+        case timeLimit = "time_limit"
+        case dueDate = "due_date"
+        case xpReward = "xp_reward"
+    }
+}
+
+nonisolated struct InsertQuizQuestionDTO: Encodable, Sendable {
+    let quizId: UUID
+    let text: String
+    let options: [String]
+    let correctIndex: Int
+
+    enum CodingKeys: String, CodingKey {
+        case text, options
+        case quizId = "quiz_id"
+        case correctIndex = "correct_index"
+    }
+}
+
+nonisolated struct InsertGradeDTO: Encodable, Sendable {
+    let studentId: UUID
+    let courseId: UUID
+    let assignmentId: UUID
+    let score: Double
+    let maxScore: Double
+    let letterGrade: String
+    let feedback: String
+    let gradedAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case score, feedback
+        case studentId = "student_id"
+        case courseId = "course_id"
+        case assignmentId = "assignment_id"
+        case maxScore = "max_score"
+        case letterGrade = "letter_grade"
+        case gradedAt = "graded_at"
+    }
+}
+
+nonisolated struct InsertAttendanceDTO: Encodable, Sendable {
+    let studentId: UUID
+    let courseId: UUID
+    let courseName: String
+    let date: String?
+    let status: String
+
+    enum CodingKeys: String, CodingKey {
+        case date, status
+        case studentId = "student_id"
+        case courseId = "course_id"
+        case courseName = "course_name"
+    }
+}
+
+nonisolated struct InsertConversationDTO: Encodable, Sendable {
+    let title: String
+    let createdAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case title
+        case createdAt = "created_at"
+    }
+}
+
+nonisolated struct InsertConversationParticipantDTO: Encodable, Sendable {
+    let conversationId: UUID
+    let userId: UUID
+    let userName: String
+    let unreadCount: Int
+
+    enum CodingKeys: String, CodingKey {
+        case conversationId = "conversation_id"
+        case userId = "user_id"
+        case userName = "user_name"
+        case unreadCount = "unread_count"
+    }
+}
+
+nonisolated struct InsertEnrollmentDTO: Encodable, Sendable {
+    let studentId: UUID
+    let courseId: UUID
+    let enrolledAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case studentId = "student_id"
+        case courseId = "course_id"
+        case enrolledAt = "enrolled_at"
+    }
+}
+
+nonisolated struct InsertStudentAchievementDTO: Encodable, Sendable {
+    let studentId: UUID
+    let achievementId: UUID
+    let unlockedAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case studentId = "student_id"
+        case achievementId = "achievement_id"
+        case unlockedAt = "unlocked_at"
+    }
+}
+
+// MARK: - Update DTOs
+
+nonisolated struct UpdateCourseDTO: Encodable, Sendable {
+    let title: String?
+    let description: String?
+
+    enum CodingKeys: String, CodingKey {
+        case title, description
+    }
+}
+
+nonisolated struct UpdateAssignmentDTO: Encodable, Sendable {
+    let title: String?
+    let instructions: String?
+    let dueDate: String?
+    let points: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case title, instructions, points
+        case dueDate = "due_date"
+    }
+}
+
+nonisolated struct UpdateGradeDTO: Encodable, Sendable {
+    let score: Double?
+    let letterGrade: String?
+    let feedback: String?
+    let gradedAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case score, feedback
+        case letterGrade = "letter_grade"
+        case gradedAt = "graded_at"
+    }
+}
+
+nonisolated struct UpdateAnnouncementDTO: Encodable, Sendable {
+    let title: String?
+    let content: String?
+    let isPinned: Bool?
+
+    enum CodingKeys: String, CodingKey {
+        case title, content
+        case isPinned = "is_pinned"
+    }
+}

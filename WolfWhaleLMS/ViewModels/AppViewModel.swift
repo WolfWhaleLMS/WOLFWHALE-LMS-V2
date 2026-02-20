@@ -25,6 +25,8 @@ class AppViewModel {
     var schoolMetrics: SchoolMetrics?
     var allUsers: [ProfileDTO] = []
     var dataError: String?
+    var gradeError: String?
+    var enrollmentError: String?
 
     var isDemoMode = false
     private let mockService = MockDataService.shared
@@ -425,6 +427,50 @@ class AppViewModel {
         return score
     }
 
+    // MARK: - Conversations
+    func createConversation(title: String, recipientNames: [String]) async throws {
+        guard let user = currentUser else { return }
+
+        if !isDemoMode {
+            // Build participant list: current user + recipients
+            // For now, recipients are matched by name from allUsers or treated as display names
+            var participants: [(userId: UUID, userName: String)] = [
+                (userId: user.id, userName: user.fullName)
+            ]
+            // Try to match recipient names to known profiles
+            for name in recipientNames {
+                if let match = allUsers.first(where: {
+                    "\($0.firstName) \($0.lastName)".localizedStandardContains(name)
+                }) {
+                    participants.append((userId: match.id, userName: "\(match.firstName) \(match.lastName)"))
+                } else {
+                    // Create a placeholder participant with a generated UUID
+                    participants.append((userId: UUID(), userName: name))
+                }
+            }
+
+            let convDTO = try await dataService.createConversation(
+                title: title,
+                participantIds: participants
+            )
+
+            // Refresh conversations to pick up the new one
+            conversations = try await dataService.fetchConversations(for: user.id)
+        } else {
+            let newConversation = Conversation(
+                id: UUID(),
+                participantNames: [user.fullName] + recipientNames,
+                title: title,
+                lastMessage: "",
+                lastMessageDate: Date(),
+                unreadCount: 0,
+                messages: [],
+                avatarSystemName: recipientNames.count > 1 ? "person.3.fill" : "person.crop.circle.fill"
+            )
+            conversations.insert(newConversation, at: 0)
+        }
+    }
+
     func sendMessage(in conversationId: UUID, text: String) {
         guard let index = conversations.firstIndex(where: { $0.id == conversationId }) else { return }
         let message = ChatMessage(id: UUID(), senderName: currentUser?.fullName ?? "You", content: text, timestamp: Date(), isFromCurrentUser: true)
@@ -441,6 +487,314 @@ class AppViewModel {
                     content: text
                 )
             }
+        }
+    }
+
+    // MARK: - Student: Enroll by Class Code
+    func enrollByClassCode(_ classCode: String) async throws -> String {
+        guard let user = currentUser, user.role == .student else {
+            throw EnrollmentError.invalidClassCode
+        }
+
+        let trimmedCode = classCode.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if isDemoMode {
+            guard !trimmedCode.isEmpty else {
+                throw EnrollmentError.invalidClassCode
+            }
+            let mockCourses = mockService.sampleCourses()
+            if let match = mockCourses.first(where: { $0.classCode.lowercased() == trimmedCode.lowercased() }) {
+                if courses.contains(where: { $0.id == match.id }) {
+                    throw EnrollmentError.alreadyEnrolled
+                }
+                courses.append(match)
+                return match.title
+            }
+            throw EnrollmentError.invalidClassCode
+        }
+
+        let courseName = try await dataService.enrollByClassCode(studentId: user.id, classCode: trimmedCode)
+        courses = try await dataService.fetchCourses(for: user.id, role: user.role)
+        let courseIds = courses.map(\.id)
+        assignments = try await dataService.fetchAssignments(for: user.id, role: user.role, courseIds: courseIds)
+        return courseName
+    }
+
+    // MARK: - Teacher: Grade Submission
+    func gradeSubmission(assignmentId: UUID, score: Double, letterGrade: String, feedback: String?) async throws {
+        isLoading = true
+        gradeError = nil
+        defer { isLoading = false }
+
+        guard let assignment = assignments.first(where: { $0.id == assignmentId }) else {
+            gradeError = "Assignment not found"
+            throw NSError(domain: "AppViewModel", code: 404, userInfo: [NSLocalizedDescriptionKey: "Assignment not found"])
+        }
+
+        let maxScore = Double(assignment.points)
+        let percentage = maxScore > 0 ? (score / maxScore) * 100 : 0
+
+        if isDemoMode {
+            if let index = assignments.firstIndex(where: { $0.id == assignmentId }) {
+                assignments[index].grade = percentage
+                assignments[index].feedback = feedback
+            }
+            return
+        }
+
+        do {
+            try await dataService.gradeSubmission(
+                studentId: currentUser?.id ?? UUID(),
+                courseId: assignment.courseId,
+                assignmentId: assignmentId,
+                score: score,
+                maxScore: maxScore,
+                letterGrade: letterGrade,
+                feedback: feedback ?? ""
+            )
+            refreshData()
+        } catch {
+            gradeError = "Failed to grade submission: \(error.localizedDescription)"
+            throw error
+        }
+    }
+
+    // MARK: - Teacher: Create Quiz
+    func createQuiz(courseId: UUID, title: String, questions: [QuizQuestion], timeLimit: Int, dueDate: Date, xpReward: Int) async throws {
+        isLoading = true
+        defer { isLoading = false }
+
+        if isDemoMode {
+            let newQuiz = Quiz(
+                id: UUID(),
+                title: title,
+                courseId: courseId,
+                courseName: courses.first(where: { $0.id == courseId })?.title ?? "Unknown",
+                questions: questions,
+                timeLimit: timeLimit,
+                dueDate: dueDate,
+                isCompleted: false,
+                score: nil,
+                xpReward: xpReward
+            )
+            quizzes.append(newQuiz)
+            return
+        }
+
+        do {
+            let formatter = ISO8601DateFormatter()
+            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            let dueDateString = formatter.string(from: dueDate)
+
+            let quizDTO = try await dataService.createQuiz(
+                courseId: courseId,
+                title: title,
+                timeLimit: timeLimit,
+                dueDate: dueDateString,
+                xpReward: xpReward
+            )
+
+            // Create each question for the quiz
+            for question in questions {
+                try await dataService.createQuizQuestion(
+                    quizId: quizDTO.id,
+                    text: question.text,
+                    options: question.options,
+                    correctIndex: question.correctIndex
+                )
+            }
+
+            refreshData()
+        } catch {
+            dataError = "Failed to create quiz: \(error.localizedDescription)"
+            throw error
+        }
+    }
+
+    // MARK: - Teacher: Create Lesson
+    func createLesson(courseId: UUID, moduleId: UUID, title: String, content: String, duration: Int, type: LessonType, xpReward: Int) async throws {
+        isLoading = true
+        defer { isLoading = false }
+
+        if isDemoMode {
+            for courseIndex in courses.indices {
+                if let modIndex = courses[courseIndex].modules.firstIndex(where: { $0.id == moduleId }) {
+                    let newLesson = Lesson(
+                        id: UUID(),
+                        title: title,
+                        content: content,
+                        duration: duration,
+                        isCompleted: false,
+                        type: type,
+                        xpReward: xpReward
+                    )
+                    courses[courseIndex].modules[modIndex].lessons.append(newLesson)
+                    return
+                }
+            }
+            return
+        }
+
+        do {
+            let orderIndex = courses.first(where: { $0.id == courseId })?
+                .modules.first(where: { $0.id == moduleId })?
+                .lessons.count ?? 0
+            _ = try await dataService.createLesson(
+                moduleId: moduleId,
+                title: title,
+                content: content,
+                duration: duration,
+                type: type.rawValue,
+                xpReward: xpReward,
+                orderIndex: orderIndex
+            )
+            refreshData()
+        } catch {
+            dataError = "Failed to create lesson: \(error.localizedDescription)"
+            throw error
+        }
+    }
+
+    // MARK: - Teacher: Create Module
+    func createModule(courseId: UUID, title: String) async throws {
+        isLoading = true
+        defer { isLoading = false }
+
+        let orderIndex = courses.first(where: { $0.id == courseId })?.modules.count ?? 0
+
+        if isDemoMode {
+            if let courseIndex = courses.firstIndex(where: { $0.id == courseId }) {
+                let newModule = Module(
+                    id: UUID(),
+                    title: title,
+                    lessons: [],
+                    orderIndex: orderIndex
+                )
+                courses[courseIndex].modules.append(newModule)
+            }
+            return
+        }
+
+        do {
+            _ = try await dataService.createModule(
+                courseId: courseId,
+                title: title,
+                orderIndex: orderIndex
+            )
+            refreshData()
+        } catch {
+            dataError = "Failed to create module: \(error.localizedDescription)"
+            throw error
+        }
+    }
+
+    // MARK: - Teacher: Take Attendance
+    func takeAttendance(records: [(studentId: UUID, courseId: UUID, courseName: String, date: String, status: String)]) async {
+        isLoading = true
+        defer { isLoading = false }
+
+        if isDemoMode {
+            for record in records {
+                let newRecord = AttendanceRecord(
+                    id: UUID(),
+                    date: ISO8601DateFormatter().date(from: record.date) ?? Date(),
+                    status: AttendanceStatus(rawValue: record.status) ?? .present,
+                    courseName: record.courseName,
+                    studentName: nil
+                )
+                attendance.append(newRecord)
+            }
+            return
+        }
+
+        do {
+            try await dataService.takeAttendance(records: records)
+            refreshData()
+        } catch {
+            dataError = "Failed to record attendance: \(error.localizedDescription)"
+        }
+    }
+
+    // MARK: - Conversations: Create with Participant IDs
+    func createConversation(title: String, participantIds: [(userId: UUID, userName: String)]) async {
+        isLoading = true
+        defer { isLoading = false }
+
+        if isDemoMode {
+            let names = participantIds.map(\.userName)
+            let newConversation = Conversation(
+                id: UUID(),
+                participantNames: names,
+                title: title,
+                lastMessage: "",
+                lastMessageDate: Date(),
+                unreadCount: 0,
+                messages: [],
+                avatarSystemName: names.count > 2 ? "person.3.fill" : "person.crop.circle.fill"
+            )
+            conversations.insert(newConversation, at: 0)
+            return
+        }
+
+        do {
+            _ = try await dataService.createConversation(
+                title: title,
+                participantIds: participantIds
+            )
+            if let user = currentUser {
+                conversations = try await dataService.fetchConversations(for: user.id)
+            }
+        } catch {
+            dataError = "Failed to create conversation: \(error.localizedDescription)"
+        }
+    }
+
+    // MARK: - Password Reset
+    func resetPassword(email: String) async throws {
+        isLoading = true
+        defer { isLoading = false }
+
+        do {
+            try await dataService.resetPassword(email: email)
+        } catch {
+            throw error
+        }
+    }
+
+    // MARK: - Delete Announcement
+    func deleteAnnouncement(_ id: UUID) async {
+        isLoading = true
+        defer { isLoading = false }
+
+        if isDemoMode {
+            announcements.removeAll { $0.id == id }
+            return
+        }
+
+        do {
+            try await dataService.deleteAnnouncement(announcementId: id)
+            announcements.removeAll { $0.id == id }
+        } catch {
+            dataError = "Failed to delete announcement: \(error.localizedDescription)"
+        }
+    }
+
+    // MARK: - Fetch Students in Course
+    func fetchStudentsInCourse(_ courseId: UUID) async -> [User] {
+        isLoading = true
+        defer { isLoading = false }
+
+        if isDemoMode {
+            // Return some mock student users in demo mode
+            return []
+        }
+
+        do {
+            let profileDTOs = try await dataService.fetchStudentsInCourse(courseId: courseId)
+            return profileDTOs.map { $0.toUser() }
+        } catch {
+            dataError = "Failed to fetch students: \(error.localizedDescription)"
+            return []
         }
     }
 

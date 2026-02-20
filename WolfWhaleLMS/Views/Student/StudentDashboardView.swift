@@ -3,6 +3,7 @@ import SwiftUI
 struct StudentDashboardView: View {
     let viewModel: AppViewModel
     @State private var appeared = false
+    @State private var showNotifications = false
 
     private var greeting: String {
         let hour = Calendar.current.component(.hour, from: Date())
@@ -11,6 +12,34 @@ struct StudentDashboardView: View {
         case 12..<17: return "Good Afternoon"
         default: return "Good Evening"
         }
+    }
+
+    private var totalLessons: Int {
+        viewModel.courses.reduce(0) { $0 + $1.totalLessons }
+    }
+
+    private var completedLessons: Int {
+        viewModel.courses.reduce(0) { $0 + $1.completedLessons }
+    }
+
+    private var lessonsProgress: Double {
+        totalLessons > 0 ? Double(completedLessons) / Double(totalLessons) : 0
+    }
+
+    private var totalAssignments: Int {
+        viewModel.assignments.count
+    }
+
+    private var submittedAssignments: Int {
+        viewModel.assignments.filter(\.isSubmitted).count
+    }
+
+    private var assignmentsProgress: Double {
+        totalAssignments > 0 ? Double(submittedAssignments) / Double(totalAssignments) : 0
+    }
+
+    private var totalUnreadMessages: Int {
+        viewModel.conversations.reduce(0) { $0 + $1.unreadCount }
     }
 
     var body: some View {
@@ -30,9 +59,26 @@ struct StudentDashboardView: View {
             .navigationTitle("\(greeting), \(viewModel.currentUser?.firstName ?? "Student")")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Notifications", systemImage: "bell.fill") {}
-                        .symbolEffect(.bounce, value: viewModel.conversations.reduce(0) { $0 + $1.unreadCount })
+                    Button {
+                        showNotifications = true
+                    } label: {
+                        Image(systemName: "bell.fill")
+                            .symbolEffect(.bounce, value: totalUnreadMessages)
+                    }
+                    .overlay(alignment: .topTrailing) {
+                        if totalUnreadMessages > 0 {
+                            Text("\(totalUnreadMessages)")
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundStyle(.white)
+                                .frame(minWidth: 16, minHeight: 16)
+                                .background(.red, in: Circle())
+                                .offset(x: 8, y: -8)
+                        }
+                    }
                 }
+            }
+            .sheet(isPresented: $showNotifications) {
+                NotificationsSheet(viewModel: viewModel)
             }
         }
     }
@@ -41,14 +87,14 @@ struct StudentDashboardView: View {
         VStack(spacing: 16) {
             HStack(spacing: 20) {
                 ActivityRingView(
-                    lessonsProgress: 0.7,
-                    assignmentsProgress: 0.45,
+                    lessonsProgress: lessonsProgress,
+                    assignmentsProgress: assignmentsProgress,
                     xpProgress: viewModel.currentUser?.xpProgress ?? 0
                 )
 
                 VStack(alignment: .leading, spacing: 10) {
-                    ActivityRingLabel(title: "Lessons", value: "7/10 today", color: .green)
-                    ActivityRingLabel(title: "Assignments", value: "2/4 done", color: .cyan)
+                    ActivityRingLabel(title: "Lessons", value: "\(completedLessons)/\(totalLessons) done", color: .green)
+                    ActivityRingLabel(title: "Assignments", value: "\(submittedAssignments)/\(totalAssignments) done", color: .cyan)
                     ActivityRingLabel(title: "XP Earned", value: "\(viewModel.currentUser?.xp ?? 0) XP", color: .purple)
                 }
                 Spacer()
@@ -208,5 +254,122 @@ struct StudentDashboardView: View {
         .frame(width: 160)
         .padding(14)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+    }
+}
+
+// MARK: - Notifications Sheet
+
+struct NotificationsSheet: View {
+    let viewModel: AppViewModel
+    @Environment(\.dismiss) private var dismiss
+
+    private var totalUnreadMessages: Int {
+        viewModel.conversations.reduce(0) { $0 + $1.unreadCount }
+    }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                // Unread messages summary
+                if totalUnreadMessages > 0 {
+                    Section {
+                        HStack(spacing: 12) {
+                            ZStack {
+                                Circle()
+                                    .fill(LinearGradient(colors: [.blue, .purple], startPoint: .topLeading, endPoint: .bottomTrailing))
+                                    .frame(width: 40, height: 40)
+                                Image(systemName: "message.fill")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.white)
+                            }
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Unread Messages")
+                                    .font(.subheadline.bold())
+                                Text("\(totalUnreadMessages) unread message\(totalUnreadMessages == 1 ? "" : "s") across your conversations")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .padding(.vertical, 4)
+
+                        ForEach(viewModel.conversations.filter { $0.unreadCount > 0 }) { conversation in
+                            HStack(spacing: 10) {
+                                Image(systemName: conversation.avatarSystemName)
+                                    .font(.caption)
+                                    .foregroundStyle(.blue)
+                                    .frame(width: 24)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(conversation.title)
+                                        .font(.subheadline)
+                                    Text(conversation.lastMessage)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .lineLimit(1)
+                                }
+                                Spacer()
+                                Text("\(conversation.unreadCount)")
+                                    .font(.caption2.bold())
+                                    .foregroundStyle(.white)
+                                    .frame(width: 20, height: 20)
+                                    .background(.blue, in: Circle())
+                            }
+                        }
+                    } header: {
+                        Text("Messages")
+                    }
+                }
+
+                // Announcements
+                if !viewModel.announcements.isEmpty {
+                    Section {
+                        ForEach(viewModel.announcements) { announcement in
+                            VStack(alignment: .leading, spacing: 6) {
+                                HStack {
+                                    if announcement.isPinned {
+                                        Image(systemName: "pin.fill")
+                                            .font(.caption)
+                                            .foregroundStyle(.orange)
+                                    }
+                                    Text(announcement.title)
+                                        .font(.subheadline.bold())
+                                    Spacer()
+                                    Text(announcement.date, style: .relative)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                Text(announcement.content)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .lineLimit(2)
+                                Text("by \(announcement.authorName)")
+                                    .font(.caption2)
+                                    .foregroundStyle(.tertiary)
+                            }
+                            .padding(.vertical, 4)
+                        }
+                    } header: {
+                        Text("Announcements")
+                    }
+                }
+
+                // Empty state
+                if totalUnreadMessages == 0 && viewModel.announcements.isEmpty {
+                    ContentUnavailableView(
+                        "All Caught Up",
+                        systemImage: "bell.slash",
+                        description: Text("No new notifications right now")
+                    )
+                }
+            }
+            .navigationTitle("Notifications")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
     }
 }

@@ -5,18 +5,33 @@ struct ParentDashboardView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 16) {
-                    ForEach(viewModel.children) { child in
-                        childCard(child)
+            Group {
+                if viewModel.isLoading {
+                    ProgressView()
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    ScrollView {
+                        VStack(spacing: 16) {
+                            ForEach(viewModel.children) { child in
+                                childCard(child)
+                            }
+                            announcementsSection
+                        }
+                        .padding(.horizontal)
+                        .padding(.bottom, 20)
                     }
-                    announcementsSection
+                    .overlay {
+                        if viewModel.children.isEmpty {
+                            ContentUnavailableView("No Children Linked", systemImage: "person.2", description: Text("Linked children will appear here"))
+                        }
+                    }
                 }
-                .padding(.horizontal)
-                .padding(.bottom, 20)
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("My Children")
+            .refreshable {
+                viewModel.refreshData()
+            }
         }
     }
 
@@ -44,6 +59,9 @@ struct ParentDashboardView: View {
 
             HStack(spacing: 12) {
                 parentStat(label: "GPA", value: String(format: "%.1f", child.gpa), color: Theme.gradeColor(child.gpa / 4.0 * 100))
+                // TODO: attendanceRate is computed from real attendance records via DataService.fetchChildren.
+                // If no attendance records exist for this child, the rate will be 0.0.
+                // In demo/mock mode, this value comes from MockDataService.sampleChildren() and may be hardcoded.
                 parentStat(label: "Attendance", value: "\(Int(child.attendanceRate * 100))%", color: child.attendanceRate > 0.9 ? .green : .orange)
                 parentStat(label: "Courses", value: "\(child.courses.count)", color: .blue)
             }

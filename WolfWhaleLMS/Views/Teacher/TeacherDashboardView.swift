@@ -5,6 +5,7 @@ struct TeacherDashboardView: View {
     @State private var showCreateCourse = false
     @State private var showCreateAssignment = false
     @State private var showCreateAnnouncement = false
+    @State private var showAttendancePicker = false
 
     var body: some View {
         NavigationStack {
@@ -64,6 +65,9 @@ struct TeacherDashboardView: View {
                 quickActionButton(icon: "megaphone.fill", label: "Announce", color: .orange) {
                     showCreateAnnouncement = true
                 }
+                quickActionButton(icon: "checklist", label: "Attendance", color: .green) {
+                    showAttendancePicker = true
+                }
             }
         }
         .sheet(isPresented: $showCreateCourse) {
@@ -71,6 +75,9 @@ struct TeacherDashboardView: View {
         }
         .sheet(isPresented: $showCreateAnnouncement) {
             CreateAnnouncementSheet(viewModel: viewModel)
+        }
+        .sheet(isPresented: $showAttendancePicker) {
+            AttendanceCoursePickerSheet(viewModel: viewModel)
         }
     }
 
@@ -270,6 +277,54 @@ struct CreateAnnouncementSheet: View {
                     .fontWeight(.semibold)
                     .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty || isCreating)
                 }
+            }
+        }
+    }
+}
+
+struct AttendanceCoursePickerSheet: View {
+    @Bindable var viewModel: AppViewModel
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            Group {
+                if viewModel.courses.isEmpty {
+                    ContentUnavailableView("No Courses", systemImage: "book.fill", description: Text("Create a course first to take attendance"))
+                } else {
+                    List(viewModel.courses) { course in
+                        NavigationLink(value: course) {
+                            HStack(spacing: 14) {
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(Theme.courseColor(course.colorName).gradient)
+                                    .frame(width: 40, height: 40)
+                                    .overlay {
+                                        Image(systemName: course.iconSystemName)
+                                            .font(.callout)
+                                            .foregroundStyle(.white)
+                                    }
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(course.title)
+                                        .font(.subheadline.bold())
+                                    Text("\(course.enrolledStudentCount) students")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                    }
+                    .listStyle(.insetGrouped)
+                }
+            }
+            .navigationTitle("Select Course")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+            }
+            .navigationDestination(for: Course.self) { course in
+                TakeAttendanceView(viewModel: viewModel, course: course)
             }
         }
     }

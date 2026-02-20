@@ -655,12 +655,33 @@ struct DataService {
             .execute()
             .value
 
+        let attendanceRate = try await calculateRealAttendanceRate(courseId: nil)
+        let studentProfiles = profiles.filter { $0.role == "Student" }
+        var totalGPA = 0.0
+        var gpaCount = 0
+        for student in studentProfiles {
+            let enrollments: [EnrollmentDTO] = try await supabaseClient
+                .from("enrollments")
+                .select()
+                .eq("student_id", value: student.id.uuidString)
+                .execute()
+                .value
+            let courseIds = enrollments.map(\.courseId)
+            if courseIds.isEmpty { continue }
+            let grades = try await fetchGrades(for: student.id, courseIds: courseIds)
+            if grades.isEmpty { continue }
+            let avg = grades.reduce(0.0) { $0 + $1.numericGrade } / Double(grades.count)
+            totalGPA += avg / 100.0 * 4.0
+            gpaCount += 1
+        }
+        let averageGPA = gpaCount > 0 ? totalGPA / Double(gpaCount) : 0.0
+
         return SchoolMetrics(
             totalStudents: students,
             totalTeachers: teachers,
             totalCourses: courses.count,
-            averageAttendance: 0.94,
-            averageGPA: 3.2,
+            averageAttendance: attendanceRate,
+            averageGPA: averageGPA,
             activeUsers: active
         )
     }
@@ -700,13 +721,23 @@ struct DataService {
                 let avg = grades.isEmpty ? 0 : grades.reduce(0.0) { $0 + $1.numericGrade } / Double(grades.count)
                 let gpa = avg / 100.0 * 4.0
 
+                let childAttendance: [AttendanceDTO] = try await supabaseClient
+                    .from("attendance")
+                    .select()
+                    .eq("student_id", value: link.childId.uuidString)
+                    .execute()
+                    .value
+                let presentCount = childAttendance.filter { $0.status.lowercased() == "present" }.count
+                let totalCount = childAttendance.count
+                let attendanceRate = totalCount > 0 ? Double(presentCount) / Double(totalCount) : 0.0
+
                 children.append(ChildInfo(
                     id: link.childId,
                     name: "\(profile.firstName) \(profile.lastName)",
                     grade: "Student",
                     avatarSystemName: "person.crop.circle.fill",
                     gpa: gpa,
-                    attendanceRate: 0.96,
+                    attendanceRate: attendanceRate,
                     courses: grades,
                     recentAssignments: Array(assignments.filter { !$0.isSubmitted }.prefix(3))
                 ))
@@ -725,5 +756,299 @@ struct DataService {
             .update(update)
             .eq("id", value: userId.uuidString)
             .execute()
+    }
+
+    func resetPassword(email: String) async throws {
+        try await supabaseClient.auth.resetPasswordForEmail(email)
+    }
+
+    // MARK: - Grades (Create)
+
+    func gradeSubmission(studentId: UUID, courseId: UUID, assignmentId: UUID, score: Double, maxScore: Double, letterGrade: String, feedback: String) async throws {
+        let dto = InsertGradeDTO(
+            studentId: studentId,
+            courseId: courseId,
+            assignmentId: assignmentId,
+            score: score,
+            maxScore: maxScore,
+            letterGrade: letterGrade,
+            feedback: feedback,
+            gradedAt: formatDate(Date())
+        )
+        try await supabaseClient
+            .from("grades")
+            .insert(dto)
+            .execute()
+    }
+
+    // MARK: - Quizzes (Create)
+
+    func createQuiz(courseId: UUID, title: String, timeLimit: Int, dueDate: String, xpReward: Int) async throws -> QuizDTO {
+        let dto = InsertQuizDTO(
+            courseId: courseId,
+            title: title,
+            timeLimit: timeLimit,
+            dueDate: dueDate,
+            xpReward: xpReward
+        )
+        let result: QuizDTO = try await supabaseClient
+            .from("quizzes")
+            .insert(dto)
+            .select()
+            .single()
+            .execute()
+            .value
+        return result
+    }
+
+    func createQuizQuestion(quizId: UUID, text: String, options: [String], correctIndex: Int) async throws {
+        let dto = InsertQuizQuestionDTO(
+            quizId: quizId,
+            text: text,
+            options: options,
+            correctIndex: correctIndex
+        )
+        try await supabaseClient
+            .from("quiz_questions")
+            .insert(dto)
+            .execute()
+    }
+
+    // MARK: - Lessons (Create)
+
+    func createLesson(moduleId: UUID, title: String, content: String, duration: Int, type: String, xpReward: Int, orderIndex: Int) async throws -> LessonDTO {
+        let dto = InsertLessonDTO(
+            moduleId: moduleId,
+            title: title,
+            content: content,
+            duration: duration,
+            type: type,
+            xpReward: xpReward,
+            orderIndex: orderIndex
+        )
+        let result: LessonDTO = try await supabaseClient
+            .from("lessons")
+            .insert(dto)
+            .select()
+            .single()
+            .execute()
+            .value
+        return result
+    }
+
+    // MARK: - Modules (Create)
+
+    func createModule(courseId: UUID, title: String, orderIndex: Int) async throws -> ModuleDTO {
+        let dto = InsertModuleDTO(
+            courseId: courseId,
+            title: title,
+            orderIndex: orderIndex
+        )
+        let result: ModuleDTO = try await supabaseClient
+            .from("modules")
+            .insert(dto)
+            .select()
+            .single()
+            .execute()
+            .value
+        return result
+    }
+
+    // MARK: - Enrollments
+
+    func enrollStudent(studentId: UUID, courseId: UUID) async throws {
+        let dto = InsertEnrollmentDTO(
+            studentId: studentId,
+            courseId: courseId,
+            enrolledAt: formatDate(Date())
+        )
+        try await supabaseClient
+            .from("enrollments")
+            .insert(dto)
+            .execute()
+    }
+
+    func enrollByClassCode(studentId: UUID, classCode: String) async throws -> String {
+        let courses: [CourseDTO] = try await supabaseClient
+            .from("courses")
+            .select()
+            .eq("class_code", value: classCode)
+            .limit(1)
+            .execute()
+            .value
+
+        guard let course = courses.first else {
+            throw EnrollmentError.invalidClassCode
+        }
+
+        // Check if already enrolled
+        let existing: [EnrollmentDTO] = try await supabaseClient
+            .from("enrollments")
+            .select()
+            .eq("student_id", value: studentId.uuidString)
+            .eq("course_id", value: course.id.uuidString)
+            .execute()
+            .value
+
+        if !existing.isEmpty {
+            throw EnrollmentError.alreadyEnrolled
+        }
+
+        try await enrollStudent(studentId: studentId, courseId: course.id)
+        return course.title
+    }
+
+    // MARK: - Attendance (Create)
+
+    func takeAttendance(records: [(studentId: UUID, courseId: UUID, courseName: String, date: String, status: String)]) async throws {
+        let dtos = records.map { record in
+            InsertAttendanceDTO(
+                studentId: record.studentId,
+                courseId: record.courseId,
+                courseName: record.courseName,
+                date: record.date,
+                status: record.status
+            )
+        }
+        try await supabaseClient
+            .from("attendance")
+            .insert(dtos)
+            .execute()
+    }
+
+    func calculateRealAttendanceRate(courseId: UUID?) async throws -> Double {
+        let records: [AttendanceDTO]
+        if let courseId {
+            records = try await supabaseClient
+                .from("attendance")
+                .select()
+                .eq("course_id", value: courseId.uuidString)
+                .execute()
+                .value
+        } else {
+            records = try await supabaseClient
+                .from("attendance")
+                .select()
+                .execute()
+                .value
+        }
+
+        let present = records.filter { $0.status.lowercased() == "present" }.count
+        let absent = records.filter { $0.status.lowercased() == "absent" }.count
+        let tardy = records.filter { $0.status.lowercased() == "tardy" }.count
+        let total = present + absent + tardy
+
+        guard total > 0 else { return 0.0 }
+        return Double(present) / Double(total)
+    }
+
+    // MARK: - Courses (Update / Delete)
+
+    func updateCourse(courseId: UUID, title: String?, description: String?) async throws {
+        let dto = UpdateCourseDTO(title: title, description: description)
+        try await supabaseClient
+            .from("courses")
+            .update(dto)
+            .eq("id", value: courseId.uuidString)
+            .execute()
+    }
+
+    func deleteCourse(courseId: UUID) async throws {
+        try await supabaseClient
+            .from("courses")
+            .delete()
+            .eq("id", value: courseId.uuidString)
+            .execute()
+    }
+
+    // MARK: - Assignments (Update / Delete)
+
+    func updateAssignment(assignmentId: UUID, title: String?, instructions: String?, dueDate: String?, points: Int?) async throws {
+        let dto = UpdateAssignmentDTO(title: title, instructions: instructions, dueDate: dueDate, points: points)
+        try await supabaseClient
+            .from("assignments")
+            .update(dto)
+            .eq("id", value: assignmentId.uuidString)
+            .execute()
+    }
+
+    func deleteAssignment(assignmentId: UUID) async throws {
+        try await supabaseClient
+            .from("assignments")
+            .delete()
+            .eq("id", value: assignmentId.uuidString)
+            .execute()
+    }
+
+    // MARK: - Announcements (Delete)
+
+    func deleteAnnouncement(announcementId: UUID) async throws {
+        try await supabaseClient
+            .from("announcements")
+            .delete()
+            .eq("id", value: announcementId.uuidString)
+            .execute()
+    }
+
+    // MARK: - Conversations (Create)
+
+    func createConversation(title: String, participantIds: [(userId: UUID, userName: String)]) async throws -> ConversationDTO {
+        let convDTO = InsertConversationDTO(title: title, createdAt: formatDate(Date()))
+        let conversation: ConversationDTO = try await supabaseClient
+            .from("conversations")
+            .insert(convDTO)
+            .select()
+            .single()
+            .execute()
+            .value
+
+        let participantDTOs = participantIds.map { participant in
+            InsertConversationParticipantDTO(
+                conversationId: conversation.id,
+                userId: participant.userId,
+                userName: participant.userName,
+                unreadCount: 0
+            )
+        }
+        try await supabaseClient
+            .from("conversation_participants")
+            .insert(participantDTOs)
+            .execute()
+
+        return conversation
+    }
+
+    // MARK: - Students in Course
+
+    func fetchStudentsInCourse(courseId: UUID) async throws -> [ProfileDTO] {
+        let enrollments: [EnrollmentDTO] = try await supabaseClient
+            .from("enrollments")
+            .select()
+            .eq("course_id", value: courseId.uuidString)
+            .execute()
+            .value
+
+        let studentIds = enrollments.map(\.studentId)
+        if studentIds.isEmpty { return [] }
+
+        let profiles: [ProfileDTO] = try await supabaseClient
+            .from("profiles")
+            .select()
+            .in("id", values: studentIds.map(\.uuidString))
+            .execute()
+            .value
+        return profiles
+    }
+}
+
+nonisolated enum EnrollmentError: LocalizedError, Sendable {
+    case invalidClassCode
+    case alreadyEnrolled
+
+    var errorDescription: String? {
+        switch self {
+        case .invalidClassCode: "Invalid class code. Please check and try again."
+        case .alreadyEnrolled: "You are already enrolled in this course."
+        }
     }
 }
