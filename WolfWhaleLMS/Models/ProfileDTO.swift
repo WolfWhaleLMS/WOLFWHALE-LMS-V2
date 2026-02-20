@@ -1,6 +1,6 @@
 import Foundation
 
-nonisolated struct ProfileDTO: Codable, Sendable {
+nonisolated struct ProfileDTO: Codable, Sendable, Identifiable {
     let id: UUID
     let firstName: String
     let lastName: String
