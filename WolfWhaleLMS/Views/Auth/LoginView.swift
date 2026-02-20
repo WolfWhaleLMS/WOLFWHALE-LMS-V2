@@ -1,0 +1,252 @@
+import SwiftUI
+
+struct LoginView: View {
+    @Bindable var viewModel: AppViewModel
+    @State private var appeared = false
+    @State private var showDemoSection = false
+    @FocusState private var focusedField: Field?
+
+    private enum Field { case email, password }
+
+    var body: some View {
+        ScrollView {
+            VStack(spacing: 0) {
+                Spacer().frame(height: 56)
+
+                logoSection
+
+                Spacer().frame(height: 40)
+
+                loginSection
+
+                Spacer().frame(height: 32)
+
+                dividerSection
+
+                Spacer().frame(height: 28)
+
+                demoSection
+
+                Spacer().frame(height: 40)
+            }
+            .padding(.horizontal, 24)
+        }
+        .scrollDismissesKeyboard(.interactively)
+        .background(Color(.systemGroupedBackground).ignoresSafeArea())
+        .opacity(appeared ? 1 : 0)
+        .offset(y: appeared ? 0 : 20)
+        .onAppear {
+            withAnimation(.spring(duration: 0.7)) { appeared = true }
+            withAnimation(.spring(duration: 0.6).delay(0.3)) { showDemoSection = true }
+        }
+    }
+
+    private var logoSection: some View {
+        VStack(spacing: 14) {
+            Image("Logo")
+                .resizable()
+                .aspectRatio(contentMode: .fill)
+                .frame(width: 100, height: 100)
+                .clipShape(Circle())
+                .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
+
+            Text("WOLF WHALE")
+                .font(.system(size: 36, weight: .black, design: .serif))
+                .tracking(2)
+                .foregroundStyle(.primary)
+
+            Text("LEARNING MANAGEMENT SYSTEM")
+                .font(.system(size: 10, weight: .medium, design: .serif))
+                .foregroundStyle(.secondary)
+                .tracking(3)
+        }
+    }
+
+    private var loginSection: some View {
+        VStack(spacing: 16) {
+            Text("Sign In")
+                .font(.title3.bold())
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            VStack(spacing: 12) {
+                HStack(spacing: 12) {
+                    Image(systemName: "envelope.fill")
+                        .foregroundStyle(.tertiary)
+                        .frame(width: 20)
+                    TextField("School Email", text: $viewModel.email)
+                        .textContentType(.emailAddress)
+                        .keyboardType(.emailAddress)
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.never)
+                        .focused($focusedField, equals: .email)
+                        .submitLabel(.next)
+                        .onSubmit { focusedField = .password }
+                }
+                .padding(14)
+                .background(Color(.systemBackground), in: .rect(cornerRadius: 12))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(focusedField == .email ? Color.purple.opacity(0.5) : Color(.separator).opacity(0.3), lineWidth: 1)
+                )
+
+                HStack(spacing: 12) {
+                    Image(systemName: "lock.fill")
+                        .foregroundStyle(.tertiary)
+                        .frame(width: 20)
+                    SecureField("Password", text: $viewModel.password)
+                        .textContentType(.password)
+                        .focused($focusedField, equals: .password)
+                        .submitLabel(.go)
+                        .onSubmit { focusedField = nil; viewModel.login() }
+                }
+                .padding(14)
+                .background(Color(.systemBackground), in: .rect(cornerRadius: 12))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(focusedField == .password ? Color.purple.opacity(0.5) : Color(.separator).opacity(0.3), lineWidth: 1)
+                )
+            }
+
+            if let error = viewModel.loginError {
+                HStack(spacing: 6) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.caption)
+                    Text(error)
+                        .font(.caption)
+                }
+                .foregroundStyle(.red)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+
+            Button {
+                focusedField = nil
+                viewModel.login()
+            } label: {
+                Group {
+                    if viewModel.isLoading {
+                        ProgressView()
+                            .tint(.white)
+                    } else {
+                        HStack(spacing: 8) {
+                            Text("Sign In")
+                                .font(.headline)
+                            Image(systemName: "arrow.right")
+                                .font(.subheadline.bold())
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 50)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(Color.purple)
+            .clipShape(.rect(cornerRadius: 12))
+            .disabled(viewModel.isLoading || viewModel.email.isEmpty || viewModel.password.isEmpty)
+            .sensoryFeedback(.impact(weight: .medium), trigger: viewModel.isAuthenticated)
+        }
+    }
+
+    private var dividerSection: some View {
+        HStack(spacing: 16) {
+            Rectangle()
+                .fill(Color(.separator).opacity(0.3))
+                .frame(height: 1)
+            Text("OR TRY A DEMO")
+                .font(.system(size: 11, weight: .semibold, design: .serif))
+                .foregroundStyle(.secondary)
+                .tracking(1.5)
+            Rectangle()
+                .fill(Color(.separator).opacity(0.3))
+                .frame(height: 1)
+        }
+    }
+
+    private var demoSection: some View {
+        VStack(spacing: 12) {
+            Text("Explore the platform with a demo account")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
+                ForEach(UserRole.allCases) { role in
+                    DemoRoleButton(role: role) {
+                        viewModel.loginAsDemo(role: role)
+                    }
+                }
+            }
+        }
+        .opacity(showDemoSection ? 1 : 0)
+        .offset(y: showDemoSection ? 0 : 16)
+    }
+}
+
+struct DemoRoleButton: View {
+    let role: UserRole
+    let action: () -> Void
+
+    private var roleDescription: String {
+        switch role {
+        case .student: "View courses & grades"
+        case .teacher: "Manage classes"
+        case .parent: "Track progress"
+        case .admin: "School dashboard"
+        }
+    }
+
+    private var roleGradient: [Color] {
+        switch role {
+        case .student: [.indigo, .purple]
+        case .teacher: [.pink, .orange]
+        case .parent: [.green, .teal]
+        case .admin: [.blue, .cyan]
+        }
+    }
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 10) {
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: roleGradient.map { $0.opacity(0.15) },
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 44, height: 44)
+
+                    Image(systemName: role.iconName)
+                        .font(.system(size: 20))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: roleGradient,
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                }
+
+                VStack(spacing: 2) {
+                    Text(role.rawValue)
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.primary)
+                    Text(roleDescription)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .background(Color(.systemBackground), in: .rect(cornerRadius: 14))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .strokeBorder(Color(.separator).opacity(0.2), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .sensoryFeedback(.impact(weight: .light), trigger: false)
+    }
+}
