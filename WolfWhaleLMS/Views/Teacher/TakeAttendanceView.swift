@@ -1,5 +1,6 @@
 import SwiftUI
 import Supabase
+import PostgREST
 
 struct TakeAttendanceView: View {
     @Bindable var viewModel: AppViewModel
