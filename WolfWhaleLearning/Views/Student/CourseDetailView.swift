@@ -85,6 +85,9 @@ struct CourseDetailView: View {
         .navigationDestination(for: LessonNav.self) { nav in
             LessonView(lesson: nav.lesson, course: nav.course, viewModel: viewModel)
         }
+        .navigationDestination(for: ARResource.self) { resource in
+            ARResourceDetailView(resource: resource, viewModel: viewModel)
+        }
     }
 
     private func lessonRow(_ lesson: Lesson) -> some View {
