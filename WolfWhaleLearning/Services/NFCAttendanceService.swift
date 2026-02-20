@@ -1,12 +1,13 @@
 import CoreNFC
-import Combine
+import Observation
 
 @MainActor
-class NFCAttendanceService: NSObject, ObservableObject, NFCNDEFReaderSessionDelegate {
-    @Published var scannedStudentId: String?
-    @Published var isScanning = false
-    @Published var lastError: String?
-    @Published var scanResult: ScanResult?
+@Observable
+class NFCAttendanceService: NSObject, NFCNDEFReaderSessionDelegate {
+    var scannedStudentId: String?
+    var isScanning = false
+    var lastError: String?
+    var scanResult: ScanResult?
 
     enum ScanResult: Equatable {
         case success(studentName: String)

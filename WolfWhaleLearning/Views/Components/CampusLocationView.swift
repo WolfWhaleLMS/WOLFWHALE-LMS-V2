@@ -2,7 +2,7 @@ import SwiftUI
 import CoreLocation
 
 struct CampusLocationView: View {
-    @StateObject private var geoService = GeoFenceService()
+    @State private var geoService = GeoFenceService()
     @State private var appeared = false
     @State private var radarAngle: Double = 0
     @State private var hapticTrigger = false

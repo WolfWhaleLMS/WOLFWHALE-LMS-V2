@@ -1,5 +1,6 @@
 import Foundation
 import UserNotifications
+import Observation
 
 // MARK: - Notification Categories
 
@@ -20,14 +21,15 @@ nonisolated enum NotificationAction: String, Sendable {
 // MARK: - NotificationService
 
 @MainActor
-final class NotificationService: NSObject, ObservableObject {
+@Observable
+final class NotificationService: NSObject {
 
-    @Published var isAuthorized = false
-    @Published var pendingNotifications: [UNNotificationRequest] = []
+    var isAuthorized = false
+    var pendingNotifications: [UNNotificationRequest] = []
 
-    @Published var deepLinkAssignmentId: UUID?
-    @Published var deepLinkConversationId: UUID?
-    @Published var deepLinkGradeId: UUID?
+    var deepLinkAssignmentId: UUID?
+    var deepLinkConversationId: UUID?
+    var deepLinkGradeId: UUID?
 
     private let center = UNUserNotificationCenter.current()
 

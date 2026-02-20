@@ -1,12 +1,13 @@
 import CoreLocation
-import Combine
+import Observation
 
 @MainActor
-class GeoFenceService: NSObject, ObservableObject, CLLocationManagerDelegate {
-    @Published var isOnCampus = false
-    @Published var currentLocation: CLLocationCoordinate2D?
-    @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
-    @Published var distanceFromCampus: Double = 0
+@Observable
+class GeoFenceService: NSObject, CLLocationManagerDelegate {
+    var isOnCampus = false
+    var currentLocation: CLLocationCoordinate2D?
+    var authorizationStatus: CLAuthorizationStatus = .notDetermined
+    var distanceFromCampus: Double = 0
 
     private let locationManager = CLLocationManager()
 

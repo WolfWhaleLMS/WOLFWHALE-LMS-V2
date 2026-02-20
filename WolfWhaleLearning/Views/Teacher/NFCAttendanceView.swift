@@ -4,7 +4,7 @@ struct NFCAttendanceView: View {
     @Bindable var viewModel: AppViewModel
     let courseId: UUID
 
-    @StateObject private var nfcService = NFCAttendanceService()
+    @State private var nfcService = NFCAttendanceService()
     @State private var checkedInStudents: [(id: UUID, name: String, time: Date)] = []
     @State private var showFinishConfirmation = false
     @State private var showSuccess = false

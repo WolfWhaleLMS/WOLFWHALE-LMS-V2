@@ -1,4 +1,5 @@
 import MultipeerConnectivity
+import Observation
 
 nonisolated struct PeerMessage: Identifiable, Codable {
     let id: UUID
@@ -15,12 +16,13 @@ nonisolated struct PeerMessage: Identifiable, Codable {
 }
 
 @MainActor
-class PeerService: NSObject, ObservableObject {
-    @Published var nearbyPeers: [MCPeerID] = []
-    @Published var connectedPeers: [MCPeerID] = []
-    @Published var isAdvertising = false
-    @Published var isBrowsing = false
-    @Published var receivedMessages: [PeerMessage] = []
+@Observable
+class PeerService: NSObject {
+    var nearbyPeers: [MCPeerID] = []
+    var connectedPeers: [MCPeerID] = []
+    var isAdvertising = false
+    var isBrowsing = false
+    var receivedMessages: [PeerMessage] = []
 
     private let serviceType = "wolfwhale-study"
     private var peerID: MCPeerID?

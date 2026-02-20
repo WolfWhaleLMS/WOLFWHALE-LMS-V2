@@ -2,16 +2,18 @@ import Foundation
 import CallKit
 import AVFoundation
 import SwiftUI
+import Observation
 
 @preconcurrency import CallKit
 
 @MainActor
-final class CallService: NSObject, ObservableObject {
+@Observable
+final class CallService: NSObject {
 
-    @Published var activeCallUUID: UUID?
-    @Published var isCallActive: Bool = false
-    @Published var callDuration: TimeInterval = 0
-    @Published var remoteParticipantName: String = ""
+    var activeCallUUID: UUID?
+    var isCallActive: Bool = false
+    var callDuration: TimeInterval = 0
+    var remoteParticipantName: String = ""
 
     private var callTimer: Timer?
     private var provider: CXProvider?
@@ -142,7 +144,7 @@ extension CallService: CXProviderDelegate {
     nonisolated func provider(_ provider: CXProvider, didDeactivate audioSession: AVAudioSession) {
     }
 
-    private func configureAudioSession() {
+    nonisolated private func configureAudioSession() {
         let session = AVAudioSession.sharedInstance()
         try? session.setCategory(
             .playAndRecord,

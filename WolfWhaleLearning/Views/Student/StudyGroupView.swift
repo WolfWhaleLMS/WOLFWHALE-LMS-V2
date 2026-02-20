@@ -2,7 +2,7 @@ import SwiftUI
 import MultipeerConnectivity
 
 struct StudyGroupView: View {
-    @StateObject private var peerService = PeerService()
+    @State private var peerService = PeerService()
     @State private var displayName = UIDevice.current.name
     @State private var messageText = ""
     @State private var isHosting = false
