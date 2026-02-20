@@ -1,9 +1,13 @@
 import SwiftUI
 import UIKit
 
-/// Handles remote-notification device token forwarding.
+/// Handles remote-notification device token forwarding and silent push.
 class AppDelegate: NSObject, UIApplicationDelegate {
     var pushService: PushNotificationService?
+
+    /// A callback the app scene sets so we can trigger a data refresh
+    /// from the AppDelegate when a silent push arrives.
+    var onBackgroundRefresh: (() -> Void)?
 
     func application(
         _ application: UIApplication,
@@ -16,7 +20,32 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         _ application: UIApplication,
         didFailToRegisterForRemoteNotificationsWithError error: Error
     ) {
-        // Token registration failed – nothing to store.
+        pushService?.handleRegistrationError(error)
+    }
+
+    /// Handle silent push notifications (`content-available: 1`) to
+    /// trigger a background data refresh.
+    func application(
+        _ application: UIApplication,
+        didReceiveRemoteNotification userInfo: [AnyHashable: Any],
+        fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void
+    ) {
+        guard let pushService else {
+            completionHandler(.noData)
+            return
+        }
+
+        Task { @MainActor in
+            let isSilent = pushService.handleSilentPush(userInfo: userInfo)
+            if isSilent {
+                onBackgroundRefresh?()
+                completionHandler(.newData)
+            } else {
+                // Visible push while app is open -- route to the correct view.
+                pushService.handleRemoteNotification(userInfo: userInfo)
+                completionHandler(.noData)
+            }
+        }
     }
 }
 

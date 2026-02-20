@@ -249,6 +249,34 @@ struct StudentDashboardView: View {
             .accessibilityLabel("Classroom Finder")
             .accessibilityHint("Double tap to find your classroom on the map")
 
+            // Study Groups
+            NavigationLink {
+                StudyGroupView()
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "person.3.fill")
+                        .font(.title3)
+                        .foregroundStyle(.teal)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Study Groups")
+                            .font(.subheadline.bold())
+                            .foregroundStyle(.primary)
+                        Text("Connect with nearby classmates")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
+                .padding(14)
+                .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Study Groups")
+            .accessibilityHint("Double tap to find and join nearby study groups")
+
             HStack(spacing: 12) {
                 // Radio button
                 Button {

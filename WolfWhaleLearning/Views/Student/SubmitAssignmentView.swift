@@ -139,21 +139,12 @@ struct SubmitAssignmentView: View {
             Text("Your Response")
                 .font(.headline)
 
-            TextEditor(text: $responseText)
-                .frame(minHeight: 150)
-                .padding(10)
-                .scrollContentBackground(.hidden)
-                .background(Color(.tertiarySystemFill), in: .rect(cornerRadius: 10))
-                .overlay(alignment: .topLeading) {
-                    if responseText.isEmpty {
-                        Text("Write your response here...")
-                            .font(.body)
-                            .foregroundStyle(.tertiary)
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 18)
-                            .allowsHitTesting(false)
-                    }
-                }
+            EnhancedTextEditor(
+                text: $responseText,
+                placeholder: "Write your response here...",
+                minHeight: 150
+            )
+            .clipShape(.rect(cornerRadius: 10))
         }
         .padding(16)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))

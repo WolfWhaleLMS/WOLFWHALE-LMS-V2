@@ -37,6 +37,9 @@ class AppViewModel {
     // MARK: - Notifications
     var notificationService = NotificationService()
 
+    // MARK: - Push Notifications (Remote)
+    var pushService = PushNotificationService()
+
     // MARK: - Biometric Auth
     var biometricService = BiometricAuthService()
     var isAppLocked: Bool = false
@@ -52,6 +55,10 @@ class AppViewModel {
         get { UserDefaults.standard.bool(forKey: "wolfwhale_calendar_sync_enabled") }
         set { UserDefaults.standard.set(newValue, forKey: "wolfwhale_calendar_sync_enabled") }
     }
+
+    // MARK: - Offline Storage & Cloud Sync
+    var offlineStorage = OfflineStorageService()
+    var cloudSync = CloudSyncService()
 
     var gpa: Double {
         guard !grades.isEmpty else { return 0 }
@@ -99,6 +106,10 @@ class AppViewModel {
                 try await fetchProfile(userId: session.user.id)
                 await loadData()
                 isAuthenticated = true
+
+                // Re-register push token on session restore
+                pushService.registerForRemoteNotifications()
+                await pushService.sendTokenToServer(userId: session.user.id)
             } catch {
                 #if DEBUG
                 print("[AppViewModel] Session check failed: \(error)")
@@ -123,6 +134,10 @@ class AppViewModel {
                 try await fetchProfile(userId: session.user.id)
                 await loadData()
                 isAuthenticated = true
+
+                // Register device for remote push notifications
+                pushService.registerForRemoteNotifications()
+                await pushService.sendTokenToServer(userId: session.user.id)
             } catch {
                 loginError = mapAuthError(error)
             }
@@ -229,10 +244,16 @@ class AppViewModel {
     func logout() {
         if !isDemoMode {
             Task {
+                // Remove push token from server before signing out
+                if let userId = currentUser?.id {
+                    await pushService.removeTokenFromServer(userId: userId)
+                }
+                pushService.clearAllNotifications()
                 try? await supabaseClient.auth.signOut()
                 await CacheService.shared.invalidateAll()
             }
         }
+        offlineStorage.clearAllData()
         isDemoMode = false
         withAnimation(.smooth) {
             isAuthenticated = false
@@ -324,8 +345,13 @@ class AppViewModel {
         }
 
         guard networkMonitor.isConnected else {
-            dataError = "No internet connection. Using offline mode."
-            loadMockData()
+            if offlineStorage.hasOfflineData {
+                dataError = "No internet connection. Using offline data."
+                loadOfflineData()
+            } else {
+                dataError = "No internet connection. Using offline mode."
+                loadMockData()
+            }
             return
         }
 
@@ -394,11 +420,17 @@ class AppViewModel {
             }
             isDataLoading = false
             cacheDataForSiri()
+            saveDataToOfflineStorage()
             notificationService.scheduleAllAssignmentReminders(assignments: assignments)
         } catch {
             isDataLoading = false
-            dataError = "Could not load data. Using offline mode."
-            loadMockData()
+            if offlineStorage.hasOfflineData {
+                dataError = "Could not load data. Using offline data."
+                loadOfflineData()
+            } else {
+                dataError = "Could not load data. Using offline mode."
+                loadMockData()
+            }
         }
     }
 
@@ -429,6 +461,30 @@ class AppViewModel {
         announcements = mockService.sampleAnnouncements()
         children = mockService.sampleChildren()
         schoolMetrics = mockService.sampleSchoolMetrics()
+        cacheDataForSiri()
+    }
+
+    // MARK: - Offline Storage Helpers
+
+    private func saveDataToOfflineStorage() {
+        offlineStorage.saveCourses(courses)
+        offlineStorage.saveAssignments(assignments)
+        offlineStorage.saveGrades(grades)
+        offlineStorage.saveConversations(conversations)
+        if let user = currentUser {
+            offlineStorage.saveUserProfile(user)
+        }
+        offlineStorage.lastSyncDate = Date()
+    }
+
+    private func loadOfflineData() {
+        courses = offlineStorage.loadCourses()
+        assignments = offlineStorage.loadAssignments()
+        grades = offlineStorage.loadGrades()
+        conversations = offlineStorage.loadConversations()
+        if currentUser == nil {
+            currentUser = offlineStorage.loadUserProfile()
+        }
         cacheDataForSiri()
     }
 

@@ -35,6 +35,7 @@ struct AppSettingsView: View {
             securitySection
             appearanceSection
             notificationsSection
+            dataAndStorageSection
             legalSection
             aboutSection
             dangerZoneSection
@@ -282,6 +283,36 @@ struct AppSettingsView: View {
             }
         } header: {
             sectionHeader(title: "Notifications", icon: "bell.fill")
+        }
+    }
+
+    // MARK: - Data & Storage Section
+
+    private var dataAndStorageSection: some View {
+        Section {
+            NavigationLink {
+                OfflineSyncView(viewModel: viewModel)
+            } label: {
+                Label {
+                    Text("Offline & Sync")
+                } icon: {
+                    Image(systemName: "arrow.down.circle.fill")
+                        .foregroundStyle(.cyan)
+                }
+            }
+
+            NavigationLink {
+                CalendarSyncView(viewModel: viewModel)
+            } label: {
+                Label {
+                    Text("Calendar Sync")
+                } icon: {
+                    Image(systemName: "calendar.badge.clock")
+                        .foregroundStyle(.purple)
+                }
+            }
+        } header: {
+            sectionHeader(title: "Data & Storage", icon: "externaldrive.fill")
         }
     }
 

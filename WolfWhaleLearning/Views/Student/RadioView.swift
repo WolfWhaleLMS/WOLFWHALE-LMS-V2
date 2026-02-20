@@ -17,6 +17,7 @@ struct RadioView: View {
                     nowPlayingSection
                     controlsSection
                     volumeSection
+                    discoverMusicSection
                 }
                 .padding(.horizontal)
                 .padding(.bottom, 100)
@@ -356,6 +357,49 @@ struct RadioView: View {
                 break
             }
         }
+    }
+
+    // MARK: - Discover Music
+
+    private var discoverMusicSection: some View {
+        NavigationLink {
+            MusicDiscoveryView()
+        } label: {
+            HStack(spacing: 14) {
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [.purple, .pink],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 44, height: 44)
+
+                    Image(systemName: "music.note.house.fill")
+                        .font(.title3)
+                        .foregroundStyle(.white)
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Discover Music")
+                        .font(.subheadline.bold())
+                    Text("Study playlists from Apple Music")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption.bold())
+                    .foregroundStyle(.secondary)
+            }
+            .padding(14)
+            .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Mini Player Bar

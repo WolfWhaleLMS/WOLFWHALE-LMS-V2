@@ -34,6 +34,8 @@ struct ProfilePhotoPicker: View {
     @State private var showActionSheet = false
     @State private var capturedImage: UIImage?
     @State private var hapticTrigger = false
+    @State private var showFilterSheet = false
+    @State private var pendingFilterImage: UIImage?
 
     private let photoService = PhotoService()
 
@@ -124,10 +126,24 @@ struct ProfilePhotoPicker: View {
             CameraCaptureView { image in
                 showCameraSheet = false
                 if let image {
-                    onImageSelected?(image)
+                    presentFilter(for: image)
                 }
             }
             .ignoresSafeArea()
+        }
+        .fullScreenCover(isPresented: $showFilterSheet) {
+            PhotoFilterView(image: $pendingFilterImage) { filtered in
+                showFilterSheet = false
+                onImageSelected?(filtered)
+                pendingFilterImage = nil
+            } onCancel: {
+                // User skipped filtering — use the original image as-is
+                showFilterSheet = false
+                if let original = pendingFilterImage {
+                    onImageSelected?(original)
+                }
+                pendingFilterImage = nil
+            }
         }
     }
 
@@ -195,8 +211,14 @@ struct ProfilePhotoPicker: View {
 
     private func handlePhotoPick(_ item: PhotosPickerItem) async {
         guard let image = await photoService.loadImage(from: item) else { return }
-        onImageSelected?(image)
         showPhotosPicker = false
+        presentFilter(for: image)
+    }
+
+    /// Presents the photo filter sheet for the given image.
+    private func presentFilter(for image: UIImage) {
+        pendingFilterImage = image
+        showFilterSheet = true
     }
 }
 

@@ -1098,3 +1098,30 @@ nonisolated struct SchoolMetricsDTO: Codable, Sendable {
         case activeUsers = "active_users"
     }
 }
+
+// MARK: - Device Tokens (Push Notifications)
+
+nonisolated struct DeviceTokenDTO: Codable, Sendable {
+    let id: UUID
+    let userId: UUID
+    let token: String
+    let platform: String
+    let createdAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, token, platform
+        case userId = "user_id"
+        case createdAt = "created_at"
+    }
+}
+
+nonisolated struct InsertDeviceTokenDTO: Encodable, Sendable {
+    let userId: UUID
+    let token: String
+    let platform: String
+
+    enum CodingKeys: String, CodingKey {
+        case token, platform
+        case userId = "user_id"
+    }
+}
