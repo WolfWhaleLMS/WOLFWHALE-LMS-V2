@@ -37,12 +37,12 @@ struct CheckGradesIntent: AppIntent {
 
 // MARK: - Cached Models
 
-struct CachedGradesSummary: Codable {
+nonisolated struct CachedGradesSummary: Codable {
     let gpa: Double
     let courseGrades: [CachedCourseGrade]
 }
 
-struct CachedCourseGrade: Codable {
+nonisolated struct CachedCourseGrade: Codable {
     let courseName: String
     let letterGrade: String
     let numericGrade: Double

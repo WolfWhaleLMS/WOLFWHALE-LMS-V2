@@ -142,7 +142,7 @@ final class ImageFilterService {
     // MARK: - Core Image Filter Application (static, non-isolated)
 
     /// Builds and applies the CIFilter chain for a given preset. Runs off the main actor.
-    private static func applyCI(_ filter: PhotoFilter, to input: CIImage) -> CIImage? {
+    nonisolated private static func applyCI(_ filter: PhotoFilter, to input: CIImage) -> CIImage? {
         switch filter {
         case .none:
             return input
@@ -212,7 +212,7 @@ final class ImageFilterService {
     // MARK: - Resize Helper
 
     /// Resizes a `UIImage` to fit within the given size, preserving aspect ratio.
-    private static func resizedImage(_ image: UIImage, to targetSize: CGSize) -> UIImage {
+    nonisolated private static func resizedImage(_ image: UIImage, to targetSize: CGSize) -> UIImage {
         let widthRatio = targetSize.width / image.size.width
         let heightRatio = targetSize.height / image.size.height
         let ratio = min(widthRatio, heightRatio)

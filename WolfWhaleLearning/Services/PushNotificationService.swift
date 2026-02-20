@@ -1,4 +1,5 @@
 import Foundation
+import Supabase
 import UserNotifications
 import UIKit
 

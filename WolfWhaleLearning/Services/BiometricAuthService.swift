@@ -23,6 +23,8 @@ class BiometricAuthService {
     /// A human-readable label for the current biometric type ("Face ID", "Touch ID", or "Biometrics").
     var biometricName: String {
         switch biometricType {
+        case .none:
+            return "Biometrics"
         case .faceID:
             return "Face ID"
         case .touchID:
@@ -37,6 +39,8 @@ class BiometricAuthService {
     /// The SF Symbol that represents the current biometric type.
     var biometricSystemImage: String {
         switch biometricType {
+        case .none:
+            return "lock.shield"
         case .faceID:
             return "faceid"
         case .touchID:

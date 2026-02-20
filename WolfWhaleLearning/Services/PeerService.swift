@@ -1,6 +1,6 @@
 import MultipeerConnectivity
 
-struct PeerMessage: Identifiable, Codable {
+nonisolated struct PeerMessage: Identifiable, Codable {
     let id: UUID
     let sender: String
     let text: String

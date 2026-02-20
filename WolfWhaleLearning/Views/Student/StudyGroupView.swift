@@ -1,4 +1,6 @@
 import SwiftUI
+import MultipeerConnectivity
+import SwiftUI
 
 struct StudyGroupView: View {
     @State private var peerService = PeerService()

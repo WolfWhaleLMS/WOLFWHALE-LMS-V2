@@ -1,4 +1,6 @@
+import Foundation
 import MusicKit
+import Observation
 
 @MainActor
 @Observable
