@@ -123,6 +123,8 @@ struct EnhancedConversationView: View {
 
             if !message.isFromCurrentUser { Spacer(minLength: 60) }
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(message.isFromCurrentUser ? "You" : message.senderName) said: \(message.content), at \(message.timestamp.formatted(.dateTime.hour().minute()))")
     }
 
     private func bubbleBackground(isCurrentUser: Bool) -> AnyShapeStyle {
@@ -175,6 +177,8 @@ struct EnhancedConversationView: View {
                 .padding(.vertical, 10)
                 .background(.ultraThinMaterial, in: Capsule())
                 .focused($isTextFieldFocused)
+                .accessibilityLabel("Message input")
+                .accessibilityHint("Type a message to send")
 
             Button {
                 sendMessage()
@@ -186,6 +190,8 @@ struct EnhancedConversationView: View {
             .tint(.pink)
             .disabled(messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             .sensoryFeedback(.impact(weight: .light), trigger: messages.count)
+            .accessibilityLabel("Send message")
+            .accessibilityHint("Double tap to send your message")
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
@@ -199,6 +205,7 @@ struct EnhancedConversationView: View {
             .fill(realtimeService.isConnected ? .green : .gray)
             .frame(width: 8, height: 8)
             .help(realtimeService.isConnected ? "Live" : "Connecting...")
+            .accessibilityLabel(realtimeService.isConnected ? "Connected, live updates active" : "Connecting to server")
     }
 
     // MARK: - Actions

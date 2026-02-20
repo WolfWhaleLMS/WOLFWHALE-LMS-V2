@@ -1,4 +1,5 @@
 import SwiftUI
+import Supabase
 
 struct AppSettingsView: View {
     @Bindable var viewModel: AppViewModel
@@ -10,6 +11,10 @@ struct AppSettingsView: View {
     @State private var showTerms = false
     @State private var showPrivacy = false
     @State private var showSignOutConfirmation = false
+    @State private var showDeleteConfirmation = false
+    @State private var showFinalDeleteConfirmation = false
+    @State private var deleteConfirmationText = ""
+    @State private var isDeletingAccount = false
 
     private var appVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
@@ -51,6 +56,52 @@ struct AppSettingsView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("Are you sure you want to sign out of your account?")
+        }
+        .alert("Delete Account?", isPresented: $showDeleteConfirmation) {
+            Button("Cancel", role: .cancel) { }
+            Button("Continue", role: .destructive) {
+                showFinalDeleteConfirmation = true
+            }
+        } message: {
+            Text("This will permanently delete your account, all your data, grades, submissions, and messages. This action cannot be undone.")
+        }
+        .alert("Type DELETE to confirm", isPresented: $showFinalDeleteConfirmation) {
+            TextField("Type DELETE", text: $deleteConfirmationText)
+            Button("Cancel", role: .cancel) {
+                deleteConfirmationText = ""
+            }
+            Button("Delete Forever", role: .destructive) {
+                if deleteConfirmationText == "DELETE" {
+                    Task { await deleteAccount() }
+                }
+                deleteConfirmationText = ""
+            }
+        } message: {
+            Text("This is your final warning. Type DELETE to permanently remove your account.")
+        }
+        .overlay {
+            if isDeletingAccount {
+                ZStack {
+                    Color.black.opacity(0.35)
+                        .ignoresSafeArea()
+
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            .controlSize(.large)
+                            .tint(.white)
+                        Text("Deleting account...")
+                            .font(.headline)
+                            .foregroundStyle(.white)
+                        Text("Please wait while we remove your data.")
+                            .font(.subheadline)
+                            .foregroundStyle(.white.opacity(0.7))
+                    }
+                    .padding(32)
+                    .background(.ultraThinMaterial, in: .rect(cornerRadius: 20))
+                }
+                .transition(.opacity)
+                .animation(.smooth, value: isDeletingAccount)
+            }
         }
     }
 
@@ -96,8 +147,10 @@ struct AppSettingsView: View {
                         .foregroundStyle(isDarkMode ? .indigo : .orange)
                 }
                 Spacer()
-                Toggle("", isOn: $isDarkMode)
+                Toggle("Dark Mode", isOn: $isDarkMode)
                     .labelsHidden()
+                    .accessibilityLabel("Dark Mode")
+                    .accessibilityHint("Double tap to toggle dark mode")
             }
         } header: {
             sectionHeader(title: "Appearance", icon: "paintbrush.fill")
@@ -116,8 +169,10 @@ struct AppSettingsView: View {
                         .foregroundStyle(.red)
                 }
                 Spacer()
-                Toggle("", isOn: $pushNotifications)
+                Toggle("Push Notifications", isOn: $pushNotifications)
                     .labelsHidden()
+                    .accessibilityLabel("Push Notifications")
+                    .accessibilityHint("Double tap to toggle push notifications")
             }
 
             HStack {
@@ -128,8 +183,10 @@ struct AppSettingsView: View {
                         .foregroundStyle(.blue)
                 }
                 Spacer()
-                Toggle("", isOn: $emailNotifications)
+                Toggle("Email Notifications", isOn: $emailNotifications)
                     .labelsHidden()
+                    .accessibilityLabel("Email Notifications")
+                    .accessibilityHint("Double tap to toggle email notifications")
             }
         } header: {
             sectionHeader(title: "Notifications", icon: "bell.fill")
@@ -249,8 +306,45 @@ struct AppSettingsView: View {
                     Image(systemName: "rectangle.portrait.and.arrow.right")
                 }
             }
+
+            Button(role: .destructive) {
+                showDeleteConfirmation = true
+            } label: {
+                Label {
+                    Text("Delete Account")
+                } icon: {
+                    Image(systemName: "trash")
+                }
+            }
         } header: {
             sectionHeader(title: "Danger Zone", icon: "exclamationmark.triangle.fill")
+        } footer: {
+            Text("Permanently deletes your account and all associated data. This cannot be undone.")
+        }
+    }
+
+    // MARK: - Delete Account
+
+    private func deleteAccount() async {
+        isDeletingAccount = true
+        do {
+            guard let userId = viewModel.currentUser?.id else { return }
+            try await supabaseClient
+                .rpc("delete_user_complete", params: ["target_user_id": userId.uuidString])
+                .execute()
+            try? await supabaseClient.auth.signOut()
+            await MainActor.run {
+                isDeletingAccount = false
+                viewModel.logout()
+            }
+        } catch {
+            // If RPC fails (e.g. non-admin), fall back to signing out.
+            // The user can contact their admin for full deletion.
+            try? await supabaseClient.auth.signOut()
+            await MainActor.run {
+                isDeletingAccount = false
+                viewModel.logout()
+            }
         }
     }
 

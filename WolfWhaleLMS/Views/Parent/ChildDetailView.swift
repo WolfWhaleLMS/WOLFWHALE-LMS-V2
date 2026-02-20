@@ -69,6 +69,8 @@ struct ChildDetailView: View {
         }
         .padding(16)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(child.name), \(child.grade), \(child.courses.count) courses enrolled")
     }
 
     // MARK: - Academic Summary
@@ -198,6 +200,8 @@ struct ChildDetailView: View {
         }
         .padding(14)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(grade.courseName): Grade \(grade.letterGrade), \(String(format: "%.0f", grade.numericGrade)) percent, \(grade.assignmentGrades.count) graded assignments")
     }
 
     // MARK: - Recent Assignments
@@ -263,6 +267,8 @@ struct ChildDetailView: View {
         }
         .padding(12)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(assignment.title) for \(assignment.courseName), \(assignment.statusText), due \(assignment.dueDate.formatted(.dateTime.month(.abbreviated).day()))")
     }
 
     private func assignmentStatusColor(_ assignment: Assignment) -> Color {
@@ -330,5 +336,8 @@ struct ChildDetailView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 20)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(title): \(subtitle)")
+        .accessibilityHint("Double tap to open")
     }
 }

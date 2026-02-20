@@ -18,6 +18,7 @@ struct SignUpView: View {
     @State private var errorMessage: String?
     @State private var successMessage: String?
     @State private var hasAttemptedSubmit = false
+    @State private var hasAcknowledgedAge = false
     @FocusState private var focusedField: Field?
 
     private enum Field { case fullName, email, password, confirmPassword, schoolCode }
@@ -140,12 +141,15 @@ struct SignUpView: View {
                 Image(systemName: "person.fill")
                     .foregroundStyle(.tertiary)
                     .frame(width: 20)
+                    .accessibilityHidden(true)
                 TextField("Full Name", text: $fullName)
                     .textContentType(.name)
                     .autocorrectionDisabled()
                     .focused($focusedField, equals: .fullName)
                     .submitLabel(.next)
                     .onSubmit { focusedField = .email }
+                    .accessibilityLabel("Full name")
+                    .accessibilityHint("Enter your first and last name")
             }
             .padding(14)
             .background(Color(.systemBackground), in: .rect(cornerRadius: 12))
@@ -160,6 +164,7 @@ struct SignUpView: View {
                     Image(systemName: "envelope.fill")
                         .foregroundStyle(.tertiary)
                         .frame(width: 20)
+                        .accessibilityHidden(true)
                     TextField("School Email", text: $email)
                         .textContentType(.emailAddress)
                         .keyboardType(.emailAddress)
@@ -168,6 +173,8 @@ struct SignUpView: View {
                         .focused($focusedField, equals: .email)
                         .submitLabel(.next)
                         .onSubmit { focusedField = .password }
+                        .accessibilityLabel("Email address")
+                        .accessibilityHint("Enter your school email address")
                 }
                 .padding(14)
                 .background(Color(.systemBackground), in: .rect(cornerRadius: 12))
@@ -196,11 +203,14 @@ struct SignUpView: View {
                     Image(systemName: "lock.fill")
                         .foregroundStyle(.tertiary)
                         .frame(width: 20)
+                        .accessibilityHidden(true)
                     SecureField("Password (min 8 characters)", text: $password)
                         .textContentType(.newPassword)
                         .focused($focusedField, equals: .password)
                         .submitLabel(.next)
                         .onSubmit { focusedField = .confirmPassword }
+                        .accessibilityLabel("Password")
+                        .accessibilityHint("Create a password with at least 8 characters")
                 }
                 .padding(14)
                 .background(Color(.systemBackground), in: .rect(cornerRadius: 12))
@@ -229,11 +239,14 @@ struct SignUpView: View {
                     Image(systemName: "lock.badge.checkmark")
                         .foregroundStyle(.tertiary)
                         .frame(width: 20)
+                        .accessibilityHidden(true)
                     SecureField("Confirm Password", text: $confirmPassword)
                         .textContentType(.newPassword)
                         .focused($focusedField, equals: .confirmPassword)
                         .submitLabel(.next)
                         .onSubmit { focusedField = .schoolCode }
+                        .accessibilityLabel("Confirm password")
+                        .accessibilityHint("Re-enter your password to confirm")
                 }
                 .padding(14)
                 .background(Color(.systemBackground), in: .rect(cornerRadius: 12))
@@ -294,6 +307,9 @@ struct SignUpView: View {
                             .foregroundStyle(selectedRole == role ? .purple : .primary)
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel("\(role.rawValue) role")
+                        .accessibilityHint("Double tap to select \(role.rawValue.lowercased()) role")
+                        .accessibilityAddTraits(selectedRole == role ? .isSelected : [])
                     }
                 }
             }
@@ -304,6 +320,7 @@ struct SignUpView: View {
                     Image(systemName: "building.2.fill")
                         .foregroundStyle(.tertiary)
                         .frame(width: 20)
+                        .accessibilityHidden(true)
                     TextField("Enter 6-character school code", text: $schoolCode)
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.characters)
@@ -313,6 +330,8 @@ struct SignUpView: View {
                         .onChange(of: schoolCode) { _, newValue in
                             schoolCode = newValue.uppercased()
                         }
+                        .accessibilityLabel("School code")
+                        .accessibilityHint("Enter the 6-character code from your school administrator")
                 }
                 .padding(14)
                 .background(Color(.systemBackground), in: .rect(cornerRadius: 12))
@@ -366,6 +385,10 @@ struct SignUpView: View {
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
 
+            // COPPA Age / Consent Acknowledgment
+            consentSection
+                .padding(.top, 4)
+
             // Sign Up button
             Button {
                 focusedField = nil
@@ -391,6 +414,8 @@ struct SignUpView: View {
             .tint(Color.purple)
             .clipShape(.rect(cornerRadius: 12))
             .disabled(isLoading || !isFormValid)
+            .accessibilityLabel(isLoading ? "Creating account" : "Create Account")
+            .accessibilityHint("Double tap to create your account")
 
             // Back to Login button
             Button {
@@ -406,6 +431,52 @@ struct SignUpView: View {
             }
             .padding(.top, 4)
         }
+        .onChange(of: selectedRole) { _, _ in
+            hasAcknowledgedAge = false
+        }
+    }
+
+    // MARK: - Consent
+
+    @ViewBuilder
+    private var consentSection: some View {
+        switch selectedRole {
+        case .student:
+            Toggle(isOn: $hasAcknowledgedAge) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Age Confirmation")
+                        .font(.subheadline.bold())
+                    Text("I confirm I am 13 or older, or my parent/guardian has approved this account for educational use.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .tint(.blue)
+
+        case .parent:
+            Toggle(isOn: $hasAcknowledgedAge) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Parental Consent")
+                        .font(.subheadline.bold())
+                    Text("I consent to my child's use of this educational platform and acknowledge the Privacy Policy.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .tint(.blue)
+
+        case .teacher, .admin:
+            Toggle(isOn: $hasAcknowledgedAge) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Terms Acknowledgment")
+                        .font(.subheadline.bold())
+                    Text("I agree to the Terms of Service and Privacy Policy.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .tint(.blue)
+        }
     }
 
     // MARK: - Validation
@@ -416,6 +487,7 @@ struct SignUpView: View {
         && passwordError == nil && !password.isEmpty
         && confirmPasswordError == nil && !confirmPassword.isEmpty
         && schoolCodeError == nil && !schoolCode.trimmingCharacters(in: .whitespaces).isEmpty
+        && hasAcknowledgedAge
     }
 
     private func validate() -> String? {

@@ -26,6 +26,8 @@ struct TeacherProfileView: View {
                     } label: {
                         Image(systemName: "gearshape.fill")
                     }
+                    .accessibilityLabel("Settings")
+                    .accessibilityHint("Double tap to open settings")
                 }
             }
         }
@@ -64,6 +66,8 @@ struct TeacherProfileView: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
             .background(.ultraThinMaterial, in: .rect(cornerRadius: 14))
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Courses: \(viewModel.courses.count)")
 
             VStack(spacing: 6) {
                 Text("\(viewModel.courses.reduce(0) { $0 + $1.enrolledStudentCount })")
@@ -75,6 +79,8 @@ struct TeacherProfileView: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
             .background(.ultraThinMaterial, in: .rect(cornerRadius: 14))
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Students: \(viewModel.courses.reduce(0) { $0 + $1.enrolledStudentCount })")
         }
     }
 
@@ -84,11 +90,14 @@ struct TeacherProfileView: View {
                 Image(systemName: isDarkMode ? "moon.fill" : "sun.max.fill")
                     .foregroundStyle(isDarkMode ? .indigo : .orange)
                     .frame(width: 28)
+                    .accessibilityHidden(true)
                 Text("Dark Mode")
                     .font(.subheadline)
                 Spacer()
-                Toggle("", isOn: $isDarkMode)
+                Toggle("Dark Mode", isOn: $isDarkMode)
                     .labelsHidden()
+                    .accessibilityLabel("Dark Mode")
+                    .accessibilityHint("Double tap to toggle dark mode")
             }
             .padding(14)
             Divider().padding(.leading, 48)

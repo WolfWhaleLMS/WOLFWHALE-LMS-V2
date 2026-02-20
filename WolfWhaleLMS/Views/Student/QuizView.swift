@@ -55,6 +55,7 @@ struct QuizView: View {
         .padding(.vertical, 6)
         .background(timeRemaining < 60 ? .red.opacity(0.2) : .blue.opacity(0.15), in: Capsule())
         .foregroundStyle(timeRemaining < 60 ? .red : .blue)
+        .accessibilityLabel("Time remaining: \(timeRemaining / 60) minutes and \(timeRemaining % 60) seconds")
     }
 
     private var timeString: String {
@@ -148,6 +149,9 @@ struct QuizView: View {
                 }
                 .buttonStyle(.plain)
                 .sensoryFeedback(.selection, trigger: selectedAnswers[currentQuestion])
+                .accessibilityLabel("Option \(index + 1): \(option)")
+                .accessibilityAddTraits(selectedAnswers[currentQuestion] == index ? .isSelected : [])
+                .accessibilityHint(selectedAnswers[currentQuestion] == index ? "Selected" : "Double tap to select this answer")
             }
         }
     }
@@ -254,6 +258,8 @@ struct QuizView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 14)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label): \(value)")
     }
 
     private func submitQuiz() {

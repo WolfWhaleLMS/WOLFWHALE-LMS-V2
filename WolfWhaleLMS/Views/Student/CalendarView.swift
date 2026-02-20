@@ -205,6 +205,8 @@ struct CalendarView: View {
                         .frame(width: 36, height: 36)
                         .background(.quaternary, in: Circle())
                 }
+                .accessibilityLabel("Previous month")
+                .accessibilityHint("Double tap to go to the previous month")
 
                 Spacer()
 
@@ -223,6 +225,8 @@ struct CalendarView: View {
                         .frame(width: 36, height: 36)
                         .background(.quaternary, in: Circle())
                 }
+                .accessibilityLabel("Next month")
+                .accessibilityHint("Double tap to go to the next month")
             }
 
             // Day of week headers
@@ -387,6 +391,8 @@ struct CalendarView: View {
         }
         .padding(12)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(event.type.label): \(event.title), \(event.courseName), at \(event.timeString)")
     }
 
     // MARK: - Helpers

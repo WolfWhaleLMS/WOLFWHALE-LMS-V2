@@ -158,6 +158,8 @@ struct EditProfileView: View {
                         .offset(x: 28, y: 28)
                 }
             }
+            .accessibilityLabel("Change profile photo")
+            .accessibilityHint("Double tap to choose a photo from your library")
 
             if isUploading {
                 HStack(spacing: 8) {

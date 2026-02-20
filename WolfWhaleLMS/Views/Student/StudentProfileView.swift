@@ -30,6 +30,8 @@ struct StudentProfileView: View {
                     } label: {
                         Image(systemName: "gearshape.fill")
                     }
+                    .accessibilityLabel("Settings")
+                    .accessibilityHint("Double tap to open settings")
                 }
             }
         }
@@ -97,6 +99,8 @@ struct StudentProfileView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 14))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label): \(value)")
     }
 
     private var xpSection: some View {
@@ -199,11 +203,14 @@ struct StudentProfileView: View {
             Image(systemName: isDarkMode ? "moon.fill" : "sun.max.fill")
                 .foregroundStyle(isDarkMode ? .indigo : .orange)
                 .frame(width: 28)
+                .accessibilityHidden(true)
             Text("Dark Mode")
                 .font(.subheadline)
             Spacer()
-            Toggle("", isOn: $isDarkMode)
+            Toggle("Dark Mode", isOn: $isDarkMode)
                 .labelsHidden()
+                .accessibilityLabel("Dark Mode")
+                .accessibilityHint("Double tap to toggle dark mode")
         }
         .padding(14)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))

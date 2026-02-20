@@ -39,6 +39,8 @@ struct GradesView: View {
                 } label: {
                     Image(systemName: "square.and.arrow.up")
                 }
+                .accessibilityLabel("Report Card")
+                .accessibilityHint("Double tap to view your report card")
             }
         }
     }

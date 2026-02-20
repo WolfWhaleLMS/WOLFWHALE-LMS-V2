@@ -121,6 +121,9 @@ struct CourseDetailView: View {
             }
         }
         .padding(.vertical, 4)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(lesson.title), \(lesson.type.rawValue), \(lesson.duration) minutes, \(lesson.xpReward) XP\(lesson.isCompleted ? ", completed" : "")")
+        .accessibilityHint(lesson.isCompleted ? "" : "Double tap to open lesson")
     }
 
     private func infoChip(icon: String, text: String) -> some View {

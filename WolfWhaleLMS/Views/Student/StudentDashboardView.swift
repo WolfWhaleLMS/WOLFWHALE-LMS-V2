@@ -147,6 +147,7 @@ struct StudentDashboardView: View {
                 .padding(14)
                 .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
             }
+            .accessibilityHint("Double tap to view attendance history")
         }
     }
 
@@ -194,6 +195,7 @@ struct StudentDashboardView: View {
                 Spacer()
                 NavigationLink("See All", value: "assignments")
                     .font(.subheadline)
+                    .accessibilityHint("Double tap to view all assignments")
             }
 
             if viewModel.upcomingAssignments.isEmpty {

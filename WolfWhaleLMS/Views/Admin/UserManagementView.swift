@@ -188,6 +188,9 @@ struct UserManagementView: View {
                 Label("Remove", systemImage: "person.badge.minus")
             }
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(user.firstName ?? "") \(user.lastName ?? ""), \(user.role), \(user.email)")
+        .accessibilityHint("Swipe left to remove user")
     }
 
     private var filterChips: some View {
@@ -225,5 +228,8 @@ struct UserManagementView: View {
                     : .secondary
                 )
         }
+        .accessibilityLabel("\(label) filter")
+        .accessibilityAddTraits(selectedRole == role ? .isSelected : [])
+        .accessibilityHint("Double tap to filter users by \(label.lowercased())")
     }
 }

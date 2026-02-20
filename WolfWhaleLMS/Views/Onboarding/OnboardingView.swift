@@ -29,6 +29,8 @@ struct OnboardingView: View {
                                 .padding(.vertical, 8)
                                 .background(.white.opacity(0.15), in: Capsule())
                         }
+                        .accessibilityLabel("Skip onboarding")
+                        .accessibilityHint("Double tap to skip to login")
                     }
                 }
                 .padding(.horizontal, 24)
@@ -89,6 +91,8 @@ struct OnboardingView: View {
                     .animation(.spring(duration: 0.3), value: currentPage)
             }
         }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("Page \(currentPage + 1) of \(totalPages)")
     }
 
     // MARK: - Page 1: Welcome

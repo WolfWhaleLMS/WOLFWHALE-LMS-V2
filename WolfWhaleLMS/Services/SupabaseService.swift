@@ -2,11 +2,14 @@ import Foundation
 import Supabase
 
 let supabaseClient: SupabaseClient = {
-    let urlString = Config.SUPABASE_URL.isEmpty ? "https://placeholder.supabase.co" : Config.SUPABASE_URL
+    let urlString = Config.SUPABASE_URL
+    let anonKey = Config.SUPABASE_ANON_KEY
     guard let url = URL(string: urlString) else {
-        fatalError("Invalid Supabase URL: \(urlString). Check Config.SUPABASE_URL.")
+        // Return a client with a placeholder URL that will fail gracefully on API calls
+        // rather than crashing the entire app on launch
+        return SupabaseClient(supabaseURL: URL(string: "https://placeholder.supabase.co")!, supabaseKey: anonKey)
     }
-    return SupabaseClient(supabaseURL: url, supabaseKey: Config.SUPABASE_ANON_KEY)
+    return SupabaseClient(supabaseURL: url, supabaseKey: anonKey)
 }()
 
 struct DataService {

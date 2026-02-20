@@ -607,7 +607,7 @@ struct ReportCardView: View {
 
             try? data.write(to: fileURL)
 
-            DispatchQueue.main.async {
+            Task { @MainActor in
                 self.pdfURL = fileURL
                 self.isGenerating = false
                 self.showShareSheet = true

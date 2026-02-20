@@ -85,7 +85,9 @@ final class RealtimeService {
                     }
                 } catch {
                     // Silently skip malformed payloads to keep the stream alive
+                    #if DEBUG
                     print("[RealtimeService] Failed to decode message: \(error)")
+                    #endif
                 }
             }
         }
@@ -143,7 +145,9 @@ final class RealtimeService {
                 return displayName
             }
         } catch {
+            #if DEBUG
             print("[RealtimeService] Failed to resolve sender name for \(senderId): \(error)")
+            #endif
         }
 
         // Fallback

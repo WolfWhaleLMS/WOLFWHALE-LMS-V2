@@ -29,6 +29,8 @@ struct TeacherCoursesView: View {
                     Button("New Course", systemImage: "plus") {
                         showCreateCourse = true
                     }
+                    .accessibilityLabel("Create new course")
+                    .accessibilityHint("Double tap to create a new course")
                 }
             }
             .navigationDestination(for: Course.self) { course in
@@ -80,6 +82,9 @@ struct TeacherCoursesView: View {
         }
         .padding(14)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(course.title), \(course.enrolledStudentCount) students, code \(course.classCode), \(course.modules.count) modules, \(course.totalLessons) lessons")
+        .accessibilityHint("Double tap to open gradebook")
     }
 
     private var createCourseSheet: some View {

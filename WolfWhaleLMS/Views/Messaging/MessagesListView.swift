@@ -34,6 +34,8 @@ struct MessagesListView: View {
                     } label: {
                         Image(systemName: "square.and.pencil")
                     }
+                    .accessibilityLabel("New conversation")
+                    .accessibilityHint("Double tap to start a new conversation")
                 }
             }
             .sheet(isPresented: $showNewConversation) {
@@ -79,6 +81,9 @@ struct MessagesListView: View {
             }
         }
         .padding(.vertical, 2)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(conversation.title), last message: \(conversation.lastMessage)\(conversation.unreadCount > 0 ? ", \(conversation.unreadCount) unread" : "")")
+        .accessibilityHint("Double tap to open conversation")
     }
 }
 
@@ -140,6 +145,8 @@ struct NewConversationSheet: View {
                                                 .foregroundStyle(.secondary)
                                         }
                                         .buttonStyle(.plain)
+                                        .accessibilityLabel("Remove \(name)")
+                                        .accessibilityHint("Double tap to remove this recipient")
                                     }
                                     .padding(.horizontal, 10)
                                     .padding(.vertical, 6)

@@ -81,6 +81,9 @@ class AppViewModel {
                 await loadData()
                 isAuthenticated = true
             } catch {
+                #if DEBUG
+                print("[AppViewModel] Session check failed: \(error)")
+                #endif
             }
         }
     }

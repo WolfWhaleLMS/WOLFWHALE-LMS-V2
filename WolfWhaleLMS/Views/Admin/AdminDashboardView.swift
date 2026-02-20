@@ -132,7 +132,15 @@ struct AdminDashboardView: View {
         .padding(16)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Attendance this week: Monday through Friday attendance chart")
+        .accessibilityLabel({
+            let rates = weeklyAttendanceRates
+            let dayNames = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
+            if !hasRealAttendanceData {
+                return "Attendance this week: No attendance records yet"
+            }
+            let descriptions = zip(dayNames, rates).map { "\($0): \(Int($1 * 100)) percent" }
+            return "Attendance this week: \(descriptions.joined(separator: ", "))"
+        }())
     }
 
     private var recentSection: some View {

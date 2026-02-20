@@ -61,6 +61,7 @@ struct LoginView: View {
                 .frame(width: 100, height: 100)
                 .clipShape(Circle())
                 .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
+                .accessibilityHidden(true)
 
             Text("WOLF WHALE")
                 .font(.system(size: 36, weight: .black, design: .serif))
@@ -85,6 +86,7 @@ struct LoginView: View {
                     Image(systemName: "envelope.fill")
                         .foregroundStyle(.tertiary)
                         .frame(width: 20)
+                        .accessibilityHidden(true)
                     TextField("School Email", text: $viewModel.email)
                         .textContentType(.emailAddress)
                         .keyboardType(.emailAddress)
@@ -93,6 +95,8 @@ struct LoginView: View {
                         .focused($focusedField, equals: .email)
                         .submitLabel(.next)
                         .onSubmit { focusedField = .password }
+                        .accessibilityLabel("Email address")
+                        .accessibilityHint("Enter your school email to sign in")
                 }
                 .padding(14)
                 .background(Color(.systemBackground), in: .rect(cornerRadius: 12))
@@ -105,11 +109,14 @@ struct LoginView: View {
                     Image(systemName: "lock.fill")
                         .foregroundStyle(.tertiary)
                         .frame(width: 20)
+                        .accessibilityHidden(true)
                     SecureField("Password", text: $viewModel.password)
                         .textContentType(.password)
                         .focused($focusedField, equals: .password)
                         .submitLabel(.go)
                         .onSubmit { focusedField = nil; viewModel.login() }
+                        .accessibilityLabel("Password")
+                        .accessibilityHint("Enter your password to sign in")
                 }
                 .padding(14)
                 .background(Color(.systemBackground), in: .rect(cornerRadius: 12))
@@ -156,6 +163,8 @@ struct LoginView: View {
             .clipShape(.rect(cornerRadius: 12))
             .disabled(viewModel.isLoading || viewModel.email.isEmpty || viewModel.password.isEmpty)
             .sensoryFeedback(.impact(weight: .medium), trigger: viewModel.isAuthenticated)
+            .accessibilityLabel(viewModel.isLoading ? "Signing in" : "Sign In")
+            .accessibilityHint("Double tap to sign in with your email and password")
 
             Button {
                 showForgotPassword = true
@@ -164,6 +173,7 @@ struct LoginView: View {
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(Color.accentColor)
             }
+            .accessibilityHint("Double tap to reset your password")
 
             Button {
                 showSignUp = true
@@ -297,5 +307,7 @@ struct DemoRoleButton: View {
         }
         .buttonStyle(.plain)
         .sensoryFeedback(.impact(weight: .light), trigger: false)
+        .accessibilityLabel("Demo \(role.rawValue)")
+        .accessibilityHint("Double tap to sign in as a demo \(role.rawValue.lowercased())")
     }
 }

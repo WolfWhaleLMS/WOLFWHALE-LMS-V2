@@ -38,6 +38,8 @@ struct AnnouncementsView: View {
                     Button("New", systemImage: "plus") {
                         showCreate = true
                     }
+                    .accessibilityLabel("New announcement")
+                    .accessibilityHint("Double tap to create a new announcement")
                 }
             }
             .overlay {
