@@ -3,13 +3,13 @@ import UserNotifications
 
 // MARK: - Notification Categories
 
-enum NotificationCategory: String {
+nonisolated enum NotificationCategory: String, Sendable {
     case assignmentDue = "ASSIGNMENT_DUE"
     case newMessage = "NEW_MESSAGE"
     case gradePosted = "GRADE_POSTED"
 }
 
-enum NotificationAction: String {
+nonisolated enum NotificationAction: String, Sendable {
     case viewAssignment = "VIEW_ASSIGNMENT"
     case markAsRead = "MARK_AS_READ"
     case viewMessage = "VIEW_MESSAGE"
@@ -19,17 +19,15 @@ enum NotificationAction: String {
 
 // MARK: - NotificationService
 
-@Observable
 @MainActor
-final class NotificationService: NSObject {
+final class NotificationService: NSObject, ObservableObject {
 
-    var isAuthorized = false
-    var pendingNotifications: [UNNotificationRequest] = []
+    @Published var isAuthorized = false
+    @Published var pendingNotifications: [UNNotificationRequest] = []
 
-    /// Deep-link destination set when the user taps a notification action.
-    var deepLinkAssignmentId: UUID?
-    var deepLinkConversationId: UUID?
-    var deepLinkGradeId: UUID?
+    @Published var deepLinkAssignmentId: UUID?
+    @Published var deepLinkConversationId: UUID?
+    @Published var deepLinkGradeId: UUID?
 
     private let center = UNUserNotificationCenter.current()
 
@@ -54,7 +52,6 @@ final class NotificationService: NSObject {
 
     // MARK: - Register Categories
 
-    /// Call once at app launch to register interactive notification categories.
     func registerCategories() {
         let viewAssignmentAction = UNNotificationAction(
             identifier: NotificationAction.viewAssignment.rawValue,
@@ -112,14 +109,12 @@ final class NotificationService: NSObject {
 
     // MARK: - Schedule Assignment Reminders
 
-    /// Schedule both a 24-hour and a 1-hour reminder for a single assignment.
     func scheduleAssignmentReminder(assignment: Assignment, reminderDate: Date? = nil) {
         guard !assignment.isSubmitted else { return }
 
         let dueDate = assignment.dueDate
         let assignmentIdString = assignment.id.uuidString
 
-        // 24-hour reminder
         if let trigger24h = calendarTrigger(for: dueDate, hoursBeforeDue: 24) {
             let content = makeAssignmentContent(
                 title: "Assignment Due Tomorrow",
@@ -134,7 +129,6 @@ final class NotificationService: NSObject {
             center.add(request)
         }
 
-        // 1-hour reminder
         if let trigger1h = calendarTrigger(for: dueDate, hoursBeforeDue: 1) {
             let content = makeAssignmentContent(
                 title: "Assignment Due in 1 Hour",
@@ -150,7 +144,6 @@ final class NotificationService: NSObject {
         }
     }
 
-    /// Bulk-schedule reminders for all upcoming (unsubmitted, not overdue) assignments.
     func scheduleAllAssignmentReminders(assignments: [Assignment]) {
         let upcoming = assignments.filter { !$0.isSubmitted && !$0.isOverdue }
         for assignment in upcoming {
@@ -236,14 +229,12 @@ final class NotificationService: NSObject {
             }
 
         case NotificationAction.markAsRead.rawValue:
-            // Handled silently -- no navigation needed.
             break
 
         case NotificationAction.dismiss.rawValue:
             break
 
         default:
-            // Default tap -- try to deep-link based on available userInfo.
             if let idString = userInfo["assignmentId"] as? String {
                 deepLinkAssignmentId = UUID(uuidString: idString)
             } else if let idString = userInfo["conversationId"] as? String {
@@ -288,7 +279,6 @@ final class NotificationService: NSObject {
 
 extension NotificationService: UNUserNotificationCenterDelegate {
 
-    /// Show notifications even while the app is in the foreground.
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         willPresent notification: UNNotification,
@@ -297,7 +287,6 @@ extension NotificationService: UNUserNotificationCenterDelegate {
         completionHandler([.banner, .sound, .badge])
     }
 
-    /// Handle the user tapping on a notification or an action button.
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
         didReceive response: UNNotificationResponse,

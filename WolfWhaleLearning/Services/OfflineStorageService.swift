@@ -270,7 +270,9 @@ final class OfflineStorageService {
     private var cacheDirectory: URL {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
         let dir = docs.appendingPathComponent("OfflineCache", isDirectory: true)
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        if !FileManager.default.fileExists(atPath: dir.path) {
+            try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        }
         return dir
     }
 

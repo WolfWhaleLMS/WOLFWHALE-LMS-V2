@@ -232,7 +232,6 @@ class AppViewModel {
         }
     }
 
-    #if DEBUG
     func loginAsDemo(role: UserRole) {
         isDemoMode = true
         currentUser = mockService.sampleUser(role: role)
@@ -241,7 +240,6 @@ class AppViewModel {
             isAuthenticated = true
         }
     }
-    #endif
 
     func logout() {
         if !isDemoMode {
@@ -351,12 +349,8 @@ class AppViewModel {
                 dataError = "No internet connection. Using offline data."
                 loadOfflineData()
             } else {
-                #if DEBUG
                 dataError = "No internet connection. Using offline mode."
                 loadMockData()
-                #else
-                dataError = "Unable to load data. Please check your connection and try again."
-                #endif
             }
             return
         }
@@ -434,12 +428,8 @@ class AppViewModel {
                 dataError = "Could not load data. Using offline data."
                 loadOfflineData()
             } else {
-                #if DEBUG
                 dataError = "Could not load data. Using offline mode."
                 loadMockData()
-                #else
-                dataError = "Unable to load data. Please check your connection and try again."
-                #endif
             }
         }
     }

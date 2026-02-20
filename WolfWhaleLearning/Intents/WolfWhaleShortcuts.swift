@@ -1,7 +1,7 @@
 import AppIntents
 
 /// Registers WolfWhale LMS shortcuts so they appear in Siri and the Shortcuts app.
-struct WolfWhaleShortcuts: AppShortcutsProvider {
+nonisolated struct WolfWhaleShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
         AppShortcut(
             intent: CheckAssignmentsIntent(),

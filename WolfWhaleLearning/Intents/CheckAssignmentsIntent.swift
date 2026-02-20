@@ -1,9 +1,7 @@
 import AppIntents
 import Foundation
 
-/// Siri intent that returns a summary of upcoming assignments.
-/// Data is read from UserDefaults where the main app caches it after each data refresh.
-struct CheckAssignmentsIntent: AppIntent {
+nonisolated struct CheckAssignmentsIntent: AppIntent {
     static var title: LocalizedStringResource = "Check Assignments"
     static var description = IntentDescription("See what assignments are due soon in WolfWhale LMS.")
 
@@ -45,8 +43,7 @@ struct CheckAssignmentsIntent: AppIntent {
 
 // MARK: - Cached Model
 
-/// Lightweight Codable model stored in UserDefaults for Siri to read.
-struct CachedAssignment: Codable {
+nonisolated struct CachedAssignment: Codable, Sendable {
     let title: String
     let dueDate: String
     let courseName: String

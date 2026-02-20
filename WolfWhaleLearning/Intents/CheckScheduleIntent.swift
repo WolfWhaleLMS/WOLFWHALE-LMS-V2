@@ -1,9 +1,7 @@
 import AppIntents
 import Foundation
 
-/// Siri intent that returns today's class schedule.
-/// Data is read from UserDefaults where the main app caches it after each data refresh.
-struct CheckScheduleIntent: AppIntent {
+nonisolated struct CheckScheduleIntent: AppIntent {
     static var title: LocalizedStringResource = "Check Schedule"
     static var description = IntentDescription("See your class schedule for today in WolfWhale LMS.")
 
@@ -34,7 +32,7 @@ struct CheckScheduleIntent: AppIntent {
 
 // MARK: - Cached Model
 
-struct CachedScheduleEntry: Codable {
+nonisolated struct CachedScheduleEntry: Codable, Sendable {
     let courseName: String
     let time: String?
 }

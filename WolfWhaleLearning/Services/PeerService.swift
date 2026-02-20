@@ -15,13 +15,12 @@ nonisolated struct PeerMessage: Identifiable, Codable {
 }
 
 @MainActor
-@Observable
-class PeerService: NSObject {
-    var nearbyPeers: [MCPeerID] = []
-    var connectedPeers: [MCPeerID] = []
-    var isAdvertising = false
-    var isBrowsing = false
-    var receivedMessages: [PeerMessage] = []
+class PeerService: NSObject, ObservableObject {
+    @Published var nearbyPeers: [MCPeerID] = []
+    @Published var connectedPeers: [MCPeerID] = []
+    @Published var isAdvertising = false
+    @Published var isBrowsing = false
+    @Published var receivedMessages: [PeerMessage] = []
 
     private let serviceType = "wolfwhale-study"
     private var peerID: MCPeerID?
@@ -56,7 +55,6 @@ class PeerService: NSObject {
 
     func startBrowsing() {
         guard let peer = peerID, let _ = session else {
-            // Create a peer/session if not already advertising
             let peer = MCPeerID(displayName: UIDevice.current.name)
             peerID = peer
             let newSession = MCSession(peer: peer, securityIdentity: nil, encryptionPreference: .required)
@@ -104,28 +102,22 @@ class PeerService: NSObject {
     // MARK: - Messaging
 
     func sendMessage(_ text: String) {
-        guard let session else { return }
-        let peers = session.connectedPeers
-        guard !peers.isEmpty else { return }
+        guard let session, !session.connectedPeers.isEmpty else { return }
         let message = PeerMessage(sender: peerID?.displayName ?? "Me", text: text)
         if let data = try? JSONEncoder().encode(message) {
-            try? session.send(data, toPeers: peers, with: .reliable)
+            try? session.send(data, toPeers: session.connectedPeers, with: .reliable)
         }
         receivedMessages.append(message)
     }
 
     func sendFile(_ data: Data, name: String) {
         guard let session else { return }
-        let peers = session.connectedPeers
-        guard !peers.isEmpty else { return }
-        for peer in peers {
+        for peer in session.connectedPeers {
             session.sendResource(at: saveTemporaryFile(data: data, name: name),
                                  withName: name,
                                  toPeer: peer) { error in
                 if let error {
-                    #if DEBUG
                     print("PeerService: file send error — \(error.localizedDescription)")
-                    #endif
                 }
             }
         }
@@ -170,11 +162,9 @@ extension PeerService: MCSessionDelegate {
     }
 
     nonisolated func session(_ session: MCSession, didReceive stream: InputStream, withName streamName: String, fromPeer peerID: MCPeerID) {
-        // Not used
     }
 
     nonisolated func session(_ session: MCSession, didStartReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, with progress: Progress) {
-        // Could track progress if needed
     }
 
     nonisolated func session(_ session: MCSession, didFinishReceivingResourceWithName resourceName: String, fromPeer peerID: MCPeerID, at localURL: URL?, withError error: Error?) {
@@ -190,15 +180,12 @@ extension PeerService: MCSessionDelegate {
 extension PeerService: MCNearbyServiceAdvertiserDelegate {
     nonisolated func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: Data?, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
         Task { @MainActor in
-            // Auto-accept invitations for study groups
             invitationHandler(true, session)
         }
     }
 
     nonisolated func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didNotStartAdvertisingPeer error: Error) {
-        #if DEBUG
         print("PeerService: advertising failed — \(error.localizedDescription)")
-        #endif
         Task { @MainActor in
             isAdvertising = false
         }
@@ -223,9 +210,7 @@ extension PeerService: MCNearbyServiceBrowserDelegate {
     }
 
     nonisolated func browser(_ browser: MCNearbyServiceBrowser, didNotStartBrowsingForPeers error: Error) {
-        #if DEBUG
         print("PeerService: browsing failed — \(error.localizedDescription)")
-        #endif
         Task { @MainActor in
             isBrowsing = false
         }

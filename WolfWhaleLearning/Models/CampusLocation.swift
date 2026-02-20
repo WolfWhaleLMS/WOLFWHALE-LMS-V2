@@ -3,7 +3,7 @@ import CoreLocation
 
 // MARK: - Location Type
 
-enum CampusLocationType: String, CaseIterable, Codable, Identifiable, Sendable {
+nonisolated enum CampusLocationType: String, CaseIterable, Codable, Identifiable, Sendable {
     case classroom
     case library
     case gym
@@ -53,7 +53,7 @@ enum CampusLocationType: String, CaseIterable, Codable, Identifiable, Sendable {
 
 // MARK: - Campus Location
 
-struct CampusLocation: Identifiable, Codable, Hashable, Sendable {
+nonisolated struct CampusLocation: Identifiable, Codable, Hashable, Sendable {
     let id: UUID
     var name: String
     var buildingName: String

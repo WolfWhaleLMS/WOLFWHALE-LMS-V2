@@ -208,7 +208,7 @@ struct MusicDiscoveryView: View {
                 if !searchText.isEmpty {
                     Button {
                         searchText = ""
-                        musicService.searchResults = []
+                        musicService.searchResults = nil
                     } label: {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundStyle(.secondary)
@@ -223,7 +223,7 @@ struct MusicDiscoveryView: View {
 
     private var searchResultsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            if musicService.isLoading && !musicService.searchResults.isEmpty {
+            if musicService.isLoading && musicService.searchResults?.isEmpty == false {
                 ProgressView()
                     .frame(maxWidth: .infinity, alignment: .center)
             }
@@ -236,12 +236,12 @@ struct MusicDiscoveryView: View {
                     .frame(maxWidth: .infinity)
             }
 
-            if !musicService.searchResults.isEmpty {
+            if let results = musicService.searchResults, !results.isEmpty {
                 Text("Results")
                     .font(.headline)
 
                 LazyVStack(spacing: 8) {
-                    ForEach(musicService.searchResults) { song in
+                    ForEach(results) { song in
                         songRow(song)
                     }
                 }
@@ -330,7 +330,6 @@ struct MusicDiscoveryView: View {
 
             Spacer()
 
-            // Playback controls
             Button {
                 hapticTrigger.toggle()
                 musicService.togglePlayback()

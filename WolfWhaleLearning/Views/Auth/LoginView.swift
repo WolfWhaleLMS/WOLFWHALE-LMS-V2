@@ -24,7 +24,6 @@ struct LoginView: View {
 
                 loginSection
 
-                #if DEBUG
                 Spacer().frame(height: 32)
 
                 dividerSection
@@ -32,7 +31,6 @@ struct LoginView: View {
                 Spacer().frame(height: 28)
 
                 demoSection
-                #endif
 
                 Spacer().frame(height: 40)
             }
@@ -47,9 +45,7 @@ struct LoginView: View {
         .offset(y: appeared ? 0 : 20)
         .onAppear {
             withAnimation(.spring(duration: 0.7)) { appeared = true }
-            #if DEBUG
             withAnimation(.spring(duration: 0.6).delay(0.3)) { showDemoSection = true }
-            #endif
             loginAudio.startPlaying()
         }
         .onChange(of: viewModel.isAuthenticated) { _, authenticated in
@@ -217,7 +213,6 @@ struct LoginView: View {
         }
     }
 
-    #if DEBUG
     private var dividerSection: some View {
         HStack(spacing: 16) {
             Rectangle()
@@ -250,7 +245,6 @@ struct LoginView: View {
         .opacity(showDemoSection ? 1 : 0)
         .offset(y: showDemoSection ? 0 : 16)
     }
-    #endif
 }
 
 struct DemoRoleButton: View {

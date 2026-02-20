@@ -3,7 +3,7 @@ import Foundation
 
 /// Siri intent that returns a summary of the student's current grades and GPA.
 /// Data is read from UserDefaults where the main app caches it after each data refresh.
-struct CheckGradesIntent: AppIntent {
+nonisolated struct CheckGradesIntent: AppIntent {
     static var title: LocalizedStringResource = "Check Grades"
     static var description = IntentDescription("See your current grades and GPA in WolfWhale LMS.")
 

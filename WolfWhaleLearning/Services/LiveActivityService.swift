@@ -3,7 +3,7 @@ import SwiftUI
 
 // MARK: - Activity Attributes
 
-struct ClassSessionAttributes: ActivityAttributes {
+nonisolated struct ClassSessionAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
         var timeRemaining: Int // minutes
         var currentTopic: String
@@ -17,7 +17,7 @@ struct ClassSessionAttributes: ActivityAttributes {
     var courseColor: String
 }
 
-struct AssignmentDueAttributes: ActivityAttributes {
+nonisolated struct AssignmentDueAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
         var hoursRemaining: Int
         var isSubmitted: Bool

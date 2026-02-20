@@ -9,7 +9,7 @@ class MusicService {
     var isPlaying = false
     var currentTrack: Track?
     var studyPlaylists: [Playlist] = []
-    var searchResults: MusicItemCollection<Song> = []
+    var searchResults: MusicItemCollection<Song>?
     var hasSubscription = false
     var isLoading = false
     var error: String?
@@ -44,7 +44,7 @@ class MusicService {
 
     func searchStudyMusic(query: String) async {
         guard !query.trimmingCharacters(in: .whitespaces).isEmpty else {
-            searchResults = []
+            searchResults = nil
             return
         }
 
@@ -58,7 +58,7 @@ class MusicService {
             searchResults = response.songs
         } catch {
             self.error = "Search failed: \(error.localizedDescription)"
-            searchResults = []
+            searchResults = nil
         }
 
         isLoading = false
@@ -84,7 +84,6 @@ class MusicService {
                     }
                 }
             } catch {
-                // Continue with other queries even if one fails
                 continue
             }
         }
