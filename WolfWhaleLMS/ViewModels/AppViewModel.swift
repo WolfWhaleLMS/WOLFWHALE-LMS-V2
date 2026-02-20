@@ -91,6 +91,37 @@ class AppViewModel {
         }
     }
 
+    func signUp(name: String, email: String, password: String, role: UserRole, schoolCode: String?) async throws {
+        let trimmedName = name.trimmingCharacters(in: .whitespaces)
+        let nameComponents = trimmedName.split(separator: " ", maxSplits: 1)
+        let firstName = String(nameComponents.first ?? "")
+        let lastName = nameComponents.count > 1 ? String(nameComponents.last!) : ""
+        let trimmedEmail = email.trimmingCharacters(in: .whitespaces).lowercased()
+
+        let result = try await supabaseClient.auth.signUp(
+            email: trimmedEmail,
+            password: password,
+            data: [
+                "first_name": .string(firstName),
+                "last_name": .string(lastName),
+                "role": .string(role.rawValue)
+            ]
+        )
+
+        let newProfile = InsertProfileDTO(
+            id: result.user.id,
+            firstName: firstName,
+            lastName: lastName,
+            email: trimmedEmail,
+            role: role.rawValue,
+            schoolId: schoolCode
+        )
+        try await supabaseClient
+            .from("profiles")
+            .insert(newProfile)
+            .execute()
+    }
+
     func loginAsDemo(role: UserRole) {
         isDemoMode = true
         currentUser = mockService.sampleUser(role: role)
@@ -339,7 +370,8 @@ class AppViewModel {
             let newAssignment = Assignment(
                 id: UUID(), title: title, courseId: courseId, courseName: courseName,
                 instructions: instructions, dueDate: dueDate, points: points,
-                isSubmitted: false, submission: nil, grade: nil, feedback: nil, xpReward: xpReward
+                isSubmitted: false, submission: nil, grade: nil, feedback: nil, xpReward: xpReward,
+                studentId: nil, studentName: nil
             )
             assignments.append(newAssignment)
         }
@@ -521,21 +553,26 @@ class AppViewModel {
     }
 
     // MARK: - Teacher: Grade Submission
-    func gradeSubmission(assignmentId: UUID, score: Double, letterGrade: String, feedback: String?) async throws {
+    func gradeSubmission(assignmentId: UUID, studentId: UUID?, score: Double, letterGrade: String, feedback: String?) async throws {
         isLoading = true
         gradeError = nil
         defer { isLoading = false }
 
-        guard let assignment = assignments.first(where: { $0.id == assignmentId }) else {
+        guard let assignment = assignments.first(where: { $0.id == assignmentId && $0.studentId == studentId }) ??
+              assignments.first(where: { $0.id == assignmentId }) else {
             gradeError = "Assignment not found"
             throw NSError(domain: "AppViewModel", code: 404, userInfo: [NSLocalizedDescriptionKey: "Assignment not found"])
         }
+
+        // Use the studentId passed in, then fall back to the assignment's studentId, then currentUser as last resort
+        let resolvedStudentId = studentId ?? assignment.studentId ?? currentUser?.id ?? UUID()
 
         let maxScore = Double(assignment.points)
         let percentage = maxScore > 0 ? (score / maxScore) * 100 : 0
 
         if isDemoMode {
-            if let index = assignments.firstIndex(where: { $0.id == assignmentId }) {
+            if let index = assignments.firstIndex(where: { $0.id == assignmentId && $0.studentId == studentId }) ??
+               assignments.firstIndex(where: { $0.id == assignmentId }) {
                 assignments[index].grade = percentage
                 assignments[index].feedback = feedback
             }
@@ -544,7 +581,7 @@ class AppViewModel {
 
         do {
             try await dataService.gradeSubmission(
-                studentId: currentUser?.id ?? UUID(),
+                studentId: resolvedStudentId,
                 courseId: assignment.courseId,
                 assignmentId: assignmentId,
                 score: score,

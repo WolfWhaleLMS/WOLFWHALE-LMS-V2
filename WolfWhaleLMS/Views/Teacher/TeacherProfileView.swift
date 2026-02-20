@@ -11,6 +11,7 @@ struct TeacherProfileView: View {
                     profileHeader
                     statsSection
                     settingsSection
+                    aboutSection
                     logoutButton
                 }
                 .padding(.horizontal)
@@ -104,6 +105,59 @@ struct TeacherProfileView: View {
                 .foregroundStyle(.tertiary)
         }
         .padding(14)
+    }
+
+    private var aboutSection: some View {
+        VStack(spacing: 16) {
+            HStack {
+                Image(systemName: "info.circle.fill")
+                    .foregroundStyle(.blue)
+                    .frame(width: 28)
+                Text("About")
+                    .font(.headline)
+                Spacer()
+            }
+
+            VStack(spacing: 12) {
+                Image(systemName: "w.circle.fill")
+                    .font(.system(size: 40))
+                    .foregroundStyle(
+                        LinearGradient(
+                            colors: [.purple, .cyan],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+
+                Text("WolfWhale LMS")
+                    .font(.headline)
+
+                HStack(spacing: 16) {
+                    VStack(spacing: 2) {
+                        Text("Version")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        Text("1.0.0")
+                            .font(.caption.monospaced())
+                    }
+                    VStack(spacing: 2) {
+                        Text("Build")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        Text("2024.1")
+                            .font(.caption.monospaced())
+                    }
+                }
+
+                Text("\u{00A9} 2024 WolfWhale. All rights reserved.")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.bottom, 4)
+        }
+        .padding(16)
+        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
     }
 
     private var logoutButton: some View {

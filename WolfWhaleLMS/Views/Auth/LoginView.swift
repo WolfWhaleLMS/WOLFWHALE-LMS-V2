@@ -5,6 +5,8 @@ struct LoginView: View {
     @State private var appeared = false
     @State private var showDemoSection = false
     @State private var showForgotPassword = false
+    @State private var showSignUp = false
+    @State private var showAdminSetup = false
     @FocusState private var focusedField: Field?
 
     private enum Field { case email, password }
@@ -36,6 +38,12 @@ struct LoginView: View {
         .background(Color(.systemGroupedBackground).ignoresSafeArea())
         .sheet(isPresented: $showForgotPassword) {
             ForgotPasswordView()
+        }
+        .sheet(isPresented: $showSignUp) {
+            SignUpView()
+        }
+        .sheet(isPresented: $showAdminSetup) {
+            AdminSetupView()
         }
         .opacity(appeared ? 1 : 0)
         .offset(y: appeared ? 0 : 20)
@@ -156,6 +164,35 @@ struct LoginView: View {
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(.purple)
             }
+
+            Button {
+                showSignUp = true
+            } label: {
+                HStack(spacing: 8) {
+                    Text("Create Account")
+                        .font(.headline)
+                    Image(systemName: "person.badge.plus")
+                        .font(.subheadline.bold())
+                }
+                .frame(maxWidth: .infinity)
+                .frame(height: 50)
+            }
+            .buttonStyle(.bordered)
+            .tint(Color.purple)
+            .clipShape(.rect(cornerRadius: 12))
+
+            Button {
+                showAdminSetup = true
+            } label: {
+                HStack(spacing: 4) {
+                    Image(systemName: "building.2.fill")
+                        .font(.caption)
+                    Text("Set up a new school")
+                        .font(.subheadline.weight(.medium))
+                }
+                .foregroundStyle(.purple.opacity(0.8))
+            }
+            .padding(.top, 2)
         }
     }
 

@@ -33,6 +33,8 @@ nonisolated struct Assignment: Identifiable, Hashable, Sendable {
     var grade: Double?
     var feedback: String?
     var xpReward: Int
+    var studentId: UUID? = nil
+    var studentName: String? = nil
 
     var isOverdue: Bool {
         !isSubmitted && dueDate < Date()

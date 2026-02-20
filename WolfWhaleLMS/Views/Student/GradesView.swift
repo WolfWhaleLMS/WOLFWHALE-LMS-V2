@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct GradesView: View {
-    let viewModel: AppViewModel
+    @Bindable var viewModel: AppViewModel
 
     private var gpa: Double {
         guard !viewModel.grades.isEmpty else { return 0 }
@@ -31,6 +31,15 @@ struct GradesView: View {
         }
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Grades")
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                NavigationLink {
+                    ReportCardView(viewModel: viewModel)
+                } label: {
+                    Image(systemName: "square.and.arrow.up")
+                }
+            }
+        }
     }
 
     private var gpaCard: some View {

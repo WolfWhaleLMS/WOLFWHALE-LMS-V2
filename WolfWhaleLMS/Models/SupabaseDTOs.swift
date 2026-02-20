@@ -127,6 +127,7 @@ nonisolated struct AssignmentDTO: Codable, Sendable {
     let points: Int?
     let xpReward: Int?
     let createdAt: String?
+    let studentId: UUID?
 
     enum CodingKeys: String, CodingKey {
         case id, title, instructions, points
@@ -134,6 +135,7 @@ nonisolated struct AssignmentDTO: Codable, Sendable {
         case dueDate = "due_date"
         case xpReward = "xp_reward"
         case createdAt = "created_at"
+        case studentId = "student_id"
     }
 }
 

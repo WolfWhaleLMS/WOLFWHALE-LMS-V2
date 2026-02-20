@@ -86,6 +86,20 @@ struct GradeSubmissionView: View {
                 Spacer()
             }
 
+            // Student identification
+            if let studentName = assignment.studentName {
+                HStack(spacing: 8) {
+                    Image(systemName: "person.fill")
+                        .foregroundStyle(.pink)
+                    Text(studentName)
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.primary)
+                }
+                .padding(8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(.pink.opacity(0.1), in: .rect(cornerRadius: 10))
+            }
+
             HStack(spacing: 16) {
                 Label("Due: \(assignment.dueDate.formatted(.dateTime.month(.abbreviated).day()))", systemImage: "calendar")
                 Label("\(assignment.points) pts", systemImage: "star.fill")
@@ -295,6 +309,7 @@ struct GradeSubmissionView: View {
             do {
                 try await viewModel.gradeSubmission(
                     assignmentId: assignment.id,
+                    studentId: assignment.studentId,
                     score: score,
                     letterGrade: finalLetterGrade,
                     feedback: trimmedFeedback.isEmpty ? nil : trimmedFeedback

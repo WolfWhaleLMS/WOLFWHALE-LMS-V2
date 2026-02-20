@@ -209,8 +209,9 @@ struct DataService {
             courseNames[c.id] = c.title
         }
 
-        var submissions: [UUID: SubmissionDTO] = [:]
         if role == .student {
+            // Student: fetch only their own submissions
+            var submissions: [UUID: SubmissionDTO] = [:]
             let subs: [SubmissionDTO] = try await supabaseClient
                 .from("submissions")
                 .select()
@@ -220,24 +221,104 @@ struct DataService {
             for s in subs {
                 submissions[s.assignmentId] = s
             }
-        }
 
-        return assignmentDTOs.map { dto in
-            let sub = submissions[dto.id]
-            return Assignment(
-                id: dto.id,
-                title: dto.title,
-                courseId: dto.courseId,
-                courseName: courseNames[dto.courseId] ?? "Unknown",
-                instructions: dto.instructions ?? "",
-                dueDate: parseDate(dto.dueDate),
-                points: dto.points ?? 100,
-                isSubmitted: sub != nil,
-                submission: sub?.content,
-                grade: sub?.grade,
-                feedback: sub?.feedback,
-                xpReward: dto.xpReward ?? 50
-            )
+            return assignmentDTOs.map { dto in
+                let sub = submissions[dto.id]
+                return Assignment(
+                    id: dto.id,
+                    title: dto.title,
+                    courseId: dto.courseId,
+                    courseName: courseNames[dto.courseId] ?? "Unknown",
+                    instructions: dto.instructions ?? "",
+                    dueDate: parseDate(dto.dueDate),
+                    points: dto.points ?? 100,
+                    isSubmitted: sub != nil,
+                    submission: sub?.content,
+                    grade: sub?.grade,
+                    feedback: sub?.feedback,
+                    xpReward: dto.xpReward ?? 50,
+                    studentId: nil,
+                    studentName: nil
+                )
+            }
+        } else {
+            // Teacher/Admin/Parent: fetch ALL submissions for these assignments and resolve student names
+            let assignmentIds = assignmentDTOs.map(\.id)
+            var allSubmissions: [SubmissionDTO] = []
+            if !assignmentIds.isEmpty {
+                allSubmissions = try await supabaseClient
+                    .from("submissions")
+                    .select()
+                    .in("assignment_id", values: assignmentIds.map(\.uuidString))
+                    .execute()
+                    .value
+            }
+
+            // Resolve student names from profiles
+            let studentIds = Array(Set(allSubmissions.map(\.studentId)))
+            var studentNames: [UUID: String] = [:]
+            if !studentIds.isEmpty {
+                let profiles: [ProfileDTO] = try await supabaseClient
+                    .from("profiles")
+                    .select()
+                    .in("id", values: studentIds.map(\.uuidString))
+                    .execute()
+                    .value
+                for p in profiles {
+                    studentNames[p.id] = "\(p.firstName) \(p.lastName)"
+                }
+            }
+
+            // Group submissions by assignment
+            var submissionsByAssignment: [UUID: [SubmissionDTO]] = [:]
+            for sub in allSubmissions {
+                submissionsByAssignment[sub.assignmentId, default: []].append(sub)
+            }
+
+            var results: [Assignment] = []
+            for dto in assignmentDTOs {
+                let subs = submissionsByAssignment[dto.id] ?? []
+                if subs.isEmpty {
+                    // No submissions yet - show the assignment as unsubmitted
+                    results.append(Assignment(
+                        id: dto.id,
+                        title: dto.title,
+                        courseId: dto.courseId,
+                        courseName: courseNames[dto.courseId] ?? "Unknown",
+                        instructions: dto.instructions ?? "",
+                        dueDate: parseDate(dto.dueDate),
+                        points: dto.points ?? 100,
+                        isSubmitted: false,
+                        submission: nil,
+                        grade: nil,
+                        feedback: nil,
+                        xpReward: dto.xpReward ?? 50,
+                        studentId: nil,
+                        studentName: nil
+                    ))
+                } else {
+                    // One entry per student submission
+                    for sub in subs {
+                        results.append(Assignment(
+                            id: dto.id,
+                            title: dto.title,
+                            courseId: dto.courseId,
+                            courseName: courseNames[dto.courseId] ?? "Unknown",
+                            instructions: dto.instructions ?? "",
+                            dueDate: parseDate(dto.dueDate),
+                            points: dto.points ?? 100,
+                            isSubmitted: true,
+                            submission: sub.content,
+                            grade: sub.grade,
+                            feedback: sub.feedback,
+                            xpReward: dto.xpReward ?? 50,
+                            studentId: sub.studentId,
+                            studentName: studentNames[sub.studentId] ?? "Unknown Student"
+                        ))
+                    }
+                }
+            }
+            return results
         }
     }
 

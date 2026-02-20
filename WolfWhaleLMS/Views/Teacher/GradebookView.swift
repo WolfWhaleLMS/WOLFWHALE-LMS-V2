@@ -2,7 +2,7 @@ import SwiftUI
 
 struct GradebookView: View {
     let course: Course
-    let viewModel: AppViewModel
+    @Bindable var viewModel: AppViewModel
     @State private var showAddAssignment = false
     @State private var showCreateModule = false
     @State private var showCreateQuiz = false
@@ -30,6 +30,7 @@ struct GradebookView: View {
             VStack(spacing: 16) {
                 courseHeader
                 statsSection
+                studentSubmissionsSection
                 contentActionsSection
                 courseContentSection
                 enrolledStudentsSection
@@ -114,6 +115,47 @@ struct GradebookView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 14)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
+    }
+
+    // MARK: - Student Submissions
+
+    private var studentSubmissionsSection: some View {
+        NavigationLink {
+            StudentSubmissionsView(viewModel: viewModel, course: course)
+        } label: {
+            HStack(spacing: 12) {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(.orange.gradient)
+                    .frame(width: 40, height: 40)
+                    .overlay {
+                        Image(systemName: "person.2.fill")
+                            .font(.callout)
+                            .foregroundStyle(.white)
+                    }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Student Submissions")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.primary)
+                    Text("View submissions grouped by student")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                if pendingCount > 0 {
+                    Text("\(pendingCount)")
+                        .font(.caption2.bold())
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(.orange, in: .capsule)
+                        .foregroundStyle(.white)
+                }
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(14)
+            .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        }
     }
 
     // MARK: - Content Actions
@@ -275,7 +317,7 @@ struct GradebookView: View {
                 .padding(.vertical, 20)
                 .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
             } else {
-                ForEach(courseAssignments) { assignment in
+                ForEach(Array(courseAssignments.enumerated()), id: \.offset) { _, assignment in
                     assignmentRow(assignment)
                 }
             }
@@ -288,6 +330,16 @@ struct GradebookView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(assignment.title)
                         .font(.subheadline.bold())
+                    if let studentName = assignment.studentName {
+                        HStack(spacing: 4) {
+                            Image(systemName: "person.fill")
+                                .font(.caption2)
+                                .foregroundStyle(.pink)
+                            Text(studentName)
+                                .font(.caption)
+                                .foregroundStyle(.pink)
+                        }
+                    }
                     Text("Due: \(assignment.dueDate.formatted(.dateTime.month(.abbreviated).day()))")
                         .font(.caption)
                         .foregroundStyle(.secondary)
