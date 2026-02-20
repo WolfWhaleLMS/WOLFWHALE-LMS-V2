@@ -42,7 +42,7 @@ struct DataService {
         switch role {
         case .student:
             let enrollments: [EnrollmentDTO] = try await supabaseClient
-                .from("enrollments")
+                .from("course_enrollments")
                 .select()
                 .eq("student_id", value: userId.uuidString)
                 .execute()
@@ -60,7 +60,7 @@ struct DataService {
             courseDTOs = try await supabaseClient
                 .from("courses")
                 .select()
-                .eq("teacher_id", value: userId.uuidString)
+                .eq("created_by", value: userId.uuidString)
                 .execute()
                 .value
         case .admin, .parent:
@@ -98,21 +98,12 @@ struct DataService {
                 .value
         }
 
-        // --- Batch fetch lesson completions for student role ---
-        var completedLessonIds: Set<UUID> = []
-        if role == .student {
-            let completions: [LessonCompletionDTO] = try await supabaseClient
-                .from("lesson_completions")
-                .select()
-                .eq("student_id", value: userId.uuidString)
-                .execute()
-                .value
-            completedLessonIds = Set(completions.map(\.lessonId))
-        }
+        // --- No lesson_completions table; skip completion tracking ---
+        let completedLessonIds: Set<UUID> = []
 
         // --- Batch fetch enrollment counts for all courses ---
         let allEnrollments: [EnrollmentDTO] = try await supabaseClient
-            .from("enrollments")
+            .from("course_enrollments")
             .select()
             .in("course_id", values: allCourseIds.map(\.uuidString))
             .execute()
@@ -122,31 +113,44 @@ struct DataService {
             enrollmentCountByCourse[enrollment.courseId, default: 0] += 1
         }
 
-        // --- Batch fetch all teacher names ---
-        let teacherIds = Array(Set(courseDTOs.compactMap(\.teacherId)))
+        // --- Batch fetch all teacher/creator names ---
+        let creatorIds = Array(Set(courseDTOs.compactMap(\.createdBy)))
         var teacherNameMap: [UUID: String] = [:]
-        if !teacherIds.isEmpty {
+        if !creatorIds.isEmpty {
             let profiles: [ProfileDTO] = try await supabaseClient
                 .from("profiles")
                 .select()
-                .in("id", values: teacherIds.map(\.uuidString))
+                .in("id", values: creatorIds.map(\.uuidString))
                 .execute()
                 .value
             for p in profiles {
-                teacherNameMap[p.id] = "\(p.firstName) \(p.lastName)"
+                teacherNameMap[p.id] = "\(p.firstName ?? "") \(p.lastName ?? "")"
             }
         }
 
         // --- Group lessons by module ---
         var lessonsByModule: [UUID: [LessonDTO]] = [:]
         for lesson in allLessonDTOs {
-            lessonsByModule[lesson.moduleId, default: []].append(lesson)
+            guard let modId = lesson.moduleId else { continue }
+            lessonsByModule[modId, default: []].append(lesson)
         }
 
         // --- Group modules by course ---
         var modulesByCourse: [UUID: [ModuleDTO]] = [:]
         for mod in allModuleDTOs {
             modulesByCourse[mod.courseId, default: []].append(mod)
+        }
+
+        // --- Batch fetch class codes for all courses from class_codes table ---
+        var classCodeMap: [UUID: String] = [:]
+        let classCodes: [ClassCodeDTO] = try await supabaseClient
+            .from("class_codes")
+            .select()
+            .in("course_id", values: allCourseIds.map(\.uuidString))
+            .execute()
+            .value
+        for cc in classCodes {
+            classCodeMap[cc.courseId] = cc.code
         }
 
         // --- Assemble courses from pre-fetched data ---
@@ -161,10 +165,10 @@ struct DataService {
                         id: l.id,
                         title: l.title,
                         content: l.content ?? "",
-                        duration: l.duration ?? 15,
+                        duration: 15,
                         isCompleted: completedLessonIds.contains(l.id),
-                        type: LessonType(rawValue: l.type ?? "Reading") ?? .reading,
-                        xpReward: l.xpReward ?? 25
+                        type: LessonType(rawValue: l.status ?? "Reading") ?? .reading,
+                        xpReward: 25
                     )
                 }
                 modules.append(Module(
@@ -176,22 +180,22 @@ struct DataService {
             }
 
             let enrollmentCount = enrollmentCountByCourse[dto.id] ?? 0
-            let teacherName = dto.teacherId.flatMap { teacherNameMap[$0] } ?? "Unknown"
+            let teacherName = dto.createdBy.flatMap { teacherNameMap[$0] } ?? "Unknown"
             let totalLessons = modules.reduce(0) { $0 + $1.lessons.count }
             let completedLessons = modules.reduce(0) { $0 + $1.lessons.filter(\.isCompleted).count }
             let progress = totalLessons > 0 ? Double(completedLessons) / Double(totalLessons) : 0
 
             courses.append(Course(
                 id: dto.id,
-                title: dto.title,
+                title: dto.name,
                 description: dto.description ?? "",
                 teacherName: teacherName,
-                iconSystemName: dto.iconSystemName ?? "book.fill",
-                colorName: dto.colorName ?? "blue",
+                iconSystemName: "book.fill",
+                colorName: "blue",
                 modules: modules,
                 enrolledStudentCount: enrollmentCount,
                 progress: progress,
-                classCode: dto.classCode ?? ""
+                classCode: classCodeMap[dto.id] ?? ""
             ))
         }
         return courses
@@ -209,7 +213,6 @@ struct DataService {
 
         let moduleIds = moduleDTOs.map(\.id)
 
-        // Batch fetch all lessons for all modules in this course
         var allLessonDTOs: [LessonDTO] = []
         if !moduleIds.isEmpty {
             allLessonDTOs = try await supabaseClient
@@ -221,21 +224,12 @@ struct DataService {
                 .value
         }
 
-        var completedLessonIds: Set<UUID> = []
-        if let studentId {
-            let completions: [LessonCompletionDTO] = try await supabaseClient
-                .from("lesson_completions")
-                .select()
-                .eq("student_id", value: studentId.uuidString)
-                .execute()
-                .value
-            completedLessonIds = Set(completions.map(\.lessonId))
-        }
+        let completedLessonIds: Set<UUID> = []
 
-        // Group lessons by module
         var lessonsByModule: [UUID: [LessonDTO]] = [:]
         for lesson in allLessonDTOs {
-            lessonsByModule[lesson.moduleId, default: []].append(lesson)
+            guard let modId = lesson.moduleId else { continue }
+            lessonsByModule[modId, default: []].append(lesson)
         }
 
         var modules: [Module] = []
@@ -246,10 +240,10 @@ struct DataService {
                     id: l.id,
                     title: l.title,
                     content: l.content ?? "",
-                    duration: l.duration ?? 15,
+                    duration: 15,
                     isCompleted: completedLessonIds.contains(l.id),
-                    type: LessonType(rawValue: l.type ?? "Reading") ?? .reading,
-                    xpReward: l.xpReward ?? 25
+                    type: LessonType(rawValue: l.status ?? "Reading") ?? .reading,
+                    xpReward: 25
                 )
             }
             modules.append(Module(
@@ -264,7 +258,7 @@ struct DataService {
 
     private func fetchEnrollmentCount(for courseId: UUID) async throws -> Int {
         let enrollments: [EnrollmentDTO] = try await supabaseClient
-            .from("enrollments")
+            .from("course_enrollments")
             .select()
             .eq("course_id", value: courseId.uuidString)
             .execute()
@@ -282,7 +276,7 @@ struct DataService {
                 .single()
                 .execute()
                 .value
-            return "\(profile.firstName) \(profile.lastName)"
+            return "\(profile.firstName ?? "") \(profile.lastName ?? "")"
         } catch {
             return "Unknown"
         }
@@ -325,11 +319,10 @@ struct DataService {
             .execute()
             .value
         for c in courseDTOs {
-            courseNames[c.id] = c.title
+            courseNames[c.id] = c.name
         }
 
         if role == .student {
-            // Student: fetch only their own submissions
             var submissions: [UUID: SubmissionDTO] = [:]
             let subs: [SubmissionDTO] = try await supabaseClient
                 .from("submissions")
@@ -350,18 +343,17 @@ struct DataService {
                     courseName: courseNames[dto.courseId] ?? "Unknown",
                     instructions: dto.instructions ?? "",
                     dueDate: parseDate(dto.dueDate),
-                    points: dto.points ?? 100,
+                    points: dto.maxPoints ?? 100,
                     isSubmitted: sub != nil,
-                    submission: sub?.content,
-                    grade: sub?.grade,
-                    feedback: sub?.feedback,
-                    xpReward: dto.xpReward ?? 50,
+                    submission: sub?.submissionText,
+                    grade: nil,
+                    feedback: nil,
+                    xpReward: 50,
                     studentId: nil,
                     studentName: nil
                 )
             }
         } else {
-            // Teacher/Admin/Parent: fetch ALL submissions for these assignments and resolve student names
             let assignmentIds = assignmentDTOs.map(\.id)
             var allSubmissions: [SubmissionDTO] = []
             if !assignmentIds.isEmpty {
@@ -373,7 +365,6 @@ struct DataService {
                     .value
             }
 
-            // Resolve student names from profiles
             let studentIds = Array(Set(allSubmissions.map(\.studentId)))
             var studentNames: [UUID: String] = [:]
             if !studentIds.isEmpty {
@@ -384,11 +375,10 @@ struct DataService {
                     .execute()
                     .value
                 for p in profiles {
-                    studentNames[p.id] = "\(p.firstName) \(p.lastName)"
+                    studentNames[p.id] = "\(p.firstName ?? "") \(p.lastName ?? "")"
                 }
             }
 
-            // Group submissions by assignment
             var submissionsByAssignment: [UUID: [SubmissionDTO]] = [:]
             for sub in allSubmissions {
                 submissionsByAssignment[sub.assignmentId, default: []].append(sub)
@@ -398,7 +388,6 @@ struct DataService {
             for dto in assignmentDTOs {
                 let subs = submissionsByAssignment[dto.id] ?? []
                 if subs.isEmpty {
-                    // No submissions yet - show the assignment as unsubmitted
                     results.append(Assignment(
                         id: dto.id,
                         title: dto.title,
@@ -406,17 +395,16 @@ struct DataService {
                         courseName: courseNames[dto.courseId] ?? "Unknown",
                         instructions: dto.instructions ?? "",
                         dueDate: parseDate(dto.dueDate),
-                        points: dto.points ?? 100,
+                        points: dto.maxPoints ?? 100,
                         isSubmitted: false,
                         submission: nil,
                         grade: nil,
                         feedback: nil,
-                        xpReward: dto.xpReward ?? 50,
+                        xpReward: 50,
                         studentId: nil,
                         studentName: nil
                     ))
                 } else {
-                    // One entry per student submission
                     for sub in subs {
                         results.append(Assignment(
                             id: dto.id,
@@ -425,12 +413,12 @@ struct DataService {
                             courseName: courseNames[dto.courseId] ?? "Unknown",
                             instructions: dto.instructions ?? "",
                             dueDate: parseDate(dto.dueDate),
-                            points: dto.points ?? 100,
+                            points: dto.maxPoints ?? 100,
                             isSubmitted: true,
-                            submission: sub.content,
-                            grade: sub.grade,
-                            feedback: sub.feedback,
-                            xpReward: dto.xpReward ?? 50,
+                            submission: sub.submissionText,
+                            grade: nil,
+                            feedback: nil,
+                            xpReward: 50,
                             studentId: sub.studentId,
                             studentName: studentNames[sub.studentId] ?? "Unknown Student"
                         ))
@@ -449,7 +437,7 @@ struct DataService {
     }
 
     func submitAssignment(assignmentId: UUID, studentId: UUID, content: String) async throws {
-        let dto = InsertSubmissionDTO(assignmentId: assignmentId, studentId: studentId, content: content)
+        let dto = InsertSubmissionDTO(tenantId: nil, assignmentId: assignmentId, studentId: studentId, submissionText: content, filePath: nil, submissionUrl: nil, status: "submitted")
         try await supabaseClient
             .from("submissions")
             .insert(dto)
@@ -478,7 +466,7 @@ struct DataService {
             .in("id", values: courseIds.map(\.uuidString))
             .execute()
             .value
-        for c in courseDTOs { courseNames[c.id] = c.title }
+        for c in courseDTOs { courseNames[c.id] = c.name }
 
         let attempts: [QuizAttemptDTO] = try await supabaseClient
             .from("quiz_attempts")
@@ -498,6 +486,25 @@ struct DataService {
             .execute()
             .value
 
+        // --- Batch fetch all options for all questions ---
+        let allQuestionIds = allQuestionDTOs.map(\.id)
+        var allOptionDTOs: [QuizOptionDTO] = []
+        if !allQuestionIds.isEmpty {
+            allOptionDTOs = try await supabaseClient
+                .from("quiz_options")
+                .select()
+                .in("question_id", values: allQuestionIds.map(\.uuidString))
+                .order("order_index")
+                .execute()
+                .value
+        }
+
+        // Group options by question
+        var optionsByQuestion: [UUID: [QuizOptionDTO]] = [:]
+        for opt in allOptionDTOs {
+            optionsByQuestion[opt.questionId, default: []].append(opt)
+        }
+
         // Group questions by quiz
         var questionsByQuiz: [UUID: [QuizQuestionDTO]] = [:]
         for q in allQuestionDTOs {
@@ -508,11 +515,14 @@ struct DataService {
         for dto in quizDTOs {
             let questionDTOs = questionsByQuiz[dto.id] ?? []
             let questions = questionDTOs.map { q in
-                QuizQuestion(
+                let opts = optionsByQuestion[q.id] ?? []
+                let optionTexts = opts.map(\.optionText)
+                let correctIdx = opts.firstIndex(where: { $0.isCorrect == true }) ?? 0
+                return QuizQuestion(
                     id: q.id,
-                    text: q.text,
-                    options: q.options ?? [],
-                    correctIndex: q.correctIndex ?? 0
+                    text: q.questionText,
+                    options: optionTexts,
+                    correctIndex: correctIdx
                 )
             }
 
@@ -523,18 +533,18 @@ struct DataService {
                 courseId: dto.courseId,
                 courseName: courseNames[dto.courseId] ?? "Unknown",
                 questions: questions,
-                timeLimit: dto.timeLimit ?? 30,
-                dueDate: parseDate(dto.dueDate),
+                timeLimit: dto.timeLimitMinutes ?? 30,
+                dueDate: Date(),
                 isCompleted: attempt != nil,
                 score: attempt?.score,
-                xpReward: dto.xpReward ?? 100
+                xpReward: 100
             ))
         }
         return quizzes
     }
 
     func submitQuizAttempt(quizId: UUID, studentId: UUID, score: Double) async throws {
-        let dto = InsertQuizAttemptDTO(quizId: quizId, studentId: studentId, score: score)
+        let dto = InsertQuizAttemptDTO(quizId: quizId, studentId: studentId, tenantId: nil, score: score, totalPoints: nil, percentage: nil, passed: nil, attemptNumber: nil)
         try await supabaseClient
             .from("quiz_attempts")
             .insert(dto)
@@ -546,7 +556,6 @@ struct DataService {
     func fetchGrades(for studentId: UUID, courseIds: [UUID]) async throws -> [GradeEntry] {
         if courseIds.isEmpty { return [] }
 
-        // Batch fetch all grades for this student across all courses at once
         let allGradeDTOs: [GradeDTO] = try await supabaseClient
             .from("grades")
             .select()
@@ -555,7 +564,6 @@ struct DataService {
             .execute()
             .value
 
-        // Batch fetch all course info at once
         let courseDTOs: [CourseDTO] = try await supabaseClient
             .from("courses")
             .select()
@@ -563,11 +571,9 @@ struct DataService {
             .execute()
             .value
 
-        // Build course lookup
         var courseMap: [UUID: CourseDTO] = [:]
         for c in courseDTOs { courseMap[c.id] = c }
 
-        // Group grades by course
         var gradesByCourse: [UUID: [GradeDTO]] = [:]
         for g in allGradeDTOs {
             gradesByCourse[g.courseId, default: []].append(g)
@@ -581,11 +587,11 @@ struct DataService {
             let assignmentGrades = gradeDTOs.map { g in
                 AssignmentGrade(
                     id: g.id,
-                    title: g.title ?? "Assignment",
-                    score: g.score ?? 0,
-                    maxScore: g.maxScore ?? 100,
+                    title: "Assignment",
+                    score: g.pointsEarned ?? 0,
+                    maxScore: 100,
                     date: parseDate(g.gradedAt),
-                    type: g.type ?? "Assignment"
+                    type: "Assignment"
                 )
             }
 
@@ -597,9 +603,9 @@ struct DataService {
             gradeEntries.append(GradeEntry(
                 id: course.id,
                 courseId: course.id,
-                courseName: course.title,
-                courseIcon: course.iconSystemName ?? "book.fill",
-                courseColor: course.colorName ?? "blue",
+                courseName: course.name,
+                courseIcon: "book.fill",
+                courseColor: "blue",
                 letterGrade: letter,
                 numericGrade: avg,
                 assignmentGrades: assignmentGrades
@@ -647,14 +653,30 @@ struct DataService {
                 .value
         }
 
+        // Resolve creator names
+        let creatorIds = Array(Set(dtos.compactMap(\.createdBy)))
+        var nameMap: [UUID: String] = [:]
+        if !creatorIds.isEmpty {
+            let profiles: [ProfileDTO] = try await supabaseClient
+                .from("profiles")
+                .select()
+                .in("id", values: creatorIds.map(\.uuidString))
+                .execute()
+                .value
+            for p in profiles {
+                nameMap[p.id] = "\(p.firstName ?? "") \(p.lastName ?? "")"
+            }
+        }
+
         return dtos.map { dto in
-            Announcement(
+            let authorName = dto.createdBy.flatMap { nameMap[$0] } ?? "Admin"
+            return Announcement(
                 id: dto.id,
                 title: dto.title,
                 content: dto.content ?? "",
-                authorName: dto.authorName ?? "Admin",
+                authorName: authorName,
                 date: parseDate(dto.createdAt),
-                isPinned: dto.isPinned ?? false
+                isPinned: false
             )
         }
     }
@@ -669,18 +691,15 @@ struct DataService {
     // MARK: - Conversations & Messages
 
     func fetchConversations(for userId: UUID) async throws -> [Conversation] {
-        let participants: [ConversationParticipantDTO] = try await supabaseClient
-            .from("conversation_participants")
+        let members: [ConversationMemberDTO] = try await supabaseClient
+            .from("conversation_members")
             .select()
             .eq("user_id", value: userId.uuidString)
             .execute()
             .value
 
-        let conversationIds = participants.map(\.conversationId)
+        let conversationIds = members.map(\.conversationId)
         if conversationIds.isEmpty { return [] }
-
-        var unreadMap: [UUID: Int] = [:]
-        for p in participants { unreadMap[p.conversationId] = p.unreadCount ?? 0 }
 
         let convDTOs: [ConversationDTO] = try await supabaseClient
             .from("conversations")
@@ -704,24 +723,39 @@ struct DataService {
             .execute()
             .value
 
+        // Resolve sender names
+        let senderIds = Array(Set(allMessageDTOs.map(\.senderId)))
+        var senderNameMap: [UUID: String] = [:]
+        if !senderIds.isEmpty {
+            let profiles: [ProfileDTO] = try await supabaseClient
+                .from("profiles")
+                .select()
+                .in("id", values: senderIds.map(\.uuidString))
+                .execute()
+                .value
+            for p in profiles {
+                senderNameMap[p.id] = "\(p.firstName ?? "") \(p.lastName ?? "")"
+            }
+        }
+
         // Group messages by conversation
         var messagesByConv: [UUID: [MessageDTO]] = [:]
         for m in allMessageDTOs {
             messagesByConv[m.conversationId, default: []].append(m)
         }
 
-        // --- Batch fetch all participants for all conversations at once ---
-        let allParticipants: [ConversationParticipantDTO] = try await supabaseClient
-            .from("conversation_participants")
+        // --- Batch fetch all members for all conversations at once ---
+        let allMembers: [ConversationMemberDTO] = try await supabaseClient
+            .from("conversation_members")
             .select()
             .in("conversation_id", values: convIds.map(\.uuidString))
             .execute()
             .value
 
-        // Group participants by conversation
-        var participantsByConv: [UUID: [ConversationParticipantDTO]] = [:]
-        for p in allParticipants {
-            participantsByConv[p.conversationId, default: []].append(p)
+        // Group members by conversation
+        var membersByConv: [UUID: [ConversationMemberDTO]] = [:]
+        for m in allMembers {
+            membersByConv[m.conversationId, default: []].append(m)
         }
 
         var conversations: [Conversation] = []
@@ -730,23 +764,23 @@ struct DataService {
             let messages = messageDTOs.map { m in
                 ChatMessage(
                     id: m.id,
-                    senderName: m.senderName ?? "Unknown",
+                    senderName: senderNameMap[m.senderId] ?? "Unknown",
                     content: m.content,
                     timestamp: parseDate(m.createdAt),
                     isFromCurrentUser: m.senderId == userId
                 )
             }
 
-            let convParticipants = participantsByConv[conv.id] ?? []
-            let otherCount = convParticipants.filter { $0.userId != userId }.count
+            let convMembers = membersByConv[conv.id] ?? []
+            let otherCount = convMembers.filter { $0.userId != userId }.count
 
             conversations.append(Conversation(
                 id: conv.id,
                 participantNames: [],
-                title: conv.title ?? "Conversation",
+                title: conv.subject ?? "Conversation",
                 lastMessage: messages.last?.content ?? "",
                 lastMessageDate: messages.last?.timestamp ?? parseDate(conv.createdAt),
-                unreadCount: unreadMap[conv.id] ?? 0,
+                unreadCount: 0,
                 messages: messages,
                 avatarSystemName: otherCount > 1 ? "person.3.fill" : "person.crop.circle.fill"
             ))
@@ -756,7 +790,7 @@ struct DataService {
     }
 
     func sendMessage(conversationId: UUID, senderId: UUID, senderName: String, content: String) async throws {
-        let dto = InsertMessageDTO(conversationId: conversationId, senderId: senderId, senderName: senderName, content: content)
+        let dto = InsertMessageDTO(tenantId: nil, conversationId: conversationId, senderId: senderId, content: content, attachments: nil)
         try await supabaseClient
             .from("messages")
             .insert(dto)
@@ -789,13 +823,13 @@ struct DataService {
         return allAchievements.map { dto in
             Achievement(
                 id: dto.id,
-                title: dto.title,
+                title: dto.name,
                 description: dto.description ?? "",
-                iconSystemName: dto.iconSystemName ?? "star.fill",
+                iconSystemName: dto.icon ?? "star.fill",
                 isUnlocked: unlockedIds.contains(dto.id),
                 unlockedDate: unlockedDates[dto.id],
                 xpReward: dto.xpReward ?? 50,
-                rarity: AchievementRarity(rawValue: dto.rarity ?? "Common") ?? .common
+                rarity: AchievementRarity(rawValue: dto.tier ?? "Common") ?? .common
             )
         }
     }
@@ -803,21 +837,34 @@ struct DataService {
     // MARK: - Leaderboard
 
     func fetchLeaderboard() async throws -> [LeaderboardEntry] {
-        let profiles: [ProfileDTO] = try await supabaseClient
-            .from("profiles")
+        let xpEntries: [StudentXpDTO] = try await supabaseClient
+            .from("student_xp")
             .select()
-            .eq("role", value: "Student")
-            .order("xp", ascending: false)
+            .order("total_xp", ascending: false)
             .limit(20)
             .execute()
             .value
 
-        return profiles.enumerated().map { index, p in
+        if xpEntries.isEmpty { return [] }
+
+        let studentIds = xpEntries.map(\.studentId)
+        let profiles: [ProfileDTO] = try await supabaseClient
+            .from("profiles")
+            .select()
+            .in("id", values: studentIds.map(\.uuidString))
+            .execute()
+            .value
+        var nameMap: [UUID: String] = [:]
+        for p in profiles {
+            nameMap[p.id] = "\(p.firstName ?? "") \(p.lastName ?? "")"
+        }
+
+        return xpEntries.enumerated().map { index, entry in
             LeaderboardEntry(
-                id: p.id,
-                userName: "\(p.firstName) \(p.lastName)",
-                xp: p.xp,
-                level: p.level,
+                id: entry.studentId,
+                userName: nameMap[entry.studentId] ?? "Unknown",
+                xp: entry.totalXp ?? 0,
+                level: entry.currentLevel ?? 1,
                 rank: index + 1,
                 avatarSystemName: "person.crop.circle.fill"
             )
@@ -828,10 +875,10 @@ struct DataService {
 
     func fetchAttendance(for studentId: UUID) async throws -> [AttendanceRecord] {
         let dtos: [AttendanceDTO] = try await supabaseClient
-            .from("attendance")
+            .from("attendance_records")
             .select()
             .eq("student_id", value: studentId.uuidString)
-            .order("date", ascending: false)
+            .order("attendance_date", ascending: false)
             .limit(50)
             .execute()
             .value
@@ -839,47 +886,79 @@ struct DataService {
         return dtos.map { dto in
             AttendanceRecord(
                 id: dto.id,
-                date: parseDate(dto.date),
+                date: parseDate(dto.attendanceDate),
                 status: AttendanceStatus(rawValue: dto.status) ?? .present,
-                courseName: dto.courseName ?? "All Classes",
+                courseName: "All Classes",
                 studentName: nil
             )
         }
     }
 
     // MARK: - Lesson Completion
+    // NOTE: "lesson_completions" table does NOT exist in the database.
 
     func completeLesson(studentId: UUID, lessonId: UUID) async throws {
-        let dto = InsertLessonCompletionDTO(studentId: studentId, lessonId: lessonId)
-        try await supabaseClient
-            .from("lesson_completions")
-            .insert(dto)
-            .execute()
+        print("[DataService] completeLesson called but lesson_completions table does not exist. studentId=\(studentId) lessonId=\(lessonId)")
     }
 
     // MARK: - Admin: Users
 
     func fetchAllUsers(schoolId: String?) async throws -> [ProfileDTO] {
-        let profiles: [ProfileDTO]
-        if let schoolId {
-            profiles = try await supabaseClient
-                .from("profiles")
+        if let schoolId, let tenantUUID = UUID(uuidString: schoolId) {
+            let memberships: [TenantMembershipDTO] = try await supabaseClient
+                .from("tenant_memberships")
                 .select()
-                .eq("school_id", value: schoolId)
-                .order("created_at", ascending: false)
+                .eq("tenant_id", value: tenantUUID.uuidString)
                 .limit(100)
                 .execute()
                 .value
+
+            let userIds = memberships.map(\.userId)
+            if userIds.isEmpty { return [] }
+
+            // Build role lookup from memberships
+            var roleByUser: [UUID: String] = [:]
+            for m in memberships { roleByUser[m.userId] = m.role }
+
+            var profiles: [ProfileDTO] = try await supabaseClient
+                .from("profiles")
+                .select()
+                .in("id", values: userIds.map(\.uuidString))
+                .order("created_at", ascending: false)
+                .execute()
+                .value
+
+            // Populate transient role property on each profile
+            for i in profiles.indices {
+                profiles[i].role = roleByUser[profiles[i].id] ?? ""
+            }
+
+            return profiles
         } else {
-            profiles = try await supabaseClient
+            // No school filter -- fetch all profiles and all memberships
+            var profiles: [ProfileDTO] = try await supabaseClient
                 .from("profiles")
                 .select()
                 .order("created_at", ascending: false)
                 .limit(100)
                 .execute()
                 .value
+
+            let allMemberships: [TenantMembershipDTO] = try await supabaseClient
+                .from("tenant_memberships")
+                .select()
+                .limit(500)
+                .execute()
+                .value
+            var roleByUser: [UUID: String] = [:]
+            for m in allMemberships { roleByUser[m.userId] = m.role }
+
+            for i in profiles.indices {
+                profiles[i].role = roleByUser[profiles[i].id] ?? ""
+            }
+
+            return profiles
         }
-        return profiles
     }
 
     func deleteUser(userId: UUID) async throws {
@@ -894,8 +973,18 @@ struct DataService {
 
     func fetchSchoolMetrics(schoolId: String?) async throws -> SchoolMetrics {
         let profiles = try await fetchAllUsers(schoolId: schoolId)
-        let students = profiles.filter { $0.role == "Student" }.count
-        let teachers = profiles.filter { $0.role == "Teacher" }.count
+
+        let allMemberships: [TenantMembershipDTO] = try await supabaseClient
+            .from("tenant_memberships")
+            .select()
+            .limit(500)
+            .execute()
+            .value
+        var roleByUser: [UUID: String] = [:]
+        for m in allMemberships { roleByUser[m.userId] = m.role }
+
+        let students = profiles.filter { roleByUser[$0.id] == "Student" }.count
+        let teachers = profiles.filter { roleByUser[$0.id] == "Teacher" }.count
         let active = profiles.count
 
         let courses: [CourseDTO] = try await supabaseClient
@@ -907,25 +996,21 @@ struct DataService {
 
         let attendanceRate = try await calculateRealAttendanceRate(courseId: nil)
 
-        // --- Batch-compute average GPA: fetch all enrollments and grades at once ---
-        let studentProfiles = profiles.filter { $0.role == "Student" }
+        let studentProfiles = profiles.filter { roleByUser[$0.id] == "Student" }
         let studentIds = studentProfiles.map(\.id)
 
         var averageGPA = 0.0
         if !studentIds.isEmpty {
-            // Batch fetch all enrollments for all students
             let allEnrollments: [EnrollmentDTO] = try await supabaseClient
-                .from("enrollments")
+                .from("course_enrollments")
                 .select()
                 .in("student_id", values: studentIds.map(\.uuidString))
                 .execute()
                 .value
 
-            // Get unique course IDs from enrollments
             let allCourseIds = Array(Set(allEnrollments.map(\.courseId)))
 
             if !allCourseIds.isEmpty {
-                // Batch fetch all grades for all students across all courses
                 let allGrades: [GradeDTO] = try await supabaseClient
                     .from("grades")
                     .select()
@@ -934,29 +1019,16 @@ struct DataService {
                     .execute()
                     .value
 
-                // Batch fetch all course info for GPA calculation
-                let allCourseDTOs: [CourseDTO] = try await supabaseClient
-                    .from("courses")
-                    .select()
-                    .in("id", values: allCourseIds.map(\.uuidString))
-                    .execute()
-                    .value
-                var courseInfoMap: [UUID: CourseDTO] = [:]
-                for c in allCourseDTOs { courseInfoMap[c.id] = c }
-
-                // Group enrollments by student
                 var enrollmentsByStudent: [UUID: [EnrollmentDTO]] = [:]
                 for e in allEnrollments {
                     enrollmentsByStudent[e.studentId, default: []].append(e)
                 }
 
-                // Group grades by (studentId, courseId)
                 var gradesByStudentCourse: [UUID: [UUID: [GradeDTO]]] = [:]
                 for g in allGrades {
                     gradesByStudentCourse[g.studentId, default: [:]][g.courseId, default: []].append(g)
                 }
 
-                // Compute per-student GPA
                 var totalGPA = 0.0
                 var gpaCount = 0
                 for student in studentProfiles {
@@ -970,8 +1042,8 @@ struct DataService {
                         if courseGrades.isEmpty { continue }
 
                         let assignmentGrades = courseGrades.map { g -> Double in
-                            let score = g.score ?? 0
-                            let maxScore = g.maxScore ?? 100
+                            let score = g.pointsEarned ?? 0
+                            let maxScore = 100.0
                             return maxScore > 0 ? (score / maxScore * 100) : 0
                         }
                         let avg = assignmentGrades.reduce(0.0, +) / Double(assignmentGrades.count)
@@ -1000,8 +1072,8 @@ struct DataService {
     // MARK: - Parent: Children
 
     func fetchChildren(for parentId: UUID) async throws -> [ChildInfo] {
-        let links: [ParentChildDTO] = try await supabaseClient
-            .from("parent_child_links")
+        let links: [StudentParentDTO] = try await supabaseClient
+            .from("student_parents")
             .select()
             .eq("parent_id", value: parentId.uuidString)
             .execute()
@@ -1009,9 +1081,8 @@ struct DataService {
 
         if links.isEmpty { return [] }
 
-        let childIds = links.map(\.childId)
+        let childIds = links.map(\.studentId)
 
-        // --- Batch fetch all child profiles at once ---
         let childProfiles: [ProfileDTO] = try await supabaseClient
             .from("profiles")
             .select()
@@ -1021,24 +1092,20 @@ struct DataService {
         var profileMap: [UUID: ProfileDTO] = [:]
         for p in childProfiles { profileMap[p.id] = p }
 
-        // --- Batch fetch all enrollments for all children at once ---
         let allEnrollments: [EnrollmentDTO] = try await supabaseClient
-            .from("enrollments")
+            .from("course_enrollments")
             .select()
             .in("student_id", values: childIds.map(\.uuidString))
             .execute()
             .value
 
-        // Group enrollments by student
         var enrollmentsByChild: [UUID: [EnrollmentDTO]] = [:]
         for e in allEnrollments {
             enrollmentsByChild[e.studentId, default: []].append(e)
         }
 
-        // Collect all unique course IDs across all children
         let allCourseIds = Array(Set(allEnrollments.map(\.courseId)))
 
-        // --- Batch fetch all grades for all children across all courses ---
         var allGrades: [GradeDTO] = []
         if !allCourseIds.isEmpty {
             allGrades = try await supabaseClient
@@ -1050,13 +1117,11 @@ struct DataService {
                 .value
         }
 
-        // Group grades by (studentId, courseId)
         var gradesByStudentCourse: [UUID: [UUID: [GradeDTO]]] = [:]
         for g in allGrades {
             gradesByStudentCourse[g.studentId, default: [:]][g.courseId, default: []].append(g)
         }
 
-        // --- Batch fetch all course info ---
         var courseMap: [UUID: CourseDTO] = [:]
         if !allCourseIds.isEmpty {
             let allCourseDTOs: [CourseDTO] = try await supabaseClient
@@ -1068,7 +1133,6 @@ struct DataService {
             for c in allCourseDTOs { courseMap[c.id] = c }
         }
 
-        // --- Batch fetch all assignments for all courses ---
         var allAssignmentDTOs: [AssignmentDTO] = []
         if !allCourseIds.isEmpty {
             allAssignmentDTOs = try await supabaseClient
@@ -1081,7 +1145,6 @@ struct DataService {
                 .value
         }
 
-        // --- Batch fetch all submissions for all children ---
         var allSubmissions: [SubmissionDTO] = []
         if !childIds.isEmpty {
             allSubmissions = try await supabaseClient
@@ -1091,55 +1154,49 @@ struct DataService {
                 .execute()
                 .value
         }
-        // Group submissions by studentId -> assignmentId
         var submissionsByStudent: [UUID: [UUID: SubmissionDTO]] = [:]
         for s in allSubmissions {
             submissionsByStudent[s.studentId, default: [:]][s.assignmentId] = s
         }
 
-        // Group assignments by courseId
         var assignmentsByCourse: [UUID: [AssignmentDTO]] = [:]
         for a in allAssignmentDTOs {
             assignmentsByCourse[a.courseId, default: []].append(a)
         }
 
-        // --- Batch fetch all attendance for all children ---
         let allAttendance: [AttendanceDTO] = try await supabaseClient
-            .from("attendance")
+            .from("attendance_records")
             .select()
             .in("student_id", values: childIds.map(\.uuidString))
             .limit(500)
             .execute()
             .value
-        // Group attendance by student
         var attendanceByChild: [UUID: [AttendanceDTO]] = [:]
         for a in allAttendance {
             attendanceByChild[a.studentId, default: []].append(a)
         }
 
-        // --- Assemble child info from pre-fetched data ---
         var children: [ChildInfo] = []
         for link in links {
-            guard let profile = profileMap[link.childId] else { continue }
+            guard let profile = profileMap[link.studentId] else { continue }
 
-            let childEnrollments = enrollmentsByChild[link.childId] ?? []
+            let childEnrollments = enrollmentsByChild[link.studentId] ?? []
             let childCourseIds = childEnrollments.map(\.courseId)
 
-            // Build grade entries for this child
             var gradeEntries: [GradeEntry] = []
             for courseId in childCourseIds {
                 guard let course = courseMap[courseId] else { continue }
-                let gradeDTOs = gradesByStudentCourse[link.childId]?[courseId] ?? []
+                let gradeDTOs = gradesByStudentCourse[link.studentId]?[courseId] ?? []
                 if gradeDTOs.isEmpty { continue }
 
                 let assignmentGrades = gradeDTOs.map { g in
                     AssignmentGrade(
                         id: g.id,
-                        title: g.title ?? "Assignment",
-                        score: g.score ?? 0,
-                        maxScore: g.maxScore ?? 100,
+                        title: "Assignment",
+                        score: g.pointsEarned ?? 0,
+                        maxScore: 100,
                         date: parseDate(g.gradedAt),
-                        type: g.type ?? "Assignment"
+                        type: "Assignment"
                     )
                 }
 
@@ -1150,20 +1207,19 @@ struct DataService {
                 gradeEntries.append(GradeEntry(
                     id: course.id,
                     courseId: course.id,
-                    courseName: course.title,
-                    courseIcon: course.iconSystemName ?? "book.fill",
-                    courseColor: course.colorName ?? "blue",
+                    courseName: course.name,
+                    courseIcon: "book.fill",
+                    courseColor: "blue",
                     letterGrade: letter,
                     numericGrade: avg,
                     assignmentGrades: assignmentGrades
                 ))
             }
 
-            // Build assignment list for this child
-            let childSubmissions = submissionsByStudent[link.childId] ?? [:]
+            let childSubmissions = submissionsByStudent[link.studentId] ?? [:]
             var childAssignments: [Assignment] = []
             for courseId in childCourseIds {
-                let courseName = courseMap[courseId]?.title ?? "Unknown"
+                let courseName = courseMap[courseId]?.name ?? "Unknown"
                 let dtos = assignmentsByCourse[courseId] ?? []
                 for dto in dtos {
                     let sub = childSubmissions[dto.id]
@@ -1174,12 +1230,12 @@ struct DataService {
                         courseName: courseName,
                         instructions: dto.instructions ?? "",
                         dueDate: parseDate(dto.dueDate),
-                        points: dto.points ?? 100,
+                        points: dto.maxPoints ?? 100,
                         isSubmitted: sub != nil,
-                        submission: sub?.content,
-                        grade: sub?.grade,
-                        feedback: sub?.feedback,
-                        xpReward: dto.xpReward ?? 50,
+                        submission: sub?.submissionText,
+                        grade: nil,
+                        feedback: nil,
+                        xpReward: 50,
                         studentId: nil,
                         studentName: nil
                     ))
@@ -1189,14 +1245,14 @@ struct DataService {
             let avg = gradeEntries.isEmpty ? 0 : gradeEntries.reduce(0.0) { $0 + $1.numericGrade } / Double(gradeEntries.count)
             let gpa = avg / 100.0 * 4.0
 
-            let childAttendance = attendanceByChild[link.childId] ?? []
+            let childAttendance = attendanceByChild[link.studentId] ?? []
             let presentCount = childAttendance.filter { $0.status.lowercased() == "present" }.count
             let totalCount = childAttendance.count
             let attendanceRate = totalCount > 0 ? Double(presentCount) / Double(totalCount) : 0.0
 
             children.append(ChildInfo(
-                id: link.childId,
-                name: "\(profile.firstName) \(profile.lastName)",
+                id: link.studentId,
+                name: "\(profile.firstName ?? "") \(profile.lastName ?? "")",
                 grade: "Student",
                 avatarSystemName: "person.crop.circle.fill",
                 gpa: gpa,
@@ -1210,11 +1266,11 @@ struct DataService {
 
     // MARK: - Profile
 
-    func updateProfile(userId: UUID, update: UpdateProfileDTO) async throws {
+    func updateProfile(userId: UUID, update: UpdateStudentXpDTO) async throws {
         try await supabaseClient
-            .from("profiles")
+            .from("student_xp")
             .update(update)
-            .eq("id", value: userId.uuidString)
+            .eq("student_id", value: userId.uuidString)
             .execute()
     }
 
@@ -1225,14 +1281,18 @@ struct DataService {
     // MARK: - Grades (Create)
 
     func gradeSubmission(studentId: UUID, courseId: UUID, assignmentId: UUID, score: Double, maxScore: Double, letterGrade: String, feedback: String) async throws {
+        let percentage = maxScore > 0 ? (score / maxScore * 100) : 0
         let dto = InsertGradeDTO(
+            tenantId: nil,
+            submissionId: nil,
+            assignmentId: assignmentId,
             studentId: studentId,
             courseId: courseId,
-            assignmentId: assignmentId,
-            score: score,
-            maxScore: maxScore,
+            pointsEarned: score,
+            percentage: percentage,
             letterGrade: letterGrade,
             feedback: feedback,
+            gradedBy: nil,
             gradedAt: formatDate(Date())
         )
         try await supabaseClient
@@ -1245,11 +1305,19 @@ struct DataService {
 
     func createQuiz(courseId: UUID, title: String, timeLimit: Int, dueDate: String, xpReward: Int) async throws -> QuizDTO {
         let dto = InsertQuizDTO(
+            tenantId: nil,
             courseId: courseId,
+            assignmentId: nil,
             title: title,
-            timeLimit: timeLimit,
-            dueDate: dueDate,
-            xpReward: xpReward
+            description: nil,
+            timeLimitMinutes: timeLimit,
+            shuffleQuestions: nil,
+            shuffleAnswers: nil,
+            showResults: nil,
+            maxAttempts: nil,
+            passingScore: nil,
+            status: nil,
+            createdBy: nil
         )
         let result: QuizDTO = try await supabaseClient
             .from("quizzes")
@@ -1262,15 +1330,35 @@ struct DataService {
     }
 
     func createQuizQuestion(quizId: UUID, text: String, options: [String], correctIndex: Int) async throws {
-        let dto = InsertQuizQuestionDTO(
+        let questionDTO = InsertQuizQuestionDTO(
             quizId: quizId,
-            text: text,
-            options: options,
-            correctIndex: correctIndex
+            type: "multiple_choice",
+            questionText: text,
+            points: 1.0,
+            orderIndex: nil,
+            explanation: nil
         )
-        try await supabaseClient
+        // Insert question and get back the ID
+        let question: QuizQuestionDTO = try await supabaseClient
             .from("quiz_questions")
-            .insert(dto)
+            .insert(questionDTO)
+            .select()
+            .single()
+            .execute()
+            .value
+
+        // Insert options
+        let optionDTOs = options.enumerated().map { idx, optText in
+            InsertQuizOptionDTO(
+                questionId: question.id,
+                optionText: optText,
+                isCorrect: idx == correctIndex,
+                orderIndex: idx
+            )
+        }
+        try await supabaseClient
+            .from("quiz_options")
+            .insert(optionDTOs)
             .execute()
     }
 
@@ -1278,13 +1366,15 @@ struct DataService {
 
     func createLesson(moduleId: UUID, title: String, content: String, duration: Int, type: String, xpReward: Int, orderIndex: Int) async throws -> LessonDTO {
         let dto = InsertLessonDTO(
-            moduleId: moduleId,
+            tenantId: nil,
+            courseId: nil,
             title: title,
+            description: nil,
             content: content,
-            duration: duration,
-            type: type,
-            xpReward: xpReward,
-            orderIndex: orderIndex
+            orderIndex: orderIndex,
+            createdBy: nil,
+            status: type,
+            moduleId: moduleId
         )
         let result: LessonDTO = try await supabaseClient
             .from("lessons")
@@ -1300,9 +1390,13 @@ struct DataService {
 
     func createModule(courseId: UUID, title: String, orderIndex: Int) async throws -> ModuleDTO {
         let dto = InsertModuleDTO(
+            tenantId: nil,
             courseId: courseId,
+            createdBy: nil,
             title: title,
-            orderIndex: orderIndex
+            description: nil,
+            orderIndex: orderIndex,
+            status: nil
         )
         let result: ModuleDTO = try await supabaseClient
             .from("modules")
@@ -1318,35 +1412,49 @@ struct DataService {
 
     func enrollStudent(studentId: UUID, courseId: UUID) async throws {
         let dto = InsertEnrollmentDTO(
-            studentId: studentId,
+            tenantId: nil,
             courseId: courseId,
+            studentId: studentId,
+            teacherId: nil,
+            status: "active",
             enrolledAt: formatDate(Date())
         )
         try await supabaseClient
-            .from("enrollments")
+            .from("course_enrollments")
             .insert(dto)
             .execute()
     }
 
     func enrollByClassCode(studentId: UUID, classCode: String) async throws -> String {
-        let courses: [CourseDTO] = try await supabaseClient
-            .from("courses")
+        let codes: [ClassCodeDTO] = try await supabaseClient
+            .from("class_codes")
             .select()
-            .eq("class_code", value: classCode)
+            .eq("code", value: classCode)
             .limit(1)
             .execute()
             .value
 
-        guard let course = courses.first else {
+        guard let codeEntry = codes.first else {
             throw EnrollmentError.invalidClassCode
         }
 
-        // Check if already enrolled
+        let courseDTOs: [CourseDTO] = try await supabaseClient
+            .from("courses")
+            .select()
+            .eq("id", value: codeEntry.courseId.uuidString)
+            .limit(1)
+            .execute()
+            .value
+
+        guard let course = courseDTOs.first else {
+            throw EnrollmentError.invalidClassCode
+        }
+
         let existing: [EnrollmentDTO] = try await supabaseClient
-            .from("enrollments")
+            .from("course_enrollments")
             .select()
             .eq("student_id", value: studentId.uuidString)
-            .eq("course_id", value: course.id.uuidString)
+            .eq("course_id", value: codeEntry.courseId.uuidString)
             .execute()
             .value
 
@@ -1354,8 +1462,8 @@ struct DataService {
             throw EnrollmentError.alreadyEnrolled
         }
 
-        try await enrollStudent(studentId: studentId, courseId: course.id)
-        return course.title
+        try await enrollStudent(studentId: studentId, courseId: codeEntry.courseId)
+        return course.name
     }
 
     // MARK: - Attendance (Create)
@@ -1363,15 +1471,17 @@ struct DataService {
     func takeAttendance(records: [(studentId: UUID, courseId: UUID, courseName: String, date: String, status: String)]) async throws {
         let dtos = records.map { record in
             InsertAttendanceDTO(
-                studentId: record.studentId,
+                tenantId: nil,
                 courseId: record.courseId,
-                courseName: record.courseName,
-                date: record.date,
-                status: record.status
+                studentId: record.studentId,
+                attendanceDate: record.date,
+                status: record.status,
+                notes: nil,
+                markedBy: nil
             )
         }
         try await supabaseClient
-            .from("attendance")
+            .from("attendance_records")
             .insert(dtos)
             .execute()
     }
@@ -1380,7 +1490,7 @@ struct DataService {
         let records: [AttendanceDTO]
         if let courseId {
             records = try await supabaseClient
-                .from("attendance")
+                .from("attendance_records")
                 .select()
                 .eq("course_id", value: courseId.uuidString)
                 .limit(1000)
@@ -1388,7 +1498,7 @@ struct DataService {
                 .value
         } else {
             records = try await supabaseClient
-                .from("attendance")
+                .from("attendance_records")
                 .select()
                 .limit(1000)
                 .execute()
@@ -1407,7 +1517,7 @@ struct DataService {
     // MARK: - Courses (Update / Delete)
 
     func updateCourse(courseId: UUID, title: String?, description: String?, colorName: String? = nil, iconSystemName: String? = nil) async throws {
-        let dto = UpdateCourseDTO(title: title, description: description, colorName: colorName, iconSystemName: iconSystemName)
+        let dto = UpdateCourseDTO(name: title, description: description, subject: nil, gradeLevel: nil, semester: nil, startDate: nil, endDate: nil, syllabusUrl: nil, credits: nil, status: nil)
         try await supabaseClient
             .from("courses")
             .update(dto)
@@ -1426,7 +1536,7 @@ struct DataService {
     // MARK: - Assignments (Update / Delete)
 
     func updateAssignment(assignmentId: UUID, title: String?, instructions: String?, dueDate: String?, points: Int?) async throws {
-        let dto = UpdateAssignmentDTO(title: title, instructions: instructions, dueDate: dueDate, points: points)
+        let dto = UpdateAssignmentDTO(title: title, description: nil, instructions: instructions, type: nil, dueDate: dueDate, availableDate: nil, maxPoints: points, submissionType: nil, allowLateSubmission: nil, lateSubmissionDays: nil, status: nil)
         try await supabaseClient
             .from("assignments")
             .update(dto)
@@ -1455,7 +1565,7 @@ struct DataService {
     // MARK: - Conversations (Create)
 
     func createConversation(title: String, participantIds: [(userId: UUID, userName: String)]) async throws -> ConversationDTO {
-        let convDTO = InsertConversationDTO(title: title, createdAt: formatDate(Date()))
+        let convDTO = InsertConversationDTO(tenantId: nil, type: "direct", subject: title, createdBy: nil, courseId: nil)
         let conversation: ConversationDTO = try await supabaseClient
             .from("conversations")
             .insert(convDTO)
@@ -1464,17 +1574,15 @@ struct DataService {
             .execute()
             .value
 
-        let participantDTOs = participantIds.map { participant in
-            InsertConversationParticipantDTO(
+        let memberDTOs = participantIds.map { participant in
+            InsertConversationMemberDTO(
                 conversationId: conversation.id,
-                userId: participant.userId,
-                userName: participant.userName,
-                unreadCount: 0
+                userId: participant.userId
             )
         }
         try await supabaseClient
-            .from("conversation_participants")
-            .insert(participantDTOs)
+            .from("conversation_members")
+            .insert(memberDTOs)
             .execute()
 
         return conversation
@@ -1484,7 +1592,7 @@ struct DataService {
 
     func fetchStudentsInCourse(courseId: UUID) async throws -> [ProfileDTO] {
         let enrollments: [EnrollmentDTO] = try await supabaseClient
-            .from("enrollments")
+            .from("course_enrollments")
             .select()
             .eq("course_id", value: courseId.uuidString)
             .execute()
@@ -1519,11 +1627,6 @@ struct DataService {
 
     func deleteLesson(lessonId: UUID) async throws {
         try await supabaseClient
-            .from("lesson_completions")
-            .delete()
-            .eq("lesson_id", value: lessonId.uuidString)
-            .execute()
-        try await supabaseClient
             .from("lessons")
             .delete()
             .eq("id", value: lessonId.uuidString)
@@ -1532,7 +1635,7 @@ struct DataService {
 
     func unenrollStudent(studentId: UUID, courseId: UUID) async throws {
         try await supabaseClient
-            .from("enrollments")
+            .from("course_enrollments")
             .delete()
             .eq("student_id", value: studentId.uuidString)
             .eq("course_id", value: courseId.uuidString)
@@ -1541,8 +1644,6 @@ struct DataService {
 
     // MARK: - Paginated Fetches
 
-    /// Fetches a page of assignments with offset-based pagination.
-    /// Use with PaginationState for infinite-scroll or load-more patterns.
     func fetchAssignmentsPaginated(for userId: UUID, role: UserRole, courseIds: [UUID], offset: Int, limit: Int) async throws -> [Assignment] {
         if courseIds.isEmpty { return [] }
 
@@ -1563,7 +1664,7 @@ struct DataService {
             .execute()
             .value
         for c in courseDTOs {
-            courseNames[c.id] = c.title
+            courseNames[c.id] = c.name
         }
 
         if role == .student {
@@ -1587,12 +1688,12 @@ struct DataService {
                     courseName: courseNames[dto.courseId] ?? "Unknown",
                     instructions: dto.instructions ?? "",
                     dueDate: parseDate(dto.dueDate),
-                    points: dto.points ?? 100,
+                    points: dto.maxPoints ?? 100,
                     isSubmitted: sub != nil,
-                    submission: sub?.content,
-                    grade: sub?.grade,
-                    feedback: sub?.feedback,
-                    xpReward: dto.xpReward ?? 50,
+                    submission: sub?.submissionText,
+                    grade: nil,
+                    feedback: nil,
+                    xpReward: 50,
                     studentId: nil,
                     studentName: nil
                 )
@@ -1619,7 +1720,7 @@ struct DataService {
                     .execute()
                     .value
                 for p in profiles {
-                    studentNames[p.id] = "\(p.firstName) \(p.lastName)"
+                    studentNames[p.id] = "\(p.firstName ?? "") \(p.lastName ?? "")"
                 }
             }
 
@@ -1639,12 +1740,12 @@ struct DataService {
                         courseName: courseNames[dto.courseId] ?? "Unknown",
                         instructions: dto.instructions ?? "",
                         dueDate: parseDate(dto.dueDate),
-                        points: dto.points ?? 100,
+                        points: dto.maxPoints ?? 100,
                         isSubmitted: false,
                         submission: nil,
                         grade: nil,
                         feedback: nil,
-                        xpReward: dto.xpReward ?? 50,
+                        xpReward: 50,
                         studentId: nil,
                         studentName: nil
                     ))
@@ -1657,12 +1758,12 @@ struct DataService {
                             courseName: courseNames[dto.courseId] ?? "Unknown",
                             instructions: dto.instructions ?? "",
                             dueDate: parseDate(dto.dueDate),
-                            points: dto.points ?? 100,
+                            points: dto.maxPoints ?? 100,
                             isSubmitted: true,
-                            submission: sub.content,
-                            grade: sub.grade,
-                            feedback: sub.feedback,
-                            xpReward: dto.xpReward ?? 50,
+                            submission: sub.submissionText,
+                            grade: nil,
+                            feedback: nil,
+                            xpReward: 50,
                             studentId: sub.studentId,
                             studentName: studentNames[sub.studentId] ?? "Unknown Student"
                         ))
@@ -1673,13 +1774,12 @@ struct DataService {
         }
     }
 
-    /// Fetches a page of attendance records with offset-based pagination.
     func fetchAttendancePaginated(for studentId: UUID, offset: Int, limit: Int) async throws -> [AttendanceRecord] {
         let dtos: [AttendanceDTO] = try await supabaseClient
-            .from("attendance")
+            .from("attendance_records")
             .select()
             .eq("student_id", value: studentId.uuidString)
-            .order("date", ascending: false)
+            .order("attendance_date", ascending: false)
             .range(from: offset, to: offset + limit - 1)
             .execute()
             .value
@@ -1687,15 +1787,14 @@ struct DataService {
         return dtos.map { dto in
             AttendanceRecord(
                 id: dto.id,
-                date: parseDate(dto.date),
+                date: parseDate(dto.attendanceDate),
                 status: AttendanceStatus(rawValue: dto.status) ?? .present,
-                courseName: dto.courseName ?? "All Classes",
+                courseName: "All Classes",
                 studentName: nil
             )
         }
     }
 
-    /// Fetches a page of announcements with offset-based pagination.
     func fetchAnnouncementsPaginated(tenantId: UUID? = nil, offset: Int, limit: Int) async throws -> [Announcement] {
         let dtos: [AnnouncementDTO]
         if let tenantId {
@@ -1722,35 +1821,45 @@ struct DataService {
                 id: dto.id,
                 title: dto.title,
                 content: dto.content ?? "",
-                authorName: dto.authorName ?? "Admin",
+                authorName: "Admin",
                 date: parseDate(dto.createdAt),
-                isPinned: dto.isPinned ?? false
+                isPinned: false
             )
         }
     }
 
-    /// Fetches a page of users with offset-based pagination.
     func fetchAllUsersPaginated(schoolId: String?, offset: Int, limit: Int) async throws -> [ProfileDTO] {
-        let profiles: [ProfileDTO]
-        if let schoolId {
-            profiles = try await supabaseClient
-                .from("profiles")
+        if let schoolId, let tenantUUID = UUID(uuidString: schoolId) {
+            let memberships: [TenantMembershipDTO] = try await supabaseClient
+                .from("tenant_memberships")
                 .select()
-                .eq("school_id", value: schoolId)
-                .order("created_at", ascending: false)
+                .eq("tenant_id", value: tenantUUID.uuidString)
                 .range(from: offset, to: offset + limit - 1)
                 .execute()
                 .value
+
+            let userIds = memberships.map(\.userId)
+            if userIds.isEmpty { return [] }
+
+            let profiles: [ProfileDTO] = try await supabaseClient
+                .from("profiles")
+                .select()
+                .in("id", values: userIds.map(\.uuidString))
+                .order("created_at", ascending: false)
+                .execute()
+                .value
+
+            return profiles
         } else {
-            profiles = try await supabaseClient
+            let profiles: [ProfileDTO] = try await supabaseClient
                 .from("profiles")
                 .select()
                 .order("created_at", ascending: false)
                 .range(from: offset, to: offset + limit - 1)
                 .execute()
                 .value
+            return profiles
         }
-        return profiles
     }
 }
 

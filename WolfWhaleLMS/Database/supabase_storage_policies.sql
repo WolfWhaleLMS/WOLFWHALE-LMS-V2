@@ -1,8 +1,11 @@
 -- =============================================================================
--- WolfWhale LMS - Supabase Storage Bucket & Policies
+-- WolfWhale LMS - Supabase Storage Bucket Policies
 -- =============================================================================
--- Creates storage buckets for file uploads and applies RLS-style policies.
--- Buckets:
+-- Applies RLS-style policies to storage buckets for file uploads.
+-- Uses helper functions from supabase_rls_policies.sql (get_user_role(),
+-- get_user_tenant_id(), is_course_teacher(), etc.)
+--
+-- Buckets (already exist - only policies are created here):
 --   - assignment-submissions: Student-uploaded assignment files
 --   - lesson-materials: Teacher-uploaded lesson content (PDFs, images, etc.)
 --   - avatars: User profile avatars
@@ -12,50 +15,34 @@
 --   lesson-materials/{course_id}/{module_id}/{filename}
 --   avatars/{user_id}/{filename}
 --
--- Run AFTER the main table RLS migration.
+-- KEY CHANGE: Uses get_user_role() from tenant_memberships instead of
+-- (SELECT role FROM profiles WHERE id = auth.uid()).
+--
+-- Run AFTER supabase_rls_policies.sql (helper functions must exist).
 -- =============================================================================
 
--- =============================================================================
--- SECTION 1: Create Buckets
--- =============================================================================
-
-INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-VALUES
-    (
-        'assignment-submissions',
-        'assignment-submissions',
-        false,
-        52428800,  -- 50 MB max file size
-        ARRAY['application/pdf', 'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-              'text/plain', 'application/msword',
-              'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-              'application/vnd.ms-excel',
-              'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-              'application/vnd.ms-powerpoint',
-              'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-              'video/mp4', 'audio/mpeg']
-    ),
-    (
-        'lesson-materials',
-        'lesson-materials',
-        false,
-        104857600,  -- 100 MB max for lesson materials
-        ARRAY['application/pdf', 'image/jpeg', 'image/png', 'image/gif', 'image/webp',
-              'text/plain', 'application/msword',
-              'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-              'video/mp4', 'audio/mpeg', 'application/zip']
-    ),
-    (
-        'avatars',
-        'avatars',
-        true,  -- Public so avatar URLs work without auth
-        5242880,  -- 5 MB max for avatars
-        ARRAY['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-    )
-ON CONFLICT (id) DO NOTHING;
 
 -- =============================================================================
--- SECTION 2: Assignment Submissions Bucket Policies
+-- SECTION 0: Drop existing storage policies (idempotent)
+-- =============================================================================
+
+DO $$
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN (
+        SELECT policyname, tablename
+        FROM pg_policies
+        WHERE schemaname = 'storage'
+          AND tablename = 'objects'
+    ) LOOP
+        EXECUTE format('DROP POLICY IF EXISTS %I ON storage.objects', r.policyname);
+    END LOOP;
+END $$;
+
+
+-- =============================================================================
+-- SECTION 1: Assignment Submissions Bucket Policies
 -- =============================================================================
 
 -- Students can upload their own submissions
@@ -99,61 +86,68 @@ USING (
     AND (storage.foldername(name))[1] = auth.uid()::text
 );
 
--- Teachers can read submissions only for assignments in courses they teach
+-- Teachers can read submissions for assignments in courses they teach
 -- Folder path: {student_id}/{assignment_id}/{filename}
--- Validates via assignment_id (2nd folder segment) -> course -> teacher_id chain
+-- Validates via assignment_id (2nd folder segment) -> course -> created_by chain
 CREATE POLICY "Teachers can read course submissions"
 ON storage.objects FOR SELECT
 TO authenticated
 USING (
     bucket_id = 'assignment-submissions'
-    AND (
-        SELECT role FROM profiles WHERE id = auth.uid()
-    ) = 'Teacher'
+    AND get_user_role() = 'teacher'
     AND EXISTS (
         SELECT 1 FROM assignments a
         JOIN courses c ON c.id = a.course_id
         WHERE a.id::text = (storage.foldername(name))[2]
-          AND c.teacher_id = auth.uid()
+          AND c.created_by = auth.uid()
     )
 );
 
--- Admins can read all submissions
+-- Admins can read all submissions in their tenant
 CREATE POLICY "Admins can read all submissions"
 ON storage.objects FOR SELECT
 TO authenticated
 USING (
     bucket_id = 'assignment-submissions'
-    AND (
-        SELECT role FROM profiles WHERE id = auth.uid()
-    ) = 'Admin'
+    AND get_user_role() = 'admin'
 );
 
+-- Parents can read their children's submissions
+CREATE POLICY "Parents can read child submissions"
+ON storage.objects FOR SELECT
+TO authenticated
+USING (
+    bucket_id = 'assignment-submissions'
+    AND get_user_role() = 'parent'
+    AND EXISTS (
+        SELECT 1 FROM student_parents sp
+        WHERE sp.parent_id = auth.uid()
+          AND sp.student_id::text = (storage.foldername(name))[1]
+    )
+);
+
+
 -- =============================================================================
--- SECTION 3: Lesson Materials Bucket Policies
+-- SECTION 2: Lesson Materials Bucket Policies
 -- =============================================================================
 
--- Teachers can upload lesson materials for their courses
+-- Teachers and admins can upload lesson materials
 -- Folder path: {course_id}/{module_id}/{filename}
 CREATE POLICY "Teachers can upload lesson materials"
 ON storage.objects FOR INSERT
 TO authenticated
 WITH CHECK (
     bucket_id = 'lesson-materials'
-    AND (
-        SELECT role FROM profiles WHERE id = auth.uid()
-    ) IN ('Teacher', 'Admin')
+    AND get_user_role() IN ('teacher', 'admin')
 );
 
--- Teachers can read lesson materials they uploaded
+-- Teachers and admins can read all lesson materials
 CREATE POLICY "Teachers can read lesson materials"
 ON storage.objects FOR SELECT
 TO authenticated
 USING (
     bucket_id = 'lesson-materials'
-    AND (
-        SELECT role FROM profiles WHERE id = auth.uid()
-    ) IN ('Teacher', 'Admin')
+    AND get_user_role() IN ('teacher', 'admin')
 );
 
 -- Students can read lesson materials for courses they are enrolled in
@@ -164,9 +158,9 @@ TO authenticated
 USING (
     bucket_id = 'lesson-materials'
     AND EXISTS (
-        SELECT 1 FROM enrollments e
-        WHERE e.student_id = auth.uid()
-          AND e.course_id::text = (storage.foldername(name))[1]
+        SELECT 1 FROM course_enrollments ce
+        WHERE ce.student_id = auth.uid()
+          AND ce.course_id::text = (storage.foldername(name))[1]
     )
 );
 
@@ -177,43 +171,38 @@ TO authenticated
 USING (
     bucket_id = 'lesson-materials'
     AND EXISTS (
-        SELECT 1 FROM parent_child_links pcl
-        JOIN enrollments e ON e.student_id = pcl.child_id
-        WHERE pcl.parent_id = auth.uid()
-          AND e.course_id::text = (storage.foldername(name))[1]
+        SELECT 1 FROM student_parents sp
+        JOIN course_enrollments ce ON ce.student_id = sp.student_id
+        WHERE sp.parent_id = auth.uid()
+          AND ce.course_id::text = (storage.foldername(name))[1]
     )
 );
 
--- Teachers can update their own lesson materials
+-- Teachers and admins can update lesson materials
 CREATE POLICY "Teachers can update lesson materials"
 ON storage.objects FOR UPDATE
 TO authenticated
 USING (
     bucket_id = 'lesson-materials'
-    AND (
-        SELECT role FROM profiles WHERE id = auth.uid()
-    ) IN ('Teacher', 'Admin')
+    AND get_user_role() IN ('teacher', 'admin')
 )
 WITH CHECK (
     bucket_id = 'lesson-materials'
-    AND (
-        SELECT role FROM profiles WHERE id = auth.uid()
-    ) IN ('Teacher', 'Admin')
+    AND get_user_role() IN ('teacher', 'admin')
 );
 
--- Teachers can delete their own lesson materials
+-- Teachers and admins can delete lesson materials
 CREATE POLICY "Teachers can delete lesson materials"
 ON storage.objects FOR DELETE
 TO authenticated
 USING (
     bucket_id = 'lesson-materials'
-    AND (
-        SELECT role FROM profiles WHERE id = auth.uid()
-    ) IN ('Teacher', 'Admin')
+    AND get_user_role() IN ('teacher', 'admin')
 );
 
+
 -- =============================================================================
--- SECTION 4: Avatars Bucket Policies
+-- SECTION 3: Avatars Bucket Policies
 -- =============================================================================
 
 -- Users can upload their own avatar
@@ -226,7 +215,7 @@ WITH CHECK (
     AND (storage.foldername(name))[1] = auth.uid()::text
 );
 
--- Anyone can read avatars (bucket is public)
+-- Anyone authenticated can read avatars (bucket is public)
 CREATE POLICY "Anyone can read avatars"
 ON storage.objects FOR SELECT
 TO authenticated
@@ -253,6 +242,7 @@ USING (
     bucket_id = 'avatars'
     AND (storage.foldername(name))[1] = auth.uid()::text
 );
+
 
 -- =============================================================================
 -- END OF STORAGE POLICIES

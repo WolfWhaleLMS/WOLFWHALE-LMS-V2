@@ -93,6 +93,8 @@ class AppViewModel {
         }
     }
 
+    // MARK: - Sign Up
+    // Role is NOT stored on profiles — it goes into tenant_memberships.
     func signUp(name: String, email: String, password: String, role: UserRole, schoolCode: String?) async throws {
         let trimmedName = name.trimmingCharacters(in: .whitespaces)
         let nameComponents = trimmedName.split(separator: " ", maxSplits: 1)
@@ -110,18 +112,58 @@ class AppViewModel {
             ]
         )
 
+        // Insert into profiles (without role — role is NOT on profiles table)
         let newProfile = InsertProfileDTO(
             id: result.user.id,
             firstName: firstName,
             lastName: lastName,
-            email: trimmedEmail,
-            role: role.rawValue,
-            schoolId: schoolCode
+            avatarUrl: nil,
+            phone: nil,
+            dateOfBirth: nil,
+            bio: nil,
+            timezone: nil,
+            language: nil,
+            gradeLevel: nil,
+            fullName: "\(firstName) \(lastName)"
         )
         try await supabaseClient
             .from("profiles")
             .insert(newProfile)
             .execute()
+
+        // Insert role into tenant_memberships
+        let membershipDTO = InsertTenantMembershipDTO(
+            userId: result.user.id,
+            tenantId: nil,
+            role: role.rawValue,
+            status: "active",
+            joinedAt: nil,
+            invitedAt: nil,
+            invitedBy: nil
+        )
+        try await supabaseClient
+            .from("tenant_memberships")
+            .insert(membershipDTO)
+            .execute()
+
+        // If student, create initial student_xp row
+        if role == .student {
+            let xpDTO = InsertStudentXpDTO(
+                studentId: result.user.id,
+                tenantId: nil,
+                totalXp: 0,
+                currentLevel: 1,
+                currentTier: nil,
+                streakDays: 0,
+                coins: 0,
+                totalCoinsEarned: nil,
+                totalCoinsSpent: nil
+            )
+            try await supabaseClient
+                .from("student_xp")
+                .insert(xpDTO)
+                .execute()
+        }
     }
 
     func loginAsDemo(role: UserRole) {
@@ -160,6 +202,9 @@ class AppViewModel {
         }
     }
 
+    // MARK: - Fetch Profile
+    // Loads profile from profiles table, role from tenant_memberships, XP from student_xp,
+    // and email from Supabase Auth session.
     private func fetchProfile(userId: UUID) async throws {
         let profile: ProfileDTO = try await supabaseClient
             .from("profiles")
@@ -168,19 +213,63 @@ class AppViewModel {
             .single()
             .execute()
             .value
-        currentUser = profile.toUser()
+
+        // Get email from Auth session (not stored in profiles table)
+        let session = try await supabaseClient.auth.session
+        let userEmail = session.user.email ?? ""
+
+        // Fetch role from tenant_memberships
+        let memberships: [TenantMembershipDTO] = try await supabaseClient
+            .from("tenant_memberships")
+            .select()
+            .eq("user_id", value: userId.uuidString)
+            .limit(1)
+            .execute()
+            .value
+        let role = memberships.first.flatMap { UserRole(rawValue: $0.role) } ?? .student
+
+        // Derive schoolId from tenant_memberships.tenant_id
+        let tenantId = memberships.first?.tenantId?.uuidString
+
+        // Fetch XP/level/coins/streak from student_xp (only relevant for students, but safe to query)
+        var xp = 0
+        var level = 1
+        var coins = 0
+        var streak = 0
+        let xpEntries: [StudentXpDTO] = try await supabaseClient
+            .from("student_xp")
+            .select()
+            .eq("student_id", value: userId.uuidString)
+            .limit(1)
+            .execute()
+            .value
+        if let xpEntry = xpEntries.first {
+            xp = xpEntry.totalXp ?? 0
+            level = xpEntry.currentLevel ?? 1
+            coins = xpEntry.coins ?? 0
+            streak = xpEntry.streakDays ?? 0
+        }
+
+        var user = profile.toUser(email: userEmail, role: role, xp: xp, level: level, coins: coins, streak: streak)
+        user.schoolId = tenantId
+        currentUser = user
     }
 
+    // MARK: - Sync XP to student_xp table (NOT profiles)
     func syncProfile() {
         guard let user = currentUser, !isDemoMode else { return }
         Task {
-            let update = UpdateProfileDTO(
-                xp: user.xp,
-                level: user.level,
-                coins: user.coins,
-                streak: user.streak
+            let update = UpdateStudentXpDTO(
+                totalXp: user.xp,
+                currentLevel: user.level,
+                streakDays: user.streak,
+                coins: user.coins
             )
-            try? await dataService.updateProfile(userId: user.id, update: update)
+            try? await supabaseClient
+                .from("student_xp")
+                .update(update)
+                .eq("student_id", value: user.id.uuidString)
+                .execute()
         }
     }
 
@@ -266,6 +355,7 @@ class AppViewModel {
     }
 
     // MARK: - Admin: Create User
+    // Role goes into tenant_memberships, NOT profiles.
     func createUser(
         firstName: String,
         lastName: String,
@@ -276,40 +366,76 @@ class AppViewModel {
         guard let admin = currentUser, admin.role == .admin else {
             throw UserManagementError.unauthorized
         }
-        guard remainingUserSlots > 0 else {
-            throw UserManagementError.noSlotsRemaining
-        }
+
+        let trimFirst = firstName.trimmingCharacters(in: .whitespaces)
+        let trimLast = lastName.trimmingCharacters(in: .whitespaces)
 
         let result = try await supabaseClient.auth.signUp(
             email: email,
             password: password,
             data: [
-                "first_name": .string(firstName.trimmingCharacters(in: .whitespaces)),
-                "last_name": .string(lastName.trimmingCharacters(in: .whitespaces)),
+                "first_name": .string(trimFirst),
+                "last_name": .string(trimLast),
                 "role": .string(role.rawValue)
             ]
         )
 
+        // Insert into profiles (without role -- role is NOT on profiles table)
         let newProfile = InsertProfileDTO(
             id: result.user.id,
-            firstName: firstName.trimmingCharacters(in: .whitespaces),
-            lastName: lastName.trimmingCharacters(in: .whitespaces),
-            email: email,
-            role: role.rawValue,
-            schoolId: admin.schoolId
+            firstName: trimFirst,
+            lastName: trimLast,
+            avatarUrl: nil,
+            phone: nil,
+            dateOfBirth: nil,
+            bio: nil,
+            timezone: nil,
+            language: nil,
+            gradeLevel: nil,
+            fullName: "\(trimFirst) \(trimLast)"
         )
         try await supabaseClient
             .from("profiles")
             .insert(newProfile)
             .execute()
 
-        let slotUpdate = UpdateSlotsDTO(userSlotsUsed: admin.userSlotsUsed + 1)
+        // Insert role into tenant_memberships (use admin's tenant if available)
+        let adminTenantId = admin.schoolId.flatMap { UUID(uuidString: $0) }
+        let membershipDTO = InsertTenantMembershipDTO(
+            userId: result.user.id,
+            tenantId: adminTenantId,
+            role: role.rawValue,
+            status: "active",
+            joinedAt: nil,
+            invitedAt: nil,
+            invitedBy: admin.id
+        )
         try await supabaseClient
-            .from("profiles")
-            .update(slotUpdate)
-            .eq("id", value: admin.id.uuidString)
+            .from("tenant_memberships")
+            .insert(membershipDTO)
             .execute()
 
+        // If student, create initial student_xp row
+        if role == .student {
+            let xpDTO = InsertStudentXpDTO(
+                studentId: result.user.id,
+                tenantId: adminTenantId,
+                totalXp: 0,
+                currentLevel: 1,
+                currentTier: nil,
+                streakDays: 0,
+                coins: 0,
+                totalCoinsEarned: nil,
+                totalCoinsSpent: nil
+            )
+            try await supabaseClient
+                .from("student_xp")
+                .insert(xpDTO)
+                .execute()
+        }
+
+        // Slot tracking: userSlotsTotal/userSlotsUsed are not DB columns on profiles.
+        // They are tracked locally on the User model for plan-based limits.
         currentUser?.userSlotsUsed += 1
         allUsers = try await dataService.fetchAllUsers(schoolId: admin.schoolId)
     }
@@ -320,32 +446,52 @@ class AppViewModel {
         }
         try await dataService.deleteUser(userId: userId)
         allUsers.removeAll { $0.id == userId }
-        if let slotsUsed = currentUser?.userSlotsUsed, slotsUsed > 0 {
+        if currentUser?.userSlotsUsed ?? 0 > 0 {
             currentUser?.userSlotsUsed -= 1
-            let slotUpdate = UpdateSlotsDTO(userSlotsUsed: slotsUsed - 1)
-            try? await supabaseClient
-                .from("profiles")
-                .update(slotUpdate)
-                .eq("id", value: admin.id.uuidString)
-                .execute()
         }
     }
 
     // MARK: - Teacher: Create Course
+    // classCode is NOT on the courses table — it lives in the class_codes table.
+    // After creating the course, we insert a row into class_codes.
     func createCourse(title: String, description: String, colorName: String) async throws {
         guard let user = currentUser else { return }
         let classCode = "\(title.prefix(4).uppercased())-\(Int.random(in: 1000...9999))"
+
+        // InsertCourseDTO uses 'name' (via CodingKey) and 'created_by' — no classCode field.
+        // iconSystemName and colorName are not DB columns; the view layer handles those locally.
         let dto = InsertCourseDTO(
-            title: title,
+            tenantId: nil,
+            name: title,
             description: description,
-            teacherId: user.id,
-            iconSystemName: "book.fill",
-            colorName: colorName,
-            classCode: classCode,
-            tenantId: nil
+            subject: nil,
+            gradeLevel: nil,
+            createdBy: user.id,
+            semester: nil,
+            startDate: nil,
+            endDate: nil,
+            syllabusUrl: nil,
+            credits: nil,
+            status: nil
         )
         if !isDemoMode {
-            _ = try await dataService.createCourse(dto)
+            let createdCourse = try await dataService.createCourse(dto)
+
+            // Insert class code into the class_codes table
+            let classCodeDTO = InsertClassCodeDTO(
+                tenantId: nil,
+                courseId: createdCourse.id,
+                code: classCode,
+                isActive: true,
+                expiresAt: nil,
+                maxUses: nil,
+                createdBy: user.id
+            )
+            try await supabaseClient
+                .from("class_codes")
+                .insert(classCodeDTO)
+                .execute()
+
             courses = try await dataService.fetchCourses(for: user.id, role: user.role)
         } else {
             let newCourse = Course(
@@ -359,6 +505,7 @@ class AppViewModel {
     }
 
     // MARK: - Teacher: Create Assignment
+    // InsertAssignmentDTO uses 'maxPoints' (via CodingKey mapped to 'max_points')
     func createAssignment(courseId: UUID, title: String, instructions: String, dueDate: Date, points: Int) async throws {
         guard let user = currentUser else { return }
         let xpReward = points / 2
@@ -367,12 +514,20 @@ class AppViewModel {
             let formatter = ISO8601DateFormatter()
             formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
             let dto = InsertAssignmentDTO(
+                tenantId: nil,
                 courseId: courseId,
                 title: title,
+                description: nil,
                 instructions: instructions,
+                type: nil,
+                createdBy: user.id,
                 dueDate: formatter.string(from: dueDate),
-                points: points,
-                xpReward: xpReward
+                availableDate: nil,
+                maxPoints: points,
+                submissionType: nil,
+                allowLateSubmission: nil,
+                lateSubmissionDays: nil,
+                status: nil
             )
             try await dataService.createAssignment(dto)
             let courseIds = courses.map(\.id)
@@ -390,17 +545,20 @@ class AppViewModel {
     }
 
     // MARK: - Create Announcement
+    // InsertAnnouncementDTO uses 'createdBy' (not 'authorId'), and no 'isPinned' field
     func createAnnouncement(title: String, content: String, isPinned: Bool) async throws {
         guard let user = currentUser else { return }
 
         if !isDemoMode {
             let dto = InsertAnnouncementDTO(
+                tenantId: nil,
+                courseId: nil,
                 title: title,
                 content: content,
-                authorId: user.id,
-                authorName: user.fullName,
-                isPinned: isPinned,
-                tenantId: nil
+                createdBy: user.id,
+                publishedAt: nil,
+                expiresAt: nil,
+                status: nil
             )
             try await dataService.createAnnouncement(dto)
             announcements = try await dataService.fetchAnnouncements()
@@ -484,16 +642,16 @@ class AppViewModel {
             // Try to match recipient names to known profiles
             for name in recipientNames {
                 if let match = allUsers.first(where: {
-                    "\($0.firstName) \($0.lastName)".localizedStandardContains(name)
+                    "\($0.firstName ?? "") \($0.lastName ?? "")".localizedStandardContains(name)
                 }) {
-                    participants.append((userId: match.id, userName: "\(match.firstName) \(match.lastName)"))
+                    participants.append((userId: match.id, userName: "\(match.firstName ?? "") \(match.lastName ?? "")"))
                 } else {
                     // Create a placeholder participant with a generated UUID
                     participants.append((userId: UUID(), userName: name))
                 }
             }
 
-            let convDTO = try await dataService.createConversation(
+            _ = try await dataService.createConversation(
                 title: title,
                 participantIds: participants
             )
@@ -919,6 +1077,7 @@ class AppViewModel {
     }
 
     // MARK: - Attendance + Parent
+    // Uses attendance_records table (not "attendance") and attendance_date column (not "date")
     func fetchAttendanceForCourse(courseId: UUID) async -> [AttendanceRecord] {
         if isDemoMode {
             return attendance.filter { record in
@@ -927,10 +1086,10 @@ class AppViewModel {
         }
         do {
             let dtos: [AttendanceDTO] = try await supabaseClient
-                .from("attendance")
+                .from("attendance_records")
                 .select()
                 .eq("course_id", value: courseId.uuidString)
-                .order("date", ascending: false)
+                .order("attendance_date", ascending: false)
                 .execute()
                 .value
             return dtos.map { dto in
@@ -947,15 +1106,32 @@ class AppViewModel {
         }
     }
 
+    // Role is not on profiles; need to use tenant_memberships to filter teachers
     func fetchTeachersForChild(childId: UUID) async -> [ProfileDTO] {
         if isDemoMode {
-            return allUsers.filter { $0.role == "Teacher" }
+            // In demo mode, return empty since ProfileDTO has no role property
+            return []
         }
         do {
-            let teachers = try await dataService.fetchAllUsers(schoolId: currentUser?.schoolId)
-            return teachers.filter { $0.role == "Teacher" }
+            // Fetch teacher user IDs from tenant_memberships
+            let memberships: [TenantMembershipDTO] = try await supabaseClient
+                .from("tenant_memberships")
+                .select()
+                .eq("role", value: "Teacher")
+                .execute()
+                .value
+            let teacherIds = memberships.map(\.userId)
+            if teacherIds.isEmpty { return [] }
+
+            let profiles: [ProfileDTO] = try await supabaseClient
+                .from("profiles")
+                .select()
+                .in("id", values: teacherIds.map(\.uuidString))
+                .execute()
+                .value
+            return profiles
         } catch {
-            return allUsers.filter { $0.role == "Teacher" }
+            return []
         }
     }
 

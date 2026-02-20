@@ -256,7 +256,7 @@ struct ManageStudentsView: View {
             do {
                 if !viewModel.isDemoMode {
                     try await supabaseClient
-                        .from("enrollments")
+                        .from("course_enrollments")
                         .delete()
                         .eq("student_id", value: student.id.uuidString)
                         .eq("course_id", value: course.id.uuidString)

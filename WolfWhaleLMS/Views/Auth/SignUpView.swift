@@ -444,19 +444,41 @@ struct SignUpView: View {
                     ]
                 )
 
-                // Create profile in profiles table
+                // Create profile in profiles table (email/role/schoolId are NOT profile columns)
                 let newProfile = InsertProfileDTO(
                     id: result.user.id,
                     firstName: firstName,
                     lastName: lastName,
-                    email: email.trimmingCharacters(in: .whitespaces).lowercased(),
-                    role: selectedRole.rawValue,
-                    schoolId: code
+                    avatarUrl: nil,
+                    phone: nil,
+                    dateOfBirth: nil,
+                    bio: nil,
+                    timezone: nil,
+                    language: nil,
+                    gradeLevel: nil,
+                    fullName: "\(firstName) \(lastName)"
                 )
                 try await supabaseClient
                     .from("profiles")
                     .insert(newProfile)
                     .execute()
+
+                // Create tenant membership for role (role lives in tenant_memberships, not profiles)
+                if let tenantCode = code, !tenantCode.isEmpty, let tenantUUID = UUID(uuidString: tenantCode) {
+                    let membership = InsertTenantMembershipDTO(
+                        userId: result.user.id,
+                        tenantId: tenantUUID,
+                        role: selectedRole.rawValue,
+                        status: "active",
+                        joinedAt: ISO8601DateFormatter().string(from: Date()),
+                        invitedAt: nil,
+                        invitedBy: nil
+                    )
+                    try await supabaseClient
+                        .from("tenant_memberships")
+                        .insert(membership)
+                        .execute()
+                }
 
                 withAnimation(.smooth) {
                     successMessage = "Account created! Please check your email to verify."

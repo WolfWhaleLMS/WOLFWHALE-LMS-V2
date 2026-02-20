@@ -335,29 +335,51 @@ struct AdminSetupView: View {
                     ]
                 )
 
-                // 2. Create school/tenant record
-                let schoolRecord = InsertSchoolDTO(
-                    id: schoolCode,
+                // 2. Create tenant record (the actual table is "tenants", not "schools")
+                let tenantId = UUID()
+                let tenantRecord = InsertTenantDTO(
+                    id: tenantId,
                     name: trimmedSchool,
-                    adminId: result.user.id
+                    slug: schoolCode,
+                    status: "active"
                 )
                 try await supabaseClient
-                    .from("schools")
-                    .insert(schoolRecord)
+                    .from("tenants")
+                    .insert(tenantRecord)
                     .execute()
 
-                // 3. Create admin profile linked to the school
+                // 3. Create admin profile (email/role/schoolId are NOT profile columns)
                 let newProfile = InsertProfileDTO(
                     id: result.user.id,
                     firstName: firstName,
                     lastName: lastName,
-                    email: trimmedEmail,
-                    role: UserRole.admin.rawValue,
-                    schoolId: schoolCode
+                    avatarUrl: nil,
+                    phone: nil,
+                    dateOfBirth: nil,
+                    bio: nil,
+                    timezone: nil,
+                    language: nil,
+                    gradeLevel: nil,
+                    fullName: "\(firstName) \(lastName)"
                 )
                 try await supabaseClient
                     .from("profiles")
                     .insert(newProfile)
+                    .execute()
+
+                // 4. Create tenant membership (role lives in tenant_memberships)
+                let membership = InsertTenantMembershipDTO(
+                    userId: result.user.id,
+                    tenantId: tenantId,
+                    role: UserRole.admin.rawValue,
+                    status: "active",
+                    joinedAt: ISO8601DateFormatter().string(from: Date()),
+                    invitedAt: nil,
+                    invitedBy: nil
+                )
+                try await supabaseClient
+                    .from("tenant_memberships")
+                    .insert(membership)
                     .execute()
 
                 withAnimation(.smooth) {
@@ -402,15 +424,15 @@ struct AdminSetupView: View {
     }
 }
 
-// MARK: - DTO for school/tenant record
+// MARK: - DTO for tenant record
 
-nonisolated struct InsertSchoolDTO: Encodable, Sendable {
-    let id: String
+nonisolated struct InsertTenantDTO: Encodable, Sendable {
+    let id: UUID
     let name: String
-    let adminId: UUID
+    let slug: String
+    let status: String?
 
     enum CodingKeys: String, CodingKey {
-        case id, name
-        case adminId = "admin_id"
+        case id, name, slug, status
     }
 }

@@ -279,16 +279,18 @@ struct TakeAttendanceView: View {
 
                 if !viewModel.isDemoMode {
                     let dto = InsertAttendanceDTO(
-                        studentId: student.id,
+                        tenantId: nil,
                         courseId: course.id,
-                        courseName: course.title,
-                        date: dateString,
-                        status: status.rawValue
+                        studentId: student.id,
+                        attendanceDate: dateString,
+                        status: status.rawValue,
+                        notes: nil,
+                        markedBy: nil
                     )
                     // Fire-and-forget insert; errors are silently handled
                     // since the local state is already updated.
                     _ = try? await supabaseClient
-                        .from("attendance")
+                        .from("attendance_records")
                         .insert(dto)
                         .execute()
                 }
