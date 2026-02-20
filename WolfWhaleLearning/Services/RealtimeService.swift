@@ -58,7 +58,7 @@ final class RealtimeService {
         listenTask = Task { [weak self] in
             guard let self else { return }
 
-            await ch.subscribe()
+            try? await ch.subscribeWithError()
 
             await MainActor.run {
                 self.isConnected = true

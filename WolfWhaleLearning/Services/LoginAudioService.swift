@@ -103,18 +103,15 @@ class LoginAudioService {
         let delta = (end - start) / Float(steps)
         var currentStep = 0
 
-        fadeTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] timer in
-            Task { @MainActor [weak self] in
-                guard let self else {
-                    timer.invalidate()
-                    return
-                }
+        fadeTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                guard let self else { return }
                 currentStep += 1
                 let newVolume = start + delta * Float(currentStep)
                 self.player?.volume = newVolume
 
                 if currentStep >= steps {
-                    timer.invalidate()
+                    self.fadeTimer?.invalidate()
                     self.fadeTimer = nil
                     self.player?.volume = end
                     completion?()
@@ -123,10 +120,5 @@ class LoginAudioService {
         }
     }
 
-    deinit {
-        fadeTimer?.invalidate()
-        if let loopObserver {
-            NotificationCenter.default.removeObserver(loopObserver)
-        }
-    }
+
 }

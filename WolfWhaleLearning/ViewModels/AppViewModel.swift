@@ -308,7 +308,7 @@ class AppViewModel {
             let update = UpdateStudentXpDTO(
                 streakDays: user.streak
             )
-            try? await supabaseClient
+            _ = try? await supabaseClient
                 .from("student_xp")
                 .update(update)
                 .eq("student_id", value: user.id.uuidString)
