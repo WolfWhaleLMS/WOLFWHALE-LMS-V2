@@ -98,7 +98,7 @@ struct LoginView: View {
                 .background(Color(.systemBackground), in: .rect(cornerRadius: 12))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(focusedField == .email ? Color.purple.opacity(0.5) : Color(.separator).opacity(0.3), lineWidth: 1)
+                        .strokeBorder(focusedField == .email ? Color.accentColor.opacity(0.5) : Color(.separator).opacity(0.3), lineWidth: 1)
                 )
 
                 HStack(spacing: 12) {
@@ -115,7 +115,7 @@ struct LoginView: View {
                 .background(Color(.systemBackground), in: .rect(cornerRadius: 12))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(focusedField == .password ? Color.purple.opacity(0.5) : Color(.separator).opacity(0.3), lineWidth: 1)
+                        .strokeBorder(focusedField == .password ? Color.accentColor.opacity(0.5) : Color(.separator).opacity(0.3), lineWidth: 1)
                 )
             }
 
@@ -152,7 +152,7 @@ struct LoginView: View {
                 .frame(height: 50)
             }
             .buttonStyle(.borderedProminent)
-            .tint(Color.purple)
+            .tint(.accentColor)
             .clipShape(.rect(cornerRadius: 12))
             .disabled(viewModel.isLoading || viewModel.email.isEmpty || viewModel.password.isEmpty)
             .sensoryFeedback(.impact(weight: .medium), trigger: viewModel.isAuthenticated)
@@ -162,7 +162,7 @@ struct LoginView: View {
             } label: {
                 Text("Forgot Password?")
                     .font(.subheadline.weight(.medium))
-                    .foregroundStyle(.purple)
+                    .foregroundStyle(Color.accentColor)
             }
 
             Button {
@@ -178,7 +178,7 @@ struct LoginView: View {
                 .frame(height: 50)
             }
             .buttonStyle(.bordered)
-            .tint(Color.purple)
+            .tint(.accentColor)
             .clipShape(.rect(cornerRadius: 12))
 
             Button {
@@ -190,7 +190,7 @@ struct LoginView: View {
                     Text("Set up a new school")
                         .font(.subheadline.weight(.medium))
                 }
-                .foregroundStyle(.purple.opacity(0.8))
+                .foregroundStyle(Color.accentColor.opacity(0.8))
             }
             .padding(.top, 2)
         }
