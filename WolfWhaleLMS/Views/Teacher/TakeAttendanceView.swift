@@ -1,4 +1,5 @@
 import SwiftUI
+import Supabase
 
 struct TakeAttendanceView: View {
     @Bindable var viewModel: AppViewModel
