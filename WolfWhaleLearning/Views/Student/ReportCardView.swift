@@ -104,7 +104,7 @@ struct ReportCardView: View {
         VStack(spacing: 12) {
             Image(systemName: "graduationcap.fill")
                 .font(.system(size: 36))
-                .foregroundStyle(.pink)
+                .foregroundStyle(.indigo)
 
             Text("WolfWhale LMS")
                 .font(.title2.bold())
@@ -164,7 +164,7 @@ struct ReportCardView: View {
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
-                .background(Color.pink.opacity(0.1))
+                .background(Color.indigo.opacity(0.1))
 
                 if viewModel.grades.isEmpty {
                     Text("No grades available")
@@ -325,7 +325,7 @@ struct ReportCardView: View {
                     HStack {
                         Text(item.courseName)
                             .font(.caption.bold())
-                            .foregroundStyle(.pink)
+                            .foregroundStyle(.indigo)
                         Image(systemName: "chevron.right")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
@@ -368,7 +368,7 @@ struct ReportCardView: View {
             .padding(.vertical, 14)
         }
         .buttonStyle(.borderedProminent)
-        .tint(.pink)
+        .tint(.indigo)
         .disabled(isGenerating)
         .padding(.top, 4)
     }

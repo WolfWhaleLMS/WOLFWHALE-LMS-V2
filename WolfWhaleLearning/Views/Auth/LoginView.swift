@@ -5,8 +5,8 @@ struct LoginView: View {
     @State private var appeared = false
     @State private var showDemoSection = false
     @State private var showForgotPassword = false
-    @State private var showAdminSetup = false
     @State private var hapticTrigger = false
+    @State private var glowPulse = false
     @FocusState private var focusedField: Field?
 
     private enum Field { case email, password }
@@ -39,9 +39,6 @@ struct LoginView: View {
         .sheet(isPresented: $showForgotPassword) {
             ForgotPasswordView()
         }
-        .sheet(isPresented: $showAdminSetup) {
-            AdminSetupView()
-        }
         .opacity(appeared ? 1 : 0)
         .offset(y: appeared ? 0 : 20)
         .onAppear {
@@ -52,13 +49,41 @@ struct LoginView: View {
 
     private var logoSection: some View {
         VStack(spacing: 14) {
-            Image("Logo")
-                .resizable()
-                .aspectRatio(contentMode: .fill)
-                .frame(width: 100, height: 100)
-                .clipShape(Circle())
-                .shadow(color: .black.opacity(0.15), radius: 8, y: 4)
-                .accessibilityHidden(true)
+            ZStack {
+                // Outer glow layers (stacked for intensity)
+                Circle()
+                    .fill(Color.green.opacity(0.08))
+                    .frame(width: 160, height: 160)
+                    .blur(radius: 30)
+                    .scaleEffect(glowPulse ? 1.15 : 0.95)
+
+                Circle()
+                    .fill(Color.green.opacity(0.15))
+                    .frame(width: 130, height: 130)
+                    .blur(radius: 20)
+                    .scaleEffect(glowPulse ? 1.1 : 0.9)
+
+                Circle()
+                    .fill(Color.green.opacity(0.25))
+                    .frame(width: 115, height: 115)
+                    .blur(radius: 12)
+                    .scaleEffect(glowPulse ? 1.05 : 0.95)
+
+                // Logo
+                Image("Logo")
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .frame(width: 100, height: 100)
+                    .clipShape(Circle())
+                    .shadow(color: .green.opacity(0.6), radius: 16, y: 0)
+                    .shadow(color: .green.opacity(0.3), radius: 30, y: 0)
+            }
+            .accessibilityHidden(true)
+            .onAppear {
+                withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) {
+                    glowPulse = true
+                }
+            }
 
             Text("WOLF WHALE")
                 .font(.system(size: 36, weight: .black, design: .serif))
@@ -174,20 +199,6 @@ struct LoginView: View {
             .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             .accessibilityHint("Double tap to reset your password")
 
-            Button {
-                hapticTrigger.toggle()
-                showAdminSetup = true
-            } label: {
-                HStack(spacing: 4) {
-                    Image(systemName: "building.2.fill")
-                        .font(.caption)
-                    Text("Set up a new school")
-                        .font(.subheadline.weight(.medium))
-                }
-                .foregroundStyle(Color.accentColor.opacity(0.8))
-            }
-            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
-            .padding(.top, 2)
         }
     }
 
@@ -213,7 +224,7 @@ struct LoginView: View {
                 .foregroundStyle(.secondary)
 
             LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
-                ForEach(UserRole.allCases) { role in
+                ForEach(UserRole.allCases.filter { $0 != .superAdmin }) { role in
                     DemoRoleButton(role: role) {
                         viewModel.loginAsDemo(role: role)
                     }

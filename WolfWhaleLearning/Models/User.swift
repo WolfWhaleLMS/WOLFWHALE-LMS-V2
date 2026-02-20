@@ -32,8 +32,6 @@ nonisolated struct User: Identifiable, Hashable, Sendable {
     var email: String
     var role: UserRole
     var avatarSystemName: String
-    var xp: Int
-    var level: Int
     var coins: Int
     var streak: Int
     var joinDate: Date
@@ -42,12 +40,6 @@ nonisolated struct User: Identifiable, Hashable, Sendable {
     var userSlotsUsed: Int
 
     var fullName: String { "\(firstName) \(lastName)" }
-    var xpForNextLevel: Int { level * 500 }
-    var xpProgress: Double {
-        let needed = Double(xpForNextLevel)
-        guard needed > 0 else { return 0 }
-        return Double(xp % max(Int(needed), 1)) / max(needed, 1)
-    }
 
     init(
         id: UUID,
@@ -56,8 +48,6 @@ nonisolated struct User: Identifiable, Hashable, Sendable {
         email: String = "",
         role: UserRole = .student,
         avatarSystemName: String = "person.crop.circle.fill",
-        xp: Int = 0,
-        level: Int = 1,
         coins: Int = 0,
         streak: Int = 0,
         joinDate: Date = Date(),
@@ -71,8 +61,6 @@ nonisolated struct User: Identifiable, Hashable, Sendable {
         self.email = email
         self.role = role
         self.avatarSystemName = avatarSystemName
-        self.xp = xp
-        self.level = level
         self.coins = coins
         self.streak = streak
         self.joinDate = joinDate

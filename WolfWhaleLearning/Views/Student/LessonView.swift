@@ -6,6 +6,7 @@ struct LessonView: View {
     let viewModel: AppViewModel
     @State private var isCompleted: Bool
     @State private var showConfetti = false
+    @State private var reachedEnd = false
     @State private var arViewModel = ARLibraryViewModel()
     @Environment(\.dismiss) private var dismiss
 
@@ -23,9 +24,28 @@ struct LessonView: View {
                 contentSection
                 relatedARSection
 
-                if !isCompleted {
-                    completeButton
+                if isCompleted {
+                    lessonCompleteBanner
                 }
+
+                // Invisible marker at the very end of content
+                Color.clear
+                    .frame(height: 1)
+                    .onAppear {
+                        guard !isCompleted && !reachedEnd else { return }
+                        reachedEnd = true
+                        Task {
+                            try? await Task.sleep(for: .seconds(1))
+                            guard !isCompleted else { return }
+                            withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
+                                isCompleted = true
+                                showConfetti = true
+                            }
+                            viewModel.completeLesson(lesson, in: course)
+                            try? await Task.sleep(for: .seconds(2))
+                            showConfetti = false
+                        }
+                    }
             }
             .padding()
         }
@@ -56,20 +76,12 @@ struct LessonView: View {
                     .foregroundStyle(.secondary)
             }
             Spacer()
-            VStack(alignment: .trailing, spacing: 4) {
-                HStack(spacing: 4) {
-                    Image(systemName: "clock")
-                    Text("\(lesson.duration) min")
-                }
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                HStack(spacing: 4) {
-                    Image(systemName: "star.fill")
-                    Text("+\(lesson.xpReward) XP")
-                }
-                .font(.caption.bold())
-                .foregroundStyle(.purple)
+            HStack(spacing: 4) {
+                Image(systemName: "clock")
+                Text("\(lesson.duration) min")
             }
+            .font(.caption)
+            .foregroundStyle(.secondary)
         }
         .padding(16)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
@@ -85,26 +97,31 @@ struct LessonView: View {
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
     }
 
-    private var completeButton: some View {
-        Button {
-            withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
-                isCompleted = true
-                showConfetti = true
+    private var lessonCompleteBanner: some View {
+        HStack(spacing: 10) {
+            Image(systemName: "checkmark.seal.fill")
+                .font(.title3)
+                .foregroundStyle(.green)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Lesson Complete!")
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.primary)
+                Text("Well done!")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
-            viewModel.completeLesson(lesson, in: course)
-            Task {
-                try? await Task.sleep(for: .seconds(2))
-                showConfetti = false
-            }
-        } label: {
-            Label("Mark as Complete", systemImage: "checkmark.circle.fill")
-                .font(.headline)
-                .frame(maxWidth: .infinity)
-                .frame(height: 50)
+            Spacer()
         }
-        .buttonStyle(.borderedProminent)
-        .tint(.green)
-        .sensoryFeedback(.success, trigger: isCompleted)
+        .padding(14)
+        .background(.green.opacity(0.1), in: .rect(cornerRadius: 14))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .strokeBorder(.green.opacity(0.3), lineWidth: 1)
+        )
+        .transition(.asymmetric(
+            insertion: .move(edge: .bottom).combined(with: .opacity),
+            removal: .opacity
+        ))
     }
 
     private var relatedARSection: some View {
@@ -158,9 +175,6 @@ struct LessonView: View {
                 .symbolEffect(.bounce, value: showConfetti)
             Text("Lesson Complete!")
                 .font(.title2.bold())
-            Text("+\(lesson.xpReward) XP")
-                .font(.headline)
-                .foregroundStyle(.purple)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.ultraThinMaterial)

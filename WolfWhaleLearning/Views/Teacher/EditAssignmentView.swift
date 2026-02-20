@@ -165,10 +165,7 @@ struct EditAssignmentView: View {
                 .font(.subheadline)
 
             // Points preview
-            HStack(spacing: 16) {
-                pointsPreview(label: "Points", value: "\(points)", color: .pink)
-                pointsPreview(label: "XP Reward", value: "\(points / 2)", color: .purple)
-            }
+            pointsPreview(label: "Points", value: "\(points)", color: .pink)
         }
         .padding(14)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))

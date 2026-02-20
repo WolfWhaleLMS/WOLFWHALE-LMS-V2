@@ -216,8 +216,8 @@ struct OnboardingView: View {
 
             VStack(spacing: 16) {
                 HStack(spacing: 12) {
-                    gamificationCard(icon: "bolt.fill", title: "XP Points", description: "Earn experience for every activity", color: .purple)
                     gamificationCard(icon: "flame.fill", title: "Streaks", description: "Build daily learning habits", color: .orange)
+                    gamificationCard(icon: "bitcoinsign.circle.fill", title: "Coins", description: "Earn coins for every activity", color: .yellow)
                 }
 
                 HStack(spacing: 12) {
@@ -225,40 +225,6 @@ struct OnboardingView: View {
                     gamificationCard(icon: "medal.fill", title: "Achievements", description: "Unlock badges and rewards", color: .cyan)
                 }
 
-                // XP bar preview
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Image(systemName: "star.fill")
-                            .foregroundStyle(.yellow)
-                        Text("Level 5")
-                            .font(.subheadline.bold())
-                            .foregroundStyle(.white)
-                        Spacer()
-                        Text("2,450 / 3,000 XP")
-                            .font(.caption)
-                            .foregroundStyle(.white.opacity(0.6))
-                    }
-
-                    GeometryReader { geo in
-                        ZStack(alignment: .leading) {
-                            Capsule()
-                                .fill(.white.opacity(0.15))
-                            Capsule()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [.purple, .cyan],
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                )
-                                .frame(width: geo.size.width * 0.82)
-                        }
-                    }
-                    .frame(height: 10)
-                }
-                .padding(16)
-                .background(.white.opacity(0.1), in: .rect(cornerRadius: 14))
-                .padding(.horizontal, 24)
             }
             .padding(.horizontal, 24)
 

@@ -74,7 +74,6 @@ struct AssignmentsView: View {
             HStack(spacing: 16) {
                 Label(assignment.dueDate.formatted(.dateTime.month(.abbreviated).day()), systemImage: "calendar")
                 Label("\(assignment.points) pts", systemImage: "star.fill")
-                Label("+\(assignment.xpReward) XP", systemImage: "bolt.fill")
             }
             .font(.caption)
             .foregroundStyle(.secondary)

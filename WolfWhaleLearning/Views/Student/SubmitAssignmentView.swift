@@ -74,7 +74,7 @@ struct SubmitAssignmentView: View {
             // Course name
             HStack(spacing: 6) {
                 Image(systemName: "book.fill")
-                    .foregroundStyle(.pink)
+                    .foregroundStyle(.blue)
                 Text(assignment.courseName)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -97,22 +97,17 @@ struct SubmitAssignmentView: View {
 
             Divider()
 
-            // Due date, points, XP
+            // Due date, points
             HStack(spacing: 20) {
                 infoLabel(
                     icon: "calendar",
                     text: assignment.dueDate.formatted(.dateTime.month(.abbreviated).day().year()),
-                    color: assignment.isOverdue ? .red : .pink
+                    color: assignment.isOverdue ? .red : .orange
                 )
                 infoLabel(
                     icon: "star.fill",
                     text: "\(assignment.points) pts",
                     color: .orange
-                )
-                infoLabel(
-                    icon: "bolt.fill",
-                    text: "+\(assignment.xpReward) XP",
-                    color: .purple
                 )
             }
 
@@ -197,7 +192,7 @@ struct SubmitAssignmentView: View {
             .frame(height: 44)
         }
         .buttonStyle(.borderedProminent)
-        .tint(.pink)
+        .tint(.blue)
         .disabled(isSubmitDisabled)
     }
 

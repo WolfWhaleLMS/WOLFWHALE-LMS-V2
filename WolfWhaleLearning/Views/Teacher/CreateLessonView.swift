@@ -9,7 +9,6 @@ struct CreateLessonView: View {
     @State private var content = ""
     @State private var duration = 15
     @State private var lessonType: LessonType = .reading
-    @State private var xpReward = 25
     @State private var isLoading = false
     @State private var showSuccess = false
     @State private var errorMessage: String?
@@ -91,22 +90,12 @@ struct CreateLessonView: View {
                 }
             }
 
-            HStack(spacing: 16) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Duration")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Stepper("\(duration) min", value: $duration, in: 5...120, step: 5)
-                        .font(.subheadline)
-                }
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("XP Reward")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Stepper("\(xpReward) XP", value: $xpReward, in: 5...200, step: 5)
-                        .font(.subheadline)
-                }
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Duration")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Stepper("\(duration) min", value: $duration, in: 5...120, step: 5)
+                    .font(.subheadline)
             }
         }
         .padding(14)
@@ -238,7 +227,7 @@ struct CreateLessonView: View {
                     content: trimmedContent,
                     duration: duration,
                     type: lessonType,
-                    xpReward: xpReward
+                    xpReward: 0
                 )
                 isLoading = false
                 withAnimation(.snappy) {

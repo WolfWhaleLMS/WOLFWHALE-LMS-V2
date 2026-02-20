@@ -90,8 +90,6 @@ nonisolated struct ProfileDTO: Codable, Sendable, Identifiable {
     func toUser(
         email: String = "",
         role: UserRole = .student,
-        xp: Int = 0,
-        level: Int = 0,
         coins: Int = 0,
         streak: Int = 0
     ) -> User {
@@ -102,8 +100,6 @@ nonisolated struct ProfileDTO: Codable, Sendable, Identifiable {
             email: email,
             role: role,
             avatarSystemName: "person.crop.circle.fill",
-            xp: xp,
-            level: level,
             coins: coins,
             streak: streak,
             joinDate: Date()

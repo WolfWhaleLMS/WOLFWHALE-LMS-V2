@@ -235,7 +235,7 @@ class AppViewModel {
     }
 
     // MARK: - Fetch Profile
-    // Loads profile from profiles table, role from tenant_memberships, XP from student_xp,
+    // Loads profile from profiles table, role from tenant_memberships, coins/streak from student_xp,
     // and email from Supabase Auth session.
     private func fetchProfile(userId: UUID) async throws {
         let profile: ProfileDTO = try await supabaseClient
@@ -263,9 +263,7 @@ class AppViewModel {
         // Derive schoolId from tenant_memberships.tenant_id
         let tenantId = memberships.first?.tenantId?.uuidString
 
-        // Fetch XP/level/coins/streak from student_xp (only relevant for students, but safe to query)
-        var xp = 0
-        var level = 1
+        // Fetch coins/streak from student_xp (only relevant for students, but safe to query)
         var coins = 0
         var streak = 0
         let xpEntries: [StudentXpDTO] = try await supabaseClient
@@ -276,24 +274,20 @@ class AppViewModel {
             .execute()
             .value
         if let xpEntry = xpEntries.first {
-            xp = xpEntry.totalXp ?? 0
-            level = xpEntry.currentLevel ?? 1
             coins = xpEntry.coins ?? 0
             streak = xpEntry.streakDays ?? 0
         }
 
-        var user = profile.toUser(email: userEmail, role: role, xp: xp, level: level, coins: coins, streak: streak)
+        var user = profile.toUser(email: userEmail, role: role, coins: coins, streak: streak)
         user.schoolId = tenantId
         currentUser = user
     }
 
-    // MARK: - Sync XP to student_xp table (NOT profiles)
+    // MARK: - Sync coins/streak to student_xp table (NOT profiles)
     func syncProfile() {
         guard let user = currentUser, !isDemoMode else { return }
         Task {
             let update = UpdateStudentXpDTO(
-                totalXp: user.xp,
-                currentLevel: user.level,
                 streakDays: user.streak,
                 coins: user.coins
             )
@@ -624,8 +618,6 @@ class AppViewModel {
         for moduleIndex in courses[courseIndex].modules.indices {
             if let lessonIndex = courses[courseIndex].modules[moduleIndex].lessons.firstIndex(where: { $0.id == lesson.id }) {
                 courses[courseIndex].modules[moduleIndex].lessons[lessonIndex].isCompleted = true
-                currentUser?.xp += lesson.xpReward
-                currentUser?.coins += lesson.xpReward / 5
 
                 if !isDemoMode, let user = currentUser {
                     let tenantUUID = user.schoolId.flatMap { UUID(uuidString: $0) }
@@ -645,8 +637,6 @@ class AppViewModel {
         guard let index = assignments.firstIndex(where: { $0.id == assignment.id }) else { return }
         assignments[index].isSubmitted = true
         assignments[index].submission = text
-        currentUser?.xp += assignment.xpReward
-        currentUser?.coins += assignment.xpReward / 5
 
         if !isDemoMode, let user = currentUser {
             Task {
@@ -667,8 +657,6 @@ class AppViewModel {
         let score = Double(correct) / Double(quiz.questions.count) * 100
         quizzes[index].isCompleted = true
         quizzes[index].score = score
-        currentUser?.xp += quiz.xpReward
-        currentUser?.coins += quiz.xpReward / 5
 
         if !isDemoMode, let user = currentUser {
             Task {

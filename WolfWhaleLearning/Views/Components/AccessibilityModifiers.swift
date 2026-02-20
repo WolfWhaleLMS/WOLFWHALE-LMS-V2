@@ -40,10 +40,10 @@ extension View {
     }
 
     /// Apply leaderboard entry accessibility
-    func leaderboardAccessibility(rank: Int, name: String, xp: Int, level: Int) -> some View {
+    func leaderboardAccessibility(rank: Int, name: String) -> some View {
         self
             .accessibilityElement(children: .combine)
-            .accessibilityLabel("Rank \(rank): \(name), level \(level), \(xp) XP")
+            .accessibilityLabel("Rank \(rank): \(name)")
     }
 
     /// Apply message bubble accessibility

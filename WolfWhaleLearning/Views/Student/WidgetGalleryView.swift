@@ -22,12 +22,11 @@ struct WidgetGalleryView: View {
                     .padding()
 
                     // Study Pet Widget
-                    sectionHeader("Study Pet", icon: "heart.fill", color: .pink)
+                    sectionHeader("Study Pet", icon: "heart.fill", color: .orange)
                     StudyPetWidget(
                         petName: viewModel.currentUser?.firstName ?? "Buddy",
-                        petLevel: viewModel.currentUser?.level ?? 1,
+                        petLevel: 1,
                         petMood: determinePetMood(),
-                        xp: viewModel.currentUser?.xp ?? 0,
                         streak: viewModel.currentUser?.streak ?? 0,
                         lastStudyDate: Date()
                     )
@@ -64,7 +63,7 @@ struct WidgetGalleryView: View {
         guard let user = viewModel.currentUser else { return .neutral }
         if user.streak >= 7 { return .excited }
         if user.streak >= 3 { return .happy }
-        if user.xp > 0 { return .neutral }
+        if user.coins > 0 { return .neutral }
         return .sad
     }
 

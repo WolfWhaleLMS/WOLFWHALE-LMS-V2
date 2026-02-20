@@ -4,6 +4,8 @@ struct StudentDashboardView: View {
     let viewModel: AppViewModel
     @State private var appeared = false
     @State private var showNotifications = false
+    @State private var showRadio = false
+    @State private var showWidgetGallery = false
 
     private var greeting: String {
         let hour = Calendar.current.component(.hour, from: Date())
@@ -60,7 +62,7 @@ struct StudentDashboardView: View {
                     VStack(spacing: 20) {
                         activitySection
                         statsRow
-                        xpSection
+                        campusLifeSection
                         upcomingSection
                         coursesSection
                     }
@@ -87,13 +89,20 @@ struct StudentDashboardView: View {
                                 .foregroundStyle(.white)
                                 .frame(minWidth: 16, minHeight: 16)
                                 .background(.red, in: Circle())
-                                .offset(x: 8, y: -8)
+                                .offset(x: 6, y: -6)
                         }
                     }
+                    .padding(.trailing, 4)
                 }
             }
             .sheet(isPresented: $showNotifications) {
                 NotificationsSheet(viewModel: viewModel)
+            }
+            .sheet(isPresented: $showRadio) {
+                RadioView()
+            }
+            .sheet(isPresented: $showWidgetGallery) {
+                WidgetGalleryView(viewModel: viewModel)
             }
         }
     }
@@ -103,14 +112,12 @@ struct StudentDashboardView: View {
             HStack(spacing: 20) {
                 ActivityRingView(
                     lessonsProgress: lessonsProgress,
-                    assignmentsProgress: assignmentsProgress,
-                    xpProgress: viewModel.currentUser?.xpProgress ?? 0
+                    assignmentsProgress: assignmentsProgress
                 )
 
                 VStack(alignment: .leading, spacing: 10) {
                     ActivityRingLabel(title: "Lessons", value: "\(completedLessons)/\(totalLessons) done", color: .green)
                     ActivityRingLabel(title: "Assignments", value: "\(submittedAssignments)/\(totalAssignments) done", color: .cyan)
-                    ActivityRingLabel(title: "XP Earned", value: "\(viewModel.currentUser?.xp ?? 0) XP", color: .purple)
                 }
                 Spacer()
             }
@@ -118,14 +125,13 @@ struct StudentDashboardView: View {
         }
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 20))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Activity rings: \(completedLessons) of \(totalLessons) lessons done, \(submittedAssignments) of \(totalAssignments) assignments done, \(viewModel.currentUser?.xp ?? 0) XP earned")
+        .accessibilityLabel("Activity rings: \(completedLessons) of \(totalLessons) lessons done, \(submittedAssignments) of \(totalAssignments) assignments done")
     }
 
     private var statsRow: some View {
         VStack(spacing: 12) {
             HStack(spacing: 12) {
                 statCard(icon: "flame.fill", value: "\(viewModel.currentUser?.streak ?? 0)", label: "Day Streak", color: .orange)
-                statCard(icon: "star.fill", value: "Lv.\(viewModel.currentUser?.level ?? 1)", label: "Level", color: .purple)
                 statCard(icon: "bitcoinsign.circle.fill", value: "\(viewModel.currentUser?.coins ?? 0)", label: "Coins", color: .yellow)
             }
 
@@ -169,22 +175,79 @@ struct StudentDashboardView: View {
         .accessibilityLabel("\(label): \(value)")
     }
 
-    private var xpSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("Experience Points")
-                    .font(.subheadline.bold())
-                Spacer()
-                Text("\(viewModel.currentUser?.xp ?? 0) / \(viewModel.currentUser?.xpForNextLevel ?? 500) XP")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+    // MARK: - Campus Life Section
+
+    private var campusLifeSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Campus Life")
+                .font(.headline)
+
+            // Compact campus location status
+            NavigationLink {
+                CampusLocationView()
+            } label: {
+                CampusLocationView(isCompact: true)
             }
-            XPBar(progress: viewModel.currentUser?.xpProgress ?? 0, level: viewModel.currentUser?.level ?? 1)
+            .buttonStyle(.plain)
+
+            HStack(spacing: 12) {
+                // Radio button
+                Button {
+                    showRadio = true
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "radio.fill")
+                            .font(.title3)
+                            .foregroundStyle(.purple)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Campus Radio")
+                                .font(.subheadline.bold())
+                                .foregroundStyle(.primary)
+                            Text("Listen now")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
+                    .padding(14)
+                    .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Campus Radio")
+                .accessibilityHint("Double tap to open the radio player")
+            }
+
+            // Widget gallery link
+            Button {
+                showWidgetGallery = true
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "apps.iphone")
+                        .font(.title3)
+                        .foregroundStyle(.cyan)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Home Screen Widgets")
+                            .font(.subheadline.bold())
+                            .foregroundStyle(.primary)
+                        Text("Preview & add widgets")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
+                .padding(14)
+                .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Home Screen Widgets")
+            .accessibilityHint("Double tap to preview available widgets")
         }
-        .padding(16)
-        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Experience Points: \(viewModel.currentUser?.xp ?? 0) of \(viewModel.currentUser?.xpForNextLevel ?? 500) XP, Level \(viewModel.currentUser?.level ?? 1)")
     }
 
     private var upcomingSection: some View {

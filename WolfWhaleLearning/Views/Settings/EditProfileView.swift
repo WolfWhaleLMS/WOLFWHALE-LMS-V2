@@ -352,8 +352,6 @@ struct EditProfileView: View {
 
             let columns = [GridItem(.flexible()), GridItem(.flexible())]
             LazyVGrid(columns: columns, spacing: 10) {
-                statCard(icon: "bolt.fill", label: "XP", value: "\(viewModel.currentUser?.xp ?? 0)", color: .purple)
-                statCard(icon: "star.fill", label: "Level", value: "\(viewModel.currentUser?.level ?? 1)", color: .yellow)
                 statCard(icon: "bitcoinsign.circle.fill", label: "Coins", value: "\(viewModel.currentUser?.coins ?? 0)", color: .orange)
                 statCard(icon: "flame.fill", label: "Streak", value: "\(viewModel.currentUser?.streak ?? 0) days", color: .red)
             }

@@ -6,7 +6,6 @@ struct StudyPetWidget: View {
     let petName: String
     let petLevel: Int
     let petMood: PetMood
-    let xp: Int
     let streak: Int
     let lastStudyDate: Date?
 
@@ -70,10 +69,6 @@ struct StudyPetWidget: View {
 
             // Stats row
             HStack(spacing: 16) {
-                Label("\(xp) XP", systemImage: "star.fill")
-                    .font(.caption2)
-                    .foregroundStyle(.orange)
-
                 Label("\(streak) day streak", systemImage: "flame.fill")
                     .font(.caption2)
                     .foregroundStyle(.red)

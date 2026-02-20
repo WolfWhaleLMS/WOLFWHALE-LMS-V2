@@ -225,7 +225,6 @@ struct QuizView: View {
 
                 HStack(spacing: 20) {
                     resultStat(label: "Correct", value: "\(Int(score / 100 * Double(quiz.questions.count)))/\(quiz.questions.count)", color: .green)
-                    resultStat(label: "XP Earned", value: "+\(quiz.xpReward)", color: .purple)
                     resultStat(label: "Time", value: timeString, color: .blue)
                 }
 

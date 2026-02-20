@@ -17,7 +17,7 @@ private enum CalendarEventType: Hashable {
 
     var color: Color {
         switch self {
-        case .assignment: .pink
+        case .assignment: .orange
         case .quiz: .orange
         case .announcement: .blue
         }
@@ -271,7 +271,7 @@ struct CalendarView: View {
 
     private var legendRow: some View {
         HStack(spacing: 16) {
-            legendItem(color: .pink, label: "Assignment")
+            legendItem(color: .orange, label: "Assignment")
             legendItem(color: .orange, label: "Quiz")
             legendItem(color: .blue, label: "Event")
         }
@@ -428,7 +428,7 @@ private struct CalendarDayView: View {
                 HStack(spacing: 3) {
                     if eventTypes.contains(.assignment) {
                         Circle()
-                            .fill(Color.pink)
+                            .fill(Color.orange)
                             .frame(width: 5, height: 5)
                     }
                     if eventTypes.contains(.quiz) {

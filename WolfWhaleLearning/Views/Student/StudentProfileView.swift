@@ -13,7 +13,6 @@ struct StudentProfileView: View {
                     profileHeader
                     statsGrid
                     schoolIDLink
-                    xpSection
                     achievementsSection
                     streakSection
                     appearanceSection
@@ -62,15 +61,6 @@ struct StudentProfileView: View {
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
 
-            HStack(spacing: 6) {
-                Image(systemName: "star.fill")
-                    .foregroundStyle(.yellow)
-                Text("Level \(viewModel.currentUser?.level ?? 1)")
-                    .font(.headline)
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .background(.yellow.opacity(0.15), in: Capsule())
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 20)
@@ -80,7 +70,6 @@ struct StudentProfileView: View {
     private var statsGrid: some View {
         let columns = [GridItem(.flexible()), GridItem(.flexible())]
         return LazyVGrid(columns: columns, spacing: 12) {
-            profileStat(icon: "bolt.fill", value: "\(viewModel.currentUser?.xp ?? 0)", label: "Total XP", color: .purple)
             profileStat(icon: "bitcoinsign.circle.fill", value: "\(viewModel.currentUser?.coins ?? 0)", label: "Coins", color: .yellow)
             profileStat(icon: "flame.fill", value: "\(viewModel.currentUser?.streak ?? 0) days", label: "Streak", color: .orange)
             profileStat(icon: "book.fill", value: "\(viewModel.courses.count)", label: "Courses", color: .blue)
@@ -103,22 +92,6 @@ struct StudentProfileView: View {
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 14))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label): \(value)")
-    }
-
-    private var xpSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("XP Progress")
-                    .font(.headline)
-                Spacer()
-                Text("Level \(viewModel.currentUser?.level ?? 1) → \((viewModel.currentUser?.level ?? 1) + 1)")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            XPBar(progress: viewModel.currentUser?.xpProgress ?? 0, level: viewModel.currentUser?.level ?? 1)
-        }
-        .padding(16)
-        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
     }
 
     private var achievementsSection: some View {

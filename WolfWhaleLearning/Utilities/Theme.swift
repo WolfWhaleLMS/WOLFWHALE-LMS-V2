@@ -78,36 +78,3 @@ struct StatRing: View {
     }
 }
 
-struct XPBar: View {
-    let progress: Double
-    let level: Int
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text("Level \(level)")
-                    .font(.caption.bold())
-                Spacer()
-                Text("\(Int(progress * 100))%")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            GeometryReader { geo in
-                ZStack(alignment: .leading) {
-                    Capsule()
-                        .fill(.quaternary)
-                    Capsule()
-                        .fill(
-                            LinearGradient(
-                                colors: [.purple, .blue],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .frame(width: geo.size.width * min(progress, 1.0))
-                }
-            }
-            .frame(height: 8)
-        }
-    }
-}

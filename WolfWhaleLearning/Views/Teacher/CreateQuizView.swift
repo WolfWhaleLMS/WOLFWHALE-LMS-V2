@@ -7,7 +7,6 @@ struct CreateQuizView: View {
     @State private var quizTitle = ""
     @State private var timeLimit = 15
     @State private var dueDate = Date().addingTimeInterval(7 * 86400)
-    @State private var xpReward = 50
     @State private var questions: [DraftQuestion] = [DraftQuestion()]
     @State private var isLoading = false
     @State private var showSuccess = false
@@ -55,22 +54,12 @@ struct CreateQuizView: View {
             TextField("Quiz Title", text: $quizTitle)
                 .textFieldStyle(.roundedBorder)
 
-            HStack(spacing: 16) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Time Limit")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Stepper("\(timeLimit) min", value: $timeLimit, in: 5...120, step: 5)
-                        .font(.subheadline)
-                }
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("XP Reward")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Stepper("\(xpReward) XP", value: $xpReward, in: 10...500, step: 10)
-                        .font(.subheadline)
-                }
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Time Limit")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Stepper("\(timeLimit) min", value: $timeLimit, in: 5...120, step: 5)
+                    .font(.subheadline)
             }
 
             VStack(alignment: .leading, spacing: 4) {
@@ -266,7 +255,7 @@ struct CreateQuizView: View {
                     questions: quizQuestions,
                     timeLimit: timeLimit,
                     dueDate: dueDate,
-                    xpReward: xpReward
+                    xpReward: 0
                 )
                 isLoading = false
                 withAnimation(.snappy) {

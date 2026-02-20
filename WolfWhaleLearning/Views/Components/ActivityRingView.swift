@@ -3,14 +3,12 @@ import SwiftUI
 struct ActivityRingView: View {
     let lessonsProgress: Double
     let assignmentsProgress: Double
-    let xpProgress: Double
-    @State private var animatedProgress: [Double] = [0, 0, 0]
+    @State private var animatedProgress: [Double] = [0, 0]
 
     var body: some View {
         ZStack {
             ring(progress: animatedProgress[0], color: .green, padding: 0)
             ring(progress: animatedProgress[1], color: .cyan, padding: 20)
-            ring(progress: animatedProgress[2], color: .purple, padding: 40)
 
             VStack(spacing: 2) {
                 Image(systemName: "flame.fill")
@@ -24,7 +22,7 @@ struct ActivityRingView: View {
         .frame(width: 140, height: 140)
         .onAppear {
             withAnimation(.spring(duration: 1.2, bounce: 0.2).delay(0.2)) {
-                animatedProgress = [lessonsProgress, assignmentsProgress, xpProgress]
+                animatedProgress = [lessonsProgress, assignmentsProgress]
             }
         }
     }

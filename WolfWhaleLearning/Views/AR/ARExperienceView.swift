@@ -120,6 +120,10 @@ struct ARSimulatorPlaceholderView: View {
         }
     }
 
+    private func organelleByName(_ name: String) -> CellOrganelle? {
+        organelles.first(where: { $0.name == name })
+    }
+
     private var cellDiagram: some View {
         ZStack {
             Ellipse()
@@ -134,22 +138,25 @@ struct ARSimulatorPlaceholderView: View {
                 .frame(width: 280, height: 240)
 
             Ellipse()
-                .stroke(Color(hex: 0x66BB6A), lineWidth: 3)
+                .stroke(Color(hex: 0xFFE082), lineWidth: 3)
                 .frame(width: 280, height: 240)
 
-            organelleDot(organelle: organelles[0], x: 0, y: 0, size: 60)
-            organelleDot(organelle: organelles[1], x: -70, y: -30, size: 28)
-            organelleDot(organelle: organelles[2], x: 70, y: -40, size: 28)
-            organelleDot(organelle: organelles[3], x: -50, y: 50, size: 35)
-            organelleDot(organelle: organelles[4], x: 60, y: 50, size: 32)
-            organelleDot(organelle: organelles[5], x: -90, y: 10, size: 22)
-            organelleDot(organelle: organelles[6], x: 95, y: 0, size: 20)
-            organelleDot(organelle: organelles[7], x: -30, y: -70, size: 24)
-            organelleDot(organelle: organelles[8], x: 30, y: 75, size: 18)
+            if let o = organelleByName("Nucleus") { organelleDot(organelle: o, x: 0, y: 0, size: 60) }
+            if let o = organelleByName("Nucleolus") { organelleDot(organelle: o, x: 5, y: 5, size: 18) }
+            if let o = organelleByName("Mitochondria") { organelleDot(organelle: o, x: -70, y: -30, size: 28) }
+            if let o = organelleByName("Rough Endoplasmic Reticulum") { organelleDot(organelle: o, x: 55, y: -15, size: 28) }
+            if let o = organelleByName("Smooth Endoplasmic Reticulum") { organelleDot(organelle: o, x: -60, y: 20, size: 24) }
+            if let o = organelleByName("Golgi Apparatus") { organelleDot(organelle: o, x: -50, y: 55, size: 35) }
+            if let o = organelleByName("Cell Membrane") { organelleDot(organelle: o, x: 110, y: -80, size: 20) }
+            if let o = organelleByName("Lysosomes") { organelleDot(organelle: o, x: 85, y: 10, size: 18) }
+            if let o = organelleByName("Vacuoles") { organelleDot(organelle: o, x: 40, y: 60, size: 22) }
+            if let o = organelleByName("Centrioles") { organelleDot(organelle: o, x: -25, y: -65, size: 16) }
+            if let o = organelleByName("Peroxisomes") { organelleDot(organelle: o, x: 75, y: -50, size: 12) }
 
+            // Scattered ribosome dots
             ForEach([CGPoint(x: -100, y: -60), CGPoint(x: 80, y: -70), CGPoint(x: -80, y: 70), CGPoint(x: 100, y: 60), CGPoint(x: -20, y: 90)], id: \.x) { point in
                 Circle()
-                    .fill(Color(hex: 0x795548).opacity(0.5))
+                    .fill(Color(hex: 0x4A148C).opacity(0.5))
                     .frame(width: 5, height: 5)
                     .offset(x: point.x, y: point.y)
             }
@@ -250,14 +257,19 @@ struct ARSimulatorPlaceholderView: View {
     private func iconForOrganelle(_ name: String) -> String {
         switch name {
         case "Nucleus": return "circle.fill"
+        case "Nucleolus": return "circle.inset.filled"
+        case "Nuclear Envelope": return "circle.dashed"
         case "Mitochondria": return "bolt.fill"
-        case "Endoplasmic Reticulum": return "wave.3.right"
+        case "Rough Endoplasmic Reticulum": return "wave.3.right"
+        case "Smooth Endoplasmic Reticulum": return "wave.3.left"
         case "Golgi Apparatus": return "tray.full.fill"
         case "Cell Membrane": return "circle"
-        case "Ribosome": return "circle.grid.3x3.fill"
-        case "Lysosome": return "drop.fill"
-        case "Vacuole": return "drop.circle.fill"
-        case "Centrosome": return "target"
+        case "Ribosomes": return "circle.grid.3x3.fill"
+        case "Lysosomes": return "drop.fill"
+        case "Vacuoles": return "drop.circle.fill"
+        case "Centrioles": return "target"
+        case "Peroxisomes": return "smallcircle.filled.circle"
+        case "Cytoplasm": return "drop"
         default: return "circle.fill"
         }
     }

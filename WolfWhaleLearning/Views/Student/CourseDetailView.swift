@@ -106,8 +106,6 @@ struct CourseDetailView: View {
                     Text(lesson.type.rawValue)
                     Text("·")
                     Text("\(lesson.duration) min")
-                    Text("·")
-                    Text("+\(lesson.xpReward) XP")
                 }
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -125,7 +123,7 @@ struct CourseDetailView: View {
         }
         .padding(.vertical, 4)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(lesson.title), \(lesson.type.rawValue), \(lesson.duration) minutes, \(lesson.xpReward) XP\(lesson.isCompleted ? ", completed" : "")")
+        .accessibilityLabel("\(lesson.title), \(lesson.type.rawValue), \(lesson.duration) minutes\(lesson.isCompleted ? ", completed" : "")")
         .accessibilityHint(lesson.isCompleted ? "" : "Double tap to open lesson")
     }
 

@@ -91,7 +91,7 @@ struct LeaderboardView: View {
         ContentUnavailableView(
             "No Rankings Yet",
             systemImage: "trophy",
-            description: Text("Complete lessons and assignments to earn XP and appear on the leaderboard")
+            description: Text("Complete lessons and assignments to appear on the leaderboard")
         )
     }
 
@@ -114,21 +114,7 @@ struct LeaderboardView: View {
                 icon: "number",
                 value: currentUserRank > 0 ? "#\(currentUserRank)" : "--",
                 label: "Your Rank",
-                color: .pink
-            )
-            divider
-            statItem(
-                icon: "bolt.fill",
-                value: "\(viewModel.currentUser?.xp ?? 0)",
-                label: "XP",
-                color: .purple
-            )
-            divider
-            statItem(
-                icon: "star.fill",
-                value: "Lv.\(viewModel.currentUser?.level ?? 1)",
-                label: "Level",
-                color: .yellow
+                color: .orange
             )
             divider
             statItem(
@@ -301,7 +287,7 @@ struct LeaderboardView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Image(systemName: "list.number")
-                    .foregroundStyle(.pink)
+                    .foregroundStyle(.indigo)
                 Text("Full Rankings")
                     .font(.headline)
                 Spacer()
@@ -374,7 +360,7 @@ struct LeaderboardView: View {
                     if isCurrentUser {
                         Text("(You)")
                             .font(.caption2)
-                            .foregroundStyle(.pink)
+                            .foregroundStyle(.blue)
                     }
                 }
 
@@ -427,13 +413,13 @@ struct LeaderboardView: View {
         .padding(12)
         .background(
             isCurrentUser
-                ? AnyShapeStyle(.pink.opacity(0.08))
+                ? AnyShapeStyle(.blue.opacity(0.08))
                 : AnyShapeStyle(.clear),
             in: .rect(cornerRadius: 12)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(isCurrentUser ? .pink.opacity(0.3) : .clear, lineWidth: 1.5)
+                .stroke(isCurrentUser ? .blue.opacity(0.3) : .clear, lineWidth: 1.5)
         )
         .animation(.smooth, value: entry.rank)
         .accessibilityElement(children: .combine)
