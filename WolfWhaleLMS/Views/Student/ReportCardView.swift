@@ -398,6 +398,10 @@ struct ReportCardView: View {
     private func generatePDF() {
         isGenerating = true
 
+        let grades = viewModel.grades
+        let attendance = viewModel.attendance
+        let assignments = viewModel.assignments
+
         DispatchQueue.global(qos: .userInitiated).async {
             let pageWidth: CGFloat = 612  // US Letter
             let pageHeight: CGFloat = 792
@@ -409,10 +413,6 @@ struct ReportCardView: View {
                 bounds: CGRect(x: 0, y: 0, width: pageWidth, height: pageHeight),
                 format: format
             )
-
-            let grades = viewModel.grades
-            let attendance = viewModel.attendance
-            let assignments = viewModel.assignments
 
             let data = renderer.pdfData { context in
                 context.beginPage()

@@ -56,9 +56,14 @@ struct AdminDashboardView: View {
         .accessibilityLabel("\(label): \(value)")
     }
 
+    /// Whether the attendance chart is showing real data (as opposed to an empty placeholder).
+    private var hasRealAttendanceData: Bool {
+        !viewModel.attendance.isEmpty
+    }
+
     private var weeklyAttendanceRates: [Double] {
-        let fallback = [0.96, 0.94, 0.92, 0.95, 0.93]
-        guard !viewModel.attendance.isEmpty else { return fallback }
+        let empty: [Double] = [0.0, 0.0, 0.0, 0.0, 0.0]
+        guard !viewModel.attendance.isEmpty else { return empty }
 
         let calendar = Calendar.current
         let today = Date()
@@ -67,20 +72,20 @@ struct AdminDashboardView: View {
         let weekday = calendar.component(.weekday, from: today)
         let daysFromMonday = (weekday + 5) % 7 // Sunday=1 -> 6, Monday=2 -> 0, etc.
         guard let monday = calendar.date(byAdding: .day, value: -daysFromMonday, to: today) else {
-            return fallback
+            return empty
         }
 
         var rates: [Double] = []
         for dayOffset in 0..<5 {
             guard let dayDate = calendar.date(byAdding: .day, value: dayOffset, to: monday) else {
-                rates.append(fallback[dayOffset])
+                rates.append(0.0)
                 continue
             }
             let dayRecords = viewModel.attendance.filter {
                 calendar.isDate($0.date, inSameDayAs: dayDate)
             }
             if dayRecords.isEmpty {
-                rates.append(fallback[dayOffset])
+                rates.append(0.0)
             } else {
                 let presentCount = dayRecords.filter { $0.status == .present || $0.status == .tardy }.count
                 rates.append(Double(presentCount) / Double(dayRecords.count))
@@ -95,23 +100,32 @@ struct AdminDashboardView: View {
                 .font(.headline)
 
             let rates = weeklyAttendanceRates
-            HStack(spacing: 6) {
-                ForEach(0..<5, id: \.self) { day in
-                    VStack(spacing: 6) {
-                        let rate = rates[day]
-                        ZStack(alignment: .bottom) {
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(Color(.tertiarySystemFill))
-                                .frame(height: 80)
-                            RoundedRectangle(cornerRadius: 4)
-                                .fill(rate > 0.93 ? .green : .orange)
-                                .frame(height: 80 * min(rate, 1.0))
+            ZStack {
+                HStack(spacing: 6) {
+                    ForEach(0..<5, id: \.self) { day in
+                        VStack(spacing: 6) {
+                            let rate = rates[day]
+                            ZStack(alignment: .bottom) {
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(Color(.tertiarySystemFill))
+                                    .frame(height: 80)
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(rate > 0.93 ? .green : .orange)
+                                    .frame(height: 80 * min(rate, 1.0))
+                            }
+                            .frame(maxWidth: .infinity)
+                            Text(["Mon", "Tue", "Wed", "Thu", "Fri"][day])
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
                         }
-                        .frame(maxWidth: .infinity)
-                        Text(["Mon", "Tue", "Wed", "Thu", "Fri"][day])
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
                     }
+                }
+
+                if !hasRealAttendanceData {
+                    Text("No attendance records yet")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .padding(.bottom, 16)
                 }
             }
         }
@@ -156,15 +170,6 @@ struct AdminDashboardView: View {
                 }
             }
 
-            Button(role: .destructive) {
-                viewModel.logout()
-            } label: {
-                Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 44)
-            }
-            .buttonStyle(.bordered)
-            .padding(.top, 8)
         }
     }
 }

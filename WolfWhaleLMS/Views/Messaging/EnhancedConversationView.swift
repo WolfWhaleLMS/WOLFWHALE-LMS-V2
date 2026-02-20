@@ -214,43 +214,32 @@ struct EnhancedConversationView: View {
     private func subscribeToRealtime() {
         let currentUserId = viewModel.currentUser?.id
 
-        realtimeService.subscribeToConversation(conversation.id) { incomingMessage in
-            // Skip if this message was sent by the current user
-            // (the local optimistic insert in AppViewModel already handles that)
+        realtimeService.subscribeToConversation(
+            conversation.id,
+            currentUserId: currentUserId
+        ) { incomingMessage in
             guard let convIndex = viewModel.conversations.firstIndex(where: { $0.id == conversation.id }) else {
                 return
             }
 
-            // Avoid duplicate messages
+            // Avoid duplicate messages by ID
             let isDuplicate = viewModel.conversations[convIndex].messages.contains(where: { $0.id == incomingMessage.id })
             guard !isDuplicate else { return }
 
-            // If the message sender matches current user, skip (already added optimistically)
-            // We check by comparing content + recent timestamp as a secondary guard
-            var adjusted = incomingMessage
-            if let currentUserId {
-                // The realtime payload doesn't carry isFromCurrentUser;
-                // compare sender_id from the DTO indirectly via sender name
-                if adjusted.senderName == viewModel.currentUser?.fullName {
-                    adjusted = ChatMessage(
-                        id: incomingMessage.id,
-                        senderName: incomingMessage.senderName,
-                        content: incomingMessage.content,
-                        timestamp: incomingMessage.timestamp,
-                        isFromCurrentUser: true
-                    )
-                    // If optimistic insert already exists with same content, skip
-                    let recentDuplicate = viewModel.conversations[convIndex].messages.contains {
-                        $0.isFromCurrentUser && $0.content == incomingMessage.content &&
-                        abs($0.timestamp.timeIntervalSince(incomingMessage.timestamp)) < 5
-                    }
-                    if recentDuplicate { return }
+            // If the message is from the current user, the optimistic insert in
+            // AppViewModel already added it locally. Check for a recent optimistic
+            // duplicate (same content within 5 seconds) and skip if found.
+            if incomingMessage.isFromCurrentUser {
+                let recentDuplicate = viewModel.conversations[convIndex].messages.contains {
+                    $0.isFromCurrentUser && $0.content == incomingMessage.content &&
+                    abs($0.timestamp.timeIntervalSince(incomingMessage.timestamp)) < 5
                 }
+                if recentDuplicate { return }
             }
 
-            viewModel.conversations[convIndex].messages.append(adjusted)
-            viewModel.conversations[convIndex].lastMessage = adjusted.content
-            viewModel.conversations[convIndex].lastMessageDate = adjusted.timestamp
+            viewModel.conversations[convIndex].messages.append(incomingMessage)
+            viewModel.conversations[convIndex].lastMessage = incomingMessage.content
+            viewModel.conversations[convIndex].lastMessageDate = incomingMessage.timestamp
         }
     }
 

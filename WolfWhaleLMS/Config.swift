@@ -1,9 +1,6 @@
 // Config.swift - Auto-generated at build time
-// Environment variables from Project Settings are injected here
-//
-// Usage: Config.YOUR_ENV_NAME
-// Example: If you set MY_API_KEY in Environment Variables,
-//          use Config.MY_API_KEY in your code
+// SECURITY: If this repo was ever public, rotate keys in Supabase Dashboard → Settings → API
+// TODO: Before App Store submission, set DEVELOPMENT_TEAM in project.pbxproj to your Apple Developer Team ID
 
 import Foundation
 

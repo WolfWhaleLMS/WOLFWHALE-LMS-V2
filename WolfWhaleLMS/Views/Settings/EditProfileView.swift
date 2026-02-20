@@ -1,4 +1,5 @@
 import SwiftUI
+import PhotosUI
 import Supabase
 
 struct EditProfileView: View {
@@ -8,9 +9,14 @@ struct EditProfileView: View {
     @State private var firstName: String = ""
     @State private var lastName: String = ""
     @State private var selectedAvatar: String = "person.crop.circle.fill"
+    @State private var avatarUrl: String? = nil
     @State private var isLoading = false
+    @State private var isUploading = false
     @State private var errorMessage: String?
     @State private var showSuccess = false
+
+    // PhotosPicker state
+    @State private var selectedPhoto: PhotosPickerItem?
 
     @FocusState private var focusedField: Field?
 
@@ -18,7 +24,7 @@ struct EditProfileView: View {
         case firstName, lastName
     }
 
-    // MARK: - Avatar Options
+    // MARK: - Avatar Options (fallback SF Symbols)
 
     private let avatarOptions: [String] = [
         "person.crop.circle.fill",
@@ -39,18 +45,28 @@ struct EditProfileView: View {
         "sparkles"
     ]
 
+    /// Returns true when the avatar URL looks like a real uploaded image URL
+    /// rather than an SF Symbol name.
+    private var hasUploadedAvatar: Bool {
+        guard let url = avatarUrl, !url.isEmpty else { return false }
+        return url.hasPrefix("http://") || url.hasPrefix("https://")
+    }
+
     private var hasChanges: Bool {
         guard let user = viewModel.currentUser else { return false }
-        return firstName != user.firstName ||
-               lastName != user.lastName ||
-               selectedAvatar != user.avatarSystemName
+        let nameChanged = firstName != user.firstName || lastName != user.lastName
+        let sfSymbolChanged = selectedAvatar != user.avatarSystemName
+        // Check if avatarUrl changed from what was loaded
+        let avatarChanged = hasUploadedAvatar || sfSymbolChanged
+        return nameChanged || avatarChanged
     }
 
     private var canSave: Bool {
         !firstName.trimmingCharacters(in: .whitespaces).isEmpty &&
         !lastName.trimmingCharacters(in: .whitespaces).isEmpty &&
         hasChanges &&
-        !isLoading
+        !isLoading &&
+        !isUploading
     }
 
     // MARK: - Body
@@ -73,6 +89,11 @@ struct EditProfileView: View {
             .navigationTitle("Edit Profile")
             .navigationBarTitleDisplayMode(.inline)
             .onAppear { loadCurrentValues() }
+            .onChange(of: selectedPhoto) { _, newValue in
+                Task {
+                    await uploadAvatar(item: newValue)
+                }
+            }
 
             if showSuccess {
                 successOverlay
@@ -84,56 +105,139 @@ struct EditProfileView: View {
 
     private var avatarSection: some View {
         VStack(spacing: 16) {
-            Text("Choose Avatar")
+            Text("Profile Photo")
                 .font(.headline)
 
-            ZStack {
-                Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [.pink, .purple],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .frame(width: 80, height: 80)
-                Image(systemName: selectedAvatar)
-                    .font(.system(size: 36))
-                    .foregroundStyle(.white)
+            // Photo picker for uploading a real avatar
+            PhotosPicker(selection: $selectedPhoto, matching: .images) {
+                ZStack {
+                    if hasUploadedAvatar, let urlString = avatarUrl, let url = URL(string: urlString) {
+                        AsyncImage(url: url) { phase in
+                            switch phase {
+                            case .success(let image):
+                                image
+                                    .resizable()
+                                    .scaledToFill()
+                            case .failure:
+                                fallbackAvatarImage
+                            case .empty:
+                                ProgressView()
+                                    .frame(width: 80, height: 80)
+                            @unknown default:
+                                fallbackAvatarImage
+                            }
+                        }
+                        .frame(width: 80, height: 80)
+                        .clipShape(Circle())
+                    } else {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [.pink, .purple],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 80, height: 80)
+                            .overlay {
+                                Image(systemName: selectedAvatar)
+                                    .font(.system(size: 36))
+                                    .foregroundStyle(.white)
+                            }
+                    }
+
+                    // Camera badge overlay
+                    Circle()
+                        .fill(.ultraThinMaterial)
+                        .frame(width: 28, height: 28)
+                        .overlay {
+                            Image(systemName: "camera.fill")
+                                .font(.caption)
+                                .foregroundStyle(.pink)
+                        }
+                        .offset(x: 28, y: 28)
+                }
             }
 
-            let columns = [GridItem](repeating: GridItem(.flexible(), spacing: 12), count: 4)
-            LazyVGrid(columns: columns, spacing: 12) {
-                ForEach(avatarOptions, id: \.self) { avatar in
-                    Button {
-                        withAnimation(.smooth) {
-                            selectedAvatar = avatar
+            if isUploading {
+                HStack(spacing: 8) {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text("Uploading photo...")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Text("Tap photo to change")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            // SF Symbol fallback picker
+            DisclosureGroup {
+                let columns = [GridItem](repeating: GridItem(.flexible(), spacing: 12), count: 4)
+                LazyVGrid(columns: columns, spacing: 12) {
+                    ForEach(avatarOptions, id: \.self) { avatar in
+                        Button {
+                            withAnimation(.smooth) {
+                                selectedAvatar = avatar
+                                // Clear uploaded avatar when choosing an SF Symbol
+                                avatarUrl = nil
+                                selectedPhoto = nil
+                            }
+                        } label: {
+                            Image(systemName: avatar)
+                                .font(.title2)
+                                .foregroundStyle(selectedAvatar == avatar && !hasUploadedAvatar ? .white : .primary)
+                                .frame(width: 52, height: 52)
+                                .background(
+                                    selectedAvatar == avatar && !hasUploadedAvatar
+                                        ? AnyShapeStyle(LinearGradient(colors: [.pink, .purple], startPoint: .topLeading, endPoint: .bottomTrailing))
+                                        : AnyShapeStyle(.ultraThinMaterial),
+                                    in: .rect(cornerRadius: 12)
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .strokeBorder(
+                                            selectedAvatar == avatar && !hasUploadedAvatar ? Color.pink : Color.clear,
+                                            lineWidth: 2
+                                        )
+                                )
                         }
-                    } label: {
-                        Image(systemName: avatar)
-                            .font(.title2)
-                            .foregroundStyle(selectedAvatar == avatar ? .white : .primary)
-                            .frame(width: 52, height: 52)
-                            .background(
-                                selectedAvatar == avatar
-                                    ? AnyShapeStyle(LinearGradient(colors: [.pink, .purple], startPoint: .topLeading, endPoint: .bottomTrailing))
-                                    : AnyShapeStyle(.ultraThinMaterial),
-                                in: .rect(cornerRadius: 12)
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .strokeBorder(
-                                        selectedAvatar == avatar ? Color.pink : Color.clear,
-                                        lineWidth: 2
-                                    )
-                            )
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
+                }
+                .padding(.top, 8)
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "face.smiling")
+                        .foregroundStyle(.secondary)
+                    Text("Or choose an icon instead")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 }
             }
         }
         .padding(16)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+    }
+
+    /// Fallback SF Symbol image used when AsyncImage fails to load
+    private var fallbackAvatarImage: some View {
+        ZStack {
+            Circle()
+                .fill(
+                    LinearGradient(
+                        colors: [.pink, .purple],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+            Image(systemName: selectedAvatar)
+                .font(.system(size: 36))
+                .foregroundStyle(.white)
+        }
+        .frame(width: 80, height: 80)
     }
 
     // MARK: - Name Fields
@@ -386,6 +490,61 @@ struct EditProfileView: View {
         firstName = user.firstName
         lastName = user.lastName
         selectedAvatar = user.avatarSystemName
+
+        // If the current avatarSystemName looks like a URL, treat it as an uploaded avatar
+        let stored = user.avatarSystemName
+        if stored.hasPrefix("http://") || stored.hasPrefix("https://") {
+            avatarUrl = stored
+        }
+    }
+
+    private func uploadAvatar(item: PhotosPickerItem?) async {
+        guard let item = item else { return }
+
+        await MainActor.run { isUploading = true }
+        defer { Task { @MainActor in isUploading = false } }
+
+        guard let data = try? await item.loadTransferable(type: Data.self) else {
+            await MainActor.run {
+                withAnimation(.smooth) {
+                    errorMessage = "Could not load the selected photo."
+                }
+            }
+            return
+        }
+
+        let userId = viewModel.currentUser?.id.uuidString ?? "unknown"
+        let fileName = "\(UUID().uuidString).jpg"
+        let path = "\(userId)/\(fileName)"
+
+        do {
+            try await supabaseClient.storage
+                .from("avatars")
+                .upload(
+                    path,
+                    data: data,
+                    options: FileOptions(
+                        cacheControl: "3600",
+                        contentType: "image/jpeg",
+                        upsert: true
+                    )
+                )
+
+            let publicURL = try supabaseClient.storage
+                .from("avatars")
+                .getPublicURL(path: path)
+
+            await MainActor.run {
+                avatarUrl = publicURL.absoluteString
+                errorMessage = nil
+            }
+        } catch {
+            await MainActor.run {
+                withAnimation(.smooth) {
+                    errorMessage = "Avatar upload failed: \(error.localizedDescription)"
+                }
+            }
+        }
     }
 
     private func saveProfile() {
@@ -393,6 +552,11 @@ struct EditProfileView: View {
 
         let trimmedFirst = firstName.trimmingCharacters(in: .whitespaces)
         let trimmedLast = lastName.trimmingCharacters(in: .whitespaces)
+
+        // Determine what to store as the avatar value:
+        // - If the user uploaded a photo, store the public URL
+        // - Otherwise, store the selected SF Symbol name
+        let avatarValue: String = hasUploadedAvatar ? (avatarUrl ?? selectedAvatar) : selectedAvatar
 
         isLoading = true
         errorMessage = nil
@@ -402,7 +566,7 @@ struct EditProfileView: View {
                 try? await Task.sleep(for: .seconds(0.6))
                 viewModel.currentUser?.firstName = trimmedFirst
                 viewModel.currentUser?.lastName = trimmedLast
-                viewModel.currentUser?.avatarSystemName = selectedAvatar
+                viewModel.currentUser?.avatarSystemName = avatarValue
                 isLoading = false
                 withAnimation(.spring(duration: 0.4)) {
                     showSuccess = true
@@ -418,7 +582,7 @@ struct EditProfileView: View {
                 let dto = UpdateProfileDetailsDTO(
                     firstName: trimmedFirst,
                     lastName: trimmedLast,
-                    avatarUrl: selectedAvatar
+                    avatarUrl: avatarValue
                 )
 
                 try await supabaseClient
@@ -430,7 +594,7 @@ struct EditProfileView: View {
                 await MainActor.run {
                     viewModel.currentUser?.firstName = trimmedFirst
                     viewModel.currentUser?.lastName = trimmedLast
-                    viewModel.currentUser?.avatarSystemName = selectedAvatar
+                    viewModel.currentUser?.avatarSystemName = avatarValue
                     isLoading = false
                     withAnimation(.spring(duration: 0.4)) {
                         showSuccess = true

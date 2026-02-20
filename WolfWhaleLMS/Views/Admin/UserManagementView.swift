@@ -12,7 +12,7 @@ struct UserManagementView: View {
         viewModel.allUsers.filter { user in
             let role = UserRole(rawValue: user.role)
             let matchesRole = selectedRole == nil || role == selectedRole
-            let fullName = "\(user.firstName) \(user.lastName)"
+            let fullName = "\(user.firstName ?? "") \(user.lastName ?? "")"
             let matchesSearch = searchText.isEmpty || fullName.localizedStandardContains(searchText) || user.email.localizedStandardContains(searchText)
             return matchesRole && matchesSearch
         }
@@ -81,7 +81,7 @@ struct UserManagementView: View {
                 Button("Cancel", role: .cancel) {}
             } message: {
                 if let user = userToDelete {
-                    Text("Are you sure you want to remove \(user.firstName) \(user.lastName)? This action cannot be undone.")
+                    Text("Are you sure you want to remove \(user.firstName ?? "") \(user.lastName ?? "")? This action cannot be undone.")
                 }
             }
             .refreshable {
@@ -164,7 +164,7 @@ struct UserManagementView: View {
                 }
 
             VStack(alignment: .leading, spacing: 2) {
-                Text("\(user.firstName) \(user.lastName)")
+                Text("\(user.firstName ?? "") \(user.lastName ?? "")")
                     .font(.subheadline.bold())
                 Text(user.email)
                     .font(.caption)

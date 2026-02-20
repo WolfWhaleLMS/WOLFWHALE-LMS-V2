@@ -12,6 +12,10 @@ final class RealtimeService {
     private var channel: RealtimeChannelV2?
     private var listenTask: Task<Void, Never>?
 
+    /// In-memory cache of sender ID -> display name.
+    /// Populated by profile lookups so we only fetch each sender once.
+    private var senderNameCache: [UUID: String] = [:]
+
     // Shared ISO 8601 formatter matching the rest of the app
     private let iso8601: ISO8601DateFormatter = {
         let f = ISO8601DateFormatter()
@@ -29,9 +33,14 @@ final class RealtimeService {
     // MARK: - Public API
 
     /// Subscribes to INSERT events on the `messages` table filtered by `conversation_id`.
-    /// The `onMessage` callback is invoked on the main actor for every new message.
+    ///
+    /// - Parameters:
+    ///   - conversationId: The conversation to listen on.
+    ///   - currentUserId: The logged-in user's ID, used to set `isFromCurrentUser`.
+    ///   - onMessage: Callback invoked on the main actor for every new message.
     func subscribeToConversation(
         _ conversationId: UUID,
+        currentUserId: UUID?,
         onMessage: @escaping @MainActor (ChatMessage) -> Void
     ) {
         // Tear down any previous subscription first
@@ -58,12 +67,18 @@ final class RealtimeService {
             for await action in insertions {
                 do {
                     let dto = try action.decodeRecord(as: MessageDTO.self, decoder: JSONDecoder())
+
+                    // Resolve sender name from cache or by querying profiles
+                    let senderName = await self.resolveSenderName(for: dto.senderId)
+
+                    let isFromCurrentUser = currentUserId != nil && dto.senderId == currentUserId
+
                     let chatMessage = ChatMessage(
                         id: dto.id,
-                        senderName: dto.senderName ?? "Unknown",
+                        senderName: senderName,
                         content: dto.content,
                         timestamp: self.parseDate(dto.createdAt),
-                        isFromCurrentUser: false // caller adjusts if needed
+                        isFromCurrentUser: isFromCurrentUser
                     )
                     await MainActor.run {
                         onMessage(chatMessage)
@@ -76,6 +91,14 @@ final class RealtimeService {
         }
 
         self.channel = ch
+    }
+
+    /// Backwards-compatible overload without `currentUserId`.
+    func subscribeToConversation(
+        _ conversationId: UUID,
+        onMessage: @escaping @MainActor (ChatMessage) -> Void
+    ) {
+        subscribeToConversation(conversationId, currentUserId: nil, onMessage: onMessage)
     }
 
     /// Tears down the current channel subscription and cancels the listener task.
@@ -94,6 +117,40 @@ final class RealtimeService {
     }
 
     // MARK: - Helpers
+
+    /// Resolves a sender's display name by looking up the profiles table.
+    /// Results are cached so each sender is only queried once per session.
+    private func resolveSenderName(for senderId: UUID) async -> String {
+        // Check cache first
+        if let cached = senderNameCache[senderId] {
+            return cached
+        }
+
+        // Query the profiles table for this sender
+        do {
+            let profiles: [ProfileDTO] = try await supabaseClient
+                .from("profiles")
+                .select("id, first_name, last_name")
+                .eq("id", value: senderId.uuidString)
+                .limit(1)
+                .execute()
+                .value
+
+            if let profile = profiles.first {
+                let name = "\(profile.firstName ?? "") \(profile.lastName ?? "")".trimmingCharacters(in: .whitespaces)
+                let displayName = name.isEmpty ? "Unknown" : name
+                senderNameCache[senderId] = displayName
+                return displayName
+            }
+        } catch {
+            print("[RealtimeService] Failed to resolve sender name for \(senderId): \(error)")
+        }
+
+        // Fallback
+        let fallback = "User"
+        senderNameCache[senderId] = fallback
+        return fallback
+    }
 
     private func parseDate(_ str: String?) -> Date {
         guard let str else { return Date() }

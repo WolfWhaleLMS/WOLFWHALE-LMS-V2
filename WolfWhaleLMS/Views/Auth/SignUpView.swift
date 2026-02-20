@@ -1,6 +1,11 @@
 import SwiftUI
 import Supabase
 
+/// Used to decode the tenant ID from an invite_code lookup.
+private struct TenantLookupResult: Decodable {
+    let id: UUID
+}
+
 struct SignUpView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var fullName = ""
@@ -49,6 +54,18 @@ struct SignUpView: View {
         guard hasAttemptedSubmit || !confirmPassword.isEmpty else { return nil }
         if confirmPassword != password {
             return "Passwords do not match"
+        }
+        return nil
+    }
+
+    private var schoolCodeError: String? {
+        guard hasAttemptedSubmit || !schoolCode.isEmpty else { return nil }
+        let trimmed = schoolCode.trimmingCharacters(in: .whitespaces)
+        if trimmed.isEmpty {
+            return "School code is required"
+        }
+        if trimmed.count != 6 {
+            return "School code must be exactly 6 characters"
         }
         return nil
     }
@@ -281,30 +298,46 @@ struct SignUpView: View {
                 }
             }
 
-            // School Code (for students/teachers)
-            if selectedRole == .student || selectedRole == .teacher {
+            // School Code (required for all roles)
+            VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 12) {
                     Image(systemName: "building.2.fill")
                         .foregroundStyle(.tertiary)
                         .frame(width: 20)
-                    TextField("School Code", text: $schoolCode)
+                    TextField("Enter 6-character school code", text: $schoolCode)
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.characters)
                         .focused($focusedField, equals: .schoolCode)
                         .submitLabel(.done)
                         .onSubmit { focusedField = nil }
+                        .onChange(of: schoolCode) { _, newValue in
+                            schoolCode = newValue.uppercased()
+                        }
                 }
                 .padding(14)
                 .background(Color(.systemBackground), in: .rect(cornerRadius: 12))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(focusedField == .schoolCode ? Color.purple.opacity(0.5) : Color(.separator).opacity(0.3), lineWidth: 1)
+                        .strokeBorder(
+                            schoolCodeError != nil ? Color.red.opacity(0.5)
+                            : focusedField == .schoolCode ? Color.purple.opacity(0.5)
+                            : Color(.separator).opacity(0.3),
+                            lineWidth: 1
+                        )
                 )
 
-                Text("Enter the code provided by your school to join the correct organization.")
+                if let schoolCodeError {
+                    Text(schoolCodeError)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                        .padding(.leading, 4)
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                }
+
+                Text("Ask your school administrator for the code")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.leading, 4)
             }
 
             // Error message
@@ -382,7 +415,7 @@ struct SignUpView: View {
         && emailError == nil && !email.isEmpty
         && passwordError == nil && !password.isEmpty
         && confirmPasswordError == nil && !confirmPassword.isEmpty
-        && (selectedRole == .parent || !schoolCode.trimmingCharacters(in: .whitespaces).isEmpty)
+        && schoolCodeError == nil && !schoolCode.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
     private func validate() -> String? {
@@ -399,8 +432,8 @@ struct SignUpView: View {
         if let confirmPasswordError {
             return confirmPasswordError
         }
-        if (selectedRole == .student || selectedRole == .teacher) && schoolCode.trimmingCharacters(in: .whitespaces).isEmpty {
-            return "Please enter your school code"
+        if let schoolCodeError {
+            return schoolCodeError
         }
         return nil
     }
@@ -429,9 +462,25 @@ struct SignUpView: View {
                 let nameComponents = trimmedName.split(separator: " ", maxSplits: 1)
                 let firstName = String(nameComponents.first ?? "")
                 let lastName = nameComponents.count > 1 ? String(nameComponents.last ?? "") : ""
-                let code: String? = (selectedRole == .student || selectedRole == .teacher)
-                    ? schoolCode.trimmingCharacters(in: .whitespaces)
-                    : nil
+                let tenantCode = schoolCode.uppercased().trimmingCharacters(in: .whitespaces)
+
+                // Look up tenant by invite code
+                let tenantResponse: [TenantLookupResult] = try await supabaseClient
+                    .from("tenants")
+                    .select("id")
+                    .eq("invite_code", value: tenantCode)
+                    .limit(1)
+                    .execute()
+                    .value
+
+                guard let tenant = tenantResponse.first else {
+                    withAnimation(.smooth) {
+                        errorMessage = "Invalid school code. Please check with your administrator."
+                    }
+                    isLoading = false
+                    return
+                }
+                let tenantId = tenant.id
 
                 // Sign up with Supabase Auth
                 let result = try await supabaseClient.auth.signUp(
@@ -463,22 +512,20 @@ struct SignUpView: View {
                     .insert(newProfile)
                     .execute()
 
-                // Create tenant membership for role (role lives in tenant_memberships, not profiles)
-                if let tenantCode = code, !tenantCode.isEmpty, let tenantUUID = UUID(uuidString: tenantCode) {
-                    let membership = InsertTenantMembershipDTO(
-                        userId: result.user.id,
-                        tenantId: tenantUUID,
-                        role: selectedRole.rawValue,
-                        status: "active",
-                        joinedAt: ISO8601DateFormatter().string(from: Date()),
-                        invitedAt: nil,
-                        invitedBy: nil
-                    )
-                    try await supabaseClient
-                        .from("tenant_memberships")
-                        .insert(membership)
-                        .execute()
-                }
+                // Create tenant membership for ALL roles (student, teacher, parent, admin)
+                let membership = InsertTenantMembershipDTO(
+                    userId: result.user.id,
+                    tenantId: tenantId,
+                    role: selectedRole.rawValue,
+                    status: "active",
+                    joinedAt: ISO8601DateFormatter().string(from: Date()),
+                    invitedAt: nil,
+                    invitedBy: nil
+                )
+                try await supabaseClient
+                    .from("tenant_memberships")
+                    .insert(membership)
+                    .execute()
 
                 withAnimation(.smooth) {
                     successMessage = "Account created! Please check your email to verify."

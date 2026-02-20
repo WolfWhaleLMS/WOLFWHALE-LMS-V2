@@ -27,6 +27,8 @@ nonisolated struct CourseDTO: Codable, Sendable {
     let createdAt: String?
     let updatedAt: String?
     let archivedAt: String?
+    let iconSystemName: String?
+    let colorName: String?
 
     // Convenience aliases: views/service code use `dto.title` and `dto.teacherId`
     var title: String { name }
@@ -43,6 +45,8 @@ nonisolated struct CourseDTO: Codable, Sendable {
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case archivedAt = "archived_at"
+        case iconSystemName = "icon_system_name"
+        case colorName = "color_name"
     }
 }
 
@@ -59,6 +63,8 @@ nonisolated struct InsertCourseDTO: Encodable, Sendable {
     let syllabusUrl: String?
     let credits: Double?
     let status: String?
+    let iconSystemName: String?
+    let colorName: String?
 
     enum CodingKeys: String, CodingKey {
         case name, description, subject, semester, credits, status
@@ -68,6 +74,8 @@ nonisolated struct InsertCourseDTO: Encodable, Sendable {
         case startDate = "start_date"
         case endDate = "end_date"
         case syllabusUrl = "syllabus_url"
+        case iconSystemName = "icon_system_name"
+        case colorName = "color_name"
     }
 }
 
@@ -1161,6 +1169,43 @@ nonisolated struct InsertNotificationDTO: Encodable, Sendable {
 }
 
 // MARK: - Legacy / Computed DTOs
+
+// MARK: - Lesson Completions (lesson_completions)
+// Columns: id, student_id, lesson_id, course_id, tenant_id, completed_at, created_at
+
+nonisolated struct LessonCompletionDTO: Codable, Sendable {
+    let id: UUID
+    let studentId: UUID
+    let lessonId: UUID
+    let courseId: UUID
+    let tenantId: UUID
+    let completedAt: String?
+    let createdAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case studentId = "student_id"
+        case lessonId = "lesson_id"
+        case courseId = "course_id"
+        case tenantId = "tenant_id"
+        case completedAt = "completed_at"
+        case createdAt = "created_at"
+    }
+}
+
+nonisolated struct InsertLessonCompletionDTO: Encodable, Sendable {
+    let studentId: UUID
+    let lessonId: UUID
+    let courseId: UUID
+    let tenantId: UUID
+
+    enum CodingKeys: String, CodingKey {
+        case studentId = "student_id"
+        case lessonId = "lesson_id"
+        case courseId = "course_id"
+        case tenantId = "tenant_id"
+    }
+}
 
 /// SchoolMetricsDTO is used for computed/aggregate data, not a direct table mapping.
 /// Kept for view compatibility.

@@ -27,7 +27,7 @@ struct ParentMessagingView: View {
         // that matches the profile name.
         if !courseNames.isEmpty {
             let matchedTeachers = teachers.filter { profile in
-                let fullName = "\(profile.firstName) \(profile.lastName)"
+                let fullName = "\(profile.firstName ?? "") \(profile.lastName ?? "")"
                 return viewModel.courses.contains { course in
                     courseNames.contains(course.title) && course.teacherName == fullName
                 }
@@ -49,7 +49,7 @@ struct ParentMessagingView: View {
     }
 
     private func courseForTeacher(_ teacher: ProfileDTO) -> String? {
-        let fullName = "\(teacher.firstName) \(teacher.lastName)"
+        let fullName = "\(teacher.firstName ?? "") \(teacher.lastName ?? "")"
         return viewModel.courses.first { course in
             course.teacherName == fullName &&
             child.courses.contains(where: { $0.courseName == course.title })
@@ -146,7 +146,7 @@ struct ParentMessagingView: View {
     }
 
     private func teacherCard(_ teacher: ProfileDTO) -> some View {
-        let fullName = "\(teacher.firstName) \(teacher.lastName)"
+        let fullName = "\(teacher.firstName ?? "") \(teacher.lastName ?? "")"
         let courseName = courseForTeacher(teacher)
 
         return HStack(spacing: 14) {
@@ -256,7 +256,7 @@ struct ParentMessagingView: View {
         isCreatingConversation = true
         errorMessage = nil
 
-        let teacherName = "\(teacher.firstName) \(teacher.lastName)"
+        let teacherName = "\(teacher.firstName ?? "") \(teacher.lastName ?? "")"
         let courseName = courseForTeacher(teacher) ?? "General"
         let title = "Re: \(child.name) - \(courseName)"
 

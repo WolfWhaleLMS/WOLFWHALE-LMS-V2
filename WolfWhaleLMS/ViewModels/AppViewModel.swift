@@ -60,6 +60,21 @@ class AppViewModel {
     func checkSession() {
         Task {
             defer { isCheckingSession = false }
+
+            // If we were in demo mode and there's no real Supabase session,
+            // clear all state so the user lands back on the login screen.
+            if isDemoMode {
+                do {
+                    _ = try await supabaseClient.auth.session
+                } catch {
+                    // No valid session — tear down demo state
+                    isDemoMode = false
+                    isAuthenticated = false
+                    currentUser = nil
+                    return
+                }
+            }
+
             do {
                 let session = try await supabaseClient.auth.session
                 try await fetchProfile(userId: session.user.id)
@@ -102,6 +117,20 @@ class AppViewModel {
         let lastName = nameComponents.count > 1 ? String(nameComponents.last ?? "") : ""
         let trimmedEmail = email.trimmingCharacters(in: .whitespaces).lowercased()
 
+        // Resolve schoolCode to a tenant ID (for all roles including parent)
+        var tenantId: UUID? = nil
+        if let code = schoolCode?.trimmingCharacters(in: .whitespaces).uppercased(), !code.isEmpty {
+            struct TenantLookup: Decodable { let id: UUID }
+            let results: [TenantLookup] = try await supabaseClient
+                .from("tenants")
+                .select("id")
+                .eq("invite_code", value: code)
+                .limit(1)
+                .execute()
+                .value
+            tenantId = results.first?.id
+        }
+
         let result = try await supabaseClient.auth.signUp(
             email: trimmedEmail,
             password: password,
@@ -131,10 +160,10 @@ class AppViewModel {
             .insert(newProfile)
             .execute()
 
-        // Insert role into tenant_memberships
+        // Insert role into tenant_memberships for ALL roles (student, teacher, parent, admin)
         let membershipDTO = InsertTenantMembershipDTO(
             userId: result.user.id,
-            tenantId: nil,
+            tenantId: tenantId,
             role: role.rawValue,
             status: "active",
             joinedAt: nil,
@@ -150,7 +179,7 @@ class AppViewModel {
         if role == .student {
             let xpDTO = InsertStudentXpDTO(
                 studentId: result.user.id,
-                tenantId: nil,
+                tenantId: tenantId,
                 totalXp: 0,
                 currentLevel: 1,
                 currentTier: nil,
@@ -458,8 +487,6 @@ class AppViewModel {
         guard let user = currentUser else { return }
         let classCode = "\(title.prefix(4).uppercased())-\(Int.random(in: 1000...9999))"
 
-        // InsertCourseDTO uses 'name' (via CodingKey) and 'created_by' — no classCode field.
-        // iconSystemName and colorName are not DB columns; the view layer handles those locally.
         let dto = InsertCourseDTO(
             tenantId: nil,
             name: title,
@@ -472,7 +499,9 @@ class AppViewModel {
             endDate: nil,
             syllabusUrl: nil,
             credits: nil,
-            status: nil
+            status: nil,
+            iconSystemName: "book.fill",
+            colorName: colorName
         )
         if !isDemoMode {
             let createdCourse = try await dataService.createCourse(dto)
@@ -581,8 +610,11 @@ class AppViewModel {
                 currentUser?.coins += lesson.xpReward / 5
 
                 if !isDemoMode, let user = currentUser {
-                    Task {
-                        try? await dataService.completeLesson(studentId: user.id, lessonId: lesson.id)
+                    let tenantUUID = user.schoolId.flatMap { UUID(uuidString: $0) }
+                    if let tenantUUID {
+                        Task {
+                            try? await dataService.completeLesson(studentId: user.id, lessonId: lesson.id, courseId: course.id, tenantId: tenantUUID)
+                        }
                     }
                 }
                 syncProfile()

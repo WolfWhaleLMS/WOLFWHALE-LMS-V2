@@ -1,7 +1,7 @@
 import Foundation
 import Supabase
 
-nonisolated(unsafe) let supabaseClient: SupabaseClient = {
+let supabaseClient: SupabaseClient = {
     let urlString = Config.SUPABASE_URL.isEmpty ? "https://placeholder.supabase.co" : Config.SUPABASE_URL
     guard let url = URL(string: urlString) else {
         fatalError("Invalid Supabase URL: \(urlString). Check Config.SUPABASE_URL.")
@@ -98,7 +98,6 @@ struct DataService {
                 .value
         }
 
-        // --- No lesson_completions table; skip completion tracking ---
         let completedLessonIds: Set<UUID> = []
 
         // --- Batch fetch enrollment counts for all courses ---
@@ -190,8 +189,8 @@ struct DataService {
                 title: dto.name,
                 description: dto.description ?? "",
                 teacherName: teacherName,
-                iconSystemName: "book.fill",
-                colorName: "blue",
+                iconSystemName: dto.iconSystemName ?? "book.fill",
+                colorName: dto.colorName ?? "blue",
                 modules: modules,
                 enrolledStudentCount: enrollmentCount,
                 progress: progress,
@@ -571,6 +570,18 @@ struct DataService {
             .execute()
             .value
 
+        // Fetch assignments for these courses so we can show actual titles on grades
+        let assignmentDTOs: [AssignmentDTO] = try await supabaseClient
+            .from("assignments")
+            .select()
+            .in("course_id", values: courseIds.map(\.uuidString))
+            .execute()
+            .value
+        let assignmentNames: [UUID: String] = Dictionary(
+            assignmentDTOs.map { ($0.id, $0.title) },
+            uniquingKeysWith: { first, _ in first }
+        )
+
         var courseMap: [UUID: CourseDTO] = [:]
         for c in courseDTOs { courseMap[c.id] = c }
 
@@ -587,7 +598,7 @@ struct DataService {
             let assignmentGrades = gradeDTOs.map { g in
                 AssignmentGrade(
                     id: g.id,
-                    title: "Assignment",
+                    title: assignmentNames[g.assignmentId ?? UUID()] ?? "Assignment",
                     score: g.pointsEarned ?? 0,
                     maxScore: 100,
                     date: parseDate(g.gradedAt),
@@ -895,10 +906,28 @@ struct DataService {
     }
 
     // MARK: - Lesson Completion
-    // NOTE: "lesson_completions" table does NOT exist in the database.
 
-    func completeLesson(studentId: UUID, lessonId: UUID) async throws {
-        print("[DataService] completeLesson called but lesson_completions table does not exist. studentId=\(studentId) lessonId=\(lessonId)")
+    func completeLesson(studentId: UUID, lessonId: UUID, courseId: UUID, tenantId: UUID) async throws {
+        let dto = InsertLessonCompletionDTO(
+            studentId: studentId,
+            lessonId: lessonId,
+            courseId: courseId,
+            tenantId: tenantId
+        )
+        try await supabaseClient
+            .from("lesson_completions")
+            .insert(dto)
+            .execute()
+    }
+
+    func fetchLessonCompletions(studentId: UUID, courseId: UUID) async throws -> [LessonCompletionDTO] {
+        try await supabaseClient
+            .from("lesson_completions")
+            .select()
+            .eq("student_id", value: studentId)
+            .eq("course_id", value: courseId)
+            .execute()
+            .value
     }
 
     // MARK: - Admin: Users
@@ -962,11 +991,7 @@ struct DataService {
     }
 
     func deleteUser(userId: UUID) async throws {
-        try await supabaseClient
-            .from("profiles")
-            .delete()
-            .eq("id", value: userId.uuidString)
-            .execute()
+        try await supabaseClient.rpc("delete_user_complete", params: ["target_user_id": userId.uuidString]).execute()
     }
 
     // MARK: - Admin: School Metrics
@@ -1464,6 +1489,20 @@ struct DataService {
 
         try await enrollStudent(studentId: studentId, courseId: codeEntry.courseId)
         return course.name
+    }
+
+    // MARK: - Tenant Lookup
+
+    func lookupTenantByInviteCode(_ code: String) async throws -> UUID? {
+        struct TenantResult: Decodable { let id: UUID }
+        let results: [TenantResult] = try await supabaseClient
+            .from("tenants")
+            .select("id")
+            .eq("invite_code", value: code.uppercased().trimmingCharacters(in: .whitespaces))
+            .limit(1)
+            .execute()
+            .value
+        return results.first?.id
     }
 
     // MARK: - Attendance (Create)

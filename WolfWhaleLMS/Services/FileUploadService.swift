@@ -27,7 +27,7 @@ nonisolated enum FileUploadError: LocalizedError, Sendable {
 
 /// Service for uploading, deleting, and retrieving files from Supabase Storage.
 /// Uses the global `supabaseClient` defined in SupabaseService.swift.
-nonisolated struct FileUploadService: Sendable {
+@MainActor struct FileUploadService: Sendable {
 
     /// Maximum allowed file size in bytes (10 MB).
     static let maxFileSize: Int64 = 10 * 1024 * 1024
@@ -78,8 +78,8 @@ nonisolated struct FileUploadService: Sendable {
             try await supabaseClient.storage
                 .from(bucket)
                 .upload(
-                    path: path,
-                    file: fileData,
+                    path,
+                    data: fileData,
                     options: FileOptions(
                         cacheControl: "3600",
                         contentType: contentType,
@@ -91,12 +91,10 @@ nonisolated struct FileUploadService: Sendable {
         }
 
         // Return the public URL
-        if let publicURL = getPublicURL(bucket: bucket, path: path) {
-            return publicURL.absoluteString
-        }
-
-        // Fallback: construct URL manually
-        return "\(Config.SUPABASE_URL)/storage/v1/object/public/\(bucket)/\(path)"
+        let publicURL = try supabaseClient.storage
+            .from(bucket)
+            .getPublicURL(path: path)
+        return publicURL.absoluteString
     }
 
     // MARK: - Delete

@@ -3,6 +3,7 @@ import SwiftUI
 struct ConversationView: View {
     let conversation: Conversation
     @Bindable var viewModel: AppViewModel
+    @State private var realtimeService = RealtimeService()
     @State private var messageText = ""
     @FocusState private var isTextFieldFocused: Bool
 
@@ -38,6 +39,20 @@ struct ConversationView: View {
         .background(Color(.systemGroupedBackground))
         .navigationTitle(conversation.title)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Circle()
+                    .fill(realtimeService.isConnected ? .green : .gray)
+                    .frame(width: 8, height: 8)
+                    .help(realtimeService.isConnected ? "Live" : "Connecting...")
+            }
+        }
+        .onAppear {
+            subscribeToRealtime()
+        }
+        .onDisappear {
+            realtimeService.unsubscribe()
+        }
     }
 
     private func messageBubble(_ message: ChatMessage) -> some View {
@@ -98,5 +113,38 @@ struct ConversationView: View {
         .padding(.horizontal)
         .padding(.vertical, 8)
         .background(.bar)
+    }
+
+    // MARK: - Realtime Subscription
+
+    private func subscribeToRealtime() {
+        let currentUserId = viewModel.currentUser?.id
+
+        realtimeService.subscribeToConversation(
+            conversation.id,
+            currentUserId: currentUserId
+        ) { incomingMessage in
+            guard let convIndex = viewModel.conversations.firstIndex(where: { $0.id == conversation.id }) else {
+                return
+            }
+
+            // Avoid duplicate messages by ID
+            let isDuplicate = viewModel.conversations[convIndex].messages.contains(where: { $0.id == incomingMessage.id })
+            guard !isDuplicate else { return }
+
+            // If the message is from the current user, check for a recent optimistic
+            // duplicate (same content within 5 seconds) and skip if found.
+            if incomingMessage.isFromCurrentUser {
+                let recentDuplicate = viewModel.conversations[convIndex].messages.contains {
+                    $0.isFromCurrentUser && $0.content == incomingMessage.content &&
+                    abs($0.timestamp.timeIntervalSince(incomingMessage.timestamp)) < 5
+                }
+                if recentDuplicate { return }
+            }
+
+            viewModel.conversations[convIndex].messages.append(incomingMessage)
+            viewModel.conversations[convIndex].lastMessage = incomingMessage.content
+            viewModel.conversations[convIndex].lastMessageDate = incomingMessage.timestamp
+        }
     }
 }
