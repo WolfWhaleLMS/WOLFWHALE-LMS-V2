@@ -13,6 +13,7 @@ struct EditAssignmentView: View {
     @State private var showDeleteConfirmation = false
     @State private var isDeleting = false
     @State private var errorMessage: String?
+    @State private var hapticTrigger = false
 
     @Environment(\.dismiss) private var dismiss
 
@@ -55,8 +56,10 @@ struct EditAssignmentView: View {
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel") {
+                    hapticTrigger.toggle()
                     dismiss()
                 }
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
         }
         .alert("Delete Assignment", isPresented: $showDeleteConfirmation) {
@@ -199,6 +202,7 @@ struct EditAssignmentView: View {
             }
 
             Button {
+                hapticTrigger.toggle()
                 saveAssignment()
             } label: {
                 Group {
@@ -216,6 +220,7 @@ struct EditAssignmentView: View {
             .buttonStyle(.borderedProminent)
             .tint(.pink)
             .disabled(isLoading || !isValid || !hasChanges)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         }
         .padding(.top, 4)
     }
@@ -228,6 +233,7 @@ struct EditAssignmentView: View {
                 .padding(.vertical, 4)
 
             Button {
+                hapticTrigger.toggle()
                 showDeleteConfirmation = true
             } label: {
                 Group {
@@ -245,6 +251,7 @@ struct EditAssignmentView: View {
             .buttonStyle(.borderedProminent)
             .tint(.red)
             .disabled(isDeleting)
+            .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
 
             Text("This will permanently delete the assignment and all submissions.")
                 .font(.caption2)

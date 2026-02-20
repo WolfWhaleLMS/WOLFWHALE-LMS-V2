@@ -5,6 +5,7 @@ struct AttendanceHistoryView: View {
 
     @State private var selectedCourse: String = "All"
     @State private var selectedMonth: Date = Date()
+    @State private var hapticTrigger = false
 
     // MARK: - Computed Properties
 
@@ -250,6 +251,7 @@ struct AttendanceHistoryView: View {
             // Month Navigation
             HStack {
                 Button {
+                    hapticTrigger.toggle()
                     withAnimation(.snappy) {
                         selectedMonth = calendar.date(byAdding: .month, value: -1, to: selectedMonth) ?? selectedMonth
                     }
@@ -257,6 +259,7 @@ struct AttendanceHistoryView: View {
                     Image(systemName: "chevron.left")
                         .font(.subheadline.bold())
                 }
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
                 Spacer()
 
@@ -266,6 +269,7 @@ struct AttendanceHistoryView: View {
                 Spacer()
 
                 Button {
+                    hapticTrigger.toggle()
                     withAnimation(.snappy) {
                         selectedMonth = calendar.date(byAdding: .month, value: 1, to: selectedMonth) ?? selectedMonth
                     }
@@ -273,6 +277,7 @@ struct AttendanceHistoryView: View {
                     Image(systemName: "chevron.right")
                         .font(.subheadline.bold())
                 }
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
 
             // Weekday Headers

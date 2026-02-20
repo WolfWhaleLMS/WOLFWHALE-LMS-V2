@@ -6,15 +6,15 @@ struct MockDataService {
     func sampleUser(role: UserRole) -> User {
         switch role {
         case .student:
-            User(id: UUID(), firstName: "Alex", lastName: "Rivera", email: "alex@wolfwhale.edu", role: .student, avatarSystemName: "person.crop.circle.fill", coins: 180, streak: 12, joinDate: Calendar.current.date(byAdding: .month, value: -3, to: Date())!, schoolId: "school_001", userSlotsTotal: 0, userSlotsUsed: 0)
+            User(id: UUID(), firstName: "Alex", lastName: "Rivera", email: "alex@wolfwhale.edu", role: .student, avatarSystemName: "person.crop.circle.fill", streak: 12, joinDate: Calendar.current.date(byAdding: .month, value: -3, to: Date())!, schoolId: "school_001", userSlotsTotal: 0, userSlotsUsed: 0)
         case .teacher:
-            User(id: UUID(), firstName: "Dr. Sarah", lastName: "Chen", email: "chen@wolfwhale.edu", role: .teacher, avatarSystemName: "person.crop.circle.fill", coins: 0, streak: 0, joinDate: Calendar.current.date(byAdding: .year, value: -2, to: Date())!, schoolId: "school_001", userSlotsTotal: 0, userSlotsUsed: 0)
+            User(id: UUID(), firstName: "Dr. Sarah", lastName: "Chen", email: "chen@wolfwhale.edu", role: .teacher, avatarSystemName: "person.crop.circle.fill", streak: 0, joinDate: Calendar.current.date(byAdding: .year, value: -2, to: Date())!, schoolId: "school_001", userSlotsTotal: 0, userSlotsUsed: 0)
         case .parent:
-            User(id: UUID(), firstName: "Maria", lastName: "Rivera", email: "maria@email.com", role: .parent, avatarSystemName: "person.crop.circle.fill", coins: 0, streak: 0, joinDate: Calendar.current.date(byAdding: .month, value: -3, to: Date())!, schoolId: "school_001", userSlotsTotal: 0, userSlotsUsed: 0)
+            User(id: UUID(), firstName: "Maria", lastName: "Rivera", email: "maria@email.com", role: .parent, avatarSystemName: "person.crop.circle.fill", streak: 0, joinDate: Calendar.current.date(byAdding: .month, value: -3, to: Date())!, schoolId: "school_001", userSlotsTotal: 0, userSlotsUsed: 0)
         case .admin:
-            User(id: UUID(), firstName: "James", lastName: "Wilson", email: "jwilson@wolfwhale.edu", role: .admin, avatarSystemName: "person.crop.circle.fill", coins: 0, streak: 0, joinDate: Calendar.current.date(byAdding: .year, value: -5, to: Date())!, schoolId: "school_001", userSlotsTotal: 50, userSlotsUsed: 9)
+            User(id: UUID(), firstName: "James", lastName: "Wilson", email: "jwilson@wolfwhale.edu", role: .admin, avatarSystemName: "person.crop.circle.fill", streak: 0, joinDate: Calendar.current.date(byAdding: .year, value: -5, to: Date())!, schoolId: "school_001", userSlotsTotal: 50, userSlotsUsed: 9)
         case .superAdmin:
-            User(id: UUID(), firstName: "System", lastName: "Admin", email: "superadmin@wolfwhale.io", role: .superAdmin, avatarSystemName: "person.crop.circle.fill", coins: 0, streak: 0, joinDate: Calendar.current.date(byAdding: .year, value: -5, to: Date())!, schoolId: nil, userSlotsTotal: 0, userSlotsUsed: 0)
+            User(id: UUID(), firstName: "System", lastName: "Admin", email: "superadmin@wolfwhale.io", role: .superAdmin, avatarSystemName: "person.crop.circle.fill", streak: 0, joinDate: Calendar.current.date(byAdding: .year, value: -5, to: Date())!, schoolId: nil, userSlotsTotal: 0, userSlotsUsed: 0)
         }
     }
 

@@ -32,6 +32,7 @@ struct AppSettingsView: View {
     var body: some View {
         List {
             accountSection
+            securitySection
             appearanceSection
             notificationsSection
             legalSection
@@ -138,6 +139,56 @@ struct AppSettingsView: View {
         }
     }
 
+    // MARK: - Security Section
+
+    private var securitySection: some View {
+        Section {
+            if viewModel.biometricService.isBiometricAvailable {
+                HStack {
+                    Label {
+                        Text("Use \(viewModel.biometricService.biometricName)")
+                    } icon: {
+                        Image(systemName: viewModel.biometricService.biometricSystemImage)
+                            .foregroundStyle(.green)
+                    }
+                    Spacer()
+                    Toggle(
+                        "Use \(viewModel.biometricService.biometricName)",
+                        isOn: Binding(
+                            get: { viewModel.biometricEnabled },
+                            set: { newValue in
+                                if newValue {
+                                    viewModel.enableBiometric()
+                                } else {
+                                    viewModel.disableBiometric()
+                                }
+                            }
+                        )
+                    )
+                    .labelsHidden()
+                    .sensoryFeedback(.selection, trigger: viewModel.biometricEnabled)
+                    .accessibilityLabel("Use \(viewModel.biometricService.biometricName)")
+                    .accessibilityHint("Double tap to toggle biometric authentication")
+                }
+            } else {
+                Label {
+                    Text("Biometric authentication is not available on this device.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                } icon: {
+                    Image(systemName: "lock.shield")
+                        .foregroundStyle(.gray)
+                }
+            }
+        } header: {
+            sectionHeader(title: "Security", icon: "lock.shield.fill")
+        } footer: {
+            if viewModel.biometricService.isBiometricAvailable {
+                Text("When enabled, \(viewModel.biometricService.biometricName) will be required to unlock the app after returning from the background.")
+            }
+        }
+    }
+
     // MARK: - Appearance Section
 
     private var appearanceIcon: String {
@@ -217,6 +268,17 @@ struct AppSettingsView: View {
                     .sensoryFeedback(.selection, trigger: emailNotifications)
                     .accessibilityLabel("Email Notifications")
                     .accessibilityHint("Double tap to toggle email notifications")
+            }
+
+            NavigationLink {
+                NotificationSettingsView(notificationService: viewModel.notificationService)
+            } label: {
+                Label {
+                    Text("Notification Preferences")
+                } icon: {
+                    Image(systemName: "bell.and.waves.left.and.right.fill")
+                        .foregroundStyle(.purple)
+                }
             }
         } header: {
             sectionHeader(title: "Notifications", icon: "bell.fill")

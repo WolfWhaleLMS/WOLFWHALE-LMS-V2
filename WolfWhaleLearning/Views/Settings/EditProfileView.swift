@@ -14,15 +14,15 @@ struct EditProfileView: View {
     @State private var isUploading = false
     @State private var errorMessage: String?
     @State private var showSuccess = false
-
-    // PhotosPicker state
-    @State private var selectedPhoto: PhotosPickerItem?
+    @State private var hapticTrigger = false
 
     @FocusState private var focusedField: Field?
 
     private enum Field: Hashable {
         case firstName, lastName
     }
+
+    private let photoService = PhotoService()
 
     // MARK: - Avatar Options (fallback SF Symbols)
 
@@ -89,11 +89,6 @@ struct EditProfileView: View {
             .navigationTitle("Edit Profile")
             .navigationBarTitleDisplayMode(.inline)
             .onAppear { loadCurrentValues() }
-            .onChange(of: selectedPhoto) { _, newValue in
-                Task {
-                    await uploadAvatar(item: newValue)
-                }
-            }
 
             if showSuccess {
                 successOverlay
@@ -108,72 +103,21 @@ struct EditProfileView: View {
             Text("Profile Photo")
                 .font(.headline)
 
-            // Photo picker for uploading a real avatar
-            PhotosPicker(selection: $selectedPhoto, matching: .images) {
-                ZStack {
-                    if hasUploadedAvatar, let urlString = avatarUrl, let url = URL(string: urlString) {
-                        AsyncImage(url: url) { phase in
-                            switch phase {
-                            case .success(let image):
-                                image
-                                    .resizable()
-                                    .scaledToFill()
-                            case .failure:
-                                fallbackAvatarImage
-                            case .empty:
-                                ProgressView()
-                                    .frame(width: 80, height: 80)
-                            @unknown default:
-                                fallbackAvatarImage
-                            }
-                        }
-                        .frame(width: 80, height: 80)
-                        .clipShape(Circle())
-                    } else {
-                        Circle()
-                            .fill(
-                                LinearGradient(
-                                    colors: [.pink, .purple],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .frame(width: 80, height: 80)
-                            .overlay {
-                                Image(systemName: selectedAvatar)
-                                    .font(.system(size: 36))
-                                    .foregroundStyle(.white)
-                            }
+            // Reusable ProfilePhotoPicker component
+            ProfilePhotoPicker(
+                avatarUrl: $avatarUrl,
+                selectedSystemImage: $selectedAvatar,
+                onImageSelected: { image in
+                    Task {
+                        await uploadAvatarImage(image)
                     }
-
-                    // Camera badge overlay
-                    Circle()
-                        .fill(.ultraThinMaterial)
-                        .frame(width: 28, height: 28)
-                        .overlay {
-                            Image(systemName: "camera.fill")
-                                .font(.caption)
-                                .foregroundStyle(.pink)
-                        }
-                        .offset(x: 28, y: 28)
-                }
-            }
-            .accessibilityLabel("Change profile photo")
-            .accessibilityHint("Double tap to choose a photo from your library")
-
-            if isUploading {
-                HStack(spacing: 8) {
-                    ProgressView()
-                        .controlSize(.small)
-                    Text("Uploading photo...")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-            }
-
-            Text("Tap photo to change")
-                .font(.caption)
-                .foregroundStyle(.secondary)
+                },
+                onRemovePhoto: {
+                    avatarUrl = nil
+                },
+                size: 80,
+                isUploading: isUploading
+            )
 
             // SF Symbol fallback picker
             DisclosureGroup {
@@ -185,7 +129,6 @@ struct EditProfileView: View {
                                 selectedAvatar = avatar
                                 // Clear uploaded avatar when choosing an SF Symbol
                                 avatarUrl = nil
-                                selectedPhoto = nil
                             }
                         } label: {
                             Image(systemName: avatar)
@@ -222,24 +165,6 @@ struct EditProfileView: View {
         }
         .padding(16)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
-    }
-
-    /// Fallback SF Symbol image used when AsyncImage fails to load
-    private var fallbackAvatarImage: some View {
-        ZStack {
-            Circle()
-                .fill(
-                    LinearGradient(
-                        colors: [.pink, .purple],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
-            Image(systemName: selectedAvatar)
-                .font(.system(size: 36))
-                .foregroundStyle(.white)
-        }
-        .frame(width: 80, height: 80)
     }
 
     // MARK: - Name Fields
@@ -352,7 +277,6 @@ struct EditProfileView: View {
 
             let columns = [GridItem(.flexible()), GridItem(.flexible())]
             LazyVGrid(columns: columns, spacing: 10) {
-                statCard(icon: "bitcoinsign.circle.fill", label: "Coins", value: "\(viewModel.currentUser?.coins ?? 0)", color: .orange)
                 statCard(icon: "flame.fill", label: "Streak", value: "\(viewModel.currentUser?.streak ?? 0) days", color: .red)
             }
 
@@ -421,6 +345,7 @@ struct EditProfileView: View {
             }
 
             Button {
+                hapticTrigger.toggle()
                 focusedField = nil
                 saveProfile()
             } label: {
@@ -444,6 +369,7 @@ struct EditProfileView: View {
             .tint(.pink)
             .clipShape(.rect(cornerRadius: 12))
             .disabled(!canSave)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         }
     }
 
@@ -469,10 +395,12 @@ struct EditProfileView: View {
                     .multilineTextAlignment(.center)
 
                 Button("Done") {
+                    hapticTrigger.toggle()
                     dismiss()
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.pink)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 .padding(.top, 8)
             }
             .padding(32)
@@ -498,51 +426,38 @@ struct EditProfileView: View {
         }
     }
 
-    private func uploadAvatar(item: PhotosPickerItem?) async {
-        guard let item = item else { return }
+    /// Handles avatar image upload using PhotoService.
+    /// Compresses the image and uploads to Supabase Storage,
+    /// falling back to local FileManager storage on failure.
+    private func uploadAvatarImage(_ image: UIImage) async {
+        isUploading = true
+        defer { isUploading = false }
 
-        await MainActor.run { isUploading = true }
-        defer { Task { @MainActor in isUploading = false } }
+        let userId = viewModel.currentUser?.id ?? UUID()
 
-        guard let data = try? await item.loadTransferable(type: Data.self) else {
-            await MainActor.run {
-                withAnimation(.smooth) {
-                    errorMessage = "Could not load the selected photo."
-                }
+        // Try Supabase upload first
+        if !viewModel.isDemoMode {
+            do {
+                let url = try await photoService.uploadAvatar(image, userId: userId)
+                avatarUrl = url
+                errorMessage = nil
+                return
+            } catch {
+                // Fall through to local save
+                #if DEBUG
+                print("[EditProfileView] Supabase avatar upload failed: \(error)")
+                #endif
             }
-            return
         }
 
-        let userId = viewModel.currentUser?.id.uuidString ?? "unknown"
-        let fileName = "\(UUID().uuidString).jpg"
-        let path = "\(userId)/\(fileName)"
-
-        do {
-            try await supabaseClient.storage
-                .from("avatars")
-                .upload(
-                    path,
-                    data: data,
-                    options: FileOptions(
-                        cacheControl: "3600",
-                        contentType: "image/jpeg",
-                        upsert: true
-                    )
-                )
-
-            let publicURL = try supabaseClient.storage
-                .from("avatars")
-                .getPublicURL(path: path)
-
-            await MainActor.run {
-                avatarUrl = publicURL.absoluteString
-                errorMessage = nil
-            }
-        } catch {
-            await MainActor.run {
-                withAnimation(.smooth) {
-                    errorMessage = "Avatar upload failed: \(error.localizedDescription)"
-                }
+        // Fallback: save locally with FileManager
+        let fileName = "\(userId.uuidString)_avatar.jpg"
+        if let localURL = photoService.saveImageLocally(image, fileName: fileName) {
+            avatarUrl = localURL.absoluteString
+            errorMessage = nil
+        } else {
+            withAnimation(.smooth) {
+                errorMessage = "Could not save the selected photo."
             }
         }
     }

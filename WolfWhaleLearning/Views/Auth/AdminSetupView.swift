@@ -11,6 +11,7 @@ struct AdminSetupView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var successMessage: String?
+    @State private var hapticTrigger = false
     @FocusState private var focusedField: Field?
 
     private enum Field { case schoolName, adminName, email, password, confirmPassword }
@@ -226,6 +227,7 @@ struct AdminSetupView: View {
 
             // Create School button
             Button {
+                hapticTrigger.toggle()
                 focusedField = nil
                 createSchool()
             } label: {
@@ -249,9 +251,11 @@ struct AdminSetupView: View {
             .tint(Color.purple)
             .clipShape(.rect(cornerRadius: 12))
             .disabled(isLoading || !isFormValid)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
             // Back to Login button
             Button {
+                hapticTrigger.toggle()
                 dismiss()
             } label: {
                 HStack(spacing: 6) {
@@ -262,6 +266,7 @@ struct AdminSetupView: View {
                 }
                 .foregroundStyle(.purple)
             }
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             .padding(.top, 4)
         }
     }

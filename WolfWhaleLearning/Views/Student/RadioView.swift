@@ -6,6 +6,7 @@ struct RadioView: View {
     @State private var showingStationPicker = false
     @State private var barAnimations: [CGFloat] = Array(repeating: 0.3, count: 12)
     @State private var animateVisualizer = false
+    @State private var hapticTrigger = false
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -67,6 +68,7 @@ struct RadioView: View {
         let color = Theme.courseColor(station.color)
 
         return Button {
+            hapticTrigger.toggle()
             withAnimation(.snappy) {
                 if isActive {
                     radioService.togglePlayback()
@@ -122,6 +124,7 @@ struct RadioView: View {
             )
         }
         .buttonStyle(.plain)
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         .accessibilityLabel("\(station.name), \(station.description)")
         .accessibilityHint(isActive ? "Currently playing. Double tap to pause." : "Double tap to play.")
     }
@@ -144,25 +147,48 @@ struct RadioView: View {
                         .foregroundStyle(.secondary)
                 }
 
-                // Live indicator
-                HStack(spacing: 6) {
-                    Circle()
-                        .fill(.red)
-                        .frame(width: 8, height: 8)
-                        .opacity(radioService.isPlaying ? 1.0 : 0.3)
-                        .animation(
-                            .easeInOut(duration: 0.8).repeatForever(autoreverses: true),
-                            value: radioService.isPlaying
-                        )
+                // Live / buffering indicator
+                if radioService.isLoading {
+                    HStack(spacing: 6) {
+                        ProgressView()
+                            .controlSize(.mini)
+                        Text("BUFFERING")
+                            .font(.caption2.bold())
+                            .tracking(2)
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(.secondary.opacity(0.1), in: Capsule())
+                } else {
+                    HStack(spacing: 6) {
+                        Circle()
+                            .fill(.red)
+                            .frame(width: 8, height: 8)
+                            .opacity(radioService.isPlaying ? 1.0 : 0.3)
+                            .animation(
+                                .easeInOut(duration: 0.8).repeatForever(autoreverses: true),
+                                value: radioService.isPlaying
+                            )
 
-                    Text("LIVE")
-                        .font(.caption2.bold())
-                        .tracking(2)
-                        .foregroundStyle(radioService.isPlaying ? .red : .secondary)
+                        Text(station.streamURL != nil ? "LIVE STREAM" : "LIVE")
+                            .font(.caption2.bold())
+                            .tracking(2)
+                            .foregroundStyle(radioService.isPlaying ? .red : .secondary)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(.red.opacity(0.1), in: Capsule())
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 6)
-                .background(.red.opacity(0.1), in: Capsule())
+
+                // Error message
+                if let error = radioService.error {
+                    Text(error)
+                        .font(.caption)
+                        .foregroundStyle(.red)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal)
+                }
 
             } else {
                 // Empty state
@@ -222,6 +248,7 @@ struct RadioView: View {
         HStack(spacing: 24) {
             // Previous station
             Button {
+                hapticTrigger.toggle()
                 skipStation(forward: false)
             } label: {
                 Image(systemName: "backward.fill")
@@ -231,10 +258,12 @@ struct RadioView: View {
                     .background(.ultraThinMaterial, in: Circle())
             }
             .disabled(radioService.currentStation == nil)
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             .accessibilityLabel("Previous station")
 
             // Play/Pause button
             Button {
+                hapticTrigger.toggle()
                 if radioService.currentStation != nil {
                     radioService.togglePlayback()
                 } else if let first = RadioService.RadioStation.allStations.first {
@@ -260,10 +289,12 @@ struct RadioView: View {
                         .contentTransition(.symbolEffect(.replace))
                 }
             }
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             .accessibilityLabel(radioService.isPlaying ? "Pause" : "Play")
 
             // Next station
             Button {
+                hapticTrigger.toggle()
                 skipStation(forward: true)
             } label: {
                 Image(systemName: "forward.fill")
@@ -273,6 +304,7 @@ struct RadioView: View {
                     .background(.ultraThinMaterial, in: Circle())
             }
             .disabled(radioService.currentStation == nil)
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             .accessibilityLabel("Next station")
         }
         .frame(maxWidth: .infinity)
@@ -362,6 +394,7 @@ struct RadioView: View {
 
                     // Play/Pause
                     Button {
+                        hapticTrigger.toggle()
                         radioService.togglePlayback()
                     } label: {
                         Image(systemName: radioService.isPlaying ? "pause.fill" : "play.fill")
@@ -369,10 +402,12 @@ struct RadioView: View {
                             .foregroundStyle(.primary)
                             .contentTransition(.symbolEffect(.replace))
                     }
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .accessibilityLabel(radioService.isPlaying ? "Pause" : "Play")
 
                     // Stop
                     Button {
+                        hapticTrigger.toggle()
                         withAnimation(.snappy) {
                             radioService.stop()
                             selectedStation = nil
@@ -382,6 +417,7 @@ struct RadioView: View {
                             .font(.title3)
                             .foregroundStyle(.secondary)
                     }
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .accessibilityLabel("Stop")
                 }
                 .padding(.horizontal, 16)
@@ -448,6 +484,7 @@ struct RadioView: View {
 
 struct RadioMiniPlayer: View {
     @State private var radioService = RadioService()
+    @State private var hapticTrigger = false
 
     var body: some View {
         if let station = radioService.currentStation {
@@ -474,6 +511,7 @@ struct RadioMiniPlayer: View {
                 Spacer()
 
                 Button {
+                    hapticTrigger.toggle()
                     radioService.togglePlayback()
                 } label: {
                     Image(systemName: radioService.isPlaying ? "pause.fill" : "play.fill")
@@ -481,14 +519,17 @@ struct RadioMiniPlayer: View {
                         .foregroundStyle(.primary)
                         .contentTransition(.symbolEffect(.replace))
                 }
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
                 Button {
+                    hapticTrigger.toggle()
                     radioService.stop()
                 } label: {
                     Image(systemName: "xmark")
                         .font(.caption.bold())
                         .foregroundStyle(.secondary)
                 }
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 10)

@@ -11,6 +11,7 @@ struct ManageStudentsView: View {
     @State private var errorMessage: String?
     @State private var unenrollTarget: User?
     @State private var isUnenrolling = false
+    @State private var hapticTrigger = false
 
     @Environment(\.dismiss) private var dismiss
 
@@ -75,6 +76,7 @@ struct ManageStudentsView: View {
                 Spacer()
 
                 Button {
+                    hapticTrigger.toggle()
                     UIPasteboard.general.string = course.classCode
                     withAnimation(.snappy) {
                         copiedCode = true
@@ -94,6 +96,7 @@ struct ManageStudentsView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(copiedCode ? .green : .pink)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
 
             Text("Share this code with students so they can enroll in the course.")
@@ -226,6 +229,7 @@ struct ManageStudentsView: View {
 
             // Unenroll button
             Button {
+                hapticTrigger.toggle()
                 unenrollTarget = student
             } label: {
                 Image(systemName: "person.fill.xmark")
@@ -235,6 +239,7 @@ struct ManageStudentsView: View {
                     .background(.red.opacity(0.1), in: .rect(cornerRadius: 8))
             }
             .buttonStyle(.plain)
+            .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
         }
         .padding(12)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))

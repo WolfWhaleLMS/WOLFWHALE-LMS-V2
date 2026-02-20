@@ -6,6 +6,7 @@ struct AssignmentsView: View {
     @State private var showSubmitSheet = false
     @State private var selectedAssignment: Assignment?
     @State private var submissionText = ""
+    @State private var hapticTrigger = false
 
     private var filtered: [Assignment] {
         switch selectedFilter {
@@ -41,6 +42,7 @@ struct AssignmentsView: View {
             HStack(spacing: 8) {
                 ForEach(Array(["All", "Pending", "Submitted", "Overdue"].enumerated()), id: \.offset) { index, label in
                     Button(label) {
+                        hapticTrigger.toggle()
                         withAnimation(.snappy) { selectedFilter = index }
                     }
                     .font(.subheadline.bold())
@@ -48,6 +50,7 @@ struct AssignmentsView: View {
                     .padding(.vertical, 8)
                     .background(selectedFilter == index ? .purple.opacity(0.2) : Color(.tertiarySystemFill), in: Capsule())
                     .foregroundStyle(selectedFilter == index ? .purple : .secondary)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .accessibilityLabel("\(label) filter")
                     .accessibilityAddTraits(selectedFilter == index ? .isSelected : [])
                 }
@@ -80,6 +83,7 @@ struct AssignmentsView: View {
 
             if !assignment.isSubmitted && !assignment.isOverdue {
                 Button {
+                    hapticTrigger.toggle()
                     selectedAssignment = assignment
                 } label: {
                     Text("Submit")
@@ -89,6 +93,7 @@ struct AssignmentsView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.purple)
+                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             }
 
             if let feedback = assignment.feedback {
@@ -148,17 +153,21 @@ struct AssignmentsView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
+                        hapticTrigger.toggle()
                         selectedAssignment = nil
                         submissionText = ""
                     }
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Submit") {
+                        hapticTrigger.toggle()
                         viewModel.submitAssignment(assignment, text: submissionText)
                         selectedAssignment = nil
                         submissionText = ""
                     }
                     .disabled(submissionText.isEmpty)
+                    .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                 }
             }
         }

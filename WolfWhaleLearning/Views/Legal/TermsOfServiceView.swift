@@ -2,6 +2,7 @@ import SwiftUI
 
 struct TermsOfServiceView: View {
     @Environment(\.dismiss) private var dismiss
+    @State private var hapticTrigger = false
 
     var body: some View {
         NavigationStack {
@@ -26,8 +27,10 @@ struct TermsOfServiceView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
+                        hapticTrigger.toggle()
                         dismiss()
                     }
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
         }

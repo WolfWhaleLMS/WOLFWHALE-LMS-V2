@@ -8,6 +8,7 @@ struct CoursesListView: View {
     @State private var isEnrolling = false
     @State private var enrollmentSuccess: String?
     @State private var enrollmentError: String?
+    @State private var hapticTrigger = false
 
     private var filteredCourses: [Course] {
         if searchText.isEmpty { return viewModel.courses }
@@ -55,11 +56,13 @@ struct CoursesListView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Join Course", systemImage: "plus") {
+                        hapticTrigger.toggle()
                         classCode = ""
                         enrollmentSuccess = nil
                         enrollmentError = nil
                         showJoinSheet = true
                     }
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .accessibilityLabel("Join a course")
                     .accessibilityHint("Double tap to enter a class code and enroll")
                 }
@@ -114,6 +117,7 @@ struct CoursesListView: View {
                 }
 
                 Button {
+                    hapticTrigger.toggle()
                     enrollWithClassCode()
                 } label: {
                     Group {
@@ -131,6 +135,7 @@ struct CoursesListView: View {
                 .buttonStyle(.borderedProminent)
                 .tint(.indigo)
                 .disabled(classCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isEnrolling)
+                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
                 Spacer()
             }
@@ -140,8 +145,10 @@ struct CoursesListView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
+                        hapticTrigger.toggle()
                         showJoinSheet = false
                     }
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
         }

@@ -9,6 +9,8 @@ struct HumanCellARView: View {
     @State private var selectedOrganelleInfo: String?
     @State private var selectedOrganelleFact: String?
     @State private var isPlaced = false
+    @State private var arView: ARView?
+    @State private var hapticTrigger = false
 
     var body: some View {
         ZStack {
@@ -16,7 +18,8 @@ struct HumanCellARView: View {
                 selectedOrganelleName: $selectedOrganelleName,
                 selectedOrganelleInfo: $selectedOrganelleInfo,
                 selectedOrganelleFact: $selectedOrganelleFact,
-                isPlaced: $isPlaced
+                isPlaced: $isPlaced,
+                arViewRef: $arView
             )
             .ignoresSafeArea()
 
@@ -30,6 +33,9 @@ struct HumanCellARView: View {
                 }
             }
             .padding()
+        }
+        .onDisappear {
+            arView?.session.pause()
         }
     }
 
@@ -53,6 +59,7 @@ struct HumanCellARView: View {
                     .font(.headline)
                 Spacer()
                 Button {
+                    hapticTrigger.toggle()
                     withAnimation(.spring(response: 0.3)) {
                         selectedOrganelleName = nil
                         selectedOrganelleInfo = nil
@@ -63,6 +70,7 @@ struct HumanCellARView: View {
                         .font(.title3)
                         .foregroundStyle(.secondary)
                 }
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
 
             if let info = selectedOrganelleInfo {
@@ -94,6 +102,7 @@ struct HumanCellARContainer: UIViewRepresentable {
     @Binding var selectedOrganelleInfo: String?
     @Binding var selectedOrganelleFact: String?
     @Binding var isPlaced: Bool
+    @Binding var arViewRef: ARView?
 
     func makeUIView(context: Context) -> ARView {
         let arView = ARView(frame: .zero)
@@ -120,6 +129,11 @@ struct HumanCellARContainer: UIViewRepresentable {
         arView.addGestureRecognizer(tap)
 
         context.coordinator.arView = arView
+
+        DispatchQueue.main.async {
+            arViewRef = arView
+        }
+
         return arView
     }
 
@@ -322,6 +336,7 @@ struct HumanCellARContainer: UIViewRepresentable {
             cytoplasm.name = "Cytoplasm"
             cellRoot.addChild(cytoplasm)
             organelleEntities["Cytoplasm"] = cytoplasm
+            addLabel(named: "Cytoplasm", to: cytoplasm, offset: SIMD3<Float>(0.08, -0.08, 0))
 
             // ==========================================
             // 3. NUCLEUS - large sphere, slightly off-center

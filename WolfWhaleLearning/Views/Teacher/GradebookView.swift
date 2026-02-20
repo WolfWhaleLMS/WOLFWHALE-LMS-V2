@@ -13,6 +13,7 @@ struct GradebookView: View {
     @State private var newPoints: Int = 100
     @State private var isCreating = false
     @State private var showEditCourse = false
+    @State private var hapticTrigger = false
 
     private var courseAssignments: [Assignment] {
         viewModel.assignments.filter { $0.courseName == course.title || $0.courseId == course.id }
@@ -46,13 +47,17 @@ struct GradebookView: View {
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button("Edit", systemImage: "pencil") {
+                    hapticTrigger.toggle()
                     showEditCourse = true
                 }
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Add", systemImage: "plus") {
+                    hapticTrigger.toggle()
                     showAddAssignment = true
                 }
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
         }
         .sheet(isPresented: $showAddAssignment) {
@@ -221,7 +226,10 @@ struct GradebookView: View {
     }
 
     private func contentActionButton(icon: String, label: String, color: Color, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+        Button {
+            hapticTrigger.toggle()
+            action()
+        } label: {
             VStack(spacing: 8) {
                 Image(systemName: icon)
                     .font(.title2)
@@ -234,6 +242,7 @@ struct GradebookView: View {
             .padding(.vertical, 14)
             .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
         }
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
     }
 
     // MARK: - Course Content (Modules & Lessons)
@@ -301,6 +310,7 @@ struct GradebookView: View {
             }
 
             Button {
+                hapticTrigger.toggle()
                 selectedModuleForLesson = module
             } label: {
                 Label("Add Lesson", systemImage: "plus.circle")
@@ -308,6 +318,7 @@ struct GradebookView: View {
             }
             .tint(.pink)
             .padding(.top, 2)
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         }
         .padding(12)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
@@ -446,16 +457,20 @@ struct GradebookView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
+                        hapticTrigger.toggle()
                         resetAssignmentForm()
                         showAddAssignment = false
                     }
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Create") {
+                        hapticTrigger.toggle()
                         createAssignment()
                     }
                     .fontWeight(.semibold)
                     .disabled(newTitle.trimmingCharacters(in: .whitespaces).isEmpty || isCreating)
+                    .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                 }
             }
             .overlay {

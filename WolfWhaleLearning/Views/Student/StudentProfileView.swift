@@ -5,6 +5,7 @@ struct StudentProfileView: View {
     var walletService = WalletPassService()
     @AppStorage("colorSchemePreference") private var colorSchemePreference: String = "system"
     @State private var showAchievements = false
+    @State private var hapticTrigger = false
 
     var body: some View {
         NavigationStack {
@@ -70,7 +71,6 @@ struct StudentProfileView: View {
     private var statsGrid: some View {
         let columns = [GridItem(.flexible()), GridItem(.flexible())]
         return LazyVGrid(columns: columns, spacing: 12) {
-            profileStat(icon: "bitcoinsign.circle.fill", value: "\(viewModel.currentUser?.coins ?? 0)", label: "Coins", color: .yellow)
             profileStat(icon: "flame.fill", value: "\(viewModel.currentUser?.streak ?? 0) days", label: "Streak", color: .orange)
             profileStat(icon: "book.fill", value: "\(viewModel.courses.count)", label: "Courses", color: .blue)
         }
@@ -295,6 +295,7 @@ struct StudentProfileView: View {
 
     private var logoutButton: some View {
         Button(role: .destructive) {
+            hapticTrigger.toggle()
             viewModel.logout()
         } label: {
             Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
@@ -302,5 +303,6 @@ struct StudentProfileView: View {
                 .frame(height: 44)
         }
         .buttonStyle(.bordered)
+        .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
     }
 }

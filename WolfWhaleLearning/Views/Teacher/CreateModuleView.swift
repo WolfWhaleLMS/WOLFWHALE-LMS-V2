@@ -8,6 +8,7 @@ struct CreateModuleView: View {
     @State private var isLoading = false
     @State private var showSuccess = false
     @State private var errorMessage: String?
+    @State private var hapticTrigger = false
 
     @Environment(\.dismiss) private var dismiss
 
@@ -93,6 +94,7 @@ struct CreateModuleView: View {
             }
 
             Button {
+                hapticTrigger.toggle()
                 createModule()
             } label: {
                 Group {
@@ -110,6 +112,7 @@ struct CreateModuleView: View {
             .buttonStyle(.borderedProminent)
             .tint(.pink)
             .disabled(isLoading || !isValid)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         }
         .padding(.top, 4)
     }

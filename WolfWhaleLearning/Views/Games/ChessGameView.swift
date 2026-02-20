@@ -42,6 +42,48 @@ struct ChessPosition: Equatable, Hashable {
     let col: Int
 }
 
+// MARK: - Bot Difficulty
+
+enum BotDifficulty: String, CaseIterable {
+    case easy = "Easy"
+    case medium = "Medium"
+    case hard = "Hard"
+
+    var searchDepth: Int {
+        switch self {
+        case .easy: return 1
+        case .medium: return 2
+        case .hard: return 3
+        }
+    }
+}
+
+// MARK: - Move Undo Info
+
+struct MoveUndoInfo {
+    let from: ChessPosition
+    let to: ChessPosition
+    let movedPiece: ChessPiece
+    let capturedPiece: ChessPiece?
+    let previousEnPassant: ChessPosition?
+    let previousCurrentTurn: PieceColor
+    let previousIsCheck: Bool
+    let previousIsCheckmate: Bool
+    let previousIsStalemate: Bool
+    let previousGameOver: Bool
+    let previousMoveCount: Int
+    let previousLastMove: (from: ChessPosition, to: ChessPosition)?
+    // For en passant captures
+    let epCapturedPiece: ChessPiece?
+    let epCapturedPos: ChessPosition?
+    // For castling
+    let castleRookFrom: ChessPosition?
+    let castleRookTo: ChessPosition?
+    let castleRookPiece: ChessPiece?
+    // For pawn promotion
+    let promotedTo: ChessPiece?
+}
+
 // MARK: - Chess Game Logic
 
 @Observable
@@ -60,6 +102,12 @@ class ChessGame {
     var enPassantTarget: ChessPosition?
     var promotionPending: ChessPosition?
     var gameOver: Bool = false
+
+    // Bot properties
+    var isBotEnabled: Bool = true
+    var botColor: PieceColor = .black
+    var isBotThinking: Bool = false
+    var botDifficulty: BotDifficulty = .medium
 
     init() {
         setupBoard()
@@ -80,6 +128,7 @@ class ChessGame {
         enPassantTarget = nil
         promotionPending = nil
         gameOver = false
+        isBotThinking = false
 
         // Black pieces (row 0 = top)
         board[0][0] = ChessPiece(type: .rook, color: .black)
@@ -112,6 +161,10 @@ class ChessGame {
 
     func selectSquare(row: Int, col: Int) {
         guard !gameOver else { return }
+        // Don't allow interaction when bot is thinking
+        guard !isBotThinking else { return }
+        // Don't allow interaction when it's the bot's turn
+        if isBotEnabled && currentTurn == botColor { return }
 
         let tappedPos = ChessPosition(row: row, col: col)
 
@@ -119,6 +172,7 @@ class ChessGame {
         if let selected = selectedSquare,
            validMoveSquares.contains(tappedPos) {
             movePiece(from: selected, to: tappedPos)
+            triggerBotMoveIfNeeded()
             return
         }
 
@@ -130,6 +184,17 @@ class ChessGame {
             // Deselect
             selectedSquare = nil
             validMoveSquares = []
+        }
+    }
+
+    func triggerBotMoveIfNeeded() {
+        if isBotEnabled && currentTurn == botColor && !isCheckmate && !isStalemate {
+            isBotThinking = true
+            Task { @MainActor in
+                try? await Task.sleep(for: .seconds(0.5))
+                await botMove()
+                isBotThinking = false
+            }
         }
     }
 
@@ -540,6 +605,271 @@ class ChessGame {
         return inCheck
     }
 
+    // MARK: - Bot AI
+
+    private func pieceValue(_ type: PieceType) -> Int {
+        switch type {
+        case .pawn: return 100
+        case .knight: return 320
+        case .bishop: return 330
+        case .rook: return 500
+        case .queen: return 900
+        case .king: return 20000
+        }
+    }
+
+    func evaluateBoard() -> Int {
+        var score = 0
+        for row in 0..<8 {
+            for col in 0..<8 {
+                if let piece = board[row][col] {
+                    let value = pieceValue(piece.type)
+                    // Add positional bonus for center control
+                    let centerBonus = (piece.type == .pawn || piece.type == .knight) ?
+                        max(0, 10 - abs(row - 4) * 3 - abs(col - 4) * 3) : 0
+                    score += piece.color == .white ? (value + centerBonus) : -(value + centerBonus)
+                }
+            }
+        }
+        // Bonus for check
+        if isCheck { score += currentTurn == .white ? -50 : 50 }
+        return score
+    }
+
+    func allLegalMoves(for color: PieceColor) -> [(from: ChessPosition, to: ChessPosition)] {
+        var moves: [(from: ChessPosition, to: ChessPosition)] = []
+        for row in 0..<8 {
+            for col in 0..<8 {
+                if let piece = board[row][col], piece.color == color {
+                    let pos = ChessPosition(row: row, col: col)
+                    let legal = legalMoves(for: piece, at: pos)
+                    for dest in legal {
+                        moves.append((from: pos, to: dest))
+                    }
+                }
+            }
+        }
+        return moves
+    }
+
+    func makeMove(from: ChessPosition, to: ChessPosition, simulated: Bool) -> MoveUndoInfo {
+        let movedPiece = board[from.row][from.col]!
+        let capturedPiece = board[to.row][to.col]
+        let prevEnPassant = enPassantTarget
+        let prevTurn = currentTurn
+        let prevCheck = isCheck
+        let prevCheckmate = isCheckmate
+        let prevStalemate = isStalemate
+        let prevGameOver = gameOver
+        let prevMoveCount = moveCount
+        let prevLastMove = lastMove
+
+        // En passant capture
+        var epCaptured: ChessPiece? = nil
+        var epPos: ChessPosition? = nil
+        if movedPiece.type == .pawn, to == enPassantTarget {
+            let capturedRow = from.row
+            epCaptured = board[capturedRow][to.col]
+            epPos = ChessPosition(row: capturedRow, col: to.col)
+            board[capturedRow][to.col] = nil
+        }
+
+        // Castling
+        var castleRookFrom: ChessPosition? = nil
+        var castleRookTo: ChessPosition? = nil
+        var castleRookPiece: ChessPiece? = nil
+        if movedPiece.type == .king && abs(to.col - from.col) == 2 {
+            if to.col == 6 {
+                castleRookFrom = ChessPosition(row: from.row, col: 7)
+                castleRookTo = ChessPosition(row: from.row, col: 5)
+                castleRookPiece = board[from.row][7]
+                var rook = board[from.row][7]
+                rook?.hasMoved = true
+                board[from.row][5] = rook
+                board[from.row][7] = nil
+            } else if to.col == 2 {
+                castleRookFrom = ChessPosition(row: from.row, col: 0)
+                castleRookTo = ChessPosition(row: from.row, col: 3)
+                castleRookPiece = board[from.row][0]
+                var rook = board[from.row][0]
+                rook?.hasMoved = true
+                board[from.row][3] = rook
+                board[from.row][0] = nil
+            }
+        }
+
+        // Set en passant target
+        if movedPiece.type == .pawn && abs(to.row - from.row) == 2 {
+            let epRow = (from.row + to.row) / 2
+            enPassantTarget = ChessPosition(row: epRow, col: to.col)
+        } else {
+            enPassantTarget = nil
+        }
+
+        // Move the piece
+        var moved = movedPiece
+        moved.hasMoved = true
+        board[to.row][to.col] = moved
+        board[from.row][from.col] = nil
+
+        // Pawn promotion (auto-queen)
+        var promotedTo: ChessPiece? = nil
+        if movedPiece.type == .pawn {
+            if (movedPiece.color == .white && to.row == 0) || (movedPiece.color == .black && to.row == 7) {
+                let promoted = ChessPiece(type: .queen, color: movedPiece.color, hasMoved: true)
+                board[to.row][to.col] = promoted
+                promotedTo = promoted
+            }
+        }
+
+        // Switch turn and update state
+        currentTurn = currentTurn.opposite
+        lastMove = (from: from, to: to)
+        moveCount += 1
+
+        if simulated {
+            // For simulated moves, compute check but skip checkmate/stalemate (expensive)
+            isCheck = isKingInCheck(color: currentTurn)
+        } else {
+            // Full game state update
+            isCheck = isKingInCheck(color: currentTurn)
+            if !hasAnyLegalMoves(color: currentTurn) {
+                gameOver = true
+                if isCheck {
+                    isCheckmate = true
+                } else {
+                    isStalemate = true
+                }
+            }
+        }
+
+        return MoveUndoInfo(
+            from: from,
+            to: to,
+            movedPiece: movedPiece,
+            capturedPiece: capturedPiece,
+            previousEnPassant: prevEnPassant,
+            previousCurrentTurn: prevTurn,
+            previousIsCheck: prevCheck,
+            previousIsCheckmate: prevCheckmate,
+            previousIsStalemate: prevStalemate,
+            previousGameOver: prevGameOver,
+            previousMoveCount: prevMoveCount,
+            previousLastMove: prevLastMove,
+            epCapturedPiece: epCaptured,
+            epCapturedPos: epPos,
+            castleRookFrom: castleRookFrom,
+            castleRookTo: castleRookTo,
+            castleRookPiece: castleRookPiece,
+            promotedTo: promotedTo
+        )
+    }
+
+    func undoMove(_ info: MoveUndoInfo) {
+        // Restore the moved piece to its original position
+        board[info.from.row][info.from.col] = info.movedPiece
+        // Restore what was on the destination square
+        board[info.to.row][info.to.col] = info.capturedPiece
+
+        // Undo en passant capture
+        if let epPos = info.epCapturedPos {
+            board[epPos.row][epPos.col] = info.epCapturedPiece
+        }
+
+        // Undo castling
+        if let rookFrom = info.castleRookFrom, let rookTo = info.castleRookTo {
+            board[rookFrom.row][rookFrom.col] = info.castleRookPiece
+            board[rookTo.row][rookTo.col] = nil
+        }
+
+        // Restore game state
+        enPassantTarget = info.previousEnPassant
+        currentTurn = info.previousCurrentTurn
+        isCheck = info.previousIsCheck
+        isCheckmate = info.previousIsCheckmate
+        isStalemate = info.previousIsStalemate
+        gameOver = info.previousGameOver
+        moveCount = info.previousMoveCount
+        lastMove = info.previousLastMove
+    }
+
+    func minimax(depth: Int, alpha: Int, beta: Int, isMaximizing: Bool) -> Int {
+        if depth == 0 || isCheckmate || isStalemate {
+            return evaluateBoard()
+        }
+
+        var alpha = alpha
+        var beta = beta
+        let color: PieceColor = isMaximizing ? .white : .black
+
+        if isMaximizing {
+            var maxEval = Int.min
+            for move in allLegalMoves(for: color) {
+                let undoInfo = makeMove(from: move.from, to: move.to, simulated: true)
+                let eval = minimax(depth: depth - 1, alpha: alpha, beta: beta, isMaximizing: false)
+                undoMove(undoInfo)
+                maxEval = max(maxEval, eval)
+                alpha = max(alpha, eval)
+                if beta <= alpha { break }
+            }
+            return maxEval == Int.min ? evaluateBoard() : maxEval
+        } else {
+            var minEval = Int.max
+            for move in allLegalMoves(for: color) {
+                let undoInfo = makeMove(from: move.from, to: move.to, simulated: true)
+                let eval = minimax(depth: depth - 1, alpha: alpha, beta: beta, isMaximizing: true)
+                undoMove(undoInfo)
+                minEval = min(minEval, eval)
+                beta = min(beta, eval)
+                if beta <= alpha { break }
+            }
+            return minEval == Int.max ? evaluateBoard() : minEval
+        }
+    }
+
+    @MainActor
+    func botMove() async {
+        guard !gameOver else { return }
+
+        let depth = botDifficulty.searchDepth
+        let isMax = botColor == .white
+
+        let moves = allLegalMoves(for: botColor)
+        guard !moves.isEmpty else { return }
+
+        var bestMove = moves[0]
+        var bestEval = isMax ? Int.min : Int.max
+
+        for move in moves {
+            let undoInfo = makeMove(from: move.from, to: move.to, simulated: true)
+            let eval = minimax(depth: depth - 1, alpha: Int.min, beta: Int.max, isMaximizing: !isMax)
+            undoMove(undoInfo)
+
+            if isMax {
+                if eval > bestEval {
+                    bestEval = eval
+                    bestMove = move
+                }
+            } else {
+                if eval < bestEval {
+                    bestEval = eval
+                    bestMove = move
+                }
+            }
+        }
+
+        // Add slight randomness for easy mode to avoid always picking the "best"
+        if botDifficulty == .easy {
+            // 30% chance to pick a random move instead
+            if Int.random(in: 0..<10) < 3, let randomMove = moves.randomElement() {
+                movePiece(from: randomMove.from, to: randomMove.to)
+                return
+            }
+        }
+
+        movePiece(from: bestMove.from, to: bestMove.to)
+    }
+
     // MARK: - Utilities
 
     private func isInBounds(_ row: Int, _ col: Int) -> Bool {
@@ -564,6 +894,7 @@ struct ChessGameView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            botControlBar
             statusBar
             capturedPiecesRow(color: .white)
             chessBoard
@@ -590,6 +921,71 @@ struct ChessGameView: View {
         }
     }
 
+    // MARK: - Bot Control Bar
+
+    private var botControlBar: some View {
+        HStack(spacing: 12) {
+            // Bot toggle
+            Button {
+                game.isBotEnabled.toggle()
+                if !game.isBotEnabled {
+                    game.isBotThinking = false
+                }
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: game.isBotEnabled ? "cpu.fill" : "person.2.fill")
+                        .font(.caption)
+                    Text(game.isBotEnabled ? "vs Bot" : "vs Player")
+                        .font(.caption.bold())
+                }
+                .foregroundStyle(game.isBotEnabled ? .purple : .secondary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(
+                    Capsule()
+                        .fill(game.isBotEnabled ? Color.purple.opacity(0.15) : Color(.systemGray5))
+                )
+            }
+
+            if game.isBotEnabled {
+                // Difficulty picker
+                HStack(spacing: 4) {
+                    ForEach(BotDifficulty.allCases, id: \.rawValue) { difficulty in
+                        Button {
+                            game.botDifficulty = difficulty
+                        } label: {
+                            Text(difficulty.rawValue)
+                                .font(.caption2.bold())
+                                .foregroundStyle(game.botDifficulty == difficulty ? .white : .purple)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(
+                                    Capsule()
+                                        .fill(game.botDifficulty == difficulty ? Color.purple : Color.purple.opacity(0.1))
+                                )
+                        }
+                    }
+                }
+            }
+
+            Spacer()
+
+            // Thinking indicator
+            if game.isBotThinking {
+                HStack(spacing: 6) {
+                    ProgressView()
+                        .scaleEffect(0.7)
+                    Text("Thinking...")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
+        .background(.ultraThinMaterial)
+    }
+
     // MARK: - Status Bar
 
     private var statusBar: some View {
@@ -610,6 +1006,10 @@ struct ChessGameView: View {
                 Text("Stalemate - Draw!")
                     .font(.subheadline.bold())
                     .foregroundStyle(.orange)
+            } else if game.isBotThinking {
+                Text("Bot is thinking...")
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.purple)
             } else if game.isCheck {
                 Text("\(game.currentTurn == .white ? "White" : "Black") is in check!")
                     .font(.subheadline.bold())
@@ -762,6 +1162,10 @@ struct ChessGameView: View {
         .frame(width: size, height: size)
         .contentShape(Rectangle())
         .onTapGesture {
+            // Don't allow taps when bot is thinking or it's the bot's turn
+            guard !game.isBotThinking else { return }
+            if game.isBotEnabled && game.currentTurn == game.botColor { return }
+
             let hadSelection = game.selectedSquare != nil
             let isCapture = isValidMove && piece != nil
             let isEnPassantCapture = isValidMove && game.board[game.selectedSquare?.row ?? 0][game.selectedSquare?.col ?? 0]?.type == .pawn && pos == game.enPassantTarget
@@ -803,6 +1207,7 @@ struct ChessGameView: View {
                         in: Capsule()
                     )
             }
+            .disabled(game.isBotThinking)
         }
         .padding(.vertical, 12)
     }

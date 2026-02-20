@@ -8,6 +8,7 @@ struct SchoolIDView: View {
     @State private var alertMessage = ""
     @State private var cardRotation: Double = 0
     @State private var appeared = false
+    @State private var hapticTrigger = false
 
     private var pass: WalletPassService.SchoolIDPass {
         walletService.generatePassData(for: user, schoolName: "WolfWhale Academy")
@@ -175,6 +176,7 @@ struct SchoolIDView: View {
         VStack(spacing: 12) {
             // Add to Apple Wallet button
             Button {
+                hapticTrigger.toggle()
                 walletService.addToWallet(pass: pass)
                 if let error = walletService.error {
                     alertMessage = error
@@ -192,6 +194,7 @@ struct SchoolIDView: View {
                 .frame(height: 50)
                 .background(.black, in: .rect(cornerRadius: 14))
             }
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             .accessibilityLabel("Add school ID to Apple Wallet")
             .accessibilityHint("Double tap to add your school ID pass to Apple Wallet")
 

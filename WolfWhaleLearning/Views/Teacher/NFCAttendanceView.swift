@@ -10,6 +10,7 @@ struct NFCAttendanceView: View {
     @State private var showSuccess = false
     @State private var isSaving = false
     @State private var pulseAnimation = false
+    @State private var hapticTrigger = false
 
     private var courseName: String {
         viewModel.courses.first(where: { $0.id == courseId })?.title ?? "Unknown Course"
@@ -103,6 +104,7 @@ struct NFCAttendanceView: View {
 
             // Scan button
             Button {
+                hapticTrigger.toggle()
                 nfcService.startScanning()
             } label: {
                 Label(
@@ -122,6 +124,7 @@ struct NFCAttendanceView: View {
                 )
             )
             .disabled(nfcService.isScanning || !nfcService.isNFCAvailable)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
             if !nfcService.isNFCAvailable {
                 Label("NFC is not available on this device", systemImage: "exclamationmark.triangle.fill")
@@ -228,6 +231,7 @@ struct NFCAttendanceView: View {
 
     private var finishButton: some View {
         Button {
+            hapticTrigger.toggle()
             showFinishConfirmation = true
         } label: {
             Group {
@@ -245,6 +249,7 @@ struct NFCAttendanceView: View {
         .buttonStyle(.borderedProminent)
         .tint(.pink)
         .disabled(checkedInStudents.isEmpty || isSaving)
+        .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         .padding(.top, 4)
     }
 

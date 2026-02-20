@@ -70,6 +70,7 @@ struct ShimmerLoadingView: View {
 struct ErrorStateView: View {
     let message: String
     let retryAction: (() -> Void)?
+    @State private var hapticTrigger = false
 
     init(message: String, retryAction: (() -> Void)? = nil) {
         self.message = message
@@ -88,9 +89,15 @@ struct ErrorStateView: View {
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
             if let retryAction {
-                Button("Try Again", action: retryAction)
-                    .buttonStyle(.borderedProminent)
-                    .tint(.pink)
+                Button {
+                    hapticTrigger.toggle()
+                    retryAction()
+                } label: {
+                    Text("Try Again")
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.pink)
+                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             }
         }
         .padding(32)

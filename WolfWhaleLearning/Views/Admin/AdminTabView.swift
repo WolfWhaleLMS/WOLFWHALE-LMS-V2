@@ -33,7 +33,7 @@ struct AdminTabView: View {
             .accessibilityLabel("Settings")
             .accessibilityHint("Double tap to view settings and sign out")
         }
-        .tint(.blue)
+        .tint(.accentColor)
         .overlay(alignment: .top) {
             OfflineBannerView(isConnected: viewModel.networkMonitor.isConnected)
         }

@@ -3,6 +3,7 @@ import SwiftUI
 struct TeacherProfileView: View {
     let viewModel: AppViewModel
     @AppStorage("colorSchemePreference") private var colorSchemePreference: String = "system"
+    @State private var hapticTrigger = false
 
     var body: some View {
         NavigationStack {
@@ -185,6 +186,7 @@ struct TeacherProfileView: View {
 
     private var logoutButton: some View {
         Button(role: .destructive) {
+            hapticTrigger.toggle()
             viewModel.logout()
         } label: {
             Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
@@ -192,5 +194,6 @@ struct TeacherProfileView: View {
                 .frame(height: 44)
         }
         .buttonStyle(.bordered)
+        .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
     }
 }

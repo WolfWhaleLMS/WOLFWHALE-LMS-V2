@@ -11,6 +11,7 @@ class RadioService {
     var error: String?
 
     private var player: AVPlayer?
+    private var playerItemObserver: NSKeyValueObservation?
 
     struct RadioStation: Identifiable, Hashable {
         let id: UUID
@@ -20,14 +21,30 @@ class RadioService {
         let iconName: String
         let color: String
 
-        // Built-in stations
+        // Built-in stations with real streaming URLs
+        static let classicalFocus = RadioStation(
+            id: UUID(),
+            name: "Classical Focus",
+            description: "Royalty-free classical for concentration",
+            streamURL: URL(string: "https://live.musopen.org:8085/streamvbr0"),
+            iconName: "pianokeys",
+            color: "orange"
+        )
         static let lofiStudy = RadioStation(
             id: UUID(),
             name: "Lo-Fi Study",
-            description: "Relaxing beats for studying",
-            streamURL: nil,
+            description: "Chill beats for studying",
+            streamURL: URL(string: "https://streams.fluxfm.de/Chillhop/mp3-128/streams.fluxfm.de/"),
             iconName: "headphones",
             color: "purple"
+        )
+        static let ambientNature = RadioStation(
+            id: UUID(),
+            name: "Ambient Study",
+            description: "Ambient sounds for calm focus",
+            streamURL: URL(string: "https://stream.0nlineradio.com/classical"),
+            iconName: "leaf.fill",
+            color: "green"
         )
         static let schoolNews = RadioStation(
             id: UUID(),
@@ -37,32 +54,19 @@ class RadioService {
             iconName: "megaphone.fill",
             color: "blue"
         )
-        static let classicalFocus = RadioStation(
-            id: UUID(),
-            name: "Classical Focus",
-            description: "Classical music for concentration",
-            streamURL: nil,
-            iconName: "music.note",
-            color: "orange"
-        )
-        static let natureSounds = RadioStation(
-            id: UUID(),
-            name: "Nature Sounds",
-            description: "Ambient nature for calm focus",
-            streamURL: nil,
-            iconName: "leaf.fill",
-            color: "green"
-        )
 
-        static let allStations: [RadioStation] = [lofiStudy, schoolNews, classicalFocus, natureSounds]
+        static let allStations: [RadioStation] = [classicalFocus, lofiStudy, ambientNature, schoolNews]
     }
 
     func play(station: RadioStation) {
+        // Stop any existing playback first
+        stop()
+
         currentStation = station
         isLoading = true
         error = nil
 
-        // Configure audio session
+        // Configure audio session for background playback
         do {
             try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
             try AVAudioSession.sharedInstance().setActive(true)
@@ -71,13 +75,34 @@ class RadioService {
         }
 
         if let url = station.streamURL {
-            player = AVPlayer(url: url)
+            let playerItem = AVPlayerItem(url: url)
+            player = AVPlayer(playerItem: playerItem)
             player?.volume = volume
-            player?.play()
-        }
 
-        isPlaying = true
-        isLoading = false
+            // Observe when the player item is ready to play
+            playerItemObserver = playerItem.observe(\.status, options: [.new]) { [weak self] item, _ in
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
+                    switch item.status {
+                    case .readyToPlay:
+                        self.isLoading = false
+                    case .failed:
+                        self.isLoading = false
+                        self.error = "Failed to load stream. Check your connection."
+                        self.isPlaying = false
+                    default:
+                        break
+                    }
+                }
+            }
+
+            player?.play()
+            isPlaying = true
+        } else {
+            // Station without a stream URL (e.g., School News placeholder)
+            isPlaying = true
+            isLoading = false
+        }
 
         setupNowPlayingInfo()
         setupRemoteCommandCenter()
@@ -90,7 +115,9 @@ class RadioService {
     }
 
     func resume() {
-        player?.play()
+        if let currentStation, currentStation.streamURL != nil {
+            player?.play()
+        }
         isPlaying = true
         updateNowPlayingPlaybackState()
     }
@@ -104,10 +131,13 @@ class RadioService {
     }
 
     func stop() {
+        playerItemObserver?.invalidate()
+        playerItemObserver = nil
         player?.pause()
         player = nil
         isPlaying = false
         currentStation = nil
+        isLoading = false
         MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
     }
 

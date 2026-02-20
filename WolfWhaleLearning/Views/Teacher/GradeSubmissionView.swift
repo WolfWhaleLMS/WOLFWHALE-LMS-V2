@@ -10,6 +10,7 @@ struct GradeSubmissionView: View {
     @State private var isLoading = false
     @State private var showSuccess = false
     @State private var errorMessage: String?
+    @State private var hapticTrigger = false
 
     @Environment(\.dismiss) private var dismiss
 
@@ -241,6 +242,7 @@ struct GradeSubmissionView: View {
 
     private var saveButton: some View {
         Button {
+            hapticTrigger.toggle()
             saveGrade()
         } label: {
             Group {
@@ -258,6 +260,7 @@ struct GradeSubmissionView: View {
         .buttonStyle(.borderedProminent)
         .tint(.pink)
         .disabled(isLoading || !isValid)
+        .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         .padding(.top, 4)
     }
 

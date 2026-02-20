@@ -5,6 +5,7 @@ struct CampusLocationView: View {
     @StateObject private var geoService = GeoFenceService()
     @State private var appeared = false
     @State private var radarAngle: Double = 0
+    @State private var hapticTrigger = false
 
     /// Whether to show a compact version suitable for embedding
     var isCompact = false
@@ -283,6 +284,7 @@ struct CampusLocationView: View {
 
     private var permissionButton: some View {
         Button {
+            hapticTrigger.toggle()
             geoService.requestPermission()
         } label: {
             Label("Enable Location Services", systemImage: "location.fill")
@@ -291,6 +293,7 @@ struct CampusLocationView: View {
                 .frame(height: 50)
         }
         .buttonStyle(.borderedProminent)
+        .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         .tint(
             LinearGradient(
                 colors: [.purple, .blue],

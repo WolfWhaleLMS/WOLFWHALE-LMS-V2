@@ -8,6 +8,7 @@ struct ParentMessagingView: View {
     @State private var showConversation = false
     @State private var isCreatingConversation = false
     @State private var errorMessage: String?
+    @State private var hapticTrigger = false
 
     // MARK: - Computed Properties
 
@@ -172,6 +173,7 @@ struct ParentMessagingView: View {
             Spacer()
 
             Button {
+                hapticTrigger.toggle()
                 startConversation(with: teacher)
             } label: {
                 Label("Message", systemImage: "message.fill")
@@ -180,6 +182,7 @@ struct ParentMessagingView: View {
             .buttonStyle(.borderedProminent)
             .tint(.pink)
             .disabled(isCreatingConversation)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         }
         .padding(14)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))

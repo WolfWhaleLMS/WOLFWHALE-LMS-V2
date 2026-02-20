@@ -63,7 +63,7 @@ struct WidgetGalleryView: View {
         guard let user = viewModel.currentUser else { return .neutral }
         if user.streak >= 7 { return .excited }
         if user.streak >= 3 { return .happy }
-        if user.coins > 0 { return .neutral }
+        if user.streak > 0 { return .neutral }
         return .sad
     }
 

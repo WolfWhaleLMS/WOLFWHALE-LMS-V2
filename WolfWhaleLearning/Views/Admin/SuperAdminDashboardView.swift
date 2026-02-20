@@ -7,6 +7,7 @@ struct SuperAdminDashboardView: View {
     @State private var showAddTenant = false
     @State private var editingTenant: TenantInfo?
     @State private var newUserLimit: String = ""
+    @State private var hapticTrigger = false
 
     struct TenantInfo: Identifiable {
         let id: UUID
@@ -42,10 +43,12 @@ struct SuperAdminDashboardView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
+                        hapticTrigger.toggle()
                         showAddTenant = true
                     } label: {
                         Label("Add Tenant", systemImage: "plus.circle.fill")
                     }
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
             .refreshable {
@@ -250,6 +253,7 @@ struct SuperAdminDashboardView: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                     Button {
+                        hapticTrigger.toggle()
                         showAddTenant = true
                     } label: {
                         Label("Add First Tenant", systemImage: "plus.circle.fill")
@@ -257,6 +261,7 @@ struct SuperAdminDashboardView: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(.indigo)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 20)
@@ -310,6 +315,7 @@ struct SuperAdminDashboardView: View {
             Spacer()
 
             Button {
+                hapticTrigger.toggle()
                 newUserLimit = "\(tenant.userLimit)"
                 editingTenant = tenant
             } label: {
@@ -320,6 +326,7 @@ struct SuperAdminDashboardView: View {
                     .background(Color.indigo.opacity(0.12), in: Capsule())
                     .foregroundStyle(.indigo)
             }
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         }
         .padding(12)
         .background(Color(.tertiarySystemFill), in: .rect(cornerRadius: 12))
@@ -329,7 +336,10 @@ struct SuperAdminDashboardView: View {
     }
 
     private func actionButton(title: String, icon: String, color: Color, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+        Button {
+            hapticTrigger.toggle()
+            action()
+        } label: {
             HStack(spacing: 6) {
                 Image(systemName: icon)
                 Text(title)
@@ -340,6 +350,7 @@ struct SuperAdminDashboardView: View {
             .background(color.opacity(0.12), in: .rect(cornerRadius: 12))
             .foregroundStyle(color)
         }
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         .accessibilityLabel(title)
     }
 
@@ -375,8 +386,10 @@ struct SuperAdminDashboardView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Close") {
+                        hapticTrigger.toggle()
                         showAddTenant = false
                     }
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
         }
@@ -406,6 +419,7 @@ struct SuperAdminDashboardView: View {
                 .padding(.horizontal, 24)
 
                 Button {
+                    hapticTrigger.toggle()
                     if let limit = Int(newUserLimit), limit > 0 {
                         if let index = tenants.firstIndex(where: { $0.id == tenant.id }) {
                             tenants[index] = TenantInfo(
@@ -435,6 +449,7 @@ struct SuperAdminDashboardView: View {
                         .foregroundStyle(.white)
                 }
                 .padding(.horizontal, 24)
+                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
                 Spacer()
             }
@@ -443,8 +458,10 @@ struct SuperAdminDashboardView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
+                        hapticTrigger.toggle()
                         editingTenant = nil
                     }
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
         }

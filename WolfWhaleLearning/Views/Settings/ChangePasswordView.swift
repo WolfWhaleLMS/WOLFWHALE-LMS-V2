@@ -11,6 +11,7 @@ struct ChangePasswordView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var showSuccess = false
+    @State private var hapticTrigger = false
 
     @FocusState private var focusedField: Field?
 
@@ -272,6 +273,7 @@ struct ChangePasswordView: View {
 
     private var submitButton: some View {
         Button {
+            hapticTrigger.toggle()
             focusedField = nil
             changePassword()
         } label: {
@@ -295,6 +297,7 @@ struct ChangePasswordView: View {
         .tint(.pink)
         .clipShape(.rect(cornerRadius: 12))
         .disabled(!canSubmit)
+        .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
     }
 
     // MARK: - Success Overlay
@@ -319,10 +322,12 @@ struct ChangePasswordView: View {
                     .multilineTextAlignment(.center)
 
                 Button("Done") {
+                    hapticTrigger.toggle()
                     dismiss()
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.pink)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 .padding(.top, 8)
             }
             .padding(32)

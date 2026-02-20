@@ -1,4 +1,5 @@
 import SwiftUI
+import AVFoundation
 
 struct LoginView: View {
     @Bindable var viewModel: AppViewModel
@@ -7,6 +8,7 @@ struct LoginView: View {
     @State private var showForgotPassword = false
     @State private var hapticTrigger = false
     @State private var glowPulse = false
+    @State private var loginAudio = LoginAudioService()
     @FocusState private var focusedField: Field?
 
     private enum Field { case email, password }
@@ -44,6 +46,15 @@ struct LoginView: View {
         .onAppear {
             withAnimation(.spring(duration: 0.7)) { appeared = true }
             withAnimation(.spring(duration: 0.6).delay(0.3)) { showDemoSection = true }
+            loginAudio.startPlaying()
+        }
+        .onChange(of: viewModel.isAuthenticated) { _, authenticated in
+            if authenticated {
+                loginAudio.fadeOutAndStop()
+            }
+        }
+        .onDisappear {
+            loginAudio.stop()
         }
     }
 

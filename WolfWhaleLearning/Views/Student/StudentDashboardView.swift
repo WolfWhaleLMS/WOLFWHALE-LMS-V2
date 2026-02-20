@@ -6,6 +6,7 @@ struct StudentDashboardView: View {
     @State private var showNotifications = false
     @State private var showRadio = false
     @State private var showWidgetGallery = false
+    @State private var hapticTrigger = false
 
     private var greeting: String {
         let hour = Calendar.current.component(.hour, from: Date())
@@ -62,6 +63,7 @@ struct StudentDashboardView: View {
                     VStack(spacing: 20) {
                         activitySection
                         statsRow
+                        FishTankView()
                         campusLifeSection
                         upcomingSection
                         coursesSection
@@ -75,24 +77,26 @@ struct StudentDashboardView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
+                        hapticTrigger.toggle()
                         showNotifications = true
                     } label: {
-                        Image(systemName: "bell.fill")
-                            .symbolEffect(.bounce, value: totalUnreadMessages)
-                    }
-                    .accessibilityLabel(totalUnreadMessages > 0 ? "Notifications, \(totalUnreadMessages) unread" : "Notifications")
-                    .accessibilityHint("Double tap to view notifications")
-                    .overlay(alignment: .topTrailing) {
-                        if totalUnreadMessages > 0 {
-                            Text("\(totalUnreadMessages)")
-                                .font(.system(size: 10, weight: .bold))
-                                .foregroundStyle(.white)
-                                .frame(minWidth: 16, minHeight: 16)
-                                .background(.red, in: Circle())
-                                .offset(x: 6, y: -6)
+                        ZStack(alignment: .topTrailing) {
+                            Image(systemName: "bell.fill")
+                                .symbolEffect(.bounce, value: totalUnreadMessages)
+                                .padding(6)
+
+                            if totalUnreadMessages > 0 {
+                                Text("\(totalUnreadMessages)")
+                                    .font(.system(size: 10, weight: .bold))
+                                    .foregroundStyle(.white)
+                                    .frame(minWidth: 16, minHeight: 16)
+                                    .background(.red, in: Circle())
+                            }
                         }
                     }
-                    .padding(.trailing, 4)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .accessibilityLabel(totalUnreadMessages > 0 ? "Notifications, \(totalUnreadMessages) unread" : "Notifications")
+                    .accessibilityHint("Double tap to view notifications")
                 }
             }
             .sheet(isPresented: $showNotifications) {
@@ -132,7 +136,6 @@ struct StudentDashboardView: View {
         VStack(spacing: 12) {
             HStack(spacing: 12) {
                 statCard(icon: "flame.fill", value: "\(viewModel.currentUser?.streak ?? 0)", label: "Day Streak", color: .orange)
-                statCard(icon: "bitcoinsign.circle.fill", value: "\(viewModel.currentUser?.coins ?? 0)", label: "Coins", color: .yellow)
             }
 
             NavigationLink {
@@ -190,9 +193,66 @@ struct StudentDashboardView: View {
             }
             .buttonStyle(.plain)
 
+            // Campus Map
+            NavigationLink {
+                CampusMapView()
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "map.fill")
+                        .font(.title3)
+                        .foregroundStyle(.blue)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Campus Map")
+                            .font(.subheadline.bold())
+                            .foregroundStyle(.primary)
+                        Text("Buildings & rooms")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
+                .padding(14)
+                .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Campus Map")
+            .accessibilityHint("Double tap to open the interactive campus map")
+
+            // Classroom Finder
+            NavigationLink {
+                ClassroomFinderView(courses: viewModel.courses)
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "location.magnifyingglass")
+                        .font(.title3)
+                        .foregroundStyle(.green)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Classroom Finder")
+                            .font(.subheadline.bold())
+                            .foregroundStyle(.primary)
+                        Text("Find your next class")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
+                .padding(14)
+                .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Classroom Finder")
+            .accessibilityHint("Double tap to find your classroom on the map")
+
             HStack(spacing: 12) {
                 // Radio button
                 Button {
+                    hapticTrigger.toggle()
                     showRadio = true
                 } label: {
                     HStack(spacing: 10) {
@@ -216,12 +276,14 @@ struct StudentDashboardView: View {
                     .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
                 }
                 .buttonStyle(.plain)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 .accessibilityLabel("Campus Radio")
                 .accessibilityHint("Double tap to open the radio player")
             }
 
             // Widget gallery link
             Button {
+                hapticTrigger.toggle()
                 showWidgetGallery = true
             } label: {
                 HStack(spacing: 10) {
@@ -245,6 +307,7 @@ struct StudentDashboardView: View {
                 .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
             }
             .buttonStyle(.plain)
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             .accessibilityLabel("Home Screen Widgets")
             .accessibilityHint("Double tap to preview available widgets")
         }
@@ -374,6 +437,7 @@ struct StudentDashboardView: View {
 struct NotificationsSheet: View {
     let viewModel: AppViewModel
     @Environment(\.dismiss) private var dismiss
+    @State private var hapticTrigger = false
 
     private var totalUnreadMessages: Int {
         viewModel.conversations.reduce(0) { $0 + $1.unreadCount }
@@ -478,8 +542,10 @@ struct NotificationsSheet: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
+                        hapticTrigger.toggle()
                         dismiss()
                     }
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
         }

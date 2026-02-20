@@ -11,6 +11,7 @@ struct TakeAttendanceView: View {
     @State private var isLoading = false
     @State private var showSuccess = false
     @State private var errorMessage: String?
+    @State private var hapticTrigger = false
 
     // Placeholder student list for the selected course.
     // Uses viewModel.allUsers if populated; otherwise falls back to generated names.
@@ -170,6 +171,7 @@ struct TakeAttendanceView: View {
         let isSelected = (studentStatuses[studentId] ?? .present) == status
         let color = statusColor(status)
         return Button {
+            hapticTrigger.toggle()
             withAnimation(.snappy(duration: 0.2)) {
                 studentStatuses[studentId] = status
             }
@@ -193,12 +195,14 @@ struct TakeAttendanceView: View {
             )
         }
         .buttonStyle(.plain)
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
     }
 
     // MARK: - Save Button
 
     private var saveButton: some View {
         Button {
+            hapticTrigger.toggle()
             saveAttendance()
         } label: {
             Group {
@@ -216,6 +220,7 @@ struct TakeAttendanceView: View {
         .buttonStyle(.borderedProminent)
         .tint(.pink)
         .disabled(isLoading || enrolledStudents.isEmpty)
+        .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         .padding(.top, 4)
     }
 

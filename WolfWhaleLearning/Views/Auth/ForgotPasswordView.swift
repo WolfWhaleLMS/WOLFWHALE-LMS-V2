@@ -7,6 +7,7 @@ struct ForgotPasswordView: View {
     @State private var isLoading = false
     @State private var successMessage: String?
     @State private var errorMessage: String?
+    @State private var hapticTrigger = false
     @FocusState private var isEmailFocused: Bool
 
     var body: some View {
@@ -120,6 +121,7 @@ struct ForgotPasswordView: View {
 
             // Reset Password button
             Button {
+                hapticTrigger.toggle()
                 isEmailFocused = false
                 resetPassword()
             } label: {
@@ -143,9 +145,11 @@ struct ForgotPasswordView: View {
             .tint(Color.purple)
             .clipShape(.rect(cornerRadius: 12))
             .disabled(isLoading || email.isEmpty)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
             // Back to Login button
             Button {
+                hapticTrigger.toggle()
                 dismiss()
             } label: {
                 HStack(spacing: 6) {
@@ -156,6 +160,7 @@ struct ForgotPasswordView: View {
                 }
                 .foregroundStyle(.purple)
             }
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             .padding(.top, 4)
         }
     }

@@ -7,6 +7,7 @@ struct UserManagementView: View {
     @State private var showAddUser = false
     @State private var userToDelete: ProfileDTO?
     @State private var showDeleteConfirmation = false
+    @State private var hapticTrigger = false
 
     private var filteredUsers: [ProfileDTO] {
         viewModel.allUsers.filter { user in
@@ -60,10 +61,12 @@ struct UserManagementView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
+                        hapticTrigger.toggle()
                         showAddUser = true
                     } label: {
                         Label("Add User", systemImage: "person.badge.plus")
                     }
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .disabled(viewModel.remainingUserSlots <= 0)
                 }
             }
@@ -210,6 +213,7 @@ struct UserManagementView: View {
 
     private func filterChip(label: String, role: UserRole?) -> some View {
         Button {
+            hapticTrigger.toggle()
             withAnimation(.snappy) { selectedRole = role }
         } label: {
             Text(label)
@@ -228,6 +232,7 @@ struct UserManagementView: View {
                     : .secondary
                 )
         }
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         .accessibilityLabel("\(label) filter")
         .accessibilityAddTraits(selectedRole == role ? .isSelected : [])
         .accessibilityHint("Double tap to filter users by \(label.lowercased())")

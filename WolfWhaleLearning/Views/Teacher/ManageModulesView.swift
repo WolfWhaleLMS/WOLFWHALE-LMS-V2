@@ -18,6 +18,7 @@ struct ManageModulesView: View {
     @State private var errorMessage: String?
     @State private var deleteModuleTarget: Module?
     @State private var deleteLessonTarget: (moduleId: UUID, lessonId: UUID)?
+    @State private var hapticTrigger = false
 
     @Environment(\.dismiss) private var dismiss
 
@@ -160,18 +161,22 @@ struct ManageModulesView: View {
                         }
 
                     Button {
+                        hapticTrigger.toggle()
                         saveModuleTitle(module)
                     } label: {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundStyle(.green)
                     }
+                    .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
                     Button {
+                        hapticTrigger.toggle()
                         editingModuleId = nil
                     } label: {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundStyle(.secondary)
                     }
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 } else {
                     Text(module.title)
                         .font(.subheadline.bold())
@@ -184,6 +189,7 @@ struct ManageModulesView: View {
 
                     // Expand/collapse
                     Button {
+                        hapticTrigger.toggle()
                         withAnimation(.snappy(duration: 0.25)) {
                             expandedModuleId = expandedModuleId == module.id ? nil : module.id
                         }
@@ -192,9 +198,11 @@ struct ManageModulesView: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
                     // Edit button
                     Button {
+                        hapticTrigger.toggle()
                         editingModuleTitle = module.title
                         editingModuleId = module.id
                     } label: {
@@ -202,15 +210,18 @@ struct ManageModulesView: View {
                             .font(.caption)
                             .foregroundStyle(.pink)
                     }
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
                     // Delete button
                     Button {
+                        hapticTrigger.toggle()
                         deleteModuleTarget = module
                     } label: {
                         Image(systemName: "trash")
                             .font(.caption)
                             .foregroundStyle(.red)
                     }
+                    .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
                 }
             }
             .padding(.horizontal, 12)
@@ -264,20 +275,24 @@ struct ManageModulesView: View {
                     }
 
                 Button {
+                    hapticTrigger.toggle()
                     saveLessonTitle(lesson, in: module)
                 } label: {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.caption)
                         .foregroundStyle(.green)
                 }
+                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
                 Button {
+                    hapticTrigger.toggle()
                     editingLessonId = nil
                 } label: {
                     Image(systemName: "xmark.circle.fill")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             } else {
                 Text(lesson.title)
                     .font(.caption)
@@ -290,6 +305,7 @@ struct ManageModulesView: View {
                     .foregroundStyle(.secondary)
 
                 Button {
+                    hapticTrigger.toggle()
                     editingLessonTitle = lesson.title
                     editingLessonId = lesson.id
                 } label: {
@@ -297,14 +313,17 @@ struct ManageModulesView: View {
                         .font(.caption2)
                         .foregroundStyle(.pink)
                 }
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
                 Button {
+                    hapticTrigger.toggle()
                     deleteLessonTarget = (moduleId: module.id, lessonId: lesson.id)
                 } label: {
                     Image(systemName: "trash")
                         .font(.caption2)
                         .foregroundStyle(.red)
                 }
+                .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
             }
         }
         .padding(.horizontal, 12)
@@ -325,6 +344,7 @@ struct ManageModulesView: View {
 
                     HStack(spacing: 10) {
                         Button {
+                            hapticTrigger.toggle()
                             addModule()
                         } label: {
                             Group {
@@ -342,8 +362,10 @@ struct ManageModulesView: View {
                         .buttonStyle(.borderedProminent)
                         .tint(.pink)
                         .disabled(isLoading || newModuleTitle.trimmingCharacters(in: .whitespaces).isEmpty)
+                        .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
                         Button {
+                            hapticTrigger.toggle()
                             withAnimation(.snappy) {
                                 showAddModule = false
                                 newModuleTitle = ""
@@ -355,12 +377,14 @@ struct ManageModulesView: View {
                                 .padding(.horizontal, 16)
                         }
                         .buttonStyle(.bordered)
+                        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     }
                 }
                 .padding(14)
                 .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
             } else {
                 Button {
+                    hapticTrigger.toggle()
                     withAnimation(.snappy) {
                         showAddModule = true
                     }
@@ -372,6 +396,7 @@ struct ManageModulesView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.pink)
+                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             }
 
             if let errorMessage {

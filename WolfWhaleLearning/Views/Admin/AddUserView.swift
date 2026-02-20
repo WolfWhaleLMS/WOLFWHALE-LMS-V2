@@ -12,6 +12,7 @@ struct AddUserView: View {
     @State private var isLoading = false
     @State private var errorMessage: String?
     @State private var showSuccess = false
+    @State private var hapticTrigger = false
     @FocusState private var focusedField: Field?
 
     private enum Field { case firstName, lastName, email, password }
@@ -36,14 +37,20 @@ struct AddUserView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Cancel") { dismiss() }
+                    Button("Cancel") {
+                        hapticTrigger.toggle()
+                        dismiss()
+                    }
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Create") {
+                        hapticTrigger.toggle()
                         createUser()
                     }
                     .fontWeight(.semibold)
                     .disabled(!isFormValid || isLoading)
+                    .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                 }
             }
             .overlay {

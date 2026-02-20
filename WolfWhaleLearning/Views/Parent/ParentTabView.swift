@@ -10,11 +10,6 @@ struct ParentTabView: View {
             }
             .accessibilityLabel("Home")
             .accessibilityHint("Double tap to view your children's overview")
-            Tab("AR Library", systemImage: "arkit") {
-                ARLibraryView(viewModel: viewModel)
-            }
-            .accessibilityLabel("AR Library")
-            .accessibilityHint("Double tap to explore AR experiences")
             Tab("Messages", systemImage: "message.fill") {
                 MessagesListView(viewModel: viewModel)
             }
@@ -26,7 +21,7 @@ struct ParentTabView: View {
             .accessibilityLabel("Settings")
             .accessibilityHint("Double tap to view settings")
         }
-        .tint(.green)
+        .tint(.accentColor)
         .overlay(alignment: .top) {
             OfflineBannerView(isConnected: viewModel.networkMonitor.isConnected)
         }

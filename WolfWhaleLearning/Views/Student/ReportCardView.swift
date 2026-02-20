@@ -6,6 +6,7 @@ struct ReportCardView: View {
     @State private var pdfURL: URL?
     @State private var isGenerating = false
     @State private var showShareSheet = false
+    @State private var hapticTrigger = false
 
     private var studentName: String {
         viewModel.currentUser?.fullName ?? "Student"
@@ -352,6 +353,7 @@ struct ReportCardView: View {
 
     private var exportButton: some View {
         Button {
+            hapticTrigger.toggle()
             generatePDF()
         } label: {
             HStack(spacing: 8) {
@@ -370,6 +372,7 @@ struct ReportCardView: View {
         .buttonStyle(.borderedProminent)
         .tint(.indigo)
         .disabled(isGenerating)
+        .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         .padding(.top, 4)
     }
 

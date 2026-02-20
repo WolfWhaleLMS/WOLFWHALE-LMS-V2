@@ -4,6 +4,7 @@ struct OnboardingView: View {
     @AppStorage("hasCompletedOnboarding") private var hasCompletedOnboarding = false
     @State private var currentPage = 0
     @State private var appeared = false
+    @State private var hapticTrigger = false
 
     private let totalPages = 5
 
@@ -20,6 +21,7 @@ struct OnboardingView: View {
                     Spacer()
                     if currentPage < totalPages - 1 {
                         Button {
+                            hapticTrigger.toggle()
                             completeOnboarding()
                         } label: {
                             Text("Skip")
@@ -29,6 +31,7 @@ struct OnboardingView: View {
                                 .padding(.vertical, 8)
                                 .background(.white.opacity(0.15), in: Capsule())
                         }
+                        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                         .accessibilityLabel("Skip onboarding")
                         .accessibilityHint("Double tap to skip to login")
                     }
@@ -217,12 +220,12 @@ struct OnboardingView: View {
             VStack(spacing: 16) {
                 HStack(spacing: 12) {
                     gamificationCard(icon: "flame.fill", title: "Streaks", description: "Build daily learning habits", color: .orange)
-                    gamificationCard(icon: "bitcoinsign.circle.fill", title: "Coins", description: "Earn coins for every activity", color: .yellow)
+                    gamificationCard(icon: "trophy.fill", title: "Leaderboards", description: "Compete with classmates", color: .yellow)
                 }
 
                 HStack(spacing: 12) {
-                    gamificationCard(icon: "trophy.fill", title: "Leaderboards", description: "Compete with classmates", color: .yellow)
                     gamificationCard(icon: "medal.fill", title: "Achievements", description: "Unlock badges and rewards", color: .cyan)
+                    gamificationCard(icon: "chart.line.uptrend.xyaxis", title: "Progress", description: "Track your learning journey", color: .green)
                 }
 
             }
@@ -273,6 +276,7 @@ struct OnboardingView: View {
             Spacer()
 
             Button {
+                hapticTrigger.toggle()
                 completeOnboarding()
             } label: {
                 HStack(spacing: 10) {
@@ -290,6 +294,7 @@ struct OnboardingView: View {
             .clipShape(.rect(cornerRadius: 16))
             .padding(.horizontal, 32)
             .shadow(color: .pink.opacity(0.4), radius: 16, y: 8)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
             Spacer()
                 .frame(height: 20)

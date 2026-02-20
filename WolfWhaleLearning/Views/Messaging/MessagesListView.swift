@@ -3,6 +3,7 @@ import SwiftUI
 struct MessagesListView: View {
     @Bindable var viewModel: AppViewModel
     @State private var showNewConversation = false
+    @State private var hapticTrigger = false
 
     var body: some View {
         NavigationStack {
@@ -30,10 +31,12 @@ struct MessagesListView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
+                        hapticTrigger.toggle()
                         showNewConversation = true
                     } label: {
                         Image(systemName: "square.and.pencil")
                     }
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .accessibilityLabel("New conversation")
                     .accessibilityHint("Double tap to start a new conversation")
                 }
@@ -99,6 +102,7 @@ struct NewConversationSheet: View {
     @State private var isCreating = false
     @State private var errorMessage: String?
     @State private var searchResults: [ProfileDTO] = []
+    @State private var hapticTrigger = false
 
     private var filteredProfiles: [ProfileDTO] {
         guard !recipientText.isEmpty else { return [] }
@@ -222,8 +226,10 @@ struct NewConversationSheet: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
+                        hapticTrigger.toggle()
                         dismiss()
                     }
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .disabled(isCreating)
                 }
                 ToolbarItem(placement: .confirmationAction) {
@@ -231,10 +237,12 @@ struct NewConversationSheet: View {
                         ProgressView()
                     } else {
                         Button("Create") {
+                            hapticTrigger.toggle()
                             createConversation()
                         }
                         .bold()
                         .disabled(!canCreate)
+                        .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                     }
                 }
             }

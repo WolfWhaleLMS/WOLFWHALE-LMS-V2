@@ -34,6 +34,25 @@ class AppViewModel {
     private let dataService = DataService.shared
     let networkMonitor = NetworkMonitor()
 
+    // MARK: - Notifications
+    var notificationService = NotificationService()
+
+    // MARK: - Biometric Auth
+    var biometricService = BiometricAuthService()
+    var isAppLocked: Bool = false
+
+    var biometricEnabled: Bool {
+        get { UserDefaults.standard.bool(forKey: "biometricEnabled") }
+        set { UserDefaults.standard.set(newValue, forKey: "biometricEnabled") }
+    }
+
+    // MARK: - Calendar Sync
+    var calendarService = CalendarService()
+    var calendarSyncEnabled: Bool {
+        get { UserDefaults.standard.bool(forKey: "wolfwhale_calendar_sync_enabled") }
+        set { UserDefaults.standard.set(newValue, forKey: "wolfwhale_calendar_sync_enabled") }
+    }
+
     var gpa: Double {
         guard !grades.isEmpty else { return 0 }
         return grades.reduce(0) { $0 + $1.numericGrade } / Double(grades.count)
@@ -211,6 +230,7 @@ class AppViewModel {
         if !isDemoMode {
             Task {
                 try? await supabaseClient.auth.signOut()
+                await CacheService.shared.invalidateAll()
             }
         }
         isDemoMode = false
@@ -235,7 +255,7 @@ class AppViewModel {
     }
 
     // MARK: - Fetch Profile
-    // Loads profile from profiles table, role from tenant_memberships, coins/streak from student_xp,
+    // Loads profile from profiles table, role from tenant_memberships, streak from student_xp,
     // and email from Supabase Auth session.
     private func fetchProfile(userId: UUID) async throws {
         let profile: ProfileDTO = try await supabaseClient
@@ -263,8 +283,7 @@ class AppViewModel {
         // Derive schoolId from tenant_memberships.tenant_id
         let tenantId = memberships.first?.tenantId?.uuidString
 
-        // Fetch coins/streak from student_xp (only relevant for students, but safe to query)
-        var coins = 0
+        // Fetch streak from student_xp (only relevant for students, but safe to query)
         var streak = 0
         let xpEntries: [StudentXpDTO] = try await supabaseClient
             .from("student_xp")
@@ -274,22 +293,20 @@ class AppViewModel {
             .execute()
             .value
         if let xpEntry = xpEntries.first {
-            coins = xpEntry.coins ?? 0
             streak = xpEntry.streakDays ?? 0
         }
 
-        var user = profile.toUser(email: userEmail, role: role, coins: coins, streak: streak)
+        var user = profile.toUser(email: userEmail, role: role, streak: streak)
         user.schoolId = tenantId
         currentUser = user
     }
 
-    // MARK: - Sync coins/streak to student_xp table (NOT profiles)
+    // MARK: - Sync streak to student_xp table (NOT profiles)
     func syncProfile() {
         guard let user = currentUser, !isDemoMode else { return }
         Task {
             let update = UpdateStudentXpDTO(
-                streakDays: user.streak,
-                coins: user.coins
+                streakDays: user.streak
             )
             try? await supabaseClient
                 .from("student_xp")
@@ -319,48 +336,84 @@ class AppViewModel {
             courses = try await dataService.fetchCourses(for: user.id, role: user.role)
             let courseIds = courses.map(\.id)
 
-            async let assignmentsTask = dataService.fetchAssignments(for: user.id, role: user.role, courseIds: courseIds)
-            async let announcementsTask = dataService.fetchAnnouncements()
-            async let conversationsTask = dataService.fetchConversations(for: user.id)
-
-            assignments = try await assignmentsTask
-            announcements = try await announcementsTask
-            conversations = try await conversationsTask
+            // Batch common fetches concurrently using TaskGroup
+            await withTaskGroup(of: Void.self) { group in
+                group.addTask { @MainActor in
+                    self.assignments = (try? await self.dataService.fetchAssignments(for: user.id, role: user.role, courseIds: courseIds)) ?? []
+                }
+                group.addTask { @MainActor in
+                    self.announcements = (try? await self.dataService.fetchAnnouncements()) ?? []
+                }
+                group.addTask { @MainActor in
+                    self.conversations = (try? await self.dataService.fetchConversations(for: user.id)) ?? []
+                }
+            }
 
             switch user.role {
             case .student:
-                async let quizzesTask = dataService.fetchQuizzes(for: user.id, courseIds: courseIds)
-                async let gradesTask = dataService.fetchGrades(for: user.id, courseIds: courseIds)
-                async let attendanceTask = dataService.fetchAttendance(for: user.id)
-                async let achievementsTask = dataService.fetchAchievements(for: user.id)
-                async let leaderboardTask = dataService.fetchLeaderboard()
-
-                quizzes = try await quizzesTask
-                grades = try await gradesTask
-                attendance = try await attendanceTask
-                achievements = try await achievementsTask
-                leaderboard = try await leaderboardTask
+                await withTaskGroup(of: Void.self) { group in
+                    group.addTask { @MainActor in
+                        self.quizzes = (try? await self.dataService.fetchQuizzes(for: user.id, courseIds: courseIds)) ?? []
+                    }
+                    group.addTask { @MainActor in
+                        self.grades = (try? await self.dataService.fetchGrades(for: user.id, courseIds: courseIds)) ?? []
+                    }
+                    group.addTask { @MainActor in
+                        self.attendance = (try? await self.dataService.fetchAttendance(for: user.id)) ?? []
+                    }
+                    group.addTask { @MainActor in
+                        self.achievements = (try? await self.dataService.fetchAchievements(for: user.id)) ?? []
+                    }
+                    group.addTask { @MainActor in
+                        await self.loadLeaderboard()
+                    }
+                }
 
             case .teacher:
                 break
 
             case .parent:
-                children = try await dataService.fetchChildren(for: user.id)
-                allUsers = try await dataService.fetchAllUsers(schoolId: user.schoolId)
+                await withTaskGroup(of: Void.self) { group in
+                    group.addTask { @MainActor in
+                        self.children = (try? await self.dataService.fetchChildren(for: user.id)) ?? []
+                    }
+                    group.addTask { @MainActor in
+                        self.allUsers = (try? await self.dataService.fetchAllUsers(schoolId: user.schoolId)) ?? []
+                    }
+                }
 
-            case .admin:
-                allUsers = try await dataService.fetchAllUsers(schoolId: user.schoolId)
-                schoolMetrics = try await dataService.fetchSchoolMetrics(schoolId: user.schoolId)
-
-            case .superAdmin:
-                allUsers = try await dataService.fetchAllUsers(schoolId: user.schoolId)
-                schoolMetrics = try await dataService.fetchSchoolMetrics(schoolId: user.schoolId)
+            case .admin, .superAdmin:
+                await withTaskGroup(of: Void.self) { group in
+                    group.addTask { @MainActor in
+                        self.allUsers = (try? await self.dataService.fetchAllUsers(schoolId: user.schoolId)) ?? []
+                    }
+                    group.addTask { @MainActor in
+                        self.schoolMetrics = try? await self.dataService.fetchSchoolMetrics(schoolId: user.schoolId)
+                    }
+                }
             }
             isDataLoading = false
+            cacheDataForSiri()
+            notificationService.scheduleAllAssignmentReminders(assignments: assignments)
         } catch {
             isDataLoading = false
             dataError = "Could not load data. Using offline mode."
             loadMockData()
+        }
+    }
+
+    func loadLeaderboard() async {
+        if let cached: [LeaderboardEntry] = await CacheService.shared.get("leaderboard") {
+            leaderboard = cached
+            return
+        }
+        do {
+            leaderboard = try await dataService.fetchLeaderboard()
+            await CacheService.shared.set("leaderboard", value: leaderboard, ttl: 60)
+        } catch {
+            #if DEBUG
+            print("[AppViewModel] Failed to load leaderboard: \(error)")
+            #endif
         }
     }
 
@@ -376,11 +429,54 @@ class AppViewModel {
         announcements = mockService.sampleAnnouncements()
         children = mockService.sampleChildren()
         schoolMetrics = mockService.sampleSchoolMetrics()
+        cacheDataForSiri()
     }
 
     func refreshData() {
         Task {
             await loadData()
+        }
+    }
+
+    // MARK: - Cache Data for Siri Intents
+    /// Writes lightweight JSON summaries to UserDefaults so App Intents can read
+    /// them without needing a live Supabase session.
+    func cacheDataForSiri() {
+        let defaults = UserDefaults.standard
+        let isoFormatter = ISO8601DateFormatter()
+        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
+        // 1. Upcoming assignments
+        let upcomingItems = upcomingAssignments.prefix(10).map { assignment in
+            CachedAssignment(
+                title: assignment.title,
+                dueDate: isoFormatter.string(from: assignment.dueDate),
+                courseName: assignment.courseName
+            )
+        }
+        if let data = try? JSONEncoder().encode(Array(upcomingItems)) {
+            defaults.set(data, forKey: "wolfwhale_upcoming_assignments")
+        }
+
+        // 2. Grades summary
+        let courseGrades = grades.map { entry in
+            CachedCourseGrade(
+                courseName: entry.courseName,
+                letterGrade: entry.letterGrade,
+                numericGrade: entry.numericGrade
+            )
+        }
+        let gradesSummary = CachedGradesSummary(gpa: gpa, courseGrades: courseGrades)
+        if let data = try? JSONEncoder().encode(gradesSummary) {
+            defaults.set(data, forKey: "wolfwhale_grades_summary")
+        }
+
+        // 3. Today's schedule (derived from enrolled courses)
+        let scheduleEntries = courses.map { course in
+            CachedScheduleEntry(courseName: course.title, time: nil)
+        }
+        if let data = try? JSONEncoder().encode(scheduleEntries) {
+            defaults.set(data, forKey: "wolfwhale_schedule_today")
         }
     }
 
@@ -1188,6 +1284,45 @@ class AppViewModel {
         currentUser?.firstName = firstName
         currentUser?.lastName = lastName
         currentUser?.avatarSystemName = avatar
+    }
+
+    // MARK: - Biometric Lock / Unlock
+
+    func enableBiometric() {
+        biometricService.checkBiometricAvailability()
+        guard biometricService.isBiometricAvailable else { return }
+        biometricEnabled = true
+    }
+
+    func disableBiometric() {
+        biometricEnabled = false
+        isAppLocked = false
+    }
+
+    func lockApp() {
+        guard biometricEnabled, isAuthenticated else { return }
+        isAppLocked = true
+        biometricService.isUnlocked = false
+    }
+
+    func unlockApp() {
+        isAppLocked = false
+        biometricService.isUnlocked = true
+    }
+
+    func unlockWithBiometric() {
+        Task {
+            do {
+                let success = try await biometricService.authenticate()
+                if success {
+                    unlockApp()
+                }
+            } catch {
+                #if DEBUG
+                print("[AppViewModel] Biometric unlock failed: \(error)")
+                #endif
+            }
+        }
     }
 
     private func mapAuthError(_ error: Error) -> String {

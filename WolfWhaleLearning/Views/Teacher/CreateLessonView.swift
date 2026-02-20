@@ -12,6 +12,7 @@ struct CreateLessonView: View {
     @State private var isLoading = false
     @State private var showSuccess = false
     @State private var errorMessage: String?
+    @State private var hapticTrigger = false
 
     @Environment(\.dismiss) private var dismiss
 
@@ -106,6 +107,7 @@ struct CreateLessonView: View {
         let isSelected = lessonType == type
         let color: Color = .pink
         return Button {
+            hapticTrigger.toggle()
             withAnimation(.snappy(duration: 0.2)) {
                 lessonType = type
             }
@@ -129,6 +131,7 @@ struct CreateLessonView: View {
             )
         }
         .buttonStyle(.plain)
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
     }
 
     // MARK: - Content Section
@@ -160,6 +163,7 @@ struct CreateLessonView: View {
             }
 
             Button {
+                hapticTrigger.toggle()
                 createLesson()
             } label: {
                 Group {
@@ -177,6 +181,7 @@ struct CreateLessonView: View {
             .buttonStyle(.borderedProminent)
             .tint(.pink)
             .disabled(isLoading || !isValid)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         }
         .padding(.top, 4)
     }

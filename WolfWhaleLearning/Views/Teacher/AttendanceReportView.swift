@@ -7,6 +7,7 @@ struct AttendanceReportView: View {
     @State private var startDate: Date = Calendar.current.date(byAdding: .month, value: -1, to: Date()) ?? Date()
     @State private var endDate: Date = Date()
     @State private var showExportSheet = false
+    @State private var hapticTrigger = false
 
     // MARK: - Computed Properties
 
@@ -87,10 +88,12 @@ struct AttendanceReportView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
+                    hapticTrigger.toggle()
                     showExportSheet = true
                 } label: {
                     Image(systemName: "square.and.arrow.up")
                 }
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
         }
         .sheet(isPresented: $showExportSheet) {
@@ -307,8 +310,10 @@ struct AttendanceReportView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
+                        hapticTrigger.toggle()
                         showExportSheet = false
                     }
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
         }

@@ -54,6 +54,7 @@ struct CalendarView: View {
     @State private var displayedMonth = Date()
     @State private var selectedDate: Date? = nil
     @State private var animateDirection: Int = 0
+    @State private var hapticTrigger = false
 
     private let calendar = Calendar.current
     private let daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
@@ -174,6 +175,7 @@ struct CalendarView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
+                        hapticTrigger.toggle()
                         withAnimation(.easeInOut(duration: 0.3)) {
                             displayedMonth = Date()
                             selectedDate = Date()
@@ -185,6 +187,7 @@ struct CalendarView: View {
                                 .font(.subheadline.bold())
                         }
                     }
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
         }
@@ -197,6 +200,7 @@ struct CalendarView: View {
             // Month navigation header
             HStack {
                 Button {
+                    hapticTrigger.toggle()
                     navigateMonth(by: -1)
                 } label: {
                     Image(systemName: "chevron.left")
@@ -205,6 +209,7 @@ struct CalendarView: View {
                         .frame(width: 36, height: 36)
                         .background(.quaternary, in: Circle())
                 }
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 .accessibilityLabel("Previous month")
                 .accessibilityHint("Double tap to go to the previous month")
 
@@ -217,6 +222,7 @@ struct CalendarView: View {
                 Spacer()
 
                 Button {
+                    hapticTrigger.toggle()
                     navigateMonth(by: 1)
                 } label: {
                     Image(systemName: "chevron.right")
@@ -225,6 +231,7 @@ struct CalendarView: View {
                         .frame(width: 36, height: 36)
                         .background(.quaternary, in: Circle())
                 }
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 .accessibilityLabel("Next month")
                 .accessibilityHint("Double tap to go to the next month")
             }

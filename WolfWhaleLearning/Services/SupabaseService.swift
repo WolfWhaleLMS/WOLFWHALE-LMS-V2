@@ -727,13 +727,13 @@ struct DataService {
 
         let convIds = convDTOs.map(\.id)
 
-        // --- Batch fetch all messages for all conversations at once ---
+        // --- Batch fetch last 30 messages per conversation (most recent) ---
         let allMessageDTOs: [MessageDTO] = try await supabaseClient
             .from("messages")
             .select()
             .in("conversation_id", values: convIds.map(\.uuidString))
-            .order("created_at")
-            .limit(500)
+            .order("created_at", ascending: false)
+            .limit(30 * convIds.count)
             .execute()
             .value
 
@@ -809,6 +809,24 @@ struct DataService {
             .from("messages")
             .insert(dto)
             .execute()
+    }
+
+    func fetchOlderMessages(conversationId: UUID, before: Date, limit: Int = 30) async throws -> [MessageDTO] {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let beforeString = formatter.string(from: before)
+
+        let messages: [MessageDTO] = try await supabaseClient
+            .from("messages")
+            .select()
+            .eq("conversation_id", value: conversationId.uuidString)
+            .lt("created_at", value: beforeString)
+            .order("created_at", ascending: false)
+            .limit(limit)
+            .execute()
+            .value
+
+        return messages.reversed()
     }
 
     // MARK: - Achievements
@@ -935,13 +953,13 @@ struct DataService {
 
     // MARK: - Admin: Users
 
-    func fetchAllUsers(schoolId: String?) async throws -> [ProfileDTO] {
+    func fetchAllUsers(schoolId: String?, offset: Int = 0, limit: Int = 50) async throws -> [ProfileDTO] {
         if let schoolId, let tenantUUID = UUID(uuidString: schoolId) {
             let memberships: [TenantMembershipDTO] = try await supabaseClient
                 .from("tenant_memberships")
                 .select()
                 .eq("tenant_id", value: tenantUUID.uuidString)
-                .limit(100)
+                .range(from: offset, to: offset + limit - 1)
                 .execute()
                 .value
 
@@ -972,7 +990,7 @@ struct DataService {
                 .from("profiles")
                 .select()
                 .order("created_at", ascending: false)
-                .limit(100)
+                .range(from: offset, to: offset + limit - 1)
                 .execute()
                 .value
 
@@ -1024,7 +1042,7 @@ struct DataService {
 
         let attendanceRate = try await calculateRealAttendanceRate(courseId: nil)
 
-        let studentProfiles = profiles.filter { roleByUser[$0.id] == "Student" }
+        let studentProfiles = Array(profiles.filter { roleByUser[$0.id] == "Student" }.prefix(200))
         let studentIds = studentProfiles.map(\.id)
 
         var averageGPA = 0.0
@@ -1438,6 +1456,8 @@ struct DataService {
 
     // MARK: - Enrollments
 
+    private static let enrollmentRateLimiter = EnrollmentRateLimiter()
+
     func enrollStudent(studentId: UUID, courseId: UUID) async throws {
         let dto = InsertEnrollmentDTO(
             tenantId: nil,
@@ -1454,6 +1474,8 @@ struct DataService {
     }
 
     func enrollByClassCode(studentId: UUID, classCode: String) async throws -> String {
+        try DataService.enrollmentRateLimiter.checkRateLimit(userId: studentId)
+
         let codes: [ClassCodeDTO] = try await supabaseClient
             .from("class_codes")
             .select()
@@ -1902,6 +1924,26 @@ struct DataService {
                 .value
             return profiles
         }
+    }
+}
+
+final class EnrollmentRateLimiter: @unchecked Sendable {
+    private var attempts: [(userId: UUID, time: Date)] = []
+    private let maxAttempts = 5
+    private let window: TimeInterval = 60
+    private let lock = NSLock()
+
+    func checkRateLimit(userId: UUID) throws {
+        lock.lock()
+        defer { lock.unlock() }
+
+        let cutoff = Date().addingTimeInterval(-window)
+        attempts.removeAll { $0.time < cutoff }
+        let recentAttempts = attempts.filter { $0.userId == userId }
+        guard recentAttempts.count < maxAttempts else {
+            throw NSError(domain: "RateLimit", code: 429, userInfo: [NSLocalizedDescriptionKey: "Too many enrollment attempts. Please wait a minute."])
+        }
+        attempts.append((userId: userId, time: Date()))
     }
 }
 

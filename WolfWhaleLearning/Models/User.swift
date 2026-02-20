@@ -32,7 +32,6 @@ nonisolated struct User: Identifiable, Hashable, Sendable {
     var email: String
     var role: UserRole
     var avatarSystemName: String
-    var coins: Int
     var streak: Int
     var joinDate: Date
     var schoolId: String?
@@ -48,7 +47,6 @@ nonisolated struct User: Identifiable, Hashable, Sendable {
         email: String = "",
         role: UserRole = .student,
         avatarSystemName: String = "person.crop.circle.fill",
-        coins: Int = 0,
         streak: Int = 0,
         joinDate: Date = Date(),
         schoolId: String? = nil,
@@ -61,7 +59,6 @@ nonisolated struct User: Identifiable, Hashable, Sendable {
         self.email = email
         self.role = role
         self.avatarSystemName = avatarSystemName
-        self.coins = coins
         self.streak = streak
         self.joinDate = joinDate
         self.schoolId = schoolId

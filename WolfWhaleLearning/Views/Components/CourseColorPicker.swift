@@ -2,6 +2,7 @@ import SwiftUI
 
 struct CourseColorPicker: View {
     @Binding var selectedColor: String
+    @State private var hapticTrigger = false
 
     private let colors: [(name: String, color: Color)] = [
         ("red", .red), ("orange", .orange), ("yellow", .yellow),
@@ -20,6 +21,7 @@ struct CourseColorPicker: View {
                     let isSelected = selectedColor == item.name
 
                     Button {
+                        hapticTrigger.toggle()
                         withAnimation(.snappy(duration: 0.2)) {
                             selectedColor = item.name
                         }
@@ -41,6 +43,7 @@ struct CourseColorPicker: View {
                             }
                     }
                     .buttonStyle(.plain)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .accessibilityLabel(item.name)
                     .accessibilityAddTraits(isSelected ? .isSelected : [])
                 }

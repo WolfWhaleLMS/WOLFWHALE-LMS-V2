@@ -29,6 +29,7 @@ struct EnhancedCourseCreationView: View {
     @State private var isCreating = false
     @State private var errorMessage: String?
     @State private var showSuccess = false
+    @State private var hapticTrigger = false
 
     private let subjects = [
         "Mathematics", "Science", "English", "History", "Art",
@@ -69,8 +70,10 @@ struct EnhancedCourseCreationView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
+                        hapticTrigger.toggle()
                         dismiss()
                     }
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
             .overlay {
@@ -311,6 +314,7 @@ struct EnhancedCourseCreationView: View {
             }
 
             Button {
+                hapticTrigger.toggle()
                 createCourse()
             } label: {
                 Label("Create Course", systemImage: "plus.circle.fill")
@@ -321,6 +325,7 @@ struct EnhancedCourseCreationView: View {
             .buttonStyle(.borderedProminent)
             .tint(resolvedAccentColor)
             .disabled(!isValid || isCreating)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             .accessibilityLabel("Create course")
             .accessibilityHint(isValid ? "Double tap to create the course" : "Enter a course title first")
         }

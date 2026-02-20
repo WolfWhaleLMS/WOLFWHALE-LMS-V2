@@ -2,6 +2,7 @@ import SwiftUI
 
 struct PrivacyPolicyView: View {
     @Environment(\.dismiss) private var dismiss
+    @State private var hapticTrigger = false
 
     var body: some View {
         NavigationStack {
@@ -29,8 +30,10 @@ struct PrivacyPolicyView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
+                        hapticTrigger.toggle()
                         dismiss()
                     }
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
         }
@@ -90,7 +93,7 @@ struct PrivacyPolicyView: View {
                 bulletPoint("Attendance records entered by teachers.")
 
                 subsectionTitle("Gamification Data")
-                bulletPoint("Experience points (XP), level progress, streak counts, coins earned, and achievement badges.")
+                bulletPoint("Experience points (XP), level progress, streak counts, and achievement badges.")
                 bulletPoint("Leaderboard rankings within classes and the institution.")
 
                 subsectionTitle("Communication Data")

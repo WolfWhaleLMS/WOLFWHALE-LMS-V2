@@ -3,6 +3,7 @@ import SwiftUI
 struct TeacherCoursesView: View {
     @Bindable var viewModel: AppViewModel
     @State private var showCreateCourse = false
+    @State private var hapticTrigger = false
 
     var body: some View {
         NavigationStack {
@@ -23,8 +24,10 @@ struct TeacherCoursesView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("New Course", systemImage: "plus") {
+                        hapticTrigger.toggle()
                         showCreateCourse = true
                     }
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .accessibilityLabel("Create new course")
                     .accessibilityHint("Double tap to create a new course")
                 }

@@ -31,7 +31,7 @@ struct TeacherTabView: View {
             .accessibilityLabel("Profile")
             .accessibilityHint("Double tap to view your profile")
         }
-        .tint(.pink)
+        .tint(.accentColor)
         .overlay(alignment: .top) {
             OfflineBannerView(isConnected: viewModel.networkMonitor.isConnected)
         }

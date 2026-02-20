@@ -3,6 +3,7 @@ import SwiftUI
 struct CourseIconPicker: View {
     @Binding var selectedIcon: String
     var accentColor: Color = .purple
+    @State private var hapticTrigger = false
 
     private let icons = [
         "book.fill", "atom", "function", "globe.americas.fill",
@@ -22,6 +23,7 @@ struct CourseIconPicker: View {
                     let isSelected = selectedIcon == iconName
 
                     Button {
+                        hapticTrigger.toggle()
                         withAnimation(.snappy(duration: 0.2)) {
                             selectedIcon = iconName
                         }
@@ -40,6 +42,7 @@ struct CourseIconPicker: View {
                             }
                     }
                     .buttonStyle(.plain)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .accessibilityLabel(iconName.replacingOccurrences(of: ".", with: " ").replacingOccurrences(of: "fill", with: ""))
                     .accessibilityAddTraits(isSelected ? .isSelected : [])
                 }

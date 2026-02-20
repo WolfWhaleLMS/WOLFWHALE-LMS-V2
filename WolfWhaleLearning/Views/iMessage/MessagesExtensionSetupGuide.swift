@@ -74,6 +74,7 @@ import SwiftUI
 
 struct MessagesExtensionSetupGuide: View {
     @State private var expandedSection: SetupSection?
+    @State private var hapticTrigger = false
 
     var body: some View {
         NavigationStack {
@@ -401,6 +402,7 @@ struct MessagesExtensionSetupGuide: View {
     ) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Button {
+                hapticTrigger.toggle()
                 withAnimation(.spring(response: 0.3)) {
                     expandedSection = expandedSection == section ? nil : section
                 }
@@ -419,6 +421,7 @@ struct MessagesExtensionSetupGuide: View {
                 }
             }
             .buttonStyle(.plain)
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
             if expandedSection == section {
                 VStack(spacing: 0) {

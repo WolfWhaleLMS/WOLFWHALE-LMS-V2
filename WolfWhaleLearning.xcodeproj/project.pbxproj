@@ -415,15 +415,18 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NFCReaderUsageDescription = "WolfWhale uses NFC to check in for attendance.";
-				INFOPLIST_KEY_NSCameraUsageDescription = "WolfWhale uses the camera for AR learning experiences.";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "WolfWhale uses your location to verify campus attendance.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "WolfWhale LMS uses your photo library to set your profile picture.";
-				INFOPLIST_KEY_NSUserNotificationsUsageDescription = "WolfWhale LMS sends notifications for assignments, grades, and school announcements.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "WolfWhale uses the camera for AR learning experiences and profile photos.";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "WolfWhale syncs your assignment due dates and class schedule to your calendar.";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "WolfWhale uses Face ID to securely unlock your account.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "WolfWhale uses your location to verify campus attendance and show campus maps.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "WolfWhale uses your photo library to set your profile picture and attach images to assignments.";
+				INFOPLIST_KEY_NSUserNotificationsUsageDescription = "WolfWhale sends notifications for assignments, grades, and school announcements.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_CFBundleDisplayName = WolfWhale;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -456,15 +459,18 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 18.0;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NFCReaderUsageDescription = "WolfWhale uses NFC to check in for attendance.";
-				INFOPLIST_KEY_NSCameraUsageDescription = "WolfWhale uses the camera for AR learning experiences.";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "WolfWhale uses your location to verify campus attendance.";
-				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "WolfWhale LMS uses your photo library to set your profile picture.";
-				INFOPLIST_KEY_NSUserNotificationsUsageDescription = "WolfWhale LMS sends notifications for assignments, grades, and school announcements.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "WolfWhale uses the camera for AR learning experiences and profile photos.";
+				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "WolfWhale syncs your assignment due dates and class schedule to your calendar.";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "WolfWhale uses Face ID to securely unlock your account.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "WolfWhale uses your location to verify campus attendance and show campus maps.";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "WolfWhale uses your photo library to set your profile picture and attach images to assignments.";
+				INFOPLIST_KEY_NSUserNotificationsUsageDescription = "WolfWhale sends notifications for assignments, grades, and school announcements.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_CFBundleDisplayName = WolfWhale;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

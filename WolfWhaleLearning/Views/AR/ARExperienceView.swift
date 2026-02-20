@@ -3,9 +3,10 @@ import SwiftUI
 struct ARExperienceView: View {
     let resource: ARResource
     @Environment(\.dismiss) private var dismiss
+    @State private var hapticTrigger = false
 
     var body: some View {
-        NavigationStack {
+        ZStack(alignment: .topTrailing) {
             Group {
                 #if targetEnvironment(simulator)
                 ARSimulatorPlaceholderView(resource: resource)
@@ -13,15 +14,18 @@ struct ARExperienceView: View {
                 realARView
                 #endif
             }
-            .navigationTitle(resource.title)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Done") {
-                        dismiss()
-                    }
-                }
+
+            Button {
+                hapticTrigger.toggle()
+                dismiss()
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.title)
+                    .symbolRenderingMode(.hierarchical)
+                    .foregroundStyle(.white)
+                    .padding(16)
             }
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         }
     }
 
@@ -41,6 +45,7 @@ struct ARSimulatorPlaceholderView: View {
     @State private var selectedOrganelle: CellOrganelle?
     @State private var rotationAngle: Double = 0
     @State private var scale: CGFloat = 1.0
+    @State private var hapticTrigger = false
 
     private let organelles = HumanCellData.organelles
 
@@ -165,6 +170,7 @@ struct ARSimulatorPlaceholderView: View {
 
     private func organelleDot(organelle: CellOrganelle, x: CGFloat, y: CGFloat, size: CGFloat) -> some View {
         Button {
+            hapticTrigger.toggle()
             withAnimation(.spring(response: 0.3)) {
                 selectedOrganelle = selectedOrganelle == organelle ? nil : organelle
             }
@@ -197,6 +203,7 @@ struct ARSimulatorPlaceholderView: View {
 
             ForEach(organelles) { organelle in
                 Button {
+                    hapticTrigger.toggle()
                     withAnimation(.spring(response: 0.3)) {
                         selectedOrganelle = selectedOrganelle == organelle ? nil : organelle
                     }
@@ -204,6 +211,7 @@ struct ARSimulatorPlaceholderView: View {
                     organelleRow(organelle)
                 }
                 .buttonStyle(.plain)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
         }
     }

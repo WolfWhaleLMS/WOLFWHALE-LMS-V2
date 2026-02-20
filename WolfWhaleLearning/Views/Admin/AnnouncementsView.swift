@@ -3,6 +3,7 @@ import SwiftUI
 struct AnnouncementsView: View {
     let viewModel: AppViewModel
     @State private var showCreate = false
+    @State private var hapticTrigger = false
 
     var body: some View {
         NavigationStack {
@@ -36,8 +37,10 @@ struct AnnouncementsView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("New", systemImage: "plus") {
+                        hapticTrigger.toggle()
                         showCreate = true
                     }
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .accessibilityLabel("New announcement")
                     .accessibilityHint("Double tap to create a new announcement")
                 }

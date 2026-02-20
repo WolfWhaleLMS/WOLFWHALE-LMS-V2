@@ -7,6 +7,7 @@ struct LiveActivityBanner: View {
     @State private var showStartSheet = false
     @State private var duration = 60
     @State private var topic = ""
+    @State private var hapticTrigger = false
 
     var body: some View {
         if liveActivityService.isClassSessionActive {
@@ -41,6 +42,7 @@ struct LiveActivityBanner: View {
             Spacer()
 
             Button {
+                hapticTrigger.toggle()
                 liveActivityService.endClassSession()
             } label: {
                 Text("End")
@@ -50,6 +52,7 @@ struct LiveActivityBanner: View {
                     .padding(.vertical, 6)
                     .background(.red.gradient, in: Capsule())
             }
+            .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
             .accessibilityLabel("End live session")
             .accessibilityHint("Double tap to end the current live class session")
         }
@@ -69,6 +72,7 @@ struct LiveActivityBanner: View {
 
     private var startSessionButton: some View {
         Button {
+            hapticTrigger.toggle()
             showStartSheet = true
         } label: {
             HStack(spacing: 10) {
@@ -87,6 +91,7 @@ struct LiveActivityBanner: View {
             .background(.ultraThinMaterial, in: .rect(cornerRadius: 14))
         }
         .buttonStyle(.plain)
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         .accessibilityLabel("Start live session")
         .accessibilityHint("Double tap to configure and start a Dynamic Island live session for \(courseName)")
         .sheet(isPresented: $showStartSheet) {
@@ -141,11 +146,14 @@ struct LiveActivityBanner: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
+                        hapticTrigger.toggle()
                         showStartSheet = false
                     }
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Start") {
+                        hapticTrigger.toggle()
                         let sessionTopic = topic.isEmpty ? "General Session" : topic
                         liveActivityService.startClassSession(
                             courseName: courseName,
@@ -157,6 +165,7 @@ struct LiveActivityBanner: View {
                         showStartSheet = false
                     }
                     .fontWeight(.semibold)
+                    .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                 }
             }
         }

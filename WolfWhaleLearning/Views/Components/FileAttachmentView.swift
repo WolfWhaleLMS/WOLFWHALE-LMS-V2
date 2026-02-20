@@ -4,6 +4,7 @@ import SwiftUI
 struct FileAttachmentView: View {
     @Binding var attachments: [PickedFile]
     @State private var showFilePicker = false
+    @State private var hapticTrigger = false
 
     /// Maximum number of attachments allowed.
     let maxAttachments: Int
@@ -27,6 +28,7 @@ struct FileAttachmentView: View {
             // MARK: - Add Attachment Button
             if attachments.count < maxAttachments {
                 Button {
+                    hapticTrigger.toggle()
                     showFilePicker = true
                 } label: {
                     HStack(spacing: 10) {
@@ -45,6 +47,7 @@ struct FileAttachmentView: View {
                     .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
                 }
                 .buttonStyle(.plain)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
         }
         .sheet(isPresented: $showFilePicker) {
@@ -85,6 +88,7 @@ struct FileAttachmentView: View {
 
             // Remove button
             Button {
+                hapticTrigger.toggle()
                 withAnimation(.snappy) {
                     attachments.removeAll { $0.id == file.id }
                 }
@@ -94,6 +98,7 @@ struct FileAttachmentView: View {
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         }
         .padding(10)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))

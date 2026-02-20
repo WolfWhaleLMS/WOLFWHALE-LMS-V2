@@ -7,6 +7,7 @@ struct TeacherDashboardView: View {
     @State private var showCreateAssignment = false
     @State private var showCreateAnnouncement = false
     @State private var showAttendancePicker = false
+    @State private var hapticTrigger = false
 
     var body: some View {
         NavigationStack {
@@ -110,7 +111,10 @@ struct TeacherDashboardView: View {
     }
 
     private func quickActionButton(icon: String, label: String, color: Color, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+        Button {
+            hapticTrigger.toggle()
+            action()
+        } label: {
             VStack(spacing: 8) {
                 Image(systemName: icon)
                     .font(.title2)
@@ -123,6 +127,7 @@ struct TeacherDashboardView: View {
             .padding(.vertical, 14)
             .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
         }
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         .accessibilityLabel("\(label)")
         .accessibilityHint("Double tap to \(label.lowercased())")
     }
@@ -230,6 +235,7 @@ struct TeacherDashboardView: View {
 struct CreateCourseSheet: View {
     let viewModel: AppViewModel
     @Environment(\.dismiss) private var dismiss
+    @State private var hapticTrigger = false
     @State private var title = ""
     @State private var description = ""
     @State private var colorName = "blue"
@@ -256,10 +262,15 @@ struct CreateCourseSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button("Cancel") {
+                        hapticTrigger.toggle()
+                        dismiss()
+                    }
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Create") {
+                        hapticTrigger.toggle()
                         isCreating = true
                         Task {
                             try? await viewModel.createCourse(title: title, description: description, colorName: colorName)
@@ -269,6 +280,7 @@ struct CreateCourseSheet: View {
                     }
                     .fontWeight(.semibold)
                     .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty || isCreating)
+                    .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                 }
             }
         }
@@ -278,6 +290,7 @@ struct CreateCourseSheet: View {
 struct CreateAnnouncementSheet: View {
     let viewModel: AppViewModel
     @Environment(\.dismiss) private var dismiss
+    @State private var hapticTrigger = false
     @State private var title = ""
     @State private var content = ""
     @State private var isPinned = false
@@ -295,10 +308,15 @@ struct CreateAnnouncementSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button("Cancel") {
+                        hapticTrigger.toggle()
+                        dismiss()
+                    }
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Post") {
+                        hapticTrigger.toggle()
                         isCreating = true
                         Task {
                             try? await viewModel.createAnnouncement(title: title, content: content, isPinned: isPinned)
@@ -308,6 +326,7 @@ struct CreateAnnouncementSheet: View {
                     }
                     .fontWeight(.semibold)
                     .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty || isCreating)
+                    .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                 }
             }
         }
@@ -317,6 +336,7 @@ struct CreateAnnouncementSheet: View {
 struct AttendanceCoursePickerSheet: View {
     @Bindable var viewModel: AppViewModel
     @Environment(\.dismiss) private var dismiss
+    @State private var hapticTrigger = false
 
     var body: some View {
         NavigationStack {
@@ -352,7 +372,11 @@ struct AttendanceCoursePickerSheet: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { dismiss() }
+                    Button("Cancel") {
+                        hapticTrigger.toggle()
+                        dismiss()
+                    }
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
             .navigationDestination(for: Course.self) { course in

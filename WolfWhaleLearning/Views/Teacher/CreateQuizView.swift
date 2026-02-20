@@ -11,6 +11,7 @@ struct CreateQuizView: View {
     @State private var isLoading = false
     @State private var showSuccess = false
     @State private var errorMessage: String?
+    @State private var hapticTrigger = false
 
     @Environment(\.dismiss) private var dismiss
 
@@ -107,6 +108,7 @@ struct CreateQuizView: View {
                 Spacer()
                 if questions.count > 1 {
                     Button {
+                        hapticTrigger.toggle()
                         withAnimation(.snappy) {
                             _ = questions.remove(at: index)
                         }
@@ -115,6 +117,7 @@ struct CreateQuizView: View {
                             .font(.caption)
                             .foregroundStyle(.red)
                     }
+                    .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
                 }
             }
 
@@ -126,6 +129,7 @@ struct CreateQuizView: View {
                 ForEach(0..<4, id: \.self) { optionIndex in
                     HStack(spacing: 8) {
                         Button {
+                            hapticTrigger.toggle()
                             questions[index].correctIndex = optionIndex
                         } label: {
                             Image(systemName: questions[index].correctIndex == optionIndex
@@ -135,6 +139,7 @@ struct CreateQuizView: View {
                                 .font(.title3)
                         }
                         .buttonStyle(.plain)
+                        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
                         TextField("Option \(optionIndex + 1)", text: $questions[index].options[optionIndex])
                             .textFieldStyle(.roundedBorder)
@@ -155,6 +160,7 @@ struct CreateQuizView: View {
 
     private var addQuestionButton: some View {
         Button {
+            hapticTrigger.toggle()
             withAnimation(.snappy) {
                 questions.append(DraftQuestion())
             }
@@ -166,6 +172,7 @@ struct CreateQuizView: View {
         }
         .buttonStyle(.bordered)
         .tint(.pink)
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
     }
 
     // MARK: - Create Button
@@ -182,6 +189,7 @@ struct CreateQuizView: View {
             }
 
             Button {
+                hapticTrigger.toggle()
                 createQuiz()
             } label: {
                 Group {
@@ -199,6 +207,7 @@ struct CreateQuizView: View {
             .buttonStyle(.borderedProminent)
             .tint(.pink)
             .disabled(isLoading || !isValid)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         }
         .padding(.top, 4)
     }

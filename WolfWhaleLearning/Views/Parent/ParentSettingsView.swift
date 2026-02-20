@@ -1,7 +1,8 @@
 import SwiftUI
 
 struct ParentSettingsView: View {
-    let viewModel: AppViewModel
+    @Bindable var viewModel: AppViewModel
+    @State private var hapticTrigger = false
 
     var body: some View {
         NavigationStack {
@@ -32,12 +33,47 @@ struct ParentSettingsView: View {
                     Label("Help & Support", systemImage: "questionmark.circle.fill")
                 }
 
+                if viewModel.biometricService.isBiometricAvailable {
+                    Section {
+                        HStack {
+                            Label {
+                                Text("Use \(viewModel.biometricService.biometricName)")
+                            } icon: {
+                                Image(systemName: viewModel.biometricService.biometricSystemImage)
+                                    .foregroundStyle(.green)
+                            }
+                            Spacer()
+                            Toggle(
+                                "Use \(viewModel.biometricService.biometricName)",
+                                isOn: Binding(
+                                    get: { viewModel.biometricEnabled },
+                                    set: { newValue in
+                                        if newValue {
+                                            viewModel.enableBiometric()
+                                        } else {
+                                            viewModel.disableBiometric()
+                                        }
+                                    }
+                                )
+                            )
+                            .labelsHidden()
+                            .sensoryFeedback(.selection, trigger: viewModel.biometricEnabled)
+                        }
+                    } header: {
+                        Text("Security")
+                    } footer: {
+                        Text("When enabled, \(viewModel.biometricService.biometricName) will be required to unlock the app after returning from the background.")
+                    }
+                }
+
                 Section {
                     Button(role: .destructive) {
+                        hapticTrigger.toggle()
                         viewModel.logout()
                     } label: {
                         Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
                     }
+                    .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
                 }
             }
             .navigationTitle("Settings")

@@ -12,6 +12,7 @@ struct SubmitAssignmentView: View {
     @State private var showError = false
     @State private var errorMessage = ""
     @State private var showSuccess = false
+    @State private var hapticTrigger = false
 
     private let fileUploadService = FileUploadService()
 
@@ -43,9 +44,11 @@ struct SubmitAssignmentView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
+                        hapticTrigger.toggle()
                         dismiss()
                     }
                     .disabled(isSubmitting)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
             .alert("Submission Error", isPresented: $showError) {
@@ -179,6 +182,7 @@ struct SubmitAssignmentView: View {
 
     private var submitButton: some View {
         Button {
+            hapticTrigger.toggle()
             Task {
                 await submitAssignment()
             }
@@ -194,6 +198,7 @@ struct SubmitAssignmentView: View {
         .buttonStyle(.borderedProminent)
         .tint(.blue)
         .disabled(isSubmitDisabled)
+        .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
     }
 
     // MARK: - Loading Overlay

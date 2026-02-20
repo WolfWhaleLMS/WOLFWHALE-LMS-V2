@@ -5,25 +5,23 @@ struct ARLibraryView: View {
     @State private var arViewModel = ARLibraryViewModel()
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 24) {
-                    heroSection
-                    categoryFilter
-                    if arViewModel.searchText.isEmpty && arViewModel.selectedCategory == nil {
-                        featuredSection
-                    }
-                    allResourcesSection
+        ScrollView {
+            VStack(spacing: 24) {
+                heroSection
+                categoryFilter
+                if arViewModel.searchText.isEmpty && arViewModel.selectedCategory == nil {
+                    featuredSection
                 }
-                .padding(.top, 8)
-                .padding(.bottom, 32)
+                allResourcesSection
             }
-            .background(Color(.systemGroupedBackground))
-            .navigationTitle("AR Library")
-            .searchable(text: $arViewModel.searchText, prompt: "Search models, topics, subjects...")
-            .navigationDestination(for: ARResource.self) { resource in
-                ARResourceDetailView(resource: resource, viewModel: viewModel)
-            }
+            .padding(.top, 8)
+            .padding(.bottom, 32)
+        }
+        .background(Color(.systemGroupedBackground))
+        .navigationTitle("AR Library")
+        .searchable(text: $arViewModel.searchText, prompt: "Search models, topics, subjects...")
+        .navigationDestination(for: ARResource.self) { resource in
+            ARResourceDetailView(resource: resource, viewModel: viewModel)
         }
     }
 
