@@ -65,6 +65,8 @@ struct StudentDashboardView: View {
                         Image(systemName: "bell.fill")
                             .symbolEffect(.bounce, value: totalUnreadMessages)
                     }
+                    .accessibilityLabel(totalUnreadMessages > 0 ? "Notifications, \(totalUnreadMessages) unread" : "Notifications")
+                    .accessibilityHint("Double tap to view notifications")
                     .overlay(alignment: .topTrailing) {
                         if totalUnreadMessages > 0 {
                             Text("\(totalUnreadMessages)")
@@ -102,6 +104,8 @@ struct StudentDashboardView: View {
             .padding(20)
         }
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 20))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Activity rings: \(completedLessons) of \(totalLessons) lessons done, \(submittedAssignments) of \(totalAssignments) assignments done, \(viewModel.currentUser?.xp ?? 0) XP earned")
     }
 
     private var statsRow: some View {
@@ -147,6 +151,8 @@ struct StudentDashboardView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label): \(value)")
     }
 
     private var xpSection: some View {
@@ -163,6 +169,8 @@ struct StudentDashboardView: View {
         }
         .padding(16)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Experience Points: \(viewModel.currentUser?.xp ?? 0) of \(viewModel.currentUser?.xpForNextLevel ?? 500) XP, Level \(viewModel.currentUser?.level ?? 1)")
     }
 
     private var upcomingSection: some View {
@@ -216,6 +224,8 @@ struct StudentDashboardView: View {
                     }
                     .padding(12)
                     .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("\(assignment.title) for \(assignment.courseName), due \(assignment.dueDate.formatted(.dateTime.month(.abbreviated).day())), \(assignment.points) points")
                 }
             }
         }
@@ -275,6 +285,9 @@ struct StudentDashboardView: View {
         .frame(width: 160)
         .padding(14)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(course.title), taught by \(course.teacherName), \(Int(course.progress * 100)) percent complete")
+        .accessibilityHint("Double tap to open course")
     }
 }
 

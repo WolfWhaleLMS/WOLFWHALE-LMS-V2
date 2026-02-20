@@ -48,6 +48,8 @@ struct AssignmentsView: View {
                     .padding(.vertical, 8)
                     .background(selectedFilter == index ? .purple.opacity(0.2) : Color(.tertiarySystemFill), in: Capsule())
                     .foregroundStyle(selectedFilter == index ? .purple : .secondary)
+                    .accessibilityLabel("\(label) filter")
+                    .accessibilityAddTraits(selectedFilter == index ? .isSelected : [])
                 }
             }
         }
@@ -104,6 +106,9 @@ struct AssignmentsView: View {
         }
         .padding(14)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(assignment.title) for \(assignment.courseName), due \(assignment.dueDate.formatted(.dateTime.month(.abbreviated).day())), \(assignment.points) points, status: \(assignment.statusText)")
+        .accessibilityHint((!assignment.isSubmitted && !assignment.isOverdue) ? "Contains submit button" : "")
     }
 
     private func statusBadge(_ assignment: Assignment) -> some View {

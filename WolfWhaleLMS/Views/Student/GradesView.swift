@@ -13,6 +13,7 @@ struct GradesView: View {
             if viewModel.isLoading {
                 ProgressView()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .accessibilityLabel("Loading grades")
             } else {
                 ScrollView {
                     VStack(spacing: 16) {
@@ -79,6 +80,8 @@ struct GradesView: View {
         }
         .padding(16)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Overall Performance: GPA \(String(format: "%.1f", gpa)), \(viewModel.grades.count) courses this semester")
     }
 
     private var gradesList: some View {
@@ -135,6 +138,8 @@ struct GradesView: View {
                 }
             }
             .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("\(grade.courseName): Grade \(grade.letterGrade), \(String(format: "%.1f", grade.numericGrade)) percent, \(grade.assignmentGrades.count) graded items")
         }
     }
 }

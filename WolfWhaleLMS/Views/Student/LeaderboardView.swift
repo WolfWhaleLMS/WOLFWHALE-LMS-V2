@@ -82,6 +82,7 @@ struct LeaderboardView: View {
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .accessibilityLabel("Loading leaderboard rankings")
     }
 
     // MARK: - Empty State
@@ -153,6 +154,8 @@ struct LeaderboardView: View {
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label): \(value)")
     }
 
     private var divider: some View {
@@ -288,6 +291,8 @@ struct LeaderboardView: View {
                 }
         }
         .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Rank \(entry.rank): \(entry.userName), level \(entry.level), \(entry.xp) XP")
     }
 
     // MARK: - Rankings List
@@ -431,6 +436,8 @@ struct LeaderboardView: View {
                 .stroke(isCurrentUser ? .pink.opacity(0.3) : .clear, lineWidth: 1.5)
         )
         .animation(.smooth, value: entry.rank)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Rank \(entry.rank): \(entry.userName)\(isCurrentUserEntry(entry) ? ", that's you" : ""), level \(entry.level), \(entry.xp) XP")
     }
 
     // MARK: - Helpers

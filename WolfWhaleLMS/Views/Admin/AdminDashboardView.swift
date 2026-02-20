@@ -52,6 +52,8 @@ struct AdminDashboardView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 14)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 14))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label): \(value)")
     }
 
     private var weeklyAttendanceRates: [Double] {
@@ -115,6 +117,8 @@ struct AdminDashboardView: View {
         }
         .padding(16)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Attendance this week: Monday through Friday attendance chart")
     }
 
     private var recentSection: some View {

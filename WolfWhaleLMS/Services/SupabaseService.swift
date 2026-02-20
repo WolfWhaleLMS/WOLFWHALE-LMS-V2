@@ -195,6 +195,7 @@ struct DataService {
             .select()
             .in("course_id", values: courseIds.map(\.uuidString))
             .order("due_date")
+            .limit(50)
             .execute()
             .value
 
@@ -666,7 +667,7 @@ struct DataService {
             .select()
             .eq("student_id", value: studentId.uuidString)
             .order("date", ascending: false)
-            .limit(30)
+            .limit(50)
             .execute()
             .value
 
@@ -701,6 +702,7 @@ struct DataService {
                 .select()
                 .eq("school_id", value: schoolId)
                 .order("created_at", ascending: false)
+                .limit(100)
                 .execute()
                 .value
         } else {
@@ -708,6 +710,7 @@ struct DataService {
                 .from("profiles")
                 .select()
                 .order("created_at", ascending: false)
+                .limit(100)
                 .execute()
                 .value
         }
@@ -1156,6 +1159,220 @@ struct DataService {
             .eq("student_id", value: studentId.uuidString)
             .eq("course_id", value: courseId.uuidString)
             .execute()
+    }
+
+    // MARK: - Paginated Fetches
+
+    /// Fetches a page of assignments with offset-based pagination.
+    /// Use with PaginationState for infinite-scroll or load-more patterns.
+    func fetchAssignmentsPaginated(for userId: UUID, role: UserRole, courseIds: [UUID], offset: Int, limit: Int) async throws -> [Assignment] {
+        if courseIds.isEmpty { return [] }
+
+        let assignmentDTOs: [AssignmentDTO] = try await supabaseClient
+            .from("assignments")
+            .select()
+            .in("course_id", values: courseIds.map(\.uuidString))
+            .order("due_date")
+            .range(from: offset, to: offset + limit - 1)
+            .execute()
+            .value
+
+        var courseNames: [UUID: String] = [:]
+        let courseDTOs: [CourseDTO] = try await supabaseClient
+            .from("courses")
+            .select()
+            .in("id", values: courseIds.map(\.uuidString))
+            .execute()
+            .value
+        for c in courseDTOs {
+            courseNames[c.id] = c.title
+        }
+
+        if role == .student {
+            var submissions: [UUID: SubmissionDTO] = [:]
+            let subs: [SubmissionDTO] = try await supabaseClient
+                .from("submissions")
+                .select()
+                .eq("student_id", value: userId.uuidString)
+                .execute()
+                .value
+            for s in subs {
+                submissions[s.assignmentId] = s
+            }
+
+            return assignmentDTOs.map { dto in
+                let sub = submissions[dto.id]
+                return Assignment(
+                    id: dto.id,
+                    title: dto.title,
+                    courseId: dto.courseId,
+                    courseName: courseNames[dto.courseId] ?? "Unknown",
+                    instructions: dto.instructions ?? "",
+                    dueDate: parseDate(dto.dueDate),
+                    points: dto.points ?? 100,
+                    isSubmitted: sub != nil,
+                    submission: sub?.content,
+                    grade: sub?.grade,
+                    feedback: sub?.feedback,
+                    xpReward: dto.xpReward ?? 50,
+                    studentId: nil,
+                    studentName: nil
+                )
+            }
+        } else {
+            let assignmentIds = assignmentDTOs.map(\.id)
+            var allSubmissions: [SubmissionDTO] = []
+            if !assignmentIds.isEmpty {
+                allSubmissions = try await supabaseClient
+                    .from("submissions")
+                    .select()
+                    .in("assignment_id", values: assignmentIds.map(\.uuidString))
+                    .execute()
+                    .value
+            }
+
+            let studentIds = Array(Set(allSubmissions.map(\.studentId)))
+            var studentNames: [UUID: String] = [:]
+            if !studentIds.isEmpty {
+                let profiles: [ProfileDTO] = try await supabaseClient
+                    .from("profiles")
+                    .select()
+                    .in("id", values: studentIds.map(\.uuidString))
+                    .execute()
+                    .value
+                for p in profiles {
+                    studentNames[p.id] = "\(p.firstName) \(p.lastName)"
+                }
+            }
+
+            var submissionsByAssignment: [UUID: [SubmissionDTO]] = [:]
+            for sub in allSubmissions {
+                submissionsByAssignment[sub.assignmentId, default: []].append(sub)
+            }
+
+            var results: [Assignment] = []
+            for dto in assignmentDTOs {
+                let subs = submissionsByAssignment[dto.id] ?? []
+                if subs.isEmpty {
+                    results.append(Assignment(
+                        id: dto.id,
+                        title: dto.title,
+                        courseId: dto.courseId,
+                        courseName: courseNames[dto.courseId] ?? "Unknown",
+                        instructions: dto.instructions ?? "",
+                        dueDate: parseDate(dto.dueDate),
+                        points: dto.points ?? 100,
+                        isSubmitted: false,
+                        submission: nil,
+                        grade: nil,
+                        feedback: nil,
+                        xpReward: dto.xpReward ?? 50,
+                        studentId: nil,
+                        studentName: nil
+                    ))
+                } else {
+                    for sub in subs {
+                        results.append(Assignment(
+                            id: dto.id,
+                            title: dto.title,
+                            courseId: dto.courseId,
+                            courseName: courseNames[dto.courseId] ?? "Unknown",
+                            instructions: dto.instructions ?? "",
+                            dueDate: parseDate(dto.dueDate),
+                            points: dto.points ?? 100,
+                            isSubmitted: true,
+                            submission: sub.content,
+                            grade: sub.grade,
+                            feedback: sub.feedback,
+                            xpReward: dto.xpReward ?? 50,
+                            studentId: sub.studentId,
+                            studentName: studentNames[sub.studentId] ?? "Unknown Student"
+                        ))
+                    }
+                }
+            }
+            return results
+        }
+    }
+
+    /// Fetches a page of attendance records with offset-based pagination.
+    func fetchAttendancePaginated(for studentId: UUID, offset: Int, limit: Int) async throws -> [AttendanceRecord] {
+        let dtos: [AttendanceDTO] = try await supabaseClient
+            .from("attendance")
+            .select()
+            .eq("student_id", value: studentId.uuidString)
+            .order("date", ascending: false)
+            .range(from: offset, to: offset + limit - 1)
+            .execute()
+            .value
+
+        return dtos.map { dto in
+            AttendanceRecord(
+                id: dto.id,
+                date: parseDate(dto.date),
+                status: AttendanceStatus(rawValue: dto.status) ?? .present,
+                courseName: dto.courseName ?? "All Classes",
+                studentName: nil
+            )
+        }
+    }
+
+    /// Fetches a page of announcements with offset-based pagination.
+    func fetchAnnouncementsPaginated(tenantId: UUID? = nil, offset: Int, limit: Int) async throws -> [Announcement] {
+        let dtos: [AnnouncementDTO]
+        if let tenantId {
+            dtos = try await supabaseClient
+                .from("announcements")
+                .select()
+                .eq("tenant_id", value: tenantId.uuidString)
+                .order("created_at", ascending: false)
+                .range(from: offset, to: offset + limit - 1)
+                .execute()
+                .value
+        } else {
+            dtos = try await supabaseClient
+                .from("announcements")
+                .select()
+                .order("created_at", ascending: false)
+                .range(from: offset, to: offset + limit - 1)
+                .execute()
+                .value
+        }
+
+        return dtos.map { dto in
+            Announcement(
+                id: dto.id,
+                title: dto.title,
+                content: dto.content ?? "",
+                authorName: dto.authorName ?? "Admin",
+                date: parseDate(dto.createdAt),
+                isPinned: dto.isPinned ?? false
+            )
+        }
+    }
+
+    /// Fetches a page of users with offset-based pagination.
+    func fetchAllUsersPaginated(schoolId: String?, offset: Int, limit: Int) async throws -> [ProfileDTO] {
+        let profiles: [ProfileDTO]
+        if let schoolId {
+            profiles = try await supabaseClient
+                .from("profiles")
+                .select()
+                .eq("school_id", value: schoolId)
+                .order("created_at", ascending: false)
+                .range(from: offset, to: offset + limit - 1)
+                .execute()
+                .value
+        } else {
+            profiles = try await supabaseClient
+                .from("profiles")
+                .select()
+                .order("created_at", ascending: false)
+                .range(from: offset, to: offset + limit - 1)
+                .execute()
+                .value
+        }
+        return profiles
     }
 }
 

@@ -51,6 +51,8 @@ struct TeacherDashboardView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label): \(value)")
     }
 
     private var quickActions: some View {
@@ -95,6 +97,8 @@ struct TeacherDashboardView: View {
             .padding(.vertical, 14)
             .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
         }
+        .accessibilityLabel("\(label)")
+        .accessibilityHint("Double tap to \(label.lowercased())")
     }
 
     private var recentActivity: some View {
@@ -146,6 +150,8 @@ struct TeacherDashboardView: View {
                     }
                     .padding(12)
                     .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("\(assignment.title) for \(assignment.courseName), \(assignment.grade != nil ? "graded" : "needs grading")")
                 }
             }
         }

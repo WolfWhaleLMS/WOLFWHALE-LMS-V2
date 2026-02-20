@@ -23,6 +23,7 @@ struct CoursesListView: View {
                 if viewModel.isLoading {
                     ProgressView()
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .accessibilityLabel("Loading courses")
                 } else {
                     ScrollView {
                         LazyVStack(spacing: 14) {
@@ -59,6 +60,8 @@ struct CoursesListView: View {
                         enrollmentError = nil
                         showJoinSheet = true
                     }
+                    .accessibilityLabel("Join a course")
+                    .accessibilityHint("Double tap to enter a class code and enroll")
                 }
             }
             .sheet(isPresented: $showJoinSheet) {
@@ -204,5 +207,8 @@ struct CoursesListView: View {
         }
         .padding(14)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(course.title), taught by \(course.teacherName), \(Int(course.progress * 100)) percent complete")
+        .accessibilityHint("Double tap to open course")
     }
 }

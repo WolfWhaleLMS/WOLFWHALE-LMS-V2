@@ -9,6 +9,7 @@ struct ParentDashboardView: View {
                 if viewModel.isLoading {
                     ProgressView()
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .accessibilityLabel("Loading children data")
                 } else {
                     ScrollView {
                         VStack(spacing: 16) {
@@ -119,6 +120,9 @@ struct ParentDashboardView: View {
         }
         .padding(16)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 20))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(child.name), \(child.grade), GPA \(String(format: "%.1f", child.gpa)), attendance \(Int(child.attendanceRate * 100)) percent, \(child.courses.count) courses")
+        .accessibilityHint("Double tap to view details")
     }
 
     private func parentStat(label: String, value: String, color: Color) -> some View {
@@ -133,6 +137,8 @@ struct ParentDashboardView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
         .background(Color(.tertiarySystemFill), in: .rect(cornerRadius: 10))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label): \(value)")
     }
 
     private var announcementsSection: some View {
