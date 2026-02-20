@@ -420,6 +420,8 @@
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "WolfWhale uses Face ID to securely unlock your account.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "WolfWhale uses your location to verify campus attendance and show campus maps.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "WolfWhale uses your photo library to set your profile picture and attach images to assignments.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "WolfWhale tracks your study sessions and wellness to help you maintain healthy habits.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "WolfWhale tracks your study sessions and wellness to help you maintain healthy habits.";
 				INFOPLIST_KEY_NSUserNotificationsUsageDescription = "WolfWhale sends notifications for assignments, grades, and school announcements.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -464,6 +466,8 @@
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "WolfWhale uses Face ID to securely unlock your account.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "WolfWhale uses your location to verify campus attendance and show campus maps.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "WolfWhale uses your photo library to set your profile picture and attach images to assignments.";
+				INFOPLIST_KEY_NSHealthShareUsageDescription = "WolfWhale tracks your study sessions and wellness to help you maintain healthy habits.";
+				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "WolfWhale tracks your study sessions and wellness to help you maintain healthy habits.";
 				INFOPLIST_KEY_NSUserNotificationsUsageDescription = "WolfWhale sends notifications for assignments, grades, and school announcements.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
