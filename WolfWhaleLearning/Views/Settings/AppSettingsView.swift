@@ -4,7 +4,7 @@ import Supabase
 struct AppSettingsView: View {
     @Bindable var viewModel: AppViewModel
 
-    @AppStorage("isDarkMode") private var isDarkMode: Bool = false
+    @AppStorage("colorSchemePreference") private var colorSchemePreference: String = "system"
     @AppStorage("pushNotificationsEnabled") private var pushNotifications: Bool = true
     @AppStorage("emailNotificationsEnabled") private var emailNotifications: Bool = true
 
@@ -15,6 +15,9 @@ struct AppSettingsView: View {
     @State private var showFinalDeleteConfirmation = false
     @State private var deleteConfirmationText = ""
     @State private var isDeletingAccount = false
+    @State private var hapticTrigger = false
+    @State private var signOutHapticTrigger = false
+    @State private var deleteHapticTrigger = false
 
     private var appVersion: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0.0"
@@ -137,20 +140,45 @@ struct AppSettingsView: View {
 
     // MARK: - Appearance Section
 
+    private var appearanceIcon: String {
+        switch colorSchemePreference {
+        case "light": return "sun.max.fill"
+        case "dark": return "moon.fill"
+        default: return "circle.lefthalf.filled"
+        }
+    }
+
+    private var appearanceIconColor: Color {
+        switch colorSchemePreference {
+        case "light": return .orange
+        case "dark": return .indigo
+        default: return .gray
+        }
+    }
+
     private var appearanceSection: some View {
         Section {
             HStack {
                 Label {
-                    Text("Dark Mode")
+                    Text("Appearance")
                 } icon: {
-                    Image(systemName: isDarkMode ? "moon.fill" : "sun.max.fill")
-                        .foregroundStyle(isDarkMode ? .indigo : .orange)
+                    Image(systemName: appearanceIcon)
+                        .foregroundStyle(appearanceIconColor)
                 }
                 Spacer()
-                Toggle("Dark Mode", isOn: $isDarkMode)
-                    .labelsHidden()
-                    .accessibilityLabel("Dark Mode")
-                    .accessibilityHint("Double tap to toggle dark mode")
+                Picker("Appearance", selection: $colorSchemePreference) {
+                    Label("System", systemImage: "circle.lefthalf.filled")
+                        .tag("system")
+                    Label("Light", systemImage: "sun.max.fill")
+                        .tag("light")
+                    Label("Dark", systemImage: "moon.fill")
+                        .tag("dark")
+                }
+                .pickerStyle(.segmented)
+                .frame(maxWidth: 220)
+                .sensoryFeedback(.selection, trigger: colorSchemePreference)
+                .accessibilityLabel("Appearance mode")
+                .accessibilityHint("Select system, light, or dark mode")
             }
         } header: {
             sectionHeader(title: "Appearance", icon: "paintbrush.fill")
@@ -171,6 +199,7 @@ struct AppSettingsView: View {
                 Spacer()
                 Toggle("Push Notifications", isOn: $pushNotifications)
                     .labelsHidden()
+                    .sensoryFeedback(.selection, trigger: pushNotifications)
                     .accessibilityLabel("Push Notifications")
                     .accessibilityHint("Double tap to toggle push notifications")
             }
@@ -185,6 +214,7 @@ struct AppSettingsView: View {
                 Spacer()
                 Toggle("Email Notifications", isOn: $emailNotifications)
                     .labelsHidden()
+                    .sensoryFeedback(.selection, trigger: emailNotifications)
                     .accessibilityLabel("Email Notifications")
                     .accessibilityHint("Double tap to toggle email notifications")
             }
@@ -198,6 +228,7 @@ struct AppSettingsView: View {
     private var legalSection: some View {
         Section {
             Button {
+                hapticTrigger.toggle()
                 showTerms = true
             } label: {
                 Label {
@@ -216,6 +247,7 @@ struct AppSettingsView: View {
             }
 
             Button {
+                hapticTrigger.toggle()
                 showPrivacy = true
             } label: {
                 Label {
@@ -235,6 +267,7 @@ struct AppSettingsView: View {
         } header: {
             sectionHeader(title: "Legal", icon: "scale.3d")
         }
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
     }
 
     // MARK: - About Section
@@ -298,6 +331,7 @@ struct AppSettingsView: View {
     private var dangerZoneSection: some View {
         Section {
             Button(role: .destructive) {
+                signOutHapticTrigger.toggle()
                 showSignOutConfirmation = true
             } label: {
                 Label {
@@ -306,8 +340,10 @@ struct AppSettingsView: View {
                     Image(systemName: "rectangle.portrait.and.arrow.right")
                 }
             }
+            .sensoryFeedback(.impact(weight: .heavy), trigger: signOutHapticTrigger)
 
             Button(role: .destructive) {
+                deleteHapticTrigger.toggle()
                 showDeleteConfirmation = true
             } label: {
                 Label {
@@ -316,6 +352,7 @@ struct AppSettingsView: View {
                     Image(systemName: "trash")
                 }
             }
+            .sensoryFeedback(.impact(weight: .heavy), trigger: deleteHapticTrigger)
         } header: {
             sectionHeader(title: "Danger Zone", icon: "exclamationmark.triangle.fill")
         } footer: {

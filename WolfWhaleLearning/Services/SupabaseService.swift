@@ -66,7 +66,7 @@ struct DataService {
                 .eq("created_by", value: userId.uuidString)
                 .execute()
                 .value
-        case .admin, .parent:
+        case .admin, .parent, .superAdmin:
             courseDTOs = try await supabaseClient
                 .from("courses")
                 .select()

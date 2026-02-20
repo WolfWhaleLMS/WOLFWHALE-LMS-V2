@@ -1,7 +1,8 @@
 import SwiftUI
 
 struct TeacherDashboardView: View {
-    let viewModel: AppViewModel
+    @Bindable var viewModel: AppViewModel
+    @State private var liveActivityService = LiveActivityService()
     @State private var showCreateCourse = false
     @State private var showCreateAssignment = false
     @State private var showCreateAnnouncement = false
@@ -24,6 +25,7 @@ struct TeacherDashboardView: View {
                 } else {
                     VStack(spacing: 16) {
                         overviewCards
+                        liveActivityBanner
                         quickActions
                         recentActivity
                         announcementsSection
@@ -37,6 +39,17 @@ struct TeacherDashboardView: View {
             .refreshable {
                 viewModel.refreshData()
             }
+        }
+    }
+
+    @ViewBuilder
+    private var liveActivityBanner: some View {
+        if let firstCourse = viewModel.courses.first {
+            LiveActivityBanner(
+                liveActivityService: liveActivityService,
+                courseName: firstCourse.title,
+                teacherName: viewModel.currentUser?.fullName ?? "Teacher"
+            )
         }
     }
 
@@ -86,7 +99,7 @@ struct TeacherDashboardView: View {
             }
         }
         .sheet(isPresented: $showCreateCourse) {
-            CreateCourseSheet(viewModel: viewModel)
+            EnhancedCourseCreationView(viewModel: viewModel)
         }
         .sheet(isPresented: $showCreateAnnouncement) {
             CreateAnnouncementSheet(viewModel: viewModel)

@@ -52,6 +52,8 @@ struct ContentView: View {
             ParentTabView(viewModel: viewModel)
         case .admin:
             AdminTabView(viewModel: viewModel)
+        case .superAdmin:
+            SuperAdminTabView(viewModel: viewModel)
         case .none:
             LoginView(viewModel: viewModel)
         }

@@ -2,7 +2,7 @@ import SwiftUI
 
 struct TeacherProfileView: View {
     let viewModel: AppViewModel
-    @AppStorage("isDarkMode") private var isDarkMode: Bool = false
+    @AppStorage("colorSchemePreference") private var colorSchemePreference: String = "system"
 
     var body: some View {
         NavigationStack {
@@ -87,17 +87,22 @@ struct TeacherProfileView: View {
     private var settingsSection: some View {
         VStack(spacing: 0) {
             HStack(spacing: 12) {
-                Image(systemName: isDarkMode ? "moon.fill" : "sun.max.fill")
-                    .foregroundStyle(isDarkMode ? .indigo : .orange)
+                Image(systemName: colorSchemePreference == "dark" ? "moon.fill" : colorSchemePreference == "light" ? "sun.max.fill" : "circle.lefthalf.filled")
+                    .foregroundStyle(colorSchemePreference == "dark" ? .indigo : colorSchemePreference == "light" ? .orange : .gray)
                     .frame(width: 28)
                     .accessibilityHidden(true)
-                Text("Dark Mode")
+                Text("Appearance")
                     .font(.subheadline)
                 Spacer()
-                Toggle("Dark Mode", isOn: $isDarkMode)
-                    .labelsHidden()
-                    .accessibilityLabel("Dark Mode")
-                    .accessibilityHint("Double tap to toggle dark mode")
+                Picker("Appearance", selection: $colorSchemePreference) {
+                    Label("System", systemImage: "circle.lefthalf.filled").tag("system")
+                    Label("Light", systemImage: "sun.max.fill").tag("light")
+                    Label("Dark", systemImage: "moon.fill").tag("dark")
+                }
+                .pickerStyle(.segmented)
+                .frame(maxWidth: 180)
+                .accessibilityLabel("Appearance mode")
+                .accessibilityHint("Select system, light, or dark mode")
             }
             .padding(14)
             Divider().padding(.leading, 48)

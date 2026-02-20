@@ -2,7 +2,8 @@ import SwiftUI
 
 struct StudentProfileView: View {
     let viewModel: AppViewModel
-    @AppStorage("isDarkMode") private var isDarkMode: Bool = false
+    var walletService = WalletPassService()
+    @AppStorage("colorSchemePreference") private var colorSchemePreference: String = "system"
     @State private var showAchievements = false
 
     var body: some View {
@@ -11,6 +12,7 @@ struct StudentProfileView: View {
                 VStack(spacing: 20) {
                     profileHeader
                     statsGrid
+                    schoolIDLink
                     xpSection
                     achievementsSection
                     streakSection
@@ -198,19 +200,68 @@ struct StudentProfileView: View {
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
     }
 
+    private var schoolIDLink: some View {
+        Group {
+            if let user = viewModel.currentUser {
+                NavigationLink {
+                    SchoolIDView(user: user, walletService: walletService)
+                } label: {
+                    HStack(spacing: 12) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [.purple, .cyan],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 36, height: 36)
+                            Image(systemName: "person.text.rectangle.fill")
+                                .font(.subheadline)
+                                .foregroundStyle(.white)
+                        }
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("School ID")
+                                .font(.subheadline.bold())
+                                .foregroundStyle(.primary)
+                            Text("View your digital student ID card")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
+                    .padding(14)
+                    .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("School ID")
+                .accessibilityHint("Double tap to view your digital school ID card")
+            }
+        }
+    }
+
     private var appearanceSection: some View {
         HStack(spacing: 12) {
-            Image(systemName: isDarkMode ? "moon.fill" : "sun.max.fill")
-                .foregroundStyle(isDarkMode ? .indigo : .orange)
+            Image(systemName: colorSchemePreference == "dark" ? "moon.fill" : colorSchemePreference == "light" ? "sun.max.fill" : "circle.lefthalf.filled")
+                .foregroundStyle(colorSchemePreference == "dark" ? .indigo : colorSchemePreference == "light" ? .orange : .gray)
                 .frame(width: 28)
                 .accessibilityHidden(true)
-            Text("Dark Mode")
+            Text("Appearance")
                 .font(.subheadline)
             Spacer()
-            Toggle("Dark Mode", isOn: $isDarkMode)
-                .labelsHidden()
-                .accessibilityLabel("Dark Mode")
-                .accessibilityHint("Double tap to toggle dark mode")
+            Picker("Appearance", selection: $colorSchemePreference) {
+                Label("System", systemImage: "circle.lefthalf.filled").tag("system")
+                Label("Light", systemImage: "sun.max.fill").tag("light")
+                Label("Dark", systemImage: "moon.fill").tag("dark")
+            }
+            .pickerStyle(.segmented)
+            .frame(maxWidth: 180)
+            .accessibilityLabel("Appearance mode")
+            .accessibilityHint("Select system, light, or dark mode")
         }
         .padding(14)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))

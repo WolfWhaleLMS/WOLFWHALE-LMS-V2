@@ -19,6 +19,8 @@ struct SignUpView: View {
     @State private var successMessage: String?
     @State private var hasAttemptedSubmit = false
     @State private var hasAcknowledgedAge = false
+    @State private var hapticTrigger = false
+    @State private var roleHapticTrigger = false
     @FocusState private var focusedField: Field?
 
     private enum Field { case fullName, email, password, confirmPassword, schoolCode }
@@ -278,6 +280,7 @@ struct SignUpView: View {
                 HStack(spacing: 10) {
                     ForEach(selectableRoles) { role in
                         Button {
+                            roleHapticTrigger.toggle()
                             withAnimation(.smooth) { selectedRole = role }
                         } label: {
                             HStack(spacing: 6) {
@@ -307,6 +310,7 @@ struct SignUpView: View {
                             .foregroundStyle(selectedRole == role ? .purple : .primary)
                         }
                         .buttonStyle(.plain)
+                        .sensoryFeedback(.selection, trigger: roleHapticTrigger)
                         .accessibilityLabel("\(role.rawValue) role")
                         .accessibilityHint("Double tap to select \(role.rawValue.lowercased()) role")
                         .accessibilityAddTraits(selectedRole == role ? .isSelected : [])
@@ -391,6 +395,7 @@ struct SignUpView: View {
 
             // Sign Up button
             Button {
+                hapticTrigger.toggle()
                 focusedField = nil
                 signUp()
             } label: {
@@ -414,11 +419,13 @@ struct SignUpView: View {
             .tint(Color.purple)
             .clipShape(.rect(cornerRadius: 12))
             .disabled(isLoading || !isFormValid)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             .accessibilityLabel(isLoading ? "Creating account" : "Create Account")
             .accessibilityHint("Double tap to create your account")
 
             // Back to Login button
             Button {
+                hapticTrigger.toggle()
                 dismiss()
             } label: {
                 HStack(spacing: 6) {
@@ -429,6 +436,7 @@ struct SignUpView: View {
                 }
                 .foregroundStyle(.purple)
             }
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             .padding(.top, 4)
         }
         .onChange(of: selectedRole) { _, _ in
@@ -452,6 +460,7 @@ struct SignUpView: View {
                 }
             }
             .tint(.blue)
+            .sensoryFeedback(.selection, trigger: hasAcknowledgedAge)
 
         case .parent:
             Toggle(isOn: $hasAcknowledgedAge) {
@@ -464,8 +473,9 @@ struct SignUpView: View {
                 }
             }
             .tint(.blue)
+            .sensoryFeedback(.selection, trigger: hasAcknowledgedAge)
 
-        case .teacher, .admin:
+        case .teacher, .admin, .superAdmin:
             Toggle(isOn: $hasAcknowledgedAge) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Terms Acknowledgment")
@@ -476,6 +486,7 @@ struct SignUpView: View {
                 }
             }
             .tint(.blue)
+            .sensoryFeedback(.selection, trigger: hasAcknowledgedAge)
         }
     }
 

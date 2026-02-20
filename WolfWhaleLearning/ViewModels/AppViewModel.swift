@@ -357,6 +357,10 @@ class AppViewModel {
             case .admin:
                 allUsers = try await dataService.fetchAllUsers(schoolId: user.schoolId)
                 schoolMetrics = try await dataService.fetchSchoolMetrics(schoolId: user.schoolId)
+
+            case .superAdmin:
+                allUsers = try await dataService.fetchAllUsers(schoolId: user.schoolId)
+                schoolMetrics = try await dataService.fetchSchoolMetrics(schoolId: user.schoolId)
             }
             isDataLoading = false
         } catch {
@@ -486,7 +490,18 @@ class AppViewModel {
     // MARK: - Teacher: Create Course
     // classCode is NOT on the courses table — it lives in the class_codes table.
     // After creating the course, we insert a row into class_codes.
-    func createCourse(title: String, description: String, colorName: String) async throws {
+    func createCourse(
+        title: String,
+        description: String,
+        colorName: String,
+        iconSystemName: String = "book.fill",
+        subject: String? = nil,
+        gradeLevel: String? = nil,
+        semester: String? = nil,
+        startDate: String? = nil,
+        endDate: String? = nil,
+        credits: Double? = nil
+    ) async throws {
         guard let user = currentUser else { return }
         let classCode = "\(title.prefix(4).uppercased())-\(Int.random(in: 1000...9999))"
 
@@ -494,16 +509,16 @@ class AppViewModel {
             tenantId: nil,
             name: title,
             description: description,
-            subject: nil,
-            gradeLevel: nil,
+            subject: subject,
+            gradeLevel: gradeLevel,
             createdBy: user.id,
-            semester: nil,
-            startDate: nil,
-            endDate: nil,
+            semester: semester,
+            startDate: startDate,
+            endDate: endDate,
             syllabusUrl: nil,
-            credits: nil,
+            credits: credits,
             status: nil,
-            iconSystemName: "book.fill",
+            iconSystemName: iconSystemName,
             colorName: colorName
         )
         if !isDemoMode {
@@ -528,7 +543,7 @@ class AppViewModel {
         } else {
             let newCourse = Course(
                 id: UUID(), title: title, description: description,
-                teacherName: user.fullName, iconSystemName: "book.fill",
+                teacherName: user.fullName, iconSystemName: iconSystemName,
                 colorName: colorName, modules: [], enrolledStudentCount: 0,
                 progress: 0, classCode: classCode
             )

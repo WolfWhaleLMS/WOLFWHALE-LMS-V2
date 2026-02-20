@@ -23,13 +23,16 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 @main
 struct WolfWhaleLMSApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
-    @AppStorage("isDarkMode") private var isDarkMode = false
+    @AppStorage("colorSchemePreference") private var colorSchemePreference: String = "system"
     @State private var pushService = PushNotificationService()
 
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .preferredColorScheme(isDarkMode ? .dark : .light)
+                .preferredColorScheme(
+                    colorSchemePreference == "dark" ? .dark :
+                    colorSchemePreference == "light" ? .light : nil
+                )
                 .task {
                     // Wire the push service into the AppDelegate so it
                     // receives the device token callback.

@@ -1,25 +1,22 @@
 import SwiftUI
 
-struct AdminTabView: View {
+struct SuperAdminTabView: View {
     @Bindable var viewModel: AppViewModel
 
     var body: some View {
         TabView {
-            Tab("Dashboard", systemImage: "chart.bar.fill") {
-                AdminDashboardView(viewModel: viewModel)
+            Tab("Console", systemImage: "shield.lefthalf.filled") {
+                SuperAdminDashboardView(viewModel: viewModel)
             }
-            .accessibilityLabel("Dashboard")
-            .accessibilityHint("Double tap to view school overview")
-            Tab("Users", systemImage: "person.3.fill") {
-                UserManagementView(viewModel: viewModel)
+            .accessibilityLabel("Console")
+            .accessibilityHint("Double tap to view the super admin console")
+            Tab("Tenants", systemImage: "building.2.fill") {
+                NavigationStack {
+                    UserManagementView(viewModel: viewModel)
+                }
             }
-            .accessibilityLabel("Users")
-            .accessibilityHint("Double tap to manage users")
-            Tab("Announce", systemImage: "megaphone.fill") {
-                AnnouncementsView(viewModel: viewModel)
-            }
-            .accessibilityLabel("Announcements")
-            .accessibilityHint("Double tap to view announcements")
+            .accessibilityLabel("Tenants")
+            .accessibilityHint("Double tap to manage tenants and users")
             Tab("Messages", systemImage: "message.fill") {
                 MessagesListView(viewModel: viewModel)
             }
@@ -33,7 +30,7 @@ struct AdminTabView: View {
             .accessibilityLabel("Settings")
             .accessibilityHint("Double tap to view settings and sign out")
         }
-        .tint(.blue)
+        .tint(.indigo)
         .overlay(alignment: .top) {
             OfflineBannerView(isConnected: viewModel.networkMonitor.isConnected)
         }

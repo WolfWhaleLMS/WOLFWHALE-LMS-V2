@@ -13,6 +13,8 @@ struct MockDataService {
             User(id: UUID(), firstName: "Maria", lastName: "Rivera", email: "maria@email.com", role: .parent, avatarSystemName: "person.crop.circle.fill", xp: 0, level: 0, coins: 0, streak: 0, joinDate: Calendar.current.date(byAdding: .month, value: -3, to: Date())!, schoolId: "school_001", userSlotsTotal: 0, userSlotsUsed: 0)
         case .admin:
             User(id: UUID(), firstName: "James", lastName: "Wilson", email: "jwilson@wolfwhale.edu", role: .admin, avatarSystemName: "person.crop.circle.fill", xp: 0, level: 0, coins: 0, streak: 0, joinDate: Calendar.current.date(byAdding: .year, value: -5, to: Date())!, schoolId: "school_001", userSlotsTotal: 50, userSlotsUsed: 9)
+        case .superAdmin:
+            User(id: UUID(), firstName: "System", lastName: "Admin", email: "superadmin@wolfwhale.io", role: .superAdmin, avatarSystemName: "person.crop.circle.fill", xp: 0, level: 0, coins: 0, streak: 0, joinDate: Calendar.current.date(byAdding: .year, value: -5, to: Date())!, schoolId: nil, userSlotsTotal: 0, userSlotsUsed: 0)
         }
     }
 

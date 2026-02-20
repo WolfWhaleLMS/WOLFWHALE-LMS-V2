@@ -5,6 +5,7 @@ nonisolated enum UserRole: String, CaseIterable, Sendable, Identifiable {
     case teacher = "Teacher"
     case parent = "Parent"
     case admin = "Admin"
+    case superAdmin = "SuperAdmin"
 
     var id: String { rawValue }
 
@@ -14,6 +15,7 @@ nonisolated enum UserRole: String, CaseIterable, Sendable, Identifiable {
         case .teacher: "person.crop.rectangle.fill"
         case .parent: "figure.2.and.child.holdinghands"
         case .admin: "gearshape.2.fill"
+        case .superAdmin: "shield.lefthalf.filled"
         }
     }
 

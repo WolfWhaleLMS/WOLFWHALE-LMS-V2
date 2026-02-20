@@ -5,8 +5,8 @@ struct LoginView: View {
     @State private var appeared = false
     @State private var showDemoSection = false
     @State private var showForgotPassword = false
-    @State private var showSignUp = false
     @State private var showAdminSetup = false
+    @State private var hapticTrigger = false
     @FocusState private var focusedField: Field?
 
     private enum Field { case email, password }
@@ -38,9 +38,6 @@ struct LoginView: View {
         .background(Color(.systemGroupedBackground).ignoresSafeArea())
         .sheet(isPresented: $showForgotPassword) {
             ForgotPasswordView()
-        }
-        .sheet(isPresented: $showSignUp) {
-            SignUpView()
         }
         .sheet(isPresented: $showAdminSetup) {
             AdminSetupView()
@@ -167,31 +164,18 @@ struct LoginView: View {
             .accessibilityHint("Double tap to sign in with your email and password")
 
             Button {
+                hapticTrigger.toggle()
                 showForgotPassword = true
             } label: {
                 Text("Forgot Password?")
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(Color.accentColor)
             }
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             .accessibilityHint("Double tap to reset your password")
 
             Button {
-                showSignUp = true
-            } label: {
-                HStack(spacing: 8) {
-                    Text("Create Account")
-                        .font(.headline)
-                    Image(systemName: "person.badge.plus")
-                        .font(.subheadline.bold())
-                }
-                .frame(maxWidth: .infinity)
-                .frame(height: 50)
-            }
-            .buttonStyle(.bordered)
-            .tint(.accentColor)
-            .clipShape(.rect(cornerRadius: 12))
-
-            Button {
+                hapticTrigger.toggle()
                 showAdminSetup = true
             } label: {
                 HStack(spacing: 4) {
@@ -202,6 +186,7 @@ struct LoginView: View {
                 }
                 .foregroundStyle(Color.accentColor.opacity(0.8))
             }
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             .padding(.top, 2)
         }
     }
@@ -243,6 +228,7 @@ struct LoginView: View {
 struct DemoRoleButton: View {
     let role: UserRole
     let action: () -> Void
+    @State private var hapticTrigger = false
 
     private var roleDescription: String {
         switch role {
@@ -250,6 +236,7 @@ struct DemoRoleButton: View {
         case .teacher: "Manage classes"
         case .parent: "Track progress"
         case .admin: "School dashboard"
+        case .superAdmin: "System console"
         }
     }
 
@@ -259,11 +246,15 @@ struct DemoRoleButton: View {
         case .teacher: [.pink, .orange]
         case .parent: [.green, .teal]
         case .admin: [.blue, .cyan]
+        case .superAdmin: [.indigo, .cyan]
         }
     }
 
     var body: some View {
-        Button(action: action) {
+        Button {
+            hapticTrigger.toggle()
+            action()
+        } label: {
             VStack(spacing: 10) {
                 ZStack {
                     Circle()
@@ -306,7 +297,7 @@ struct DemoRoleButton: View {
             )
         }
         .buttonStyle(.plain)
-        .sensoryFeedback(.impact(weight: .light), trigger: false)
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         .accessibilityLabel("Demo \(role.rawValue)")
         .accessibilityHint("Double tap to sign in as a demo \(role.rawValue.lowercased())")
     }

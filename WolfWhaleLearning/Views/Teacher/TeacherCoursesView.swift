@@ -1,12 +1,8 @@
 import SwiftUI
 
 struct TeacherCoursesView: View {
-    let viewModel: AppViewModel
+    @Bindable var viewModel: AppViewModel
     @State private var showCreateCourse = false
-    @State private var newCourseTitle = ""
-    @State private var newCourseDescription = ""
-    @State private var newCourseColor = "blue"
-    @State private var isCreating = false
 
     var body: some View {
         NavigationStack {
@@ -37,7 +33,7 @@ struct TeacherCoursesView: View {
                 GradebookView(course: course, viewModel: viewModel)
             }
             .sheet(isPresented: $showCreateCourse) {
-                createCourseSheet
+                EnhancedCourseCreationView(viewModel: viewModel)
             }
             .overlay {
                 if viewModel.courses.isEmpty {
@@ -85,77 +81,5 @@ struct TeacherCoursesView: View {
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(course.title), \(course.enrolledStudentCount) students, code \(course.classCode), \(course.modules.count) modules, \(course.totalLessons) lessons")
         .accessibilityHint("Double tap to open gradebook")
-    }
-
-    private var createCourseSheet: some View {
-        NavigationStack {
-            Form {
-                Section("Course Details") {
-                    TextField("Course Title", text: $newCourseTitle)
-                    TextField("Description", text: $newCourseDescription, axis: .vertical)
-                        .lineLimit(3...)
-                }
-                Section("Settings") {
-                    Picker("Color", selection: $newCourseColor) {
-                        Text("Blue").tag("blue")
-                        Text("Green").tag("green")
-                        Text("Orange").tag("orange")
-                        Text("Purple").tag("purple")
-                        Text("Pink").tag("pink")
-                        Text("Red").tag("red")
-                    }
-                }
-            }
-            .navigationTitle("New Course")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        resetCourseForm()
-                        showCreateCourse = false
-                    }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Create") {
-                        createCourse()
-                    }
-                    .fontWeight(.semibold)
-                    .disabled(newCourseTitle.trimmingCharacters(in: .whitespaces).isEmpty || isCreating)
-                }
-            }
-            .overlay {
-                if isCreating {
-                    ZStack {
-                        Color.black.opacity(0.3).ignoresSafeArea()
-                        ProgressView("Creating course...")
-                            .padding(24)
-                            .background(.regularMaterial, in: .rect(cornerRadius: 16))
-                    }
-                }
-            }
-        }
-    }
-
-    private func createCourse() {
-        isCreating = true
-        Task {
-            do {
-                try await viewModel.createCourse(
-                    title: newCourseTitle.trimmingCharacters(in: .whitespaces),
-                    description: newCourseDescription.trimmingCharacters(in: .whitespaces),
-                    colorName: newCourseColor
-                )
-                resetCourseForm()
-                showCreateCourse = false
-            } catch {
-            }
-            isCreating = false
-        }
-    }
-
-    private func resetCourseForm() {
-        newCourseTitle = ""
-        newCourseDescription = ""
-        newCourseColor = "blue"
     }
 }

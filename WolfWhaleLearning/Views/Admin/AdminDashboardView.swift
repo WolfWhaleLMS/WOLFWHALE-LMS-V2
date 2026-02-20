@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AdminDashboardView: View {
     let viewModel: AppViewModel
+    @State private var refreshHapticTrigger = false
 
     private var metrics: SchoolMetrics {
         viewModel.schoolMetrics ?? SchoolMetrics(totalStudents: 0, totalTeachers: 0, totalCourses: 0, averageAttendance: 0, averageGPA: 0, activeUsers: 0)
@@ -21,8 +22,10 @@ struct AdminDashboardView: View {
             .background(Color(.systemGroupedBackground))
             .navigationTitle("School Overview")
             .refreshable {
+                refreshHapticTrigger.toggle()
                 viewModel.refreshData()
             }
+            .sensoryFeedback(.impact(weight: .medium), trigger: refreshHapticTrigger)
         }
     }
 
