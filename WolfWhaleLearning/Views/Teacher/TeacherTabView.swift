@@ -15,6 +15,11 @@ struct TeacherTabView: View {
             }
             .accessibilityLabel("Courses")
             .accessibilityHint("Double tap to view your courses")
+            Tab("AR Library", systemImage: "arkit") {
+                ARLibraryView(viewModel: viewModel)
+            }
+            .accessibilityLabel("AR Library")
+            .accessibilityHint("Double tap to explore AR experiences")
             Tab("Messages", systemImage: "message.fill") {
                 MessagesListView(viewModel: viewModel)
             }

@@ -10,6 +10,11 @@ struct ParentTabView: View {
             }
             .accessibilityLabel("Home")
             .accessibilityHint("Double tap to view your children's overview")
+            Tab("AR Library", systemImage: "arkit") {
+                ARLibraryView(viewModel: viewModel)
+            }
+            .accessibilityLabel("AR Library")
+            .accessibilityHint("Double tap to explore AR experiences")
             Tab("Messages", systemImage: "message.fill") {
                 MessagesListView(viewModel: viewModel)
             }

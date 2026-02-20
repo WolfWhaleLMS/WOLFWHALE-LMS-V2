@@ -6,6 +6,7 @@ struct LessonView: View {
     let viewModel: AppViewModel
     @State private var isCompleted: Bool
     @State private var showConfetti = false
+    @State private var arViewModel = ARLibraryViewModel()
     @Environment(\.dismiss) private var dismiss
 
     init(lesson: Lesson, course: Course, viewModel: AppViewModel) {
@@ -20,6 +21,7 @@ struct LessonView: View {
             VStack(alignment: .leading, spacing: 20) {
                 headerCard
                 contentSection
+                relatedARSection
 
                 if !isCompleted {
                     completeButton
@@ -103,6 +105,49 @@ struct LessonView: View {
         .buttonStyle(.borderedProminent)
         .tint(.green)
         .sensoryFeedback(.success, trigger: isCompleted)
+    }
+
+    private var relatedARSection: some View {
+        let keywords = lesson.title.split(separator: " ").map(String.init) + [course.title]
+        let matched = arViewModel.resourcesMatching(keywords: keywords)
+        return Group {
+            if !matched.isEmpty {
+                VStack(alignment: .leading, spacing: 12) {
+                    Label("Related AR Experiences", systemImage: "arkit")
+                        .font(.headline)
+                    ForEach(matched) { resource in
+                        NavigationLink(value: resource) {
+                            HStack(spacing: 12) {
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(Theme.courseColor(resource.colorName).gradient)
+                                    .frame(width: 44, height: 44)
+                                    .overlay {
+                                        Image(systemName: resource.iconSystemName)
+                                            .font(.body)
+                                            .foregroundStyle(.white)
+                                    }
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(resource.title)
+                                        .font(.subheadline.bold())
+                                    Text(resource.subtitle)
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundStyle(.tertiary)
+                            }
+                            .padding(12)
+                            .background(Theme.courseColor(resource.colorName).opacity(0.08), in: .rect(cornerRadius: 12))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(16)
+                .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+            }
+        }
     }
 
     private var confettiOverlay: some View {
