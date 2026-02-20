@@ -17,25 +17,12 @@ nonisolated enum UserRole: String, CaseIterable, Sendable, Identifiable {
         }
     }
 
-    /// Case-insensitive initializer for matching DB values like "student", "Student", "STUDENT".
-    /// Falls back to nil if no match.
     static func from(_ string: String) -> UserRole? {
         let lowered = string.lowercased()
         return Self.allCases.first { $0.rawValue.lowercased() == lowered }
     }
 }
 
-/// The app-level User model. Views reference these properties directly.
-///
-/// Properties like `role`, `xp`, `level`, `coins`, `streak` are NOT stored
-/// in the `profiles` table. They come from:
-///   - `role`: `tenant_memberships` table
-///   - `xp`, `level`, `coins`, `streak`: `student_xp` table
-///   - `email`: Supabase Auth (auth.users)
-///   - `schoolId`: derived from `tenant_memberships.tenant_id`
-///
-/// The `ProfileDTO.toUser()` method bridges from DTOs to this model,
-/// accepting supplementary data as parameters.
 nonisolated struct User: Identifiable, Hashable, Sendable {
     let id: UUID
     var firstName: String
@@ -60,7 +47,6 @@ nonisolated struct User: Identifiable, Hashable, Sendable {
         return Double(xp % max(Int(needed), 1)) / max(needed, 1)
     }
 
-    /// Memberwise init with defaults for properties not always available.
     init(
         id: UUID,
         firstName: String,

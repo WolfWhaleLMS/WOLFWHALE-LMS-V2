@@ -1,15 +1,5 @@
 import Foundation
 
-// MARK: - ProfileDTO
-
-/// Decodes from the `profiles` table.
-/// DB columns: id, first_name, last_name, avatar_url, phone, date_of_birth,
-///             bio, timezone, language, preferences, created_at, updated_at,
-///             grade_level, full_name
-///
-/// `role` and `email` are NOT columns in the profiles table.
-/// They are transient properties populated by the service layer after joining
-/// with `tenant_memberships` (for role) and Supabase Auth (for email).
 nonisolated struct ProfileDTO: Codable, Sendable, Identifiable {
     let id: UUID
     var firstName: String?
@@ -26,10 +16,7 @@ nonisolated struct ProfileDTO: Codable, Sendable, Identifiable {
     var gradeLevel: String?
     var fullName: String?
 
-    // MARK: Transient (not in profiles table)
-    /// Populated from `tenant_memberships.role` by the service layer.
     var role: String = ""
-    /// Populated from Supabase Auth by the service layer.
     var email: String = ""
 
     enum CodingKeys: String, CodingKey {
@@ -60,12 +47,10 @@ nonisolated struct ProfileDTO: Codable, Sendable, Identifiable {
         updatedAt = try c.decodeIfPresent(String.self, forKey: .updatedAt)
         gradeLevel = try c.decodeIfPresent(String.self, forKey: .gradeLevel)
         fullName = try c.decodeIfPresent(String.self, forKey: .fullName)
-        // role and email are not decoded from JSON; set by service layer
         role = ""
         email = ""
     }
 
-    /// Memberwise initializer for programmatic creation.
     init(
         id: UUID,
         firstName: String? = nil,
@@ -102,9 +87,6 @@ nonisolated struct ProfileDTO: Codable, Sendable, Identifiable {
         self.email = email
     }
 
-    /// Convert to the app-level User model.
-    /// The caller must supply role (from tenant_memberships), xp/level/coins/streak
-    /// (from student_xp), and email (from Supabase Auth) as separate parameters.
     func toUser(
         email: String = "",
         role: UserRole = .student,
@@ -129,11 +111,6 @@ nonisolated struct ProfileDTO: Codable, Sendable, Identifiable {
     }
 }
 
-// MARK: - Tenant Membership DTO
-
-/// Maps to the `tenant_memberships` table.
-/// DB columns: id, tenant_id, user_id, role, status, joined_at, invited_at,
-///             invited_by, suspended_at, suspended_reason
 nonisolated struct TenantMembershipDTO: Codable, Sendable {
     let id: UUID?
     let tenantId: UUID?
@@ -158,12 +135,6 @@ nonisolated struct TenantMembershipDTO: Codable, Sendable {
     }
 }
 
-// MARK: - Student XP DTO
-
-/// Maps to the `student_xp` table.
-/// DB columns: id, tenant_id, student_id, total_xp, current_level, current_tier,
-///             streak_days, last_login_date, coins, total_coins_earned,
-///             total_coins_spent, created_at, updated_at
 nonisolated struct StudentXpDTO: Codable, Sendable {
     let id: UUID?
     let tenantId: UUID?
@@ -195,11 +166,6 @@ nonisolated struct StudentXpDTO: Codable, Sendable {
     }
 }
 
-// MARK: - Class Code DTOs
-
-/// Maps to the `class_codes` table.
-/// DB columns: id, tenant_id, course_id, code, is_active, expires_at,
-///             max_uses, use_count, created_by, created_at
 nonisolated struct ClassCodeDTO: Codable, Sendable {
     let id: UUID?
     let tenantId: UUID?
@@ -245,10 +211,6 @@ nonisolated struct InsertClassCodeDTO: Encodable, Sendable {
     }
 }
 
-// MARK: - Insert DTOs
-
-/// Insert into `profiles` table.
-/// Only includes writable columns that exist in the profiles table.
 nonisolated struct InsertProfileDTO: Encodable, Sendable {
     let id: UUID
     let firstName: String
@@ -273,7 +235,6 @@ nonisolated struct InsertProfileDTO: Encodable, Sendable {
     }
 }
 
-/// Insert into `tenant_memberships` when creating a user.
 nonisolated struct InsertTenantMembershipDTO: Encodable, Sendable {
     let userId: UUID
     let tenantId: UUID?
@@ -293,7 +254,6 @@ nonisolated struct InsertTenantMembershipDTO: Encodable, Sendable {
     }
 }
 
-/// Insert initial row into `student_xp` for a new student.
 nonisolated struct InsertStudentXpDTO: Encodable, Sendable {
     let studentId: UUID
     let tenantId: UUID?
@@ -318,9 +278,6 @@ nonisolated struct InsertStudentXpDTO: Encodable, Sendable {
     }
 }
 
-// MARK: - Update DTOs
-
-/// Update `student_xp` table (not profiles).
 nonisolated struct UpdateStudentXpDTO: Encodable, Sendable {
     var totalXp: Int?
     var currentLevel: Int?
