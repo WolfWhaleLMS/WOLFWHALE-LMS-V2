@@ -217,6 +217,30 @@ struct GradebookView: View {
                     .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
                 }
             }
+
+            NavigationLink {
+                AttendanceReportView(course: course, viewModel: viewModel)
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "chart.bar.fill")
+                        .font(.title2)
+                        .foregroundStyle(.green)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Attendance Report")
+                            .font(.caption2.bold())
+                            .foregroundStyle(.primary)
+                        Text("View student attendance rates")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
+                .padding(14)
+                .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
+            }
         }
     }
 

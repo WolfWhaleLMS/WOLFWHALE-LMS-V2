@@ -3,9 +3,7 @@ import SwiftUI
 struct AssignmentsView: View {
     @Bindable var viewModel: AppViewModel
     @State private var selectedFilter = 0
-    @State private var showSubmitSheet = false
     @State private var selectedAssignment: Assignment?
-    @State private var submissionText = ""
 
     private var filtered: [Assignment] {
         switch selectedFilter {
@@ -31,7 +29,9 @@ struct AssignmentsView: View {
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Assignments")
             .sheet(item: $selectedAssignment) { assignment in
-                submitSheet(assignment)
+                NavigationStack {
+                    SubmitAssignmentView(assignment: assignment, viewModel: viewModel)
+                }
             }
         }
     }
@@ -127,43 +127,4 @@ struct AssignmentsView: View {
         return .orange
     }
 
-    private func submitSheet(_ assignment: Assignment) -> some View {
-        NavigationStack {
-            VStack(spacing: 16) {
-                Text(assignment.title)
-                    .font(.headline)
-                Text(assignment.instructions)
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-
-                TextEditor(text: $submissionText)
-                    .frame(minHeight: 150)
-                    .padding(8)
-                    .background(Color(.tertiarySystemFill), in: .rect(cornerRadius: 10))
-
-                Spacer()
-            }
-            .padding()
-            .navigationTitle("Submit Assignment")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        selectedAssignment = nil
-                        submissionText = ""
-                    }
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Submit") {
-                        viewModel.submitAssignment(assignment, text: submissionText)
-                        selectedAssignment = nil
-                        submissionText = ""
-                    }
-                    .disabled(submissionText.isEmpty)
-                }
-            }
-        }
-        .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.visible)
-    }
 }

@@ -116,23 +116,44 @@ struct StudentDashboardView: View {
                 statCard(icon: "bitcoinsign.circle.fill", value: "\(viewModel.currentUser?.coins ?? 0)", label: "Coins", color: .yellow)
             }
 
-            NavigationLink {
-                AttendanceHistoryView(viewModel: viewModel)
-            } label: {
-                HStack(spacing: 12) {
-                    Image(systemName: "calendar.badge.clock")
-                        .font(.title3)
-                        .foregroundStyle(.green)
-                    Text("Attendance History")
-                        .font(.subheadline.bold())
-                        .foregroundStyle(.primary)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+            HStack(spacing: 12) {
+                NavigationLink {
+                    AttendanceHistoryView(viewModel: viewModel)
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "calendar.badge.clock")
+                            .font(.title3)
+                            .foregroundStyle(.green)
+                        Text("Attendance")
+                            .font(.caption.bold())
+                            .foregroundStyle(.primary)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                    }
+                    .padding(14)
+                    .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
                 }
-                .padding(14)
-                .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+
+                NavigationLink {
+                    LeaderboardView(viewModel: viewModel)
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: "trophy.fill")
+                            .font(.title3)
+                            .foregroundStyle(.yellow)
+                        Text("Leaderboard")
+                            .font(.caption.bold())
+                            .foregroundStyle(.primary)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                    }
+                    .padding(14)
+                    .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+                }
             }
         }
     }
