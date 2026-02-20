@@ -12,6 +12,7 @@ struct GradebookView: View {
     @State private var newDueDate = Date().addingTimeInterval(7 * 86400)
     @State private var newPoints: Int = 100
     @State private var isCreating = false
+    @State private var showEditCourse = false
 
     private var courseAssignments: [Assignment] {
         viewModel.assignments.filter { $0.courseName == course.title || $0.courseId == course.id }
@@ -43,6 +44,11 @@ struct GradebookView: View {
         .navigationTitle(course.title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button("Edit", systemImage: "pencil") {
+                    showEditCourse = true
+                }
+            }
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Add", systemImage: "plus") {
                     showAddAssignment = true
@@ -65,6 +71,11 @@ struct GradebookView: View {
         .sheet(item: $selectedModuleForLesson) { module in
             NavigationStack {
                 CreateLessonView(viewModel: viewModel, course: course, module: module)
+            }
+        }
+        .sheet(isPresented: $showEditCourse) {
+            NavigationStack {
+                EditCourseView(course: course, viewModel: viewModel)
             }
         }
     }
@@ -171,6 +182,39 @@ struct GradebookView: View {
                 }
                 contentActionButton(icon: "questionmark.circle.fill", label: "Create Quiz", color: .orange) {
                     showCreateQuiz = true
+                }
+            }
+
+            HStack(spacing: 10) {
+                NavigationLink {
+                    ManageModulesView(course: course, viewModel: viewModel)
+                } label: {
+                    VStack(spacing: 8) {
+                        Image(systemName: "folder.fill")
+                            .font(.title2)
+                            .foregroundStyle(.indigo)
+                        Text("Manage Modules")
+                            .font(.caption2.bold())
+                            .foregroundStyle(.primary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
+                }
+                NavigationLink {
+                    ManageStudentsView(course: course, viewModel: viewModel)
+                } label: {
+                    VStack(spacing: 8) {
+                        Image(systemName: "person.2.fill")
+                            .font(.title2)
+                            .foregroundStyle(.teal)
+                        Text("Students")
+                            .font(.caption2.bold())
+                            .foregroundStyle(.primary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
                 }
             }
         }

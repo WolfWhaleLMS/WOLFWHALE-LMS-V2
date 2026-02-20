@@ -13,7 +13,12 @@ struct ParentDashboardView: View {
                     ScrollView {
                         VStack(spacing: 16) {
                             ForEach(viewModel.children) { child in
-                                childCard(child)
+                                NavigationLink {
+                                    ChildDetailView(child: child, viewModel: viewModel)
+                                } label: {
+                                    childCard(child)
+                                }
+                                .buttonStyle(.plain)
                             }
                             announcementsSection
                         }

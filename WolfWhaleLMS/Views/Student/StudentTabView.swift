@@ -19,5 +19,8 @@ struct StudentTabView: View {
             }
         }
         .tint(.purple)
+        .overlay(alignment: .top) {
+            OfflineBannerView(isConnected: viewModel.networkMonitor.isConnected)
+        }
     }
 }

@@ -19,5 +19,8 @@ struct AdminTabView: View {
             }
         }
         .tint(.blue)
+        .overlay(alignment: .top) {
+            OfflineBannerView(isConnected: viewModel.networkMonitor.isConnected)
+        }
     }
 }

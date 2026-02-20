@@ -16,5 +16,8 @@ struct ParentTabView: View {
             }
         }
         .tint(.green)
+        .overlay(alignment: .top) {
+            OfflineBannerView(isConnected: viewModel.networkMonitor.isConnected)
+        }
     }
 }

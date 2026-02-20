@@ -31,6 +31,7 @@ class AppViewModel {
     var isDemoMode = false
     private let mockService = MockDataService.shared
     private let dataService = DataService.shared
+    let networkMonitor = NetworkMonitor()
 
     var gpa: Double {
         guard !grades.isEmpty else { return 0 }
@@ -189,6 +190,12 @@ class AppViewModel {
             return
         }
 
+        guard networkMonitor.isConnected else {
+            dataError = "No internet connection. Using offline mode."
+            loadMockData()
+            return
+        }
+
         dataError = nil
 
         do {
@@ -222,6 +229,7 @@ class AppViewModel {
 
             case .parent:
                 children = try await dataService.fetchChildren(for: user.id)
+                allUsers = try await dataService.fetchAllUsers(schoolId: user.schoolId)
 
             case .admin:
                 allUsers = try await dataService.fetchAllUsers(schoolId: user.schoolId)
@@ -833,6 +841,135 @@ class AppViewModel {
             dataError = "Failed to fetch students: \(error.localizedDescription)"
             return []
         }
+    }
+
+    // MARK: - Course Management
+    func updateCourseDetails(courseId: UUID, title: String, description: String, colorName: String, iconSystemName: String) async throws {
+        if !isDemoMode {
+            try await dataService.updateCourse(courseId: courseId, title: title, description: description, colorName: colorName, iconSystemName: iconSystemName)
+        }
+        if let index = courses.firstIndex(where: { $0.id == courseId }) {
+            courses[index].title = title
+            courses[index].description = description
+            courses[index].colorName = colorName
+            courses[index].iconSystemName = iconSystemName
+        }
+    }
+
+    func deleteCourseAndClean(courseId: UUID) async throws {
+        if !isDemoMode {
+            try await dataService.deleteCourse(courseId: courseId)
+        }
+        courses.removeAll { $0.id == courseId }
+        assignments.removeAll { $0.courseId == courseId }
+    }
+
+    func deleteModule(courseId: UUID, moduleId: UUID) async throws {
+        if !isDemoMode {
+            try await dataService.deleteModule(moduleId: moduleId)
+        }
+        if let courseIndex = courses.firstIndex(where: { $0.id == courseId }) {
+            courses[courseIndex].modules.removeAll { $0.id == moduleId }
+        }
+    }
+
+    func deleteLesson(courseId: UUID, moduleId: UUID, lessonId: UUID) async throws {
+        if !isDemoMode {
+            try await dataService.deleteLesson(lessonId: lessonId)
+        }
+        if let courseIndex = courses.firstIndex(where: { $0.id == courseId }),
+           let moduleIndex = courses[courseIndex].modules.firstIndex(where: { $0.id == moduleId }) {
+            courses[courseIndex].modules[moduleIndex].lessons.removeAll { $0.id == lessonId }
+        }
+    }
+
+    func updateAssignmentDetails(assignmentId: UUID, title: String?, instructions: String?, dueDate: Date?, points: Int?) async throws {
+        if !isDemoMode {
+            let formatter = ISO8601DateFormatter()
+            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            let dueDateString = dueDate.map { formatter.string(from: $0) }
+            try await dataService.updateAssignment(assignmentId: assignmentId, title: title, instructions: instructions, dueDate: dueDateString, points: points)
+        }
+        for index in assignments.indices where assignments[index].id == assignmentId {
+            if let title { assignments[index].title = title }
+            if let instructions { assignments[index].instructions = instructions }
+            if let dueDate { assignments[index].dueDate = dueDate }
+            if let points { assignments[index].points = points }
+        }
+    }
+
+    func deleteAssignmentAndClean(assignmentId: UUID) async throws {
+        if !isDemoMode {
+            try await dataService.deleteAssignment(assignmentId: assignmentId)
+        }
+        assignments.removeAll { $0.id == assignmentId }
+    }
+
+    func unenrollStudent(studentId: UUID, courseId: UUID) async throws {
+        if !isDemoMode {
+            try await dataService.unenrollStudent(studentId: studentId, courseId: courseId)
+        }
+        if let courseIndex = courses.firstIndex(where: { $0.id == courseId }) {
+            courses[courseIndex].enrolledStudentCount = max(0, courses[courseIndex].enrolledStudentCount - 1)
+        }
+    }
+
+    // MARK: - Attendance + Parent
+    func fetchAttendanceForCourse(courseId: UUID) async -> [AttendanceRecord] {
+        if isDemoMode {
+            return attendance.filter { record in
+                courses.first(where: { $0.title == record.courseName })?.id == courseId
+            }
+        }
+        do {
+            let dtos: [AttendanceDTO] = try await supabaseClient
+                .from("attendance")
+                .select()
+                .eq("course_id", value: courseId.uuidString)
+                .order("date", ascending: false)
+                .execute()
+                .value
+            return dtos.map { dto in
+                AttendanceRecord(
+                    id: dto.id,
+                    date: ISO8601DateFormatter().date(from: dto.date ?? "") ?? Date(),
+                    status: AttendanceStatus(rawValue: dto.status) ?? .present,
+                    courseName: dto.courseName ?? "Unknown",
+                    studentName: nil
+                )
+            }
+        } catch {
+            return []
+        }
+    }
+
+    func fetchTeachersForChild(childId: UUID) async -> [ProfileDTO] {
+        if isDemoMode {
+            return allUsers.filter { $0.role == "Teacher" }
+        }
+        do {
+            let teachers = try await dataService.fetchAllUsers(schoolId: currentUser?.schoolId)
+            return teachers.filter { $0.role == "Teacher" }
+        } catch {
+            return allUsers.filter { $0.role == "Teacher" }
+        }
+    }
+
+    // MARK: - Profile Editing
+    func updateProfileDetails(firstName: String, lastName: String, avatar: String) async throws {
+        guard let user = currentUser else { return }
+
+        if !isDemoMode {
+            let dto = UpdateProfileDetailsDTO(firstName: firstName, lastName: lastName, avatarUrl: avatar)
+            try await supabaseClient
+                .from("profiles")
+                .update(dto)
+                .eq("id", value: user.id.uuidString)
+                .execute()
+        }
+        currentUser?.firstName = firstName
+        currentUser?.lastName = lastName
+        currentUser?.avatarSystemName = avatar
     }
 
     private func mapAuthError(_ error: Error) -> String {

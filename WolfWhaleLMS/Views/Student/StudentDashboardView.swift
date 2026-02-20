@@ -105,10 +105,31 @@ struct StudentDashboardView: View {
     }
 
     private var statsRow: some View {
-        HStack(spacing: 12) {
-            statCard(icon: "flame.fill", value: "\(viewModel.currentUser?.streak ?? 0)", label: "Day Streak", color: .orange)
-            statCard(icon: "star.fill", value: "Lv.\(viewModel.currentUser?.level ?? 1)", label: "Level", color: .purple)
-            statCard(icon: "bitcoinsign.circle.fill", value: "\(viewModel.currentUser?.coins ?? 0)", label: "Coins", color: .yellow)
+        VStack(spacing: 12) {
+            HStack(spacing: 12) {
+                statCard(icon: "flame.fill", value: "\(viewModel.currentUser?.streak ?? 0)", label: "Day Streak", color: .orange)
+                statCard(icon: "star.fill", value: "Lv.\(viewModel.currentUser?.level ?? 1)", label: "Level", color: .purple)
+                statCard(icon: "bitcoinsign.circle.fill", value: "\(viewModel.currentUser?.coins ?? 0)", label: "Coins", color: .yellow)
+            }
+
+            NavigationLink {
+                AttendanceHistoryView(viewModel: viewModel)
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "calendar.badge.clock")
+                        .font(.title3)
+                        .foregroundStyle(.green)
+                    Text("Attendance History")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.primary)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
+                .padding(14)
+                .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+            }
         }
     }
 

@@ -1025,8 +1025,8 @@ struct DataService {
 
     // MARK: - Courses (Update / Delete)
 
-    func updateCourse(courseId: UUID, title: String?, description: String?) async throws {
-        let dto = UpdateCourseDTO(title: title, description: description)
+    func updateCourse(courseId: UUID, title: String?, description: String?, colorName: String? = nil, iconSystemName: String? = nil) async throws {
+        let dto = UpdateCourseDTO(title: title, description: description, colorName: colorName, iconSystemName: iconSystemName)
         try await supabaseClient
             .from("courses")
             .update(dto)
@@ -1119,6 +1119,43 @@ struct DataService {
             .execute()
             .value
         return profiles
+    }
+
+    // MARK: - Module/Lesson Deletion
+
+    func deleteModule(moduleId: UUID) async throws {
+        try await supabaseClient
+            .from("lessons")
+            .delete()
+            .eq("module_id", value: moduleId.uuidString)
+            .execute()
+        try await supabaseClient
+            .from("modules")
+            .delete()
+            .eq("id", value: moduleId.uuidString)
+            .execute()
+    }
+
+    func deleteLesson(lessonId: UUID) async throws {
+        try await supabaseClient
+            .from("lesson_completions")
+            .delete()
+            .eq("lesson_id", value: lessonId.uuidString)
+            .execute()
+        try await supabaseClient
+            .from("lessons")
+            .delete()
+            .eq("id", value: lessonId.uuidString)
+            .execute()
+    }
+
+    func unenrollStudent(studentId: UUID, courseId: UUID) async throws {
+        try await supabaseClient
+            .from("enrollments")
+            .delete()
+            .eq("student_id", value: studentId.uuidString)
+            .eq("course_id", value: courseId.uuidString)
+            .execute()
     }
 }
 

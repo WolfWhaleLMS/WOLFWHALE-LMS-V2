@@ -19,6 +19,15 @@ struct TeacherProfileView: View {
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Profile")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    NavigationLink {
+                        AppSettingsView(viewModel: viewModel)
+                    } label: {
+                        Image(systemName: "gearshape.fill")
+                    }
+                }
+            }
         }
     }
 

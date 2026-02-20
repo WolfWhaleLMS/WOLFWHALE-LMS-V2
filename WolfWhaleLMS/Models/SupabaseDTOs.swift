@@ -584,9 +584,13 @@ nonisolated struct InsertStudentAchievementDTO: Encodable, Sendable {
 nonisolated struct UpdateCourseDTO: Encodable, Sendable {
     let title: String?
     let description: String?
+    let colorName: String?
+    let iconSystemName: String?
 
     enum CodingKeys: String, CodingKey {
         case title, description
+        case colorName = "color_name"
+        case iconSystemName = "icon_system_name"
     }
 }
 
