@@ -53,6 +53,13 @@ final class CloudSyncService {
     // MARK: - Init
 
     init() {
+        // Guard: if no iCloud identity token, iCloud is not available.
+        // This avoids calling CKContainer.accountStatus() which can crash
+        // when the iCloud/CloudKit capability is not enabled.
+        guard FileManager.default.ubiquityIdentityToken != nil else {
+            iCloudAvailable = false
+            return
+        }
         Task {
             iCloudAvailable = await checkiCloudAvailability()
         }

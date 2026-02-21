@@ -38,7 +38,12 @@ class AppViewModel {
     var notificationService = NotificationService()
 
     // MARK: - Push Notifications (Remote)
-    var pushService = PushNotificationService()
+    // Lazy: APNs registration can crash without proper provisioning/entitlements
+    private var _pushService: PushNotificationService?
+    var pushService: PushNotificationService {
+        if _pushService == nil { _pushService = PushNotificationService() }
+        return _pushService!
+    }
 
     // MARK: - Biometric Auth
     var biometricService = BiometricAuthService()
@@ -50,7 +55,12 @@ class AppViewModel {
     }
 
     // MARK: - Calendar Sync
-    var calendarService = CalendarService()
+    // Lazy: EventKit may require entitlements/permissions that crash without provisioning
+    private var _calendarService: CalendarService?
+    var calendarService: CalendarService {
+        if _calendarService == nil { _calendarService = CalendarService() }
+        return _calendarService!
+    }
     var calendarSyncEnabled: Bool {
         get { UserDefaults.standard.bool(forKey: "wolfwhale_calendar_sync_enabled") }
         set { UserDefaults.standard.set(newValue, forKey: "wolfwhale_calendar_sync_enabled") }
@@ -58,7 +68,12 @@ class AppViewModel {
 
     // MARK: - Offline Storage & Cloud Sync
     var offlineStorage = OfflineStorageService()
-    var cloudSync = CloudSyncService()
+    // Lazy: CKContainer.default() crashes without iCloud capability/entitlements
+    private var _cloudSync: CloudSyncService?
+    var cloudSync: CloudSyncService {
+        if _cloudSync == nil { _cloudSync = CloudSyncService() }
+        return _cloudSync!
+    }
 
     var gpa: Double {
         guard !grades.isEmpty else { return 0 }

@@ -39,8 +39,19 @@ class LiveActivityService {
 
     var isClassSessionActive: Bool { activeClassActivity != nil }
 
+    /// Safely check whether Live Activities are enabled. Returns false if ActivityKit
+    /// is unavailable (e.g. missing entitlement or unsigned build).
+    private var areActivitiesEnabled: Bool {
+        guard #available(iOS 16.1, *) else { return false }
+        // ActivityAuthorizationInfo() can crash without proper app-group / entitlement signing.
+        // Wrap in a do block for resilience; ObjC exceptions will still crash but this
+        // protects against Swift-level failures.
+        let info = ActivityAuthorizationInfo()
+        return info.areActivitiesEnabled
+    }
+
     func startClassSession(courseName: String, teacherName: String, duration: Int, topic: String, color: String) {
-        guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
+        guard areActivitiesEnabled else { return }
 
         let attributes = ClassSessionAttributes(
             courseName: courseName,
@@ -97,7 +108,7 @@ class LiveActivityService {
     }
 
     func startAssignmentReminder(title: String, courseName: String, dueDate: Date, points: Int) {
-        guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
+        guard areActivitiesEnabled else { return }
 
         let attributes = AssignmentDueAttributes(
             assignmentTitle: title,

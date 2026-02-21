@@ -14,7 +14,9 @@ class MusicService {
     var isLoading = false
     var error: String?
 
-    private let player = ApplicationMusicPlayer.shared
+    // Lazily access ApplicationMusicPlayer.shared to avoid crash at init
+    // when MusicKit entitlement is missing (no Apple Developer account).
+    private var player: ApplicationMusicPlayer { ApplicationMusicPlayer.shared }
 
     // MARK: - Authorization
 

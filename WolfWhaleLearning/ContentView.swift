@@ -33,6 +33,8 @@ struct ContentView: View {
             // Set up local notification delegate and categories.
             let center = UNUserNotificationCenter.current()
             center.delegate = viewModel.notificationService
+            // Safe without a developer account: UNUserNotificationCenter
+            // works for local notifications. Both methods handle errors internally.
             viewModel.notificationService.registerCategories()
             await viewModel.notificationService.requestAuthorization()
 

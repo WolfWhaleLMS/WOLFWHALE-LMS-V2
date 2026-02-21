@@ -34,7 +34,7 @@ final class CalendarService {
 
     // MARK: Private
 
-    private let eventStore = EKEventStore()
+    private var eventStore: EKEventStore?
     private static let calendarTitle = "WolfWhale LMS"
     private static let identifiersKey = "wolfwhale_synced_event_ids"
     private static let lastSyncKey = "wolfwhale_last_sync_date"
@@ -48,6 +48,12 @@ final class CalendarService {
     // MARK: - Initializer
 
     init() {
+        // EKEventStore creation and authorization checks are safe without entitlements,
+        // but wrap for resilience in case the framework is unavailable.
+        do {
+            let store = EKEventStore()
+            self.eventStore = store
+        }
         checkAuthorizationStatus()
     }
 
@@ -55,6 +61,10 @@ final class CalendarService {
 
     /// Check the current calendar authorization status.
     func checkAuthorizationStatus() {
+        guard eventStore != nil else {
+            isAuthorized = false
+            return
+        }
         let status = EKEventStore.authorizationStatus(for: .event)
         switch status {
         case .authorized, .fullAccess:
@@ -67,6 +77,10 @@ final class CalendarService {
     /// Request write access to the user's calendar. Returns `true` if granted.
     @discardableResult
     func requestAccess() async -> Bool {
+        guard let eventStore else {
+            isAuthorized = false
+            return false
+        }
         do {
             let granted: Bool
             if #available(iOS 17.0, *) {
@@ -85,7 +99,9 @@ final class CalendarService {
     // MARK: - Calendar Management
 
     /// Find the existing "WolfWhale LMS" calendar or create one with a blue color.
-    func getOrCreateWolfWhaleCalendar() -> EKCalendar {
+    func getOrCreateWolfWhaleCalendar() -> EKCalendar? {
+        guard let eventStore else { return nil }
+
         // Check saved calendar identifier first
         if let savedId = UserDefaults.standard.string(forKey: Self.calendarIdKey),
            let existing = eventStore.calendar(withIdentifier: savedId) {
@@ -132,8 +148,8 @@ final class CalendarService {
 
     /// Create a calendar event for a single assignment's due date.
     func syncAssignmentToCalendar(assignment: Assignment) {
-        guard isAuthorized else { return }
-        let calendar = selectedCalendar ?? getOrCreateWolfWhaleCalendar()
+        guard isAuthorized, let eventStore else { return }
+        guard let calendar = selectedCalendar ?? getOrCreateWolfWhaleCalendar() else { return }
         let key = "assignment-\(assignment.id.uuidString)"
 
         // Remove existing event if already synced (to update)
@@ -181,8 +197,8 @@ final class CalendarService {
 
     /// Sync class schedule entries as recurring weekly events.
     func syncScheduleToCalendar(schedule: [ScheduleEntry]) {
-        guard isAuthorized else { return }
-        let calendar = selectedCalendar ?? getOrCreateWolfWhaleCalendar()
+        guard isAuthorized, let eventStore else { return }
+        guard let calendar = selectedCalendar ?? getOrCreateWolfWhaleCalendar() else { return }
 
         for entry in schedule {
             let key = "schedule-\(entry.id.uuidString)"
@@ -241,6 +257,7 @@ final class CalendarService {
 
     /// Remove a single synced event by its EKEvent identifier.
     func removeEvent(identifier: String) {
+        guard let eventStore else { return }
         guard let event = eventStore.event(withIdentifier: identifier) else { return }
         do {
             try eventStore.remove(event, span: .futureEvents, commit: true)
@@ -259,6 +276,7 @@ final class CalendarService {
 
     /// Remove all WolfWhale-synced events and clear stored identifiers.
     func removeAllWolfWhaleEvents() {
+        guard let eventStore else { return }
         let ids = syncedIdentifiers
         for (_, eventId) in ids {
             if let event = eventStore.event(withIdentifier: eventId) {
@@ -273,12 +291,12 @@ final class CalendarService {
 
     /// Returns all writable calendars for the user to pick from.
     var availableCalendars: [EKCalendar] {
-        eventStore.calendars(for: .event).filter { $0.allowsContentModifications }
+        eventStore?.calendars(for: .event).filter { $0.allowsContentModifications } ?? []
     }
 
     /// Set the target calendar by identifier.
     func selectCalendar(identifier: String) {
-        if let cal = eventStore.calendar(withIdentifier: identifier) {
+        if let cal = eventStore?.calendar(withIdentifier: identifier) {
             selectedCalendar = cal
             UserDefaults.standard.set(identifier, forKey: Self.calendarIdKey)
         }

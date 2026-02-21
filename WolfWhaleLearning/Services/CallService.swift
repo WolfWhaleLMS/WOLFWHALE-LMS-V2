@@ -19,23 +19,41 @@ final class CallService: NSObject {
 
     private var callTimer: Timer?
     private var provider: CXProvider?
-    private let callController = CXCallController()
+    private var callController: CXCallController?
     private var audioEngine: AVAudioEngine?
+    private var callKitAvailable = false
 
     override init() {
         super.init()
-        let config = CXProviderConfiguration()
-        config.supportsVideo = false
-        config.maximumCallGroups = 1
-        config.supportedHandleTypes = [.generic, .phoneNumber]
-        let provider = CXProvider(configuration: config)
-        provider.setDelegate(self, queue: nil)
-        self.provider = provider
+        // CXProvider and CXCallController can crash without proper code signing
+        // (no Apple Developer account). Defer creation and catch failures.
+        do {
+            let config = CXProviderConfiguration()
+            config.supportsVideo = false
+            config.maximumCallGroups = 1
+            config.supportedHandleTypes = [.generic, .phoneNumber]
+            let newProvider = CXProvider(configuration: config)
+            newProvider.setDelegate(self, queue: nil)
+            self.provider = newProvider
+            self.callController = CXCallController()
+            self.callKitAvailable = true
+        } catch {
+            #if DEBUG
+            print("[CallService] CallKit initialization failed (missing entitlement?): \(error)")
+            #endif
+            self.callKitAvailable = false
+        }
     }
 
     // MARK: - Start Call
 
     func startCall(to handle: String, displayName: String) {
+        guard callKitAvailable, let callController else {
+            #if DEBUG
+            print("[CallService] CallKit not available — cannot start call")
+            #endif
+            return
+        }
         let uuid = UUID()
         let callHandle = CXHandle(type: .generic, value: handle)
         let startAction = CXStartCallAction(call: uuid, handle: callHandle)
@@ -76,7 +94,7 @@ final class CallService: NSObject {
     // MARK: - End Call
 
     func endCall() {
-        guard let uuid = activeCallUUID else { return }
+        guard let uuid = activeCallUUID, let callController else { return }
         let endAction = CXEndCallAction(call: uuid)
         let transaction = CXTransaction(action: endAction)
         callController.request(transaction) { [weak self] error in
@@ -94,7 +112,7 @@ final class CallService: NSObject {
     // MARK: - Mute / Speaker
 
     func toggleMute() {
-        guard let uuid = activeCallUUID else { return }
+        guard let uuid = activeCallUUID, let callController else { return }
         isMuted.toggle()
 
         let muteAction = CXSetMutedCallAction(call: uuid, muted: isMuted)

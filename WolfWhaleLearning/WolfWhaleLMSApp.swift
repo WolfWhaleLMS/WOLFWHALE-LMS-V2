@@ -53,7 +53,7 @@ class AppDelegate: NSObject, UIApplicationDelegate {
 struct WolfWhaleLMSApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @AppStorage("colorSchemePreference") private var colorSchemePreference: String = "system"
-    @State private var pushService = PushNotificationService()
+    @State private var pushService: PushNotificationService?
 
     var body: some Scene {
         WindowGroup {
@@ -63,16 +63,21 @@ struct WolfWhaleLMSApp: App {
                     colorSchemePreference == "light" ? .light : nil
                 )
                 .task {
+                    // Lazily create push service to avoid crash without
+                    // APNs entitlements / Apple Developer provisioning.
+                    let service = PushNotificationService()
+                    pushService = service
+
                     // Wire the push service into the AppDelegate so it
                     // receives the device token callback.
-                    appDelegate.pushService = pushService
+                    appDelegate.pushService = service
 
                     // Register notification categories (synchronous setup).
-                    pushService.registerNotificationCategories()
+                    service.registerNotificationCategories()
 
                     // Request notification permissions and, if granted,
                     // register for remote notifications.
-                    await pushService.requestAuthorization()
+                    await service.requestAuthorization()
                 }
         }
     }

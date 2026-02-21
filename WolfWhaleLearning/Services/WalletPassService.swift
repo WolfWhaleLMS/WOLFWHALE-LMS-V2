@@ -4,12 +4,23 @@ import SwiftUI
 @MainActor
 @Observable
 class WalletPassService {
-    var isPassAvailable = false
     var hasExistingPass = false
     var error: String?
+    private var _passAvailabilityChecked = false
+    private var _isPassAvailable = false
+
+    /// Lazily checks PKPassLibrary availability to avoid crashes without Wallet entitlement.
+    var isPassAvailable: Bool {
+        if !_passAvailabilityChecked {
+            _passAvailabilityChecked = true
+            _isPassAvailable = PKPassLibrary.isPassLibraryAvailable()
+        }
+        return _isPassAvailable
+    }
 
     init() {
-        isPassAvailable = PKPassLibrary.isPassLibraryAvailable()
+        // Intentionally empty -- availability is checked lazily to avoid
+        // crashes on launch when the Wallet entitlement is missing.
     }
 
     /// Represents a school ID pass configuration. In production, the actual .pkpass
