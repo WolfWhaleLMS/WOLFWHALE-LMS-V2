@@ -168,7 +168,7 @@ struct TeacherProfileView: View {
                         Text("Build")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
-                        Text("2024.1")
+                        Text("2026.2.20")
                             .font(.caption.monospaced())
                     }
                 }

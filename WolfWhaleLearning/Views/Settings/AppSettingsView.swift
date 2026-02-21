@@ -24,7 +24,7 @@ struct AppSettingsView: View {
     }
 
     private var buildNumber: String {
-        Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "2024.1"
+        Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "2026.2.20"
     }
 
     // MARK: - Body
