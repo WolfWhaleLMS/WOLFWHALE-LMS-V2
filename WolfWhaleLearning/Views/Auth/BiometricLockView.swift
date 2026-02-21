@@ -84,6 +84,12 @@ struct BiometricLockView: View {
                     .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .opacity(isAnimating ? 1.0 : 0.0)
                 }
+                .padding(24)
+                .background {
+                    RoundedRectangle(cornerRadius: 20)
+                        .fill(.clear)
+                        .glassEffect(.regular.tint(.purple), in: RoundedRectangle(cornerRadius: 20))
+                }
                 .padding(.horizontal, 32)
                 .padding(.bottom, 48)
             }

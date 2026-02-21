@@ -48,7 +48,7 @@ struct GlassCard<Content: View>: View {
 
     var body: some View {
         content
-            .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+            .glassEffect(.regular, in: .rect(cornerRadius: 16))
     }
 }
 

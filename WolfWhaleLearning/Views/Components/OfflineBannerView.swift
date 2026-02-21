@@ -37,11 +37,11 @@ struct OfflineBannerView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
-        .overlay(
+        .background {
             RoundedRectangle(cornerRadius: 12)
-                .stroke(.pink.opacity(0.3), lineWidth: 1)
-        )
+                .fill(.clear)
+                .glassEffect(.regular.tint(.pink), in: RoundedRectangle(cornerRadius: 12))
+        }
         .padding(.horizontal, 16)
         .padding(.top, 8)
     }

@@ -42,7 +42,6 @@ struct GradebookView: View {
             .padding(.horizontal)
             .padding(.bottom, 20)
         }
-        .background(Color(.systemGroupedBackground))
         .navigationTitle(course.title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

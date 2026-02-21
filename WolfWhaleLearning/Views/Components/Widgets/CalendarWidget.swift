@@ -104,5 +104,6 @@ struct CalendarWidget: View {
         }
         .padding()
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
+        .glassEffect(.regular.tint(.purple), in: RoundedRectangle(cornerRadius: 20))
     }
 }

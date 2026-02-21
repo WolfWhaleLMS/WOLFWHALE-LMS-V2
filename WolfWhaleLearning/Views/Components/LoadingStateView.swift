@@ -20,7 +20,11 @@ struct LoadingStateView: View {
         }
         .padding(32)
         .frame(maxWidth: .infinity)
-        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .background {
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.clear)
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
+        }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(title). \(message)")
     }
@@ -59,7 +63,11 @@ struct ShimmerLoadingView: View {
             }
         }
         .padding(14)
-        .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
+        .background {
+            RoundedRectangle(cornerRadius: 12)
+                .fill(.clear)
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
+        }
         .opacity(isAnimating ? 0.5 : 1.0)
         .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: isAnimating)
         .onAppear { isAnimating = true }
@@ -102,7 +110,11 @@ struct ErrorStateView: View {
         }
         .padding(32)
         .frame(maxWidth: .infinity)
-        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .background {
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.clear)
+                .glassEffect(.regular.tint(.orange), in: RoundedRectangle(cornerRadius: 16))
+        }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Error: \(message)")
     }

@@ -28,7 +28,8 @@ struct WritingAssistantView: View {
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        .background(.ultraThinMaterial, in: .rect(cornerRadius: 14))
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
+        .glassEffect(.regular.tint(.blue), in: RoundedRectangle(cornerRadius: 14))
         .onChange(of: text) {
             refresh()
         }

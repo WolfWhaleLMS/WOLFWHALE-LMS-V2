@@ -61,7 +61,6 @@ struct EditCourseView: View {
             .padding(.horizontal)
             .padding(.bottom, 20)
         }
-        .background(Color(.systemGroupedBackground))
         .navigationTitle("Edit Course")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

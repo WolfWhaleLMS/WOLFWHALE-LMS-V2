@@ -125,7 +125,8 @@ struct LeaderboardView: View {
             )
         }
         .padding(.vertical, 16)
-        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .glassEffect(.regular.tint(.orange), in: RoundedRectangle(cornerRadius: 16))
     }
 
     private func statItem(icon: String, value: String, label: String, color: Color) -> some View {
@@ -176,7 +177,8 @@ struct LeaderboardView: View {
             }
         }
         .padding(20)
-        .background(.ultraThinMaterial, in: .rect(cornerRadius: 20))
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
+        .glassEffect(.regular.tint(.yellow), in: RoundedRectangle(cornerRadius: 20))
     }
 
     private var podiumLayout: some View {
@@ -314,7 +316,8 @@ struct LeaderboardView: View {
             }
         }
         .padding(16)
-        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
     }
 
     private func rankingRow(entry: LeaderboardEntry) -> some View {

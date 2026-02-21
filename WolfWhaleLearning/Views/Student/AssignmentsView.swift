@@ -29,7 +29,6 @@ struct AssignmentsView: View {
                 .padding(.horizontal)
                 .padding(.top, 8)
             }
-            .background(Color(.systemGroupedBackground))
             .overlay {
                 if viewModel.assignments.isEmpty {
                     ContentUnavailableView(
@@ -70,6 +69,9 @@ struct AssignmentsView: View {
                     .accessibilityAddTraits(selectedFilter == index ? .isSelected : [])
                 }
             }
+            .padding(.horizontal, 4)
+            .padding(.vertical, 6)
+            .glassEffect(.regular, in: .capsule)
         }
         .contentMargins(.horizontal, 0)
         .scrollIndicators(.hidden)

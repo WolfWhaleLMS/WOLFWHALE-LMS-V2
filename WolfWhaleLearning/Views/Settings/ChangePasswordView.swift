@@ -103,7 +103,6 @@ struct ChangePasswordView: View {
                 .padding(.bottom, 40)
             }
             .scrollDismissesKeyboard(.interactively)
-            .background(Color(.systemGroupedBackground))
             .navigationTitle("Change Password")
             .navigationBarTitleDisplayMode(.inline)
 

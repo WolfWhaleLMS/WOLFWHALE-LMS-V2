@@ -85,7 +85,6 @@ struct EditProfileView: View {
                 .padding(.bottom, 40)
             }
             .scrollDismissesKeyboard(.interactively)
-            .background(Color(.systemGroupedBackground))
             .navigationTitle("Edit Profile")
             .navigationBarTitleDisplayMode(.inline)
             .onAppear { loadCurrentValues() }

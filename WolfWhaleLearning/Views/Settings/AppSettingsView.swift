@@ -41,7 +41,6 @@ struct AppSettingsView: View {
             dangerZoneSection
         }
         .listStyle(.insetGrouped)
-        .background(Color(.systemGroupedBackground))
         .navigationTitle("Settings")
         .navigationBarTitleDisplayMode(.large)
         .sheet(isPresented: $showTerms) {

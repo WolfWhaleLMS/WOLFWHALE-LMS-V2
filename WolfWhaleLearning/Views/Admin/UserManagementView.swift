@@ -30,7 +30,6 @@ struct UserManagementView: View {
                 Section {
                     filterChips
                 }
-                .listRowBackground(Color.clear)
                 .listRowInsets(EdgeInsets())
 
                 Section {
@@ -161,7 +160,7 @@ struct UserManagementView: View {
             }
         }
         .padding(16)
-        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 14))
+        .background(.ultraThinMaterial, in: .rect(cornerRadius: 14))
         .padding(.horizontal, 16)
         .padding(.top, 8)
         .padding(.bottom, 4)
@@ -219,6 +218,7 @@ struct UserManagementView: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
+            .glassEffect(.regular, in: .capsule)
         }
         .scrollIndicators(.hidden)
         .contentMargins(.horizontal, 0)

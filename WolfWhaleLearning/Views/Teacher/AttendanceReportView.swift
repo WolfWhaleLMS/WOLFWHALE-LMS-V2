@@ -82,7 +82,6 @@ struct AttendanceReportView: View {
             .padding(.horizontal)
             .padding(.bottom, 20)
         }
-        .background(Color(.systemGroupedBackground))
         .navigationTitle("Attendance Report")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

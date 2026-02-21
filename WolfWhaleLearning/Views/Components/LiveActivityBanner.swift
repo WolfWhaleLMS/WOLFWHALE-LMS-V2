@@ -59,11 +59,8 @@ struct LiveActivityBanner: View {
         .padding(14)
         .background {
             RoundedRectangle(cornerRadius: 14)
-                .fill(.ultraThinMaterial)
-                .overlay {
-                    RoundedRectangle(cornerRadius: 14)
-                        .strokeBorder(.red.opacity(0.3), lineWidth: 1)
-                }
+                .fill(.clear)
+                .glassEffect(.regular.tint(.red), in: RoundedRectangle(cornerRadius: 14))
         }
         .accessibilityElement(children: .combine)
     }
@@ -88,7 +85,11 @@ struct LiveActivityBanner: View {
                     .foregroundStyle(.tertiary)
             }
             .padding(14)
-            .background(.ultraThinMaterial, in: .rect(cornerRadius: 14))
+            .background {
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(.clear)
+                    .glassEffect(.regular.tint(.purple), in: RoundedRectangle(cornerRadius: 14))
+            }
         }
         .buttonStyle(.plain)
         .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)

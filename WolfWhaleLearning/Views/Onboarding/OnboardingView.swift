@@ -29,7 +29,11 @@ struct OnboardingView: View {
                                 .foregroundStyle(.white.opacity(0.8))
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 8)
-                                .background(.white.opacity(0.15), in: Capsule())
+                                .background {
+                                    Capsule()
+                                        .fill(.clear)
+                                        .glassEffect(.regular, in: .capsule)
+                                }
                         }
                         .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                         .accessibilityLabel("Skip onboarding")
@@ -341,7 +345,11 @@ struct OnboardingView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 20)
         .padding(.horizontal, 8)
-        .background(.white.opacity(0.1), in: .rect(cornerRadius: 16))
+        .background {
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.clear)
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
+        }
     }
 
     private func featureRow(icon: String, title: String, description: String, color: Color) -> some View {
@@ -365,7 +373,11 @@ struct OnboardingView: View {
             Spacer()
         }
         .padding(12)
-        .background(.white.opacity(0.08), in: .rect(cornerRadius: 14))
+        .background {
+            RoundedRectangle(cornerRadius: 14)
+                .fill(.clear)
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 14))
+        }
     }
 
     private func gamificationCard(icon: String, title: String, description: String, color: Color) -> some View {
@@ -389,7 +401,11 @@ struct OnboardingView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
         .padding(.horizontal, 8)
-        .background(.white.opacity(0.1), in: .rect(cornerRadius: 14))
+        .background {
+            RoundedRectangle(cornerRadius: 14)
+                .fill(.clear)
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 14))
+        }
     }
 
     // MARK: - Actions

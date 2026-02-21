@@ -26,7 +26,9 @@ struct ForgotPasswordView: View {
             .padding(.horizontal, 24)
         }
         .scrollDismissesKeyboard(.interactively)
-        .background(Color(.systemGroupedBackground).ignoresSafeArea())
+        .background {
+            Color.clear.ignoresSafeArea()
+        }
     }
 
     // MARK: - Header
@@ -87,7 +89,11 @@ struct ForgotPasswordView: View {
                     .onSubmit { resetPassword() }
             }
             .padding(14)
-            .background(Color(.systemBackground), in: .rect(cornerRadius: 12))
+            .background {
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(.clear)
+                    .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
+            }
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .strokeBorder(isEmailFocused ? Color.purple.opacity(0.5) : Color(.separator).opacity(0.3), lineWidth: 1)

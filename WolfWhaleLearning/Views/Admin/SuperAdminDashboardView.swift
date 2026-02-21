@@ -30,11 +30,13 @@ struct SuperAdminDashboardView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 16) {
-                    headerSection
-                    systemHealthCard
-                    userStatisticsSection
-                    tenantManagementSection
+                GlassEffectContainer {
+                    VStack(spacing: 16) {
+                        headerSection
+                        systemHealthCard
+                        userStatisticsSection
+                        tenantManagementSection
+                    }
                 }
                 .padding(.horizontal)
                 .padding(.bottom, 20)
@@ -97,7 +99,7 @@ struct SuperAdminDashboardView: View {
             Spacer()
         }
         .padding(16)
-        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .glassEffect(.regular.tint(.purple), in: RoundedRectangle(cornerRadius: 16))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Super Admin Console. Manage all tenants and user limits.")
     }
@@ -132,7 +134,7 @@ struct SuperAdminDashboardView: View {
             }
         }
         .padding(16)
-        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .glassEffect(.regular, in: .rect(cornerRadius: 16))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("System Health: \(tenants.count) tenants, \(totalUsersAcrossTenants) total users")
     }
@@ -150,7 +152,7 @@ struct SuperAdminDashboardView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 14)
-        .background(color.opacity(0.08), in: .rect(cornerRadius: 12))
+        .glassEffect(.regular.tint(color), in: RoundedRectangle(cornerRadius: 12))
     }
 
     // MARK: - User Statistics
@@ -176,7 +178,7 @@ struct SuperAdminDashboardView: View {
             }
         }
         .padding(16)
-        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .glassEffect(.regular, in: .rect(cornerRadius: 16))
     }
 
     private func tenantStatRow(_ tenant: TenantInfo) -> some View {
@@ -198,7 +200,7 @@ struct SuperAdminDashboardView: View {
             tenantProgressBar(used: tenant.userCount, total: tenant.userLimit)
         }
         .padding(12)
-        .background(Color(.tertiarySystemFill), in: .rect(cornerRadius: 12))
+        .glassEffect(.regular.tint(.indigo), in: RoundedRectangle(cornerRadius: 12))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(tenant.name), \(tenant.userCount) of \(tenant.userLimit) users")
     }
@@ -291,13 +293,13 @@ struct SuperAdminDashboardView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
-                    .background(Color.purple.opacity(0.12), in: .rect(cornerRadius: 12))
+                    .glassEffect(.regular.tint(.purple).interactive(), in: RoundedRectangle(cornerRadius: 12))
                     .foregroundStyle(.purple)
                 }
             }
         }
         .padding(16)
-        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .glassEffect(.regular, in: .rect(cornerRadius: 16))
     }
 
     private func tenantManagementRow(_ tenant: TenantInfo) -> some View {
@@ -330,13 +332,13 @@ struct SuperAdminDashboardView: View {
                     .font(.caption.bold())
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
-                    .background(Color.indigo.opacity(0.12), in: Capsule())
+                    .glassEffect(.regular.tint(.indigo), in: .capsule)
                     .foregroundStyle(.indigo)
             }
             .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         }
         .padding(12)
-        .background(Color(.tertiarySystemFill), in: .rect(cornerRadius: 12))
+        .glassEffect(.regular.tint(.indigo), in: RoundedRectangle(cornerRadius: 12))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(tenant.name), created \(tenant.createdAt, format: .dateTime.month().day().year())")
         .accessibilityHint("Double tap Edit Limit to change user limit")
@@ -354,7 +356,7 @@ struct SuperAdminDashboardView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
-            .background(color.opacity(0.12), in: .rect(cornerRadius: 12))
+            .glassEffect(.regular.tint(color).interactive(), in: RoundedRectangle(cornerRadius: 12))
             .foregroundStyle(color)
         }
         .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)

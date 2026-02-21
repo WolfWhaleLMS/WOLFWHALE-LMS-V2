@@ -66,7 +66,8 @@ struct CourseDetailView: View {
                 StatRing(progress: course.progress, color: Theme.courseColor(course.colorName), lineWidth: 5, size: 44)
             }
             .padding(16)
-            .background(.ultraThinMaterial, in: .rect(cornerRadius: 14))
+            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 14))
             .padding(.horizontal)
         }
         .padding(.vertical)
@@ -93,7 +94,8 @@ struct CourseDetailView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 24)
-                .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
                 .padding(.horizontal)
             }
 
@@ -111,7 +113,8 @@ struct CourseDetailView: View {
                     }
                 }
                 .padding(14)
-                .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
                 .padding(.horizontal)
             }
         }

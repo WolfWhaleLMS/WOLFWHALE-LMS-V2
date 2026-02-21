@@ -24,33 +24,35 @@ struct TeacherDashboardView: View {
                     .padding(.horizontal)
                     .padding(.top, 40)
                 } else {
-                    VStack(spacing: 16) {
-                        if let dataError = viewModel.dataError {
-                            HStack(spacing: 10) {
-                                Image(systemName: "exclamationmark.triangle.fill")
-                                    .foregroundStyle(.orange)
-                                Text(dataError)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                                Spacer()
-                                Button {
-                                    viewModel.dataError = nil
-                                } label: {
-                                    Image(systemName: "xmark.circle.fill")
+                    GlassEffectContainer {
+                        VStack(spacing: 16) {
+                            if let dataError = viewModel.dataError {
+                                HStack(spacing: 10) {
+                                    Image(systemName: "exclamationmark.triangle.fill")
+                                        .foregroundStyle(.orange)
+                                    Text(dataError)
+                                        .font(.subheadline)
                                         .foregroundStyle(.secondary)
+                                    Spacer()
+                                    Button {
+                                        viewModel.dataError = nil
+                                    } label: {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    .buttonStyle(.plain)
                                 }
-                                .buttonStyle(.plain)
+                                .padding(12)
+                                .glassEffect(.regular.tint(.orange), in: .rect(cornerRadius: 12))
+                                .accessibilityElement(children: .combine)
+                                .accessibilityLabel("Warning: \(dataError)")
                             }
-                            .padding(12)
-                            .background(.orange.opacity(0.1), in: .rect(cornerRadius: 12))
-                            .accessibilityElement(children: .combine)
-                            .accessibilityLabel("Warning: \(dataError)")
+                            overviewCards
+                            liveActivityBanner
+                            quickActions
+                            recentActivity
+                            announcementsSection
                         }
-                        overviewCards
-                        liveActivityBanner
-                        quickActions
-                        recentActivity
-                        announcementsSection
                     }
                     .padding(.horizontal)
                     .padding(.bottom, 20)
@@ -103,7 +105,7 @@ struct TeacherDashboardView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
-        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .glassEffect(.regular.tint(color), in: RoundedRectangle(cornerRadius: 16))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label): \(value)")
     }
@@ -151,7 +153,7 @@ struct TeacherDashboardView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
-            .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
+            .glassEffect(.regular.tint(color).interactive(), in: RoundedRectangle(cornerRadius: 12))
         }
         .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         .accessibilityLabel("\(label)")
@@ -172,7 +174,7 @@ struct TeacherDashboardView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 20)
-                .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
+                .glassEffect(.regular, in: .rect(cornerRadius: 12))
             } else {
                 ForEach(viewModel.assignments.filter(\.isSubmitted).prefix(3)) { assignment in
                     HStack(spacing: 12) {
@@ -201,12 +203,12 @@ struct TeacherDashboardView: View {
                                 .font(.caption.bold())
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 4)
-                                .background(.orange.opacity(0.15), in: Capsule())
+                                .glassEffect(.regular.tint(.orange), in: .capsule)
                                 .foregroundStyle(.orange)
                         }
                     }
                     .padding(12)
-                    .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
+                    .glassEffect(.regular, in: .rect(cornerRadius: 12))
                     .accessibilityElement(children: .combine)
                     .accessibilityLabel("\(assignment.title) for \(assignment.courseName), \(assignment.grade != nil ? "graded" : "needs grading")")
                 }
@@ -228,7 +230,7 @@ struct TeacherDashboardView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 20)
-                .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
+                .glassEffect(.regular, in: .rect(cornerRadius: 12))
             } else {
                 ForEach(viewModel.announcements.prefix(2)) { announcement in
                     VStack(alignment: .leading, spacing: 6) {
@@ -251,7 +253,7 @@ struct TeacherDashboardView: View {
                             .lineLimit(2)
                     }
                     .padding(12)
-                    .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
+                    .glassEffect(.regular, in: .rect(cornerRadius: 12))
                 }
             }
         }

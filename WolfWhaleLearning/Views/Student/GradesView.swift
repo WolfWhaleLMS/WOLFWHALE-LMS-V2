@@ -36,7 +36,6 @@ struct GradesView: View {
                 }
             }
         }
-        .background(Color(.systemGroupedBackground))
         .navigationTitle("Grades")
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {

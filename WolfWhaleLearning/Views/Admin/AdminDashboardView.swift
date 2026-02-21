@@ -23,31 +23,33 @@ struct AdminDashboardView: View {
                     .padding(.horizontal)
                     .padding(.top, 40)
                 } else {
-                    VStack(spacing: 16) {
-                        if let dataError = viewModel.dataError {
-                            HStack(spacing: 10) {
-                                Image(systemName: "exclamationmark.triangle.fill")
-                                    .foregroundStyle(.orange)
-                                Text(dataError)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                                Spacer()
-                                Button {
-                                    viewModel.dataError = nil
-                                } label: {
-                                    Image(systemName: "xmark.circle.fill")
+                    GlassEffectContainer {
+                        VStack(spacing: 16) {
+                            if let dataError = viewModel.dataError {
+                                HStack(spacing: 10) {
+                                    Image(systemName: "exclamationmark.triangle.fill")
+                                        .foregroundStyle(.orange)
+                                    Text(dataError)
+                                        .font(.subheadline)
                                         .foregroundStyle(.secondary)
+                                    Spacer()
+                                    Button {
+                                        viewModel.dataError = nil
+                                    } label: {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    .buttonStyle(.plain)
                                 }
-                                .buttonStyle(.plain)
+                                .padding(12)
+                                .glassEffect(.regular.tint(.orange), in: .rect(cornerRadius: 12))
+                                .accessibilityElement(children: .combine)
+                                .accessibilityLabel("Warning: \(dataError)")
                             }
-                            .padding(12)
-                            .background(.orange.opacity(0.1), in: .rect(cornerRadius: 12))
-                            .accessibilityElement(children: .combine)
-                            .accessibilityLabel("Warning: \(dataError)")
+                            metricsGrid
+                            attendanceCard
+                            recentSection
                         }
-                        metricsGrid
-                        attendanceCard
-                        recentSection
                     }
                     .padding(.horizontal)
                     .padding(.bottom, 20)
@@ -88,7 +90,7 @@ struct AdminDashboardView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 14)
-        .background(.ultraThinMaterial, in: .rect(cornerRadius: 14))
+        .glassEffect(.regular.tint(color), in: RoundedRectangle(cornerRadius: 14))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label): \(value)")
     }
@@ -172,7 +174,7 @@ struct AdminDashboardView: View {
             }
         }
         .padding(16)
-        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .glassEffect(.regular, in: .rect(cornerRadius: 16))
         .accessibilityElement(children: .combine)
         .accessibilityLabel({
             let rates = weeklyAttendanceRates
@@ -199,7 +201,7 @@ struct AdminDashboardView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 20)
-                .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
+                .glassEffect(.regular, in: .rect(cornerRadius: 12))
             } else {
                 ForEach(viewModel.announcements) { announcement in
                     HStack(spacing: 12) {
@@ -216,7 +218,7 @@ struct AdminDashboardView: View {
                         Spacer()
                     }
                     .padding(12)
-                    .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
+                    .glassEffect(.regular, in: .rect(cornerRadius: 12))
                 }
             }
 
