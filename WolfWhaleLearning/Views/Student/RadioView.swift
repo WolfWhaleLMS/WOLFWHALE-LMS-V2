@@ -35,6 +35,13 @@ struct RadioView: View {
             )
             .navigationTitle("WolfWhale Radio")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
             .overlay(alignment: .bottom) {
                 if radioService.currentStation != nil {
                     miniPlayerBar

@@ -130,7 +130,7 @@ struct HumanCellARContainer: UIViewRepresentable {
 
         context.coordinator.arView = arView
 
-        DispatchQueue.main.async {
+        Task { @MainActor in
             arViewRef = arView
         }
 
@@ -155,6 +155,7 @@ struct HumanCellARContainer: UIViewRepresentable {
         var cellAnchor: AnchorEntity?
         var organelleEntities: [String: Entity] = [:]
         var labelEntities: [String: Entity] = [:]
+        var rotationTimer: Timer?
 
         var selectedOrganelleName: Binding<String?>
         var selectedOrganelleInfo: Binding<String?>
@@ -171,6 +172,10 @@ struct HumanCellARContainer: UIViewRepresentable {
             self.selectedOrganelleInfo = selectedOrganelleInfo
             self.selectedOrganelleFact = selectedOrganelleFact
             self.isPlaced = isPlaced
+        }
+
+        deinit {
+            rotationTimer?.invalidate()
         }
 
         // MARK: Tap Handling
@@ -284,9 +289,14 @@ struct HumanCellARContainer: UIViewRepresentable {
             )
 
             // Schedule re-trigger after the animation completes
-            Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak entity] _ in
+            rotationTimer?.invalidate()
+            rotationTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self, weak entity] timer in
+                guard let coordinator = self, let entity else {
+                    // Entity or coordinator deallocated – stop the timer to avoid a leak
+                    timer.invalidate()
+                    return
+                }
                 Task { @MainActor in
-                    guard let entity else { return }
                     entity.transform.rotation = simd_quatf(angle: 0, axis: SIMD3<Float>(0, 1, 0))
                     let nextRotation = Transform(rotation: simd_quatf(angle: .pi * 2, axis: SIMD3<Float>(0, 1, 0)))
                     entity.move(
@@ -296,6 +306,7 @@ struct HumanCellARContainer: UIViewRepresentable {
                         timingFunction: .linear
                     )
                 }
+                _ = coordinator // silence unused-variable warning
             }
         }
 

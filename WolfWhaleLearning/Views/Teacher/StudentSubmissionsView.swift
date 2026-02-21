@@ -91,6 +91,8 @@ struct StudentSubmissionsView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 14)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label): \(value)")
     }
 
     // MARK: - Student List Section
@@ -167,6 +169,13 @@ struct StudentSubmissionsView: View {
         }
         .padding(14)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel({
+            let graded = assignments.filter { $0.grade != nil }.count
+            let gradedAssignments = assignments.filter { $0.grade != nil }
+            let avgText = gradedAssignments.isEmpty ? "" : ", average grade \(Int(gradedAssignments.reduce(0.0) { $0 + ($1.grade ?? 0) } / Double(gradedAssignments.count))) percent"
+            return "\(name): \(assignments.count) submitted, \(graded) graded\(avgText)"
+        }())
     }
 
     private func submissionRow(_ assignment: Assignment) -> some View {

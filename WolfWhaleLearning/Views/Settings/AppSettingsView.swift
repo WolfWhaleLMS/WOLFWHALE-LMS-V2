@@ -407,7 +407,7 @@ struct AppSettingsView: View {
                         )
                     Text("WolfWhale LMS")
                         .font(.caption.bold())
-                    Text("\u{00A9} 2024 WolfWhale. All rights reserved.")
+                    Text("\u{00A9} 2025 WolfWhale. All rights reserved.")
                         .font(.caption2)
                         .foregroundStyle(.tertiary)
                 }

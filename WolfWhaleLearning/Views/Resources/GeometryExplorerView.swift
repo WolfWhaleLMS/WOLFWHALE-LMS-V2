@@ -874,7 +874,7 @@ struct GeometryExplorerView: View {
         quizShowResult = false
         quizSelectedAnswer = nil
 
-        let shape = GeometryShape.allCases.randomElement()!
+        guard let shape = GeometryShape.allCases.randomElement() else { return }
         let dims = shape.defaultDimensions.map { base in
             let variation = Double.random(in: 0.5...2.0)
             return (base * variation * 2).rounded() / 2 // round to 0.5

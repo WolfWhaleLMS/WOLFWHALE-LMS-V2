@@ -138,7 +138,7 @@ private struct FractionProblemGenerator {
 
     static func generateSimplify(difficulty: FractionDifficulty) -> FractionProblem {
         let factors = [2, 3, 4, 5, 6]
-        let factor = factors.randomElement()!
+        let factor = factors.randomElement() ?? 2
         let maxSimpleDen = max(3, difficulty.maxDenominator / factor)
         let simpleDen = Int.random(in: 2...maxSimpleDen)
         let simpleNum = Int.random(in: 1..<simpleDen)

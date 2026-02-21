@@ -25,6 +25,27 @@ struct TeacherDashboardView: View {
                     .padding(.top, 40)
                 } else {
                     VStack(spacing: 16) {
+                        if let dataError = viewModel.dataError {
+                            HStack(spacing: 10) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(.orange)
+                                Text(dataError)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                                Button {
+                                    viewModel.dataError = nil
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundStyle(.secondary)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            .padding(12)
+                            .background(.orange.opacity(0.1), in: .rect(cornerRadius: 12))
+                            .accessibilityElement(children: .combine)
+                            .accessibilityLabel("Warning: \(dataError)")
+                        }
                         overviewCards
                         liveActivityBanner
                         quickActions
@@ -245,6 +266,7 @@ struct CreateCourseSheet: View {
     @State private var description = ""
     @State private var colorName = "blue"
     @State private var isCreating = false
+    @State private var createError: String?
 
     var body: some View {
         NavigationStack {
@@ -277,16 +299,30 @@ struct CreateCourseSheet: View {
                     Button("Create") {
                         hapticTrigger.toggle()
                         isCreating = true
+                        createError = nil
                         Task {
-                            try? await viewModel.createCourse(title: title, description: description, colorName: colorName)
-                            isCreating = false
-                            dismiss()
+                            do {
+                                try await viewModel.createCourse(title: title, description: description, colorName: colorName)
+                                isCreating = false
+                                dismiss()
+                            } catch {
+                                createError = "Failed to create course. Please try again."
+                                isCreating = false
+                            }
                         }
                     }
                     .fontWeight(.semibold)
                     .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty || isCreating)
                     .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                 }
+            }
+            .alert("Error", isPresented: Binding(
+                get: { createError != nil },
+                set: { if !$0 { createError = nil } }
+            )) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(createError ?? "")
             }
         }
     }
@@ -300,6 +336,7 @@ struct CreateAnnouncementSheet: View {
     @State private var content = ""
     @State private var isPinned = false
     @State private var isCreating = false
+    @State private var createError: String?
 
     var body: some View {
         NavigationStack {
@@ -323,16 +360,30 @@ struct CreateAnnouncementSheet: View {
                     Button("Post") {
                         hapticTrigger.toggle()
                         isCreating = true
+                        createError = nil
                         Task {
-                            try? await viewModel.createAnnouncement(title: title, content: content, isPinned: isPinned)
-                            isCreating = false
-                            dismiss()
+                            do {
+                                try await viewModel.createAnnouncement(title: title, content: content, isPinned: isPinned)
+                                isCreating = false
+                                dismiss()
+                            } catch {
+                                createError = "Failed to post announcement. Please try again."
+                                isCreating = false
+                            }
                         }
                     }
                     .fontWeight(.semibold)
                     .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty || isCreating)
                     .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                 }
+            }
+            .alert("Error", isPresented: Binding(
+                get: { createError != nil },
+                set: { if !$0 { createError = nil } }
+            )) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(createError ?? "")
             }
         }
     }

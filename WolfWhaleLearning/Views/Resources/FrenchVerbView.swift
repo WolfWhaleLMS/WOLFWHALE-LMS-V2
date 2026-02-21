@@ -723,9 +723,10 @@ struct VerbQuizModeView: View {
 
     private func startQuiz() {
         quizItems = []
+        guard !verbs.isEmpty, !FrenchTense.allCases.isEmpty else { return }
         for _ in 0..<totalQuestions {
-            let verb = verbs.randomElement()!
-            let tense = FrenchTense.allCases.randomElement()!
+            guard let verb = verbs.randomElement(),
+                  let tense = FrenchTense.allCases.randomElement() else { continue }
             let pronoun = Int.random(in: 0...5)
             quizItems.append((verb: verb, tense: tense, pronounIndex: pronoun))
         }

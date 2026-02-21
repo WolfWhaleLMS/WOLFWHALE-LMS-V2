@@ -518,11 +518,10 @@ struct iMessageChessView: View {
             .padding(.vertical, 6)
             .background(.green, in: Capsule())
             .transition(.scale.combined(with: .opacity))
-            .onAppear {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    withAnimation {
-                        showSendConfirmation = false
-                    }
+            .task {
+                try? await Task.sleep(for: .seconds(1.5))
+                withAnimation {
+                    showSendConfirmation = false
                 }
             }
     }
@@ -860,7 +859,7 @@ struct iMessageChessView: View {
     }
 
     private func columnLetter(_ col: Int) -> String {
-        String(Character(UnicodeScalar(97 + col)!))
+        UnicodeScalar(97 + col).map { String(Character($0)) } ?? "?"
     }
 }
 

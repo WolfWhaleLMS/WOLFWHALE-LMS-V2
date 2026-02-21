@@ -30,6 +30,21 @@ struct AssignmentsView: View {
                 .padding(.top, 8)
             }
             .background(Color(.systemGroupedBackground))
+            .overlay {
+                if viewModel.assignments.isEmpty {
+                    ContentUnavailableView(
+                        "No Assignments",
+                        systemImage: "doc.text",
+                        description: Text("Assignments from your courses will appear here")
+                    )
+                } else if filtered.isEmpty {
+                    ContentUnavailableView(
+                        "No Matching Assignments",
+                        systemImage: "line.3.horizontal.decrease.circle",
+                        description: Text("Try a different filter to see assignments")
+                    )
+                }
+            }
             .navigationTitle("Assignments")
             .sheet(item: $selectedAssignment) { assignment in
                 submitSheet(assignment)

@@ -73,10 +73,12 @@ struct GradesView: View {
                 HStack(spacing: 4) {
                     Image(systemName: "arrow.up.right")
                         .font(.caption)
+                        .accessibilityHidden(true)
                     Text("Trending up from last semester")
                         .font(.caption)
                 }
                 .foregroundStyle(.green)
+                .accessibilityLabel("Trending up from last semester")
             }
             Spacer()
         }

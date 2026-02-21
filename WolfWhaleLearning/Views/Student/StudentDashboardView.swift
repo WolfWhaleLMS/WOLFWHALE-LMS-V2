@@ -61,6 +61,27 @@ struct StudentDashboardView: View {
                     .padding(.top, 40)
                 } else {
                     VStack(spacing: 20) {
+                        if let dataError = viewModel.dataError {
+                            HStack(spacing: 10) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(.orange)
+                                Text(dataError)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                                Button {
+                                    viewModel.dataError = nil
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundStyle(.secondary)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            .padding(12)
+                            .background(.orange.opacity(0.1), in: .rect(cornerRadius: 12))
+                            .accessibilityElement(children: .combine)
+                            .accessibilityLabel("Warning: \(dataError)")
+                        }
                         activitySection
                         statsRow
                         FishTankView()
@@ -423,18 +444,35 @@ struct StudentDashboardView: View {
             Text("Continue Learning")
                 .font(.headline)
 
-            ScrollView(.horizontal) {
-                LazyHStack(spacing: 12) {
-                    ForEach(viewModel.courses) { course in
-                        NavigationLink(value: course) {
-                            courseCard(course)
+            if viewModel.courses.isEmpty {
+                VStack(spacing: 10) {
+                    Image(systemName: "book.closed")
+                        .font(.title2)
+                        .foregroundStyle(.secondary)
+                    Text("No courses yet")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.secondary)
+                    Text("Enroll in a course to start learning")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 24)
+                .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+            } else {
+                ScrollView(.horizontal) {
+                    LazyHStack(spacing: 12) {
+                        ForEach(viewModel.courses) { course in
+                            NavigationLink(value: course) {
+                                courseCard(course)
+                            }
+                            .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
+                .contentMargins(.horizontal, 0)
+                .scrollIndicators(.hidden)
             }
-            .contentMargins(.horizontal, 0)
-            .scrollIndicators(.hidden)
         }
         .navigationDestination(for: Course.self) { course in
             CourseDetailView(course: course, viewModel: viewModel)

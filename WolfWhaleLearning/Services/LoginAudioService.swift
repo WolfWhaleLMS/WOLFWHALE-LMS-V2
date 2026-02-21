@@ -78,7 +78,9 @@ class LoginAudioService {
         do {
             try setupAudioEngine()
         } catch {
+            #if DEBUG
             print("[LoginAudioService] Failed to set up audio engine: \(error.localizedDescription)")
+            #endif
             return
         }
 
@@ -169,7 +171,9 @@ class LoginAudioService {
             try AVAudioSession.sharedInstance().setCategory(.ambient, mode: .default)
             try AVAudioSession.sharedInstance().setActive(true)
         } catch {
+            #if DEBUG
             print("[LoginAudioService] Audio session error: \(error.localizedDescription)")
+            #endif
         }
     }
 

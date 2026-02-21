@@ -42,8 +42,10 @@ class AppViewModel {
     // Lazy: APNs registration can crash without proper provisioning/entitlements
     private var _pushService: PushNotificationService?
     var pushService: PushNotificationService {
-        if _pushService == nil { _pushService = PushNotificationService() }
-        return _pushService!
+        if let existing = _pushService { return existing }
+        let service = PushNotificationService()
+        _pushService = service
+        return service
     }
 
     // MARK: - Biometric Auth
@@ -59,8 +61,10 @@ class AppViewModel {
     // Lazy: EventKit may require entitlements/permissions that crash without provisioning
     private var _calendarService: CalendarService?
     var calendarService: CalendarService {
-        if _calendarService == nil { _calendarService = CalendarService() }
-        return _calendarService!
+        if let existing = _calendarService { return existing }
+        let service = CalendarService()
+        _calendarService = service
+        return service
     }
     var calendarSyncEnabled: Bool {
         get { UserDefaults.standard.bool(forKey: UserDefaultsKeys.calendarSyncEnabled) }
@@ -72,8 +76,10 @@ class AppViewModel {
     // Lazy: CKContainer.default() crashes without iCloud capability/entitlements
     private var _cloudSync: CloudSyncService?
     var cloudSync: CloudSyncService {
-        if _cloudSync == nil { _cloudSync = CloudSyncService() }
-        return _cloudSync!
+        if let existing = _cloudSync { return existing }
+        let service = CloudSyncService()
+        _cloudSync = service
+        return service
     }
 
     var gpa: Double {
@@ -266,6 +272,10 @@ class AppViewModel {
     }
 
     func logout() {
+        // 1. Cancel any pending background refresh to prevent network storms
+        refreshTask?.cancel()
+        refreshTask = nil
+
         if !isDemoMode {
             Task {
                 // Remove push token from server before signing out
@@ -277,13 +287,42 @@ class AppViewModel {
                 await CacheService.shared.invalidateAll()
             }
         }
+
+        // 2. Stop radio playback so audio doesn't persist after logout
+        RadioService.shared.stop()
+
+        // 3. Clear offline storage
         offlineStorage.clearAllData()
+
+        // 4. Clear Siri / App Intents cached data from UserDefaults
+        //    so the next user doesn't see stale grades, assignments, or schedule
+        let defaults = UserDefaults.standard
+        defaults.removeObject(forKey: UserDefaultsKeys.upcomingAssignments)
+        defaults.removeObject(forKey: UserDefaultsKeys.gradesSummary)
+        defaults.removeObject(forKey: UserDefaultsKeys.scheduleToday)
+
+        // 5. Remove all pending local notification reminders for the previous user
+        //    and clear any deep-link state so they don't carry over
+        notificationService.cancelAllNotifications()
+        notificationService.clearDeepLinks()
+
+        // 6. Reset biometric lock state so the next login starts unlocked
+        isAppLocked = false
+
+        // 7. Clear lazy services so they are re-created fresh for the next user
+        _pushService = nil
+        _calendarService = nil
+        _cloudSync = nil
+
         isDemoMode = false
-        // Animate only the auth transition; clear data arrays outside animation
+
+        // 8. Animate only the auth transition; clear data arrays outside animation
         // to avoid a burst of cascading view recalculations
         withAnimation(.smooth) {
             isAuthenticated = false
         }
+
+        // 9. Clear all user data and error states
         currentUser = nil
         email = ""
         password = ""
@@ -299,6 +338,11 @@ class AppViewModel {
         children = []
         schoolMetrics = nil
         allUsers = []
+        dataError = nil
+        gradeError = nil
+        enrollmentError = nil
+        loginError = nil
+        isDataLoading = false
     }
 
     // MARK: - Fetch Profile
@@ -1317,12 +1361,21 @@ class AppViewModel {
                 .order("attendance_date", ascending: false)
                 .execute()
                 .value
+
+            // attendance_date is a plain "yyyy-MM-dd" string, not ISO8601
+            let dateFmt = DateFormatter()
+            dateFmt.dateFormat = "yyyy-MM-dd"
+            dateFmt.timeZone = TimeZone(identifier: "UTC")
+
+            // Look up course name from loaded courses since AttendanceDTO has no courseName column
+            let resolvedCourseName = courses.first(where: { $0.id == courseId })?.title ?? "Unknown"
+
             return dtos.map { dto in
                 AttendanceRecord(
                     id: dto.id,
-                    date: ISO8601DateFormatter().date(from: dto.date ?? "") ?? Date(),
+                    date: dateFmt.date(from: dto.date ?? "") ?? Date(),
                     status: AttendanceStatus(rawValue: dto.status) ?? .present,
-                    courseName: dto.courseName ?? "Unknown",
+                    courseName: resolvedCourseName,
                     studentName: nil
                 )
             }

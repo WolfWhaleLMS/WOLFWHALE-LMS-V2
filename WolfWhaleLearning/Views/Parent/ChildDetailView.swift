@@ -127,6 +127,8 @@ struct ChildDetailView: View {
         }
         .padding(16)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Academic Summary: GPA \(String(format: "%.1f", child.gpa)) out of 4.0, Attendance \(Int(child.attendanceRate * 100)) percent")
     }
 
     // MARK: - Course Grades

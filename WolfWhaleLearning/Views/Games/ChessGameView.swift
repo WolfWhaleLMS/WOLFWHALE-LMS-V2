@@ -653,7 +653,25 @@ class ChessGame {
     }
 
     func makeMove(from: ChessPosition, to: ChessPosition, simulated: Bool) -> MoveUndoInfo {
-        let movedPiece = board[from.row][from.col]!
+        guard let movedPiece = board[from.row][from.col] else {
+            // No piece at source — return a no-op undo info so callers never crash.
+            return MoveUndoInfo(
+                from: from, to: to,
+                movedPiece: ChessPiece(type: .pawn, color: currentTurn),
+                capturedPiece: nil,
+                previousEnPassant: enPassantTarget,
+                previousCurrentTurn: currentTurn,
+                previousIsCheck: isCheck,
+                previousIsCheckmate: isCheckmate,
+                previousIsStalemate: isStalemate,
+                previousGameOver: gameOver,
+                previousMoveCount: moveCount,
+                previousLastMove: lastMove,
+                epCapturedPiece: nil, epCapturedPos: nil,
+                castleRookFrom: nil, castleRookTo: nil, castleRookPiece: nil,
+                promotedTo: nil
+            )
+        }
         let capturedPiece = board[to.row][to.col]
         let prevEnPassant = enPassantTarget
         let prevTurn = currentTurn

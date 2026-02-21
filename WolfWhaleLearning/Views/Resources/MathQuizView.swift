@@ -99,7 +99,7 @@ private struct MathQuestionGenerator {
 
     private static func generateEasy() -> MathQuestion {
         let ops: [MathOperation] = [.addition, .subtraction]
-        let op = ops.randomElement()!
+        let op = ops.randomElement() ?? .addition
         let a = Int.random(in: 1...9)
         let b = Int.random(in: 1...9)
         switch op {
@@ -116,7 +116,7 @@ private struct MathQuestionGenerator {
 
     private static func generateMedium() -> MathQuestion {
         let ops: [MathOperation] = [.addition, .subtraction]
-        let op = ops.randomElement()!
+        let op = ops.randomElement() ?? .addition
         let a = Int.random(in: 10...99)
         let b = Int.random(in: 10...99)
         switch op {
@@ -133,7 +133,7 @@ private struct MathQuestionGenerator {
 
     private static func generateHard() -> MathQuestion {
         let ops: [MathOperation] = [.multiplication, .division]
-        let op = ops.randomElement()!
+        let op = ops.randomElement() ?? .multiplication
         switch op {
         case .multiplication:
             let a = Int.random(in: 2...12)
@@ -153,7 +153,7 @@ private struct MathQuestionGenerator {
 
     private static func generateExpert() -> MathQuestion {
         let ops: [MathOperation] = [.addition, .subtraction, .multiplication, .division]
-        let op = ops.randomElement()!
+        let op = ops.randomElement() ?? .addition
         switch op {
         case .addition:
             let a = Int.random(in: 100...999)

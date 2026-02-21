@@ -31,6 +31,8 @@ struct AnnouncementsView: View {
                         .foregroundStyle(.tertiary)
                     }
                     .padding(.vertical, 4)
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("\(announcement.isPinned ? "Pinned: " : "")\(announcement.title), \(announcement.content), by \(announcement.authorName)")
                 }
             }
             .navigationTitle("Announcements")

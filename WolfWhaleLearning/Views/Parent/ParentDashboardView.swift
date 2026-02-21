@@ -13,6 +13,27 @@ struct ParentDashboardView: View {
                 } else {
                     ScrollView {
                         VStack(spacing: 16) {
+                            if let dataError = viewModel.dataError {
+                                HStack(spacing: 10) {
+                                    Image(systemName: "exclamationmark.triangle.fill")
+                                        .foregroundStyle(.orange)
+                                    Text(dataError)
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                    Spacer()
+                                    Button {
+                                        viewModel.dataError = nil
+                                    } label: {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundStyle(.secondary)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                                .padding(12)
+                                .background(.orange.opacity(0.1), in: .rect(cornerRadius: 12))
+                                .accessibilityElement(children: .combine)
+                                .accessibilityLabel("Warning: \(dataError)")
+                            }
                             ForEach(viewModel.children) { child in
                                 NavigationLink {
                                     ChildDetailView(child: child, viewModel: viewModel)
@@ -145,6 +166,18 @@ struct ParentDashboardView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("School Announcements")
                 .font(.headline)
+
+            if viewModel.announcements.isEmpty {
+                HStack {
+                    Image(systemName: "megaphone")
+                        .foregroundStyle(.secondary)
+                    Text("No announcements at this time")
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 20)
+                .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
+            }
 
             ForEach(viewModel.announcements) { announcement in
                 VStack(alignment: .leading, spacing: 6) {

@@ -2,6 +2,8 @@ import SwiftUI
 
 struct WidgetGalleryView: View {
     let viewModel: AppViewModel
+    @Environment(\.dismiss) private var dismiss
+    @State private var hapticTrigger = false
 
     var body: some View {
         NavigationStack {
@@ -56,6 +58,15 @@ struct WidgetGalleryView: View {
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Widgets")
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        hapticTrigger.toggle()
+                        dismiss()
+                    }
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                }
+            }
         }
     }
 

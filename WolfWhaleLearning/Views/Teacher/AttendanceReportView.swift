@@ -94,6 +94,8 @@ struct AttendanceReportView: View {
                     Image(systemName: "square.and.arrow.up")
                 }
                 .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .accessibilityLabel("Export Report")
+                .accessibilityHint("Double tap to export attendance data")
             }
         }
         .sheet(isPresented: $showExportSheet) {
@@ -181,6 +183,8 @@ struct AttendanceReportView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
         .background(Color(.tertiarySystemFill), in: .rect(cornerRadius: 10))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label): \(value)")
     }
 
     // MARK: - Student List Section
@@ -265,6 +269,8 @@ struct AttendanceReportView: View {
         }
         .padding(14)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(summary.name), attendance rate \(Int(summary.rate * 100)) percent, \(summary.present) present, \(summary.absent) absent, \(summary.tardy) tardy, \(summary.excused) excused, out of \(summary.total) total records")
     }
 
     private func breakdownPill(value: Int, label: String, color: Color) -> some View {

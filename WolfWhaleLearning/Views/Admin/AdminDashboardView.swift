@@ -11,13 +11,47 @@ struct AdminDashboardView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 16) {
-                    metricsGrid
-                    attendanceCard
-                    recentSection
+                if viewModel.isDataLoading && viewModel.schoolMetrics == nil {
+                    VStack(spacing: 20) {
+                        ShimmerLoadingView(rowCount: 4)
+                        LoadingStateView(
+                            icon: "building.2.fill",
+                            title: "Loading School Data",
+                            message: "Fetching metrics, attendance, and announcements..."
+                        )
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 40)
+                } else {
+                    VStack(spacing: 16) {
+                        if let dataError = viewModel.dataError {
+                            HStack(spacing: 10) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(.orange)
+                                Text(dataError)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                                Button {
+                                    viewModel.dataError = nil
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundStyle(.secondary)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            .padding(12)
+                            .background(.orange.opacity(0.1), in: .rect(cornerRadius: 12))
+                            .accessibilityElement(children: .combine)
+                            .accessibilityLabel("Warning: \(dataError)")
+                        }
+                        metricsGrid
+                        attendanceCard
+                        recentSection
+                    }
+                    .padding(.horizontal)
+                    .padding(.bottom, 20)
                 }
-                .padding(.horizontal)
-                .padding(.bottom, 20)
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("School Overview")
@@ -106,8 +140,13 @@ struct AdminDashboardView: View {
             ZStack {
                 HStack(spacing: 6) {
                     ForEach(0..<5, id: \.self) { day in
-                        VStack(spacing: 6) {
+                        VStack(spacing: 4) {
                             let rate = rates[day]
+                            if rate > 0 {
+                                Text("\(Int(rate * 100))%")
+                                    .font(.system(size: 9, weight: .bold))
+                                    .foregroundStyle(.secondary)
+                            }
                             ZStack(alignment: .bottom) {
                                 RoundedRectangle(cornerRadius: 4)
                                     .fill(Color(.tertiarySystemFill))

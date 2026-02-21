@@ -1,4 +1,5 @@
 import SwiftUI
+import Supabase
 
 struct SuperAdminDashboardView: View {
     let viewModel: AppViewModel
@@ -280,12 +281,18 @@ struct SuperAdminDashboardView: View {
                     showAddTenant = true
                 }
 
-                actionButton(
-                    title: "View All Users",
-                    icon: "person.3.fill",
-                    color: .purple
-                ) {
-                    // Placeholder for future navigation
+                NavigationLink {
+                    UserManagementView(viewModel: viewModel)
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "person.3.fill")
+                        Text("View All Users")
+                            .font(.subheadline.bold())
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+                    .background(Color.purple.opacity(0.12), in: .rect(cornerRadius: 12))
+                    .foregroundStyle(.purple)
                 }
             }
         }
@@ -472,34 +479,70 @@ struct SuperAdminDashboardView: View {
 
     private func loadTenants() async {
         isLoading = true
-        // Placeholder data until backend integration is complete
-        try? await Task.sleep(for: .milliseconds(500))
-        tenants = [
-            TenantInfo(
-                id: UUID(),
-                name: "Westfield Academy",
-                inviteCode: "WEST2024",
-                userCount: 47,
-                userLimit: 75,
-                createdAt: Calendar.current.date(byAdding: .month, value: -6, to: Date()) ?? Date()
-            ),
-            TenantInfo(
-                id: UUID(),
-                name: "Riverside Elementary",
-                inviteCode: "RIVER24",
-                userCount: 30,
-                userLimit: 30,
-                createdAt: Calendar.current.date(byAdding: .month, value: -3, to: Date()) ?? Date()
-            ),
-            TenantInfo(
-                id: UUID(),
-                name: "Summit High School",
-                inviteCode: "SUMMIT1",
-                userCount: 12,
-                userLimit: 50,
-                createdAt: Calendar.current.date(byAdding: .month, value: -1, to: Date()) ?? Date()
-            ),
-        ]
-        isLoading = false
+        defer { isLoading = false }
+
+        do {
+            struct TenantDTO: Decodable {
+                let id: UUID
+                let name: String
+                let inviteCode: String?
+                let userLimit: Int?
+                let createdAt: String?
+
+                enum CodingKeys: String, CodingKey {
+                    case id, name
+                    case inviteCode = "invite_code"
+                    case userLimit = "user_limit"
+                    case createdAt = "created_at"
+                }
+            }
+
+            let tenantDTOs: [TenantDTO] = try await supabaseClient
+                .from("tenants")
+                .select()
+                .limit(100)
+                .execute()
+                .value
+
+            if tenantDTOs.isEmpty {
+                tenants = []
+                return
+            }
+
+            // Fetch membership counts per tenant
+            struct MembershipCount: Decodable {
+                let tenantId: UUID
+                enum CodingKeys: String, CodingKey {
+                    case tenantId = "tenant_id"
+                }
+            }
+            let memberships: [MembershipCount] = try await supabaseClient
+                .from("tenant_memberships")
+                .select("tenant_id")
+                .execute()
+                .value
+
+            var countByTenant: [UUID: Int] = [:]
+            for m in memberships {
+                countByTenant[m.tenantId, default: 0] += 1
+            }
+
+            let iso = ISO8601DateFormatter()
+            iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
+            tenants = tenantDTOs.map { dto in
+                TenantInfo(
+                    id: dto.id,
+                    name: dto.name,
+                    inviteCode: dto.inviteCode ?? "---",
+                    userCount: countByTenant[dto.id] ?? 0,
+                    userLimit: dto.userLimit ?? 50,
+                    createdAt: dto.createdAt.flatMap { iso.date(from: $0) } ?? Date()
+                )
+            }
+        } catch {
+            // On error, show empty state rather than stale data
+            tenants = []
+        }
     }
 }

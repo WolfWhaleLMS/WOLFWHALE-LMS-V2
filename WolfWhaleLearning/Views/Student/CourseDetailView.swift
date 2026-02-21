@@ -63,6 +63,25 @@ struct CourseDetailView: View {
                 .font(.headline)
                 .padding(.horizontal)
 
+            if course.modules.isEmpty {
+                VStack(spacing: 10) {
+                    Image(systemName: "folder")
+                        .font(.title2)
+                        .foregroundStyle(.secondary)
+                    Text("No modules yet")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.secondary)
+                    Text("Course content will appear here once the teacher adds modules.")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 24)
+                .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+                .padding(.horizontal)
+            }
+
             ForEach(course.modules) { module in
                 VStack(alignment: .leading, spacing: 10) {
                     Text(module.title)

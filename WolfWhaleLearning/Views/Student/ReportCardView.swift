@@ -404,12 +404,27 @@ struct ReportCardView: View {
         let grades = viewModel.grades
         let attendance = viewModel.attendance
         let assignments = viewModel.assignments
+        let capturedStudentName = studentName
+        let capturedSchoolYear = schoolYear
+        let capturedGPA = gpa
+        let capturedGPALetterGrade = gpaLetterGrade
+        let capturedStandingText = standingText
 
-        DispatchQueue.global(qos: .userInitiated).async {
+        Task.detached(priority: .userInitiated) {
             let pageWidth: CGFloat = 612  // US Letter
             let pageHeight: CGFloat = 792
             let margin: CGFloat = 50
             let contentWidth = pageWidth - (margin * 2)
+
+            // Pure helper – avoids implicit self capture inside @Sendable closure
+            func pdfStatusForGrade(_ grade: Double) -> String {
+                switch grade {
+                case 90...: return "Excellent"
+                case 80..<90: return "Good"
+                case 70..<80: return "Fair"
+                default: return "At Risk"
+                }
+            }
 
             let format = UIGraphicsPDFRendererFormat()
             let renderer = UIGraphicsPDFRenderer(
@@ -461,8 +476,8 @@ struct ReportCardView: View {
                     return y + 18
                 }
 
-                yOffset = drawInfoRow("Student Name:", studentName, at: yOffset)
-                yOffset = drawInfoRow("School Year:", schoolYear, at: yOffset)
+                yOffset = drawInfoRow("Student Name:", capturedStudentName, at: yOffset)
+                yOffset = drawInfoRow("School Year:", capturedSchoolYear, at: yOffset)
                 yOffset = drawInfoRow("Date Generated:", Date().formatted(date: .long, time: .omitted), at: yOffset)
                 yOffset += 16
 
@@ -507,7 +522,7 @@ struct ReportCardView: View {
                     (grade.courseName as NSString).draw(at: CGPoint(x: colCourse + 6, y: yOffset + 4), withAttributes: rowAttrs)
                     (grade.letterGrade as NSString).draw(at: CGPoint(x: colGrade + 6, y: yOffset + 4), withAttributes: rowBoldAttrs)
                     (String(format: "%.1f%%", grade.numericGrade) as NSString).draw(at: CGPoint(x: colPercent + 6, y: yOffset + 4), withAttributes: rowAttrs)
-                    (statusForGrade(grade.numericGrade) as NSString).draw(at: CGPoint(x: colStatus + 6, y: yOffset + 4), withAttributes: rowAttrs)
+                    (pdfStatusForGrade(grade.numericGrade) as NSString).draw(at: CGPoint(x: colStatus + 6, y: yOffset + 4), withAttributes: rowAttrs)
 
                     yOffset += rowHeight
                 }
@@ -524,9 +539,9 @@ struct ReportCardView: View {
                 ("GPA Summary" as NSString).draw(at: CGPoint(x: margin, y: yOffset), withAttributes: sectionAttrs)
                 yOffset += 22
 
-                yOffset = drawInfoRow("Cumulative GPA:", String(format: "%.1f%%", gpa), at: yOffset)
-                yOffset = drawInfoRow("Letter Grade:", gpaLetterGrade, at: yOffset)
-                yOffset = drawInfoRow("Academic Standing:", standingText, at: yOffset)
+                yOffset = drawInfoRow("Cumulative GPA:", String(format: "%.1f%%", capturedGPA), at: yOffset)
+                yOffset = drawInfoRow("Letter Grade:", capturedGPALetterGrade, at: yOffset)
+                yOffset = drawInfoRow("Academic Standing:", capturedStandingText, at: yOffset)
                 yOffset = drawInfoRow("Courses Completed:", "\(grades.count)", at: yOffset)
                 yOffset += 16
 
@@ -605,7 +620,7 @@ struct ReportCardView: View {
 
             // Save to temp file
             let tempDir = FileManager.default.temporaryDirectory
-            let fileName = "ReportCard_\(studentName.replacingOccurrences(of: " ", with: "_"))_\(Date().formatted(.iso8601.year().month().day())).pdf"
+            let fileName = "ReportCard_\(capturedStudentName.replacingOccurrences(of: " ", with: "_"))_\(Date().formatted(.iso8601.year().month().day())).pdf"
             let fileURL = tempDir.appendingPathComponent(fileName)
 
             try? data.write(to: fileURL)

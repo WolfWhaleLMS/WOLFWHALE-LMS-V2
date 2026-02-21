@@ -7,6 +7,7 @@ struct UserManagementView: View {
     @State private var showAddUser = false
     @State private var userToDelete: ProfileDTO?
     @State private var showDeleteConfirmation = false
+    @State private var deleteError: String?
     @State private var hapticTrigger = false
 
     private var filteredUsers: [ProfileDTO] {
@@ -77,7 +78,11 @@ struct UserManagementView: View {
                 Button("Remove", role: .destructive) {
                     if let user = userToDelete {
                         Task {
-                            try? await viewModel.deleteUser(userId: user.id)
+                            do {
+                                try await viewModel.deleteUser(userId: user.id)
+                            } catch {
+                                deleteError = "Failed to remove user. Please try again."
+                            }
                         }
                     }
                 }
@@ -86,6 +91,14 @@ struct UserManagementView: View {
                 if let user = userToDelete {
                     Text("Are you sure you want to remove \(user.firstName ?? "") \(user.lastName ?? "")? This action cannot be undone.")
                 }
+            }
+            .alert("Error", isPresented: Binding(
+                get: { deleteError != nil },
+                set: { if !$0 { deleteError = nil } }
+            )) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(deleteError ?? "")
             }
             .refreshable {
                 viewModel.refreshData()
