@@ -12,6 +12,7 @@ class RadioService {
 
     private var player: AVPlayer?
     private var playerItemObserver: NSKeyValueObservation?
+    private var commandCenterConfigured = false
 
     struct RadioStation: Identifiable, Hashable {
         let id: UUID
@@ -21,7 +22,6 @@ class RadioService {
         let iconName: String
         let color: String
 
-        // Built-in stations with real streaming URLs
         static let classicalFocus = RadioStation(
             id: UUID(),
             name: "Classical Focus",
@@ -59,53 +59,61 @@ class RadioService {
     }
 
     func play(station: RadioStation) {
-        // Stop any existing playback first
-        stop()
+        stopPlayer()
 
         currentStation = station
         isLoading = true
         error = nil
 
-        // Configure audio session for background playback
-        do {
-            try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
-            try AVAudioSession.sharedInstance().setActive(true)
-        } catch {
-            self.error = "Could not configure audio: \(error.localizedDescription)"
-        }
+        setupRemoteCommandCenter()
+        setupNowPlayingInfo()
 
-        if let url = station.streamURL {
-            let playerItem = AVPlayerItem(url: url)
-            player = AVPlayer(playerItem: playerItem)
-            player?.volume = volume
-
-            // Observe when the player item is ready to play
-            playerItemObserver = playerItem.observe(\.status, options: [.new]) { [weak self] item, _ in
-                Task { @MainActor [weak self] in
-                    guard let self else { return }
-                    switch item.status {
-                    case .readyToPlay:
-                        self.isLoading = false
-                    case .failed:
-                        self.isLoading = false
-                        self.error = "Failed to load stream. Check your connection."
-                        self.isPlaying = false
-                    default:
-                        break
-                    }
-                }
-            }
-
-            player?.play()
-            isPlaying = true
-        } else {
-            // Station without a stream URL (e.g., School News placeholder)
+        guard let url = station.streamURL else {
             isPlaying = true
             isLoading = false
+            return
         }
 
-        setupNowPlayingInfo()
-        setupRemoteCommandCenter()
+        Task.detached(priority: .userInitiated) {
+            do {
+                try AVAudioSession.sharedInstance().setCategory(.playback, mode: .default)
+                try AVAudioSession.sharedInstance().setActive(true)
+            } catch {
+                await MainActor.run {
+                    self.error = "Could not configure audio: \(error.localizedDescription)"
+                    self.isLoading = false
+                }
+                return
+            }
+
+            let playerItem = AVPlayerItem(url: url)
+            let newPlayer = AVPlayer(playerItem: playerItem)
+
+            await MainActor.run {
+                self.player = newPlayer
+                self.player?.volume = self.volume
+
+                self.playerItemObserver = playerItem.observe(\.status, options: [.new]) { [weak playerItem] item, _ in
+                    guard playerItem != nil else { return }
+                    Task { @MainActor [weak self] in
+                        guard let self else { return }
+                        switch item.status {
+                        case .readyToPlay:
+                            self.isLoading = false
+                        case .failed:
+                            self.isLoading = false
+                            self.error = "Failed to load stream. Check your connection."
+                            self.isPlaying = false
+                        default:
+                            break
+                        }
+                    }
+                }
+
+                self.player?.play()
+                self.isPlaying = true
+            }
+        }
     }
 
     func pause() {
@@ -131,19 +139,23 @@ class RadioService {
     }
 
     func stop() {
-        playerItemObserver?.invalidate()
-        playerItemObserver = nil
-        player?.pause()
-        player = nil
-        isPlaying = false
+        stopPlayer()
         currentStation = nil
-        isLoading = false
         MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
     }
 
     func setVolume(_ newVolume: Float) {
         volume = newVolume
         player?.volume = newVolume
+    }
+
+    private func stopPlayer() {
+        playerItemObserver?.invalidate()
+        playerItemObserver = nil
+        player?.pause()
+        player = nil
+        isPlaying = false
+        isLoading = false
     }
 
     private func setupNowPlayingInfo() {
@@ -162,29 +174,26 @@ class RadioService {
     }
 
     private func setupRemoteCommandCenter() {
+        guard !commandCenterConfigured else { return }
+        commandCenterConfigured = true
+
         let commandCenter = MPRemoteCommandCenter.shared()
 
         commandCenter.playCommand.isEnabled = true
         commandCenter.playCommand.addTarget { [weak self] _ in
-            Task { @MainActor in
-                self?.resume()
-            }
+            Task { @MainActor in self?.resume() }
             return .success
         }
 
         commandCenter.pauseCommand.isEnabled = true
         commandCenter.pauseCommand.addTarget { [weak self] _ in
-            Task { @MainActor in
-                self?.pause()
-            }
+            Task { @MainActor in self?.pause() }
             return .success
         }
 
         commandCenter.togglePlayPauseCommand.isEnabled = true
         commandCenter.togglePlayPauseCommand.addTarget { [weak self] _ in
-            Task { @MainActor in
-                self?.togglePlayback()
-            }
+            Task { @MainActor in self?.togglePlayback() }
             return .success
         }
     }
