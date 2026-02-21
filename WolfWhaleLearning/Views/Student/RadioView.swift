@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct RadioView: View {
-    @State private var radioService = RadioService()
+    @State private var radioService = RadioService.shared
     @State private var selectedStation: RadioService.RadioStation?
     @State private var showingStationPicker = false
     @State private var barAnimations: [CGFloat] = Array(repeating: 0.3, count: 12)
@@ -533,7 +533,7 @@ struct RadioView: View {
 // MARK: - Radio Mini Player (for embedding in tab views)
 
 struct RadioMiniPlayer: View {
-    @State private var radioService = RadioService()
+    @State private var radioService = RadioService.shared
     @State private var hapticTrigger = false
 
     var body: some View {

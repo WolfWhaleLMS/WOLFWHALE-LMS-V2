@@ -221,8 +221,14 @@ final class CalendarService {
             endComponents.hour = entry.endHour
             endComponents.minute = entry.endMinute
 
-            guard let startDate = cal.date(from: startComponents),
-                  let endDate = cal.date(from: endComponents) else { continue }
+            guard var startDate = cal.date(from: startComponents),
+                  var endDate = cal.date(from: endComponents) else { continue }
+
+            // If the computed start date is in the past, advance by one week
+            if startDate < Date() {
+                startDate = cal.date(byAdding: .weekOfYear, value: 1, to: startDate) ?? startDate
+                endDate = cal.date(byAdding: .weekOfYear, value: 1, to: endDate) ?? endDate
+            }
 
             event.startDate = startDate
             event.endDate = endDate

@@ -24,6 +24,14 @@ class PeerService: NSObject {
     var isBrowsing = false
     var receivedMessages: [PeerMessage] = []
 
+    /// When `true`, incoming peer invitations are accepted automatically.
+    /// Set to `false` to require manual acceptance via `pendingInvitation`.
+    var autoAcceptInvitations = true
+
+    /// Stores a pending invitation when `autoAcceptInvitations` is `false`.
+    /// The UI should present a confirmation dialog and call `respondToInvitation(_:)`.
+    var pendingInvitation: (peerID: MCPeerID, handler: ((Bool, MCSession?) -> Void))?
+
     private let serviceType = "wolfwhale-study"
     private var peerID: MCPeerID?
     private var session: MCSession?
@@ -90,6 +98,13 @@ class PeerService: NSObject {
         browser.invitePeer(peer, to: session, withContext: nil, timeout: 30)
     }
 
+    /// Accept or reject a pending invitation (used when `autoAcceptInvitations` is `false`).
+    func respondToInvitation(_ accept: Bool) {
+        guard let pending = pendingInvitation else { return }
+        pending.handler(accept, accept ? session : nil)
+        pendingInvitation = nil
+    }
+
     func disconnect() {
         session?.disconnect()
         stopAdvertising()
@@ -97,8 +112,10 @@ class PeerService: NSObject {
         connectedPeers.removeAll()
         nearbyPeers.removeAll()
         receivedMessages.removeAll()
+        pendingInvitation = nil
         peerID = nil
         session = nil
+        cleanupTempFiles()
     }
 
     // MARK: - Messaging
@@ -106,8 +123,13 @@ class PeerService: NSObject {
     func sendMessage(_ text: String) {
         guard let session, !session.connectedPeers.isEmpty else { return }
         let message = PeerMessage(sender: peerID?.displayName ?? "Me", text: text)
-        if let data = try? JSONEncoder().encode(message) {
-            try? session.send(data, toPeers: session.connectedPeers, with: .reliable)
+        do {
+            let data = try JSONEncoder().encode(message)
+            try session.send(data, toPeers: session.connectedPeers, with: .reliable)
+        } catch {
+            #if DEBUG
+            print("[PeerService] Failed to send message: \(error.localizedDescription)")
+            #endif
         }
         receivedMessages.append(message)
     }
@@ -129,10 +151,20 @@ class PeerService: NSObject {
         receivedMessages.append(message)
     }
 
+    private static let tempSubdirectory = "PeerShared"
+
     private nonisolated func saveTemporaryFile(data: Data, name: String) -> URL {
-        let url = FileManager.default.temporaryDirectory.appendingPathComponent(name)
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(Self.tempSubdirectory, isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let url = dir.appendingPathComponent(name)
         try? data.write(to: url)
         return url
+    }
+
+    /// Remove all files in the "PeerShared" temporary subdirectory.
+    func cleanupTempFiles() {
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(Self.tempSubdirectory, isDirectory: true)
+        try? FileManager.default.removeItem(at: dir)
     }
 }
 
@@ -184,7 +216,15 @@ extension PeerService: MCSessionDelegate {
 extension PeerService: MCNearbyServiceAdvertiserDelegate {
     nonisolated func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didReceiveInvitationFromPeer peerID: MCPeerID, withContext context: Data?, invitationHandler: @escaping (Bool, MCSession?) -> Void) {
         Task { @MainActor in
-            invitationHandler(true, session)
+            if autoAcceptInvitations {
+                #if DEBUG
+                print("[PeerService] Auto-accepting invitation from \(peerID.displayName)")
+                #endif
+                invitationHandler(true, session)
+            } else {
+                // Store the invitation for the UI to present a confirmation dialog
+                pendingInvitation = (peerID: peerID, handler: invitationHandler)
+            }
         }
     }
 

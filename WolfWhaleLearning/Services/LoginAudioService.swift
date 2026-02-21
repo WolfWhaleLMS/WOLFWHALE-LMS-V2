@@ -134,12 +134,16 @@ class LoginAudioService {
 
         try engine.start()
 
-        // Load the built-in Apple DLS SoundFont for Acoustic Grand Piano
+        // Attempt to load the built-in Apple DLS SoundFont for Acoustic Grand Piano.
+        // This path only exists on macOS; on iOS/Simulator the file won't be found
+        // and the sampler falls back to its default tone, which is acceptable.
         // Program 0 = Acoustic Grand Piano, bankMSB 0x79 = GM melodic sounds, bankLSB 0
+        #if targetEnvironment(simulator) || os(iOS)
+        // DLS SoundFont is not available on iOS or Simulator — use default sampler tone.
+        #else
         let dlsPath = "/System/Library/Components/CoreAudio.component/Contents/Resources/gs_instruments.dls"
-        let dlsURL = URL(fileURLWithPath: dlsPath)
-
         if FileManager.default.fileExists(atPath: dlsPath) {
+            let dlsURL = URL(fileURLWithPath: dlsPath)
             do {
                 try sampler.loadSoundBankInstrument(
                     at: dlsURL,
@@ -148,15 +152,13 @@ class LoginAudioService {
                     bankLSB: 0
                 )
             } catch {
-                // Fall back to loading default instrument
+                #if DEBUG
                 print("[LoginAudioService] Could not load DLS sound font: \(error.localizedDescription)")
+                #endif
                 // The sampler will use a default sine-like tone — still usable
             }
-        } else {
-            // On simulator or if the DLS file is not at the expected path,
-            // the sampler still produces a basic tone
-            print("[LoginAudioService] DLS SoundFont not found at expected path; using default sampler tone.")
         }
+        #endif
 
         self.engine = engine
         self.sampler = sampler

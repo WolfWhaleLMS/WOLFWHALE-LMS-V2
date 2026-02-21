@@ -4,6 +4,8 @@ import MediaPlayer
 @MainActor
 @Observable
 class RadioService {
+    static let shared = RadioService()
+
     var isPlaying = false
     var currentStation: RadioStation?
     var volume: Float = 0.7

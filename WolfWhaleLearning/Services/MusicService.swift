@@ -150,8 +150,10 @@ class MusicService {
             do {
                 try await player.play()
                 isPlaying = true
+                error = nil
             } catch {
                 self.error = "Resume failed: \(error.localizedDescription)"
+                isPlaying = false
             }
         }
     }
@@ -160,8 +162,10 @@ class MusicService {
         Task {
             do {
                 try await player.skipToNextEntry()
+                error = nil
             } catch {
                 self.error = "Skip failed: \(error.localizedDescription)"
+                isPlaying = false
             }
         }
     }

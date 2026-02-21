@@ -285,20 +285,25 @@ final class OfflineStorageService {
     // MARK: - Generic Helpers
 
     private func save<T: Encodable>(_ data: T, filename: String) {
+        // Capture the URL on the main actor, then perform file I/O off the main thread
         let url = cacheDirectory.appendingPathComponent(filename)
-        do {
-            let encoder = JSONEncoder()
-            encoder.dateEncodingStrategy = .iso8601
-            let jsonData = try encoder.encode(data)
-            try jsonData.write(to: url, options: .atomic)
-        } catch {
-            #if DEBUG
-            print("[OfflineStorage] Failed to save \(filename): \(error)")
-            #endif
+        Task.detached(priority: .utility) {
+            do {
+                let encoder = JSONEncoder()
+                encoder.dateEncodingStrategy = .iso8601
+                let jsonData = try encoder.encode(data)
+                try jsonData.write(to: url, options: .atomic)
+            } catch {
+                #if DEBUG
+                print("[OfflineStorage] Failed to save \(filename): \(error)")
+                #endif
+            }
         }
     }
 
     private func load<T: Decodable>(filename: String) -> T? {
+        // Note: load is synchronous by design so callers can use the return value immediately.
+        // For large datasets, callers should invoke from a background context.
         let url = cacheDirectory.appendingPathComponent(filename)
         guard FileManager.default.fileExists(atPath: url.path) else { return nil }
         do {

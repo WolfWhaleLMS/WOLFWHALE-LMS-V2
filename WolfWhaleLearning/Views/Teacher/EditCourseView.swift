@@ -350,7 +350,9 @@ struct EditCourseView: View {
                     try await DataService.shared.updateCourse(
                         courseId: course.id,
                         title: trimmedTitle,
-                        description: trimmedDescription
+                        description: trimmedDescription,
+                        colorName: selectedColor,
+                        iconSystemName: selectedIcon
                     )
                 }
 
@@ -382,10 +384,7 @@ struct EditCourseView: View {
 
         Task {
             do {
-                if !viewModel.isDemoMode {
-                    try await DataService.shared.deleteCourse(courseId: course.id)
-                }
-                viewModel.courses.removeAll { $0.id == course.id }
+                try await viewModel.deleteCourseAndClean(courseId: course.id)
                 isDeleting = false
                 dismiss()
             } catch {

@@ -74,6 +74,7 @@ final class RealtimeService {
             }
 
             for await action in insertions {
+                guard !Task.isCancelled else { break }
                 do {
                     let dto = try action.decodeRecord(as: MessageDTO.self, decoder: JSONDecoder())
 

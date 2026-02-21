@@ -60,8 +60,27 @@ class NFCAttendanceService: NSObject, NFCNDEFReaderSessionDelegate {
             for message in messages {
                 for record in message.records {
                     if let payload = String(data: record.payload, encoding: .utf8) {
-                        self.scannedStudentId = payload
-                        self.scanResult = .success(studentName: payload)
+                        let trimmed = payload.trimmingCharacters(in: .whitespacesAndNewlines)
+
+                        // Validate the payload: must not be empty and must be a valid UUID
+                        // or match the expected student ID format (alphanumeric, 4+ chars)
+                        guard !trimmed.isEmpty else {
+                            self.lastError = "Empty NFC payload"
+                            self.scanResult = .error("Empty NFC payload")
+                            continue
+                        }
+
+                        let isValidUUID = UUID(uuidString: trimmed) != nil
+                        let isValidAlphanumericID = trimmed.count >= 4 && trimmed.allSatisfy({ $0.isLetter || $0.isNumber || $0 == "-" })
+
+                        guard isValidUUID || isValidAlphanumericID else {
+                            self.lastError = "Invalid student ID format"
+                            self.scanResult = .error("Invalid student ID format")
+                            continue
+                        }
+
+                        self.scannedStudentId = trimmed
+                        self.scanResult = .success(studentName: trimmed)
                     }
                 }
             }

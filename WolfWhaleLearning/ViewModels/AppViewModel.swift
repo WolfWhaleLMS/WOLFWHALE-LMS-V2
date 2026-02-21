@@ -90,6 +90,10 @@ class AppViewModel {
         assignments.filter { $0.isOverdue }
     }
 
+    var totalUnreadMessages: Int {
+        conversations.reduce(0) { $0 + $1.unreadCount }
+    }
+
     var pendingGradingCount: Int {
         assignments.filter { $0.isSubmitted && $0.grade == nil }.count
     }

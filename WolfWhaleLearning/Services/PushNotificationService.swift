@@ -62,7 +62,7 @@ final class PushNotificationService {
         deviceToken = hex
         UserDefaults.standard.set(hex, forKey: Self.tokenDefaultsKey)
         #if DEBUG
-        print("[PushNotificationService] Device token: \(hex)")
+        print("[PushNotificationService] Device token: \(hex.prefix(8))...")
         #endif
     }
 

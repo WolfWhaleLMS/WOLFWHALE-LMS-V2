@@ -42,7 +42,7 @@ struct StudentDashboardView: View {
     }
 
     private var totalUnreadMessages: Int {
-        viewModel.conversations.reduce(0) { $0 + $1.unreadCount }
+        viewModel.totalUnreadMessages
     }
 
     var body: some View {
@@ -424,7 +424,7 @@ struct StudentDashboardView: View {
                 .font(.headline)
 
             ScrollView(.horizontal) {
-                HStack(spacing: 12) {
+                LazyHStack(spacing: 12) {
                     ForEach(viewModel.courses) { course in
                         NavigationLink(value: course) {
                             courseCard(course)
@@ -486,7 +486,7 @@ struct NotificationsSheet: View {
     @State private var hapticTrigger = false
 
     private var totalUnreadMessages: Int {
-        viewModel.conversations.reduce(0) { $0 + $1.unreadCount }
+        viewModel.totalUnreadMessages
     }
 
     var body: some View {

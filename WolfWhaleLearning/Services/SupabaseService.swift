@@ -5,14 +5,12 @@ let supabaseClient: SupabaseClient = {
     let urlString = Config.SUPABASE_URL
     let anonKey = Config.SUPABASE_ANON_KEY
     guard let url = URL(string: urlString) else {
-        // Return a client with a placeholder URL that will fail gracefully on API calls
-        // rather than crashing the entire app on launch
-        return SupabaseClient(supabaseURL: URL(string: "https://placeholder.supabase.co")!, supabaseKey: anonKey)
+        fatalError("[SupabaseService] Invalid SUPABASE_URL: \(urlString)")
     }
     return SupabaseClient(supabaseURL: url, supabaseKey: anonKey)
 }()
 
-struct DataService {
+struct DataService: @unchecked Sendable {
     static let shared = DataService()
 
     private let iso8601: ISO8601DateFormatter = {
@@ -178,7 +176,7 @@ struct DataService {
                         content: l.content ?? "",
                         duration: 15,
                         isCompleted: completedLessonIds.contains(l.id),
-                        type: LessonType(rawValue: l.status ?? "Reading") ?? .reading,
+                        type: LessonType(rawValue: l.type ?? "Reading") ?? .reading,
                         xpReward: 25
                     )
                 }
@@ -262,7 +260,7 @@ struct DataService {
                     content: l.content ?? "",
                     duration: 15,
                     isCompleted: completedLessonIds.contains(l.id),
-                    type: LessonType(rawValue: l.status ?? "Reading") ?? .reading,
+                    type: LessonType(rawValue: l.type ?? "Reading") ?? .reading,
                     xpReward: 25
                 )
             }
@@ -564,7 +562,32 @@ struct DataService {
     }
 
     func submitQuizAttempt(quizId: UUID, studentId: UUID, score: Double) async throws {
-        let dto = InsertQuizAttemptDTO(quizId: quizId, studentId: studentId, tenantId: nil, score: score, totalPoints: nil, percentage: nil, passed: nil, attemptNumber: nil)
+        // Check for existing attempts and enforce maxAttempts limit
+        let existingAttempts: [QuizAttemptDTO] = try await supabaseClient
+            .from("quiz_attempts")
+            .select()
+            .eq("quiz_id", value: quizId.uuidString)
+            .eq("student_id", value: studentId.uuidString)
+            .execute()
+            .value
+
+        // Fetch the quiz to check maxAttempts
+        let quizResults: [QuizDTO] = try await supabaseClient
+            .from("quizzes")
+            .select()
+            .eq("id", value: quizId.uuidString)
+            .limit(1)
+            .execute()
+            .value
+
+        if let quiz = quizResults.first, let maxAttempts = quiz.maxAttempts, maxAttempts > 0 {
+            if existingAttempts.count >= maxAttempts {
+                throw QuizSubmissionError.maxAttemptsReached(max: maxAttempts)
+            }
+        }
+
+        let attemptNumber = existingAttempts.count + 1
+        let dto = InsertQuizAttemptDTO(quizId: quizId, studentId: studentId, tenantId: nil, score: score, totalPoints: nil, percentage: nil, passed: nil, attemptNumber: attemptNumber)
         try await supabaseClient
             .from("quiz_attempts")
             .insert(dto)
@@ -745,13 +768,14 @@ struct DataService {
 
         let convIds = convDTOs.map(\.id)
 
-        // --- Batch fetch last 30 messages per conversation (most recent) ---
+        // --- Batch fetch last 30 messages per conversation (most recent), capped at 300 ---
+        let messageLimit = min(30 * convIds.count, 300)
         let allMessageDTOs: [MessageDTO] = try await supabaseClient
             .from("messages")
             .select()
             .in("conversation_id", values: convIds.map(\.uuidString))
             .order("created_at", ascending: false)
-            .limit(30 * convIds.count)
+            .limit(messageLimit)
             .execute()
             .value
 
@@ -1012,10 +1036,11 @@ struct DataService {
                 .execute()
                 .value
 
+            // NOTE: This should be paginated for very large deployments with 1000+ users
             let allMemberships: [TenantMembershipDTO] = try await supabaseClient
                 .from("tenant_memberships")
                 .select()
-                .limit(500)
+                .limit(1000)
                 .execute()
                 .value
             var roleByUser: [UUID: String] = [:]
@@ -1036,19 +1061,12 @@ struct DataService {
     // MARK: - Admin: School Metrics
 
     func fetchSchoolMetrics(schoolId: String?) async throws -> SchoolMetrics {
+        // fetchAllUsers already populates the .role property on each ProfileDTO,
+        // so reuse that instead of fetching memberships again.
         let profiles = try await fetchAllUsers(schoolId: schoolId)
 
-        let allMemberships: [TenantMembershipDTO] = try await supabaseClient
-            .from("tenant_memberships")
-            .select()
-            .limit(500)
-            .execute()
-            .value
-        var roleByUser: [UUID: String] = [:]
-        for m in allMemberships { roleByUser[m.userId] = m.role }
-
-        let students = profiles.filter { roleByUser[$0.id] == "Student" }.count
-        let teachers = profiles.filter { roleByUser[$0.id] == "Teacher" }.count
+        let students = profiles.filter { $0.role == "Student" }.count
+        let teachers = profiles.filter { $0.role == "Teacher" }.count
         let active = profiles.count
 
         let courses: [CourseDTO] = try await supabaseClient
@@ -1060,7 +1078,7 @@ struct DataService {
 
         let attendanceRate = try await calculateRealAttendanceRate(courseId: nil)
 
-        let studentProfiles = Array(profiles.filter { roleByUser[$0.id] == "Student" }.prefix(200))
+        let studentProfiles = Array(profiles.filter { $0.role == "Student" }.prefix(200))
         let studentIds = studentProfiles.map(\.id)
 
         var averageGPA = 0.0
@@ -1898,12 +1916,28 @@ struct DataService {
                 .value
         }
 
+        // Resolve creator names from profiles
+        let creatorIds = Array(Set(dtos.compactMap(\.createdBy)))
+        var nameMap: [UUID: String] = [:]
+        if !creatorIds.isEmpty {
+            let profiles: [ProfileDTO] = try await supabaseClient
+                .from("profiles")
+                .select()
+                .in("id", values: creatorIds.map(\.uuidString))
+                .execute()
+                .value
+            for p in profiles {
+                nameMap[p.id] = "\(p.firstName ?? "") \(p.lastName ?? "")"
+            }
+        }
+
         return dtos.map { dto in
-            Announcement(
+            let authorName = dto.createdBy.flatMap { nameMap[$0] } ?? "Admin"
+            return Announcement(
                 id: dto.id,
                 title: dto.title,
                 content: dto.content ?? "",
-                authorName: "Admin",
+                authorName: authorName,
                 date: parseDate(dto.createdAt),
                 isPinned: false
             )
@@ -1923,7 +1957,11 @@ struct DataService {
             let userIds = memberships.map(\.userId)
             if userIds.isEmpty { return [] }
 
-            let profiles: [ProfileDTO] = try await supabaseClient
+            // Build role lookup from memberships
+            var roleByUser: [UUID: String] = [:]
+            for m in memberships { roleByUser[m.userId] = m.role }
+
+            var profiles: [ProfileDTO] = try await supabaseClient
                 .from("profiles")
                 .select()
                 .in("id", values: userIds.map(\.uuidString))
@@ -1931,15 +1969,38 @@ struct DataService {
                 .execute()
                 .value
 
+            // Populate transient role property on each profile
+            for i in profiles.indices {
+                profiles[i].role = roleByUser[profiles[i].id] ?? ""
+            }
+
             return profiles
         } else {
-            let profiles: [ProfileDTO] = try await supabaseClient
+            var profiles: [ProfileDTO] = try await supabaseClient
                 .from("profiles")
                 .select()
                 .order("created_at", ascending: false)
                 .range(from: offset, to: offset + limit - 1)
                 .execute()
                 .value
+
+            // Fetch memberships to populate roles
+            let userIds = profiles.map(\.id)
+            if !userIds.isEmpty {
+                let memberships: [TenantMembershipDTO] = try await supabaseClient
+                    .from("tenant_memberships")
+                    .select()
+                    .in("user_id", values: userIds.map(\.uuidString))
+                    .execute()
+                    .value
+                var roleByUser: [UUID: String] = [:]
+                for m in memberships { roleByUser[m.userId] = m.role }
+
+                for i in profiles.indices {
+                    profiles[i].role = roleByUser[profiles[i].id] ?? ""
+                }
+            }
+
             return profiles
         }
     }
@@ -1962,6 +2023,17 @@ final class EnrollmentRateLimiter: @unchecked Sendable {
             throw NSError(domain: "RateLimit", code: 429, userInfo: [NSLocalizedDescriptionKey: "Too many enrollment attempts. Please wait a minute."])
         }
         attempts.append((userId: userId, time: Date()))
+    }
+}
+
+nonisolated enum QuizSubmissionError: LocalizedError, Sendable {
+    case maxAttemptsReached(max: Int)
+
+    var errorDescription: String? {
+        switch self {
+        case .maxAttemptsReached(let max):
+            "You have reached the maximum number of attempts (\(max)) for this quiz."
+        }
     }
 }
 

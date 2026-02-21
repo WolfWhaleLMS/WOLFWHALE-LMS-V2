@@ -19,7 +19,7 @@ struct TakeAttendanceView: View {
         let fromUsers = viewModel.allUsers
             .filter { $0.role.lowercased() == "student" }
             .prefix(course.enrolledStudentCount)
-            .map { (id: $0.id, name: "\($0.firstName) \($0.lastName)") }
+            .map { (id: $0.id, name: "\($0.firstName ?? "") \($0.lastName ?? "")") }
 
         if !fromUsers.isEmpty {
             return Array(fromUsers)
