@@ -2,7 +2,7 @@ import SwiftUI
 import MultipeerConnectivity
 
 struct StudyGroupView: View {
-    @State private var peerService = PeerService()
+    @State private var peerService: PeerService?
     @State private var displayName = UIDevice.current.name
     @State private var messageText = ""
     @State private var isHosting = false
@@ -13,10 +13,10 @@ struct StudyGroupView: View {
         ScrollView {
             VStack(spacing: 20) {
                 connectionCard
-                if peerService.isAdvertising || peerService.isBrowsing {
+                if peerService?.isAdvertising == true || peerService?.isBrowsing == true {
                     nearbyPeersSection
                     connectedPeersSection
-                    if !peerService.connectedPeers.isEmpty {
+                    if !(peerService?.connectedPeers.isEmpty ?? true) {
                         chatSection
                     }
                 }
@@ -27,8 +27,13 @@ struct StudyGroupView: View {
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Study Groups")
         .navigationBarTitleDisplayMode(.inline)
+        .task {
+            if peerService == nil {
+                peerService = PeerService()
+            }
+        }
         .onDisappear {
-            peerService.disconnect()
+            peerService?.disconnect()
         }
         .sheet(isPresented: $showShareNotes) {
             shareNotesSheet
@@ -42,20 +47,20 @@ struct StudyGroupView: View {
             Image(systemName: "person.3.fill")
                 .font(.system(size: 36))
                 .foregroundStyle(.teal)
-                .symbolEffect(.pulse, isActive: peerService.isAdvertising || peerService.isBrowsing)
+                .symbolEffect(.pulse, isActive: peerService?.isAdvertising == true || peerService?.isBrowsing == true)
 
-            if peerService.isAdvertising || peerService.isBrowsing {
+            if peerService?.isAdvertising == true || peerService?.isBrowsing == true {
                 VStack(spacing: 4) {
                     Text(isHosting ? "Hosting Study Group" : "Looking for Groups")
                         .font(.headline)
-                    Text("\(peerService.connectedPeers.count) student\(peerService.connectedPeers.count == 1 ? "" : "s") connected")
+                    Text("\(peerService?.connectedPeers.count ?? 0) student\((peerService?.connectedPeers.count ?? 0) == 1 ? "" : "s") connected")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
 
                 Button {
                     hapticTrigger.toggle()
-                    peerService.disconnect()
+                    peerService?.disconnect()
                     isHosting = false
                 } label: {
                     Label("Leave Group", systemImage: "xmark.circle.fill")
@@ -78,8 +83,8 @@ struct StudyGroupView: View {
                     Button {
                         hapticTrigger.toggle()
                         isHosting = true
-                        peerService.startAdvertising(displayName: displayName)
-                        peerService.startBrowsing()
+                        peerService?.startAdvertising(displayName: displayName)
+                        peerService?.startBrowsing()
                     } label: {
                         Label("Start Group", systemImage: "plus.circle.fill")
                             .font(.subheadline.bold())
@@ -93,8 +98,8 @@ struct StudyGroupView: View {
                     Button {
                         hapticTrigger.toggle()
                         isHosting = false
-                        peerService.startAdvertising(displayName: displayName)
-                        peerService.startBrowsing()
+                        peerService?.startAdvertising(displayName: displayName)
+                        peerService?.startBrowsing()
                     } label: {
                         Label("Join Group", systemImage: "antenna.radiowaves.left.and.right")
                             .font(.subheadline.bold())
@@ -119,13 +124,13 @@ struct StudyGroupView: View {
                 Text("Nearby Students")
                     .font(.headline)
                 Spacer()
-                if peerService.isBrowsing {
+                if peerService?.isBrowsing == true {
                     ProgressView()
                         .scaleEffect(0.8)
                 }
             }
 
-            if peerService.nearbyPeers.isEmpty {
+            if peerService?.nearbyPeers.isEmpty ?? true {
                 HStack(spacing: 10) {
                     Image(systemName: "wifi.exclamationmark")
                         .foregroundStyle(.secondary)
@@ -137,7 +142,7 @@ struct StudyGroupView: View {
                 .padding(.vertical, 24)
                 .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
             } else {
-                ForEach(peerService.nearbyPeers, id: \.displayName) { peer in
+                ForEach(peerService?.nearbyPeers ?? [], id: \.displayName) { peer in
                     HStack(spacing: 12) {
                         Circle()
                             .fill(.teal.gradient)
@@ -160,7 +165,7 @@ struct StudyGroupView: View {
 
                         Button {
                             hapticTrigger.toggle()
-                            peerService.invitePeer(peer)
+                            peerService?.invitePeer(peer)
                         } label: {
                             Text("Invite")
                                 .font(.caption.bold())
@@ -185,7 +190,7 @@ struct StudyGroupView: View {
             Text("Connected")
                 .font(.headline)
 
-            if peerService.connectedPeers.isEmpty {
+            if peerService?.connectedPeers.isEmpty ?? true {
                 HStack(spacing: 10) {
                     Image(systemName: "person.crop.circle.badge.questionmark")
                         .foregroundStyle(.secondary)
@@ -197,7 +202,7 @@ struct StudyGroupView: View {
                 .padding(.vertical, 20)
                 .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
             } else {
-                ForEach(peerService.connectedPeers, id: \.displayName) { peer in
+                ForEach(peerService?.connectedPeers ?? [], id: \.displayName) { peer in
                     HStack(spacing: 12) {
                         Circle()
                             .fill(.green.gradient)
@@ -251,7 +256,7 @@ struct StudyGroupView: View {
             }
 
             VStack(spacing: 8) {
-                if peerService.receivedMessages.isEmpty {
+                if peerService?.receivedMessages.isEmpty ?? true {
                     Text("No messages yet. Say hello!")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
@@ -260,7 +265,7 @@ struct StudyGroupView: View {
                 } else {
                     ScrollView {
                         LazyVStack(alignment: .leading, spacing: 8) {
-                            ForEach(peerService.receivedMessages) { message in
+                            ForEach(peerService?.receivedMessages ?? []) { message in
                                 messageBubble(message)
                             }
                         }
@@ -278,7 +283,7 @@ struct StudyGroupView: View {
                     Button {
                         guard !messageText.trimmingCharacters(in: .whitespaces).isEmpty else { return }
                         hapticTrigger.toggle()
-                        peerService.sendMessage(messageText)
+                        peerService?.sendMessage(messageText)
                         messageText = ""
                     } label: {
                         Image(systemName: "arrow.up.circle.fill")
@@ -338,7 +343,7 @@ struct StudyGroupView: View {
 
                 Button {
                     let sampleNote = "Study notes shared from WolfWhale LMS".data(using: .utf8) ?? Data()
-                    peerService.sendFile(sampleNote, name: "StudyNotes.txt")
+                    peerService?.sendFile(sampleNote, name: "StudyNotes.txt")
                     showShareNotes = false
                 } label: {
                     Label("Send Notes", systemImage: "paperplane.fill")

@@ -2,7 +2,7 @@ import SwiftUI
 import CoreLocation
 
 struct CampusLocationView: View {
-    @State private var geoService = GeoFenceService()
+    @State private var geoService: GeoFenceService?
     @State private var appeared = false
     @State private var radarAngle: Double = 0
     @State private var hapticTrigger = false
@@ -33,15 +33,18 @@ struct CampusLocationView: View {
             distanceCard
 
             // Permission button if needed
-            if geoService.authorizationStatus == .notDetermined {
+            if geoService?.authorizationStatus == .notDetermined {
                 permissionButton
-            } else if geoService.authorizationStatus == .denied ||
-                      geoService.authorizationStatus == .restricted {
+            } else if geoService?.authorizationStatus == .denied ||
+                      geoService?.authorizationStatus == .restricted {
                 permissionDeniedNotice
             }
         }
-        .onAppear {
-            geoService.requestPermission()
+        .task {
+            if geoService == nil {
+                geoService = GeoFenceService()
+            }
+            geoService?.requestPermission()
             withAnimation(.linear(duration: 4).repeatForever(autoreverses: false)) {
                 radarAngle = 360
             }
@@ -50,7 +53,7 @@ struct CampusLocationView: View {
             }
         }
         .onDisappear {
-            geoService.stopMonitoring()
+            geoService?.stopMonitoring()
         }
     }
 
@@ -68,14 +71,14 @@ struct CampusLocationView: View {
                     .fill(statusColor.gradient)
                     .frame(width: 28, height: 28)
                     .overlay {
-                        Image(systemName: geoService.isOnCampus ? "checkmark" : "xmark")
+                        Image(systemName: geoService?.isOnCampus == true ? "checkmark" : "xmark")
                             .font(.caption.bold())
                             .foregroundStyle(.white)
                     }
             }
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(geoService.isOnCampus ? "On Campus" : "Off Campus")
+                Text(geoService?.isOnCampus == true ? "On Campus" : "Off Campus")
                     .font(.subheadline.bold())
                     .foregroundStyle(statusColor)
 
@@ -92,11 +95,14 @@ struct CampusLocationView: View {
         }
         .padding(14)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
-        .onAppear {
-            geoService.requestPermission()
+        .task {
+            if geoService == nil {
+                geoService = GeoFenceService()
+            }
+            geoService?.requestPermission()
         }
         .onDisappear {
-            geoService.stopMonitoring()
+            geoService?.stopMonitoring()
         }
     }
 
@@ -154,11 +160,11 @@ struct CampusLocationView: View {
             // User position indicator
             userPositionDot
                 .offset(userOffset)
-                .animation(.spring(duration: 0.6), value: geoService.distanceFromCampus)
+                .animation(.spring(duration: 0.6), value: geoService?.distanceFromCampus)
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(geoService.isOnCampus
+        .accessibilityLabel(geoService?.isOnCampus == true
             ? "Campus map showing you are on campus"
             : "Campus map showing you are \(distanceText) from campus")
     }
@@ -191,7 +197,9 @@ struct CampusLocationView: View {
     /// When on campus, the dot is near the center; when off campus, it moves to the edge.
     private var userOffset: CGSize {
         let maxOffset: CGFloat = 100
-        let normalized = min(geoService.distanceFromCampus / max(geoService.campusRadius * 2, 1), 1.0)
+        let distance = geoService?.distanceFromCampus ?? 0
+        let radius = geoService?.campusRadius ?? 1
+        let normalized = min(distance / max(radius * 2, 1), 1.0)
         let offset = CGFloat(normalized) * maxOffset
         return CGSize(width: offset * 0.7, height: -offset * 0.5)
     }
@@ -205,17 +213,17 @@ struct CampusLocationView: View {
                     .fill(statusColor.opacity(0.15))
                     .frame(width: 56, height: 56)
 
-                Image(systemName: geoService.isOnCampus ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
+                Image(systemName: geoService?.isOnCampus == true ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
                     .font(.title2)
                     .foregroundStyle(statusColor)
-                    .symbolEffect(.bounce, value: geoService.isOnCampus)
+                    .symbolEffect(.bounce, value: geoService?.isOnCampus)
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(geoService.isOnCampus ? "You are on campus" : "You are off campus")
+                Text(geoService?.isOnCampus == true ? "You are on campus" : "You are off campus")
                     .font(.headline)
 
-                Text(geoService.isOnCampus
+                Text(geoService?.isOnCampus == true
                     ? "Your location has been verified"
                     : "Move closer to campus to check in")
                     .font(.caption)
@@ -245,7 +253,7 @@ struct CampusLocationView: View {
 
             distanceStatItem(
                 icon: "circle.dashed",
-                value: "\(Int(geoService.campusRadius))m",
+                value: "\(Int(geoService?.campusRadius ?? 0))m",
                 label: "Campus Radius",
                 color: .purple
             )
@@ -285,7 +293,7 @@ struct CampusLocationView: View {
     private var permissionButton: some View {
         Button {
             hapticTrigger.toggle()
-            geoService.requestPermission()
+            geoService?.requestPermission()
         } label: {
             Label("Enable Location Services", systemImage: "location.fill")
                 .fontWeight(.semibold)
@@ -323,11 +331,11 @@ struct CampusLocationView: View {
     // MARK: - Computed Properties
 
     private var statusColor: Color {
-        geoService.isOnCampus ? .green : .red
+        geoService?.isOnCampus == true ? .green : .red
     }
 
     private var distanceText: String {
-        let distance = geoService.distanceFromCampus
+        let distance = geoService?.distanceFromCampus ?? 0
         if distance < 1000 {
             return "\(Int(distance))m"
         } else {
@@ -336,9 +344,9 @@ struct CampusLocationView: View {
     }
 
     private var locationAccuracyText: String {
-        switch geoService.authorizationStatus {
+        switch geoService?.authorizationStatus {
         case .authorizedWhenInUse, .authorizedAlways:
-            geoService.currentLocation != nil ? "Active" : "Locating"
+            geoService?.currentLocation != nil ? "Active" : "Locating"
         case .denied, .restricted:
             "Denied"
         default:

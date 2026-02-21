@@ -2,7 +2,7 @@ import SwiftUI
 
 struct TeacherDashboardView: View {
     @Bindable var viewModel: AppViewModel
-    @State private var liveActivityService = LiveActivityService()
+    @State private var liveActivityService: LiveActivityService?
     @State private var showCreateCourse = false
     @State private var showCreateAssignment = false
     @State private var showCreateAnnouncement = false
@@ -37,6 +37,11 @@ struct TeacherDashboardView: View {
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Dashboard")
+            .task {
+                if liveActivityService == nil {
+                    liveActivityService = LiveActivityService()
+                }
+            }
             .refreshable {
                 viewModel.refreshData()
             }
@@ -45,7 +50,7 @@ struct TeacherDashboardView: View {
 
     @ViewBuilder
     private var liveActivityBanner: some View {
-        if let firstCourse = viewModel.courses.first {
+        if let firstCourse = viewModel.courses.first, let liveActivityService {
             LiveActivityBanner(
                 liveActivityService: liveActivityService,
                 courseName: firstCourse.title,

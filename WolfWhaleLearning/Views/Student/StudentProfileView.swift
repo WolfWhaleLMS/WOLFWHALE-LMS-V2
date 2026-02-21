@@ -2,7 +2,7 @@ import SwiftUI
 
 struct StudentProfileView: View {
     let viewModel: AppViewModel
-    var walletService = WalletPassService()
+    @State private var walletService: WalletPassService?
     @AppStorage("colorSchemePreference") private var colorSchemePreference: String = "system"
     @State private var showAchievements = false
     @State private var hapticTrigger = false
@@ -25,6 +25,11 @@ struct StudentProfileView: View {
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Profile")
+            .task {
+                if walletService == nil {
+                    walletService = WalletPassService()
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     NavigationLink {
@@ -175,7 +180,7 @@ struct StudentProfileView: View {
 
     private var schoolIDLink: some View {
         Group {
-            if let user = viewModel.currentUser {
+            if let user = viewModel.currentUser, let walletService {
                 NavigationLink {
                     SchoolIDView(user: user, walletService: walletService)
                 } label: {

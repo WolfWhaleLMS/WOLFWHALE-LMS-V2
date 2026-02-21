@@ -4,7 +4,7 @@ struct NFCAttendanceView: View {
     @Bindable var viewModel: AppViewModel
     let courseId: UUID
 
-    @State private var nfcService = NFCAttendanceService()
+    @State private var nfcService: NFCAttendanceService?
     @State private var checkedInStudents: [(id: UUID, name: String, time: Date)] = []
     @State private var showFinishConfirmation = false
     @State private var showSuccess = false
@@ -29,7 +29,12 @@ struct NFCAttendanceView: View {
         .background(Color(.systemGroupedBackground))
         .navigationTitle("NFC Attendance")
         .navigationBarTitleDisplayMode(.inline)
-        .onChange(of: nfcService.scanResult) { _, newValue in
+        .task {
+            if nfcService == nil {
+                nfcService = NFCAttendanceService()
+            }
+        }
+        .onChange(of: nfcService?.scanResult) { _, newValue in
             handleScanResult(newValue)
         }
         .alert("Finish Session?", isPresented: $showFinishConfirmation) {
@@ -54,7 +59,7 @@ struct NFCAttendanceView: View {
             // NFC icon with pulse animation
             ZStack {
                 // Outer pulse rings
-                if nfcService.isScanning {
+                if nfcService?.isScanning == true {
                     Circle()
                         .stroke(Color.purple.opacity(0.3), lineWidth: 2)
                         .frame(width: 160, height: 160)
@@ -83,7 +88,7 @@ struct NFCAttendanceView: View {
                 Image(systemName: scannerIconName)
                     .font(.system(size: 44))
                     .foregroundStyle(.white)
-                    .symbolEffect(.pulse, isActive: nfcService.isScanning)
+                    .symbolEffect(.pulse, isActive: nfcService?.isScanning == true)
             }
             .onAppear {
                 withAnimation(.easeInOut(duration: 1.5).repeatForever(autoreverses: false)) {
@@ -105,10 +110,10 @@ struct NFCAttendanceView: View {
             // Scan button
             Button {
                 hapticTrigger.toggle()
-                nfcService.startScanning()
+                nfcService?.startScanning()
             } label: {
                 Label(
-                    nfcService.isScanning ? "Scanning..." : "Tap to Start Scanning",
+                    nfcService?.isScanning == true ? "Scanning..." : "Tap to Start Scanning",
                     systemImage: "sensor.tag.radiowaves.forward.fill"
                 )
                 .fontWeight(.semibold)
@@ -123,16 +128,16 @@ struct NFCAttendanceView: View {
                     endPoint: .trailing
                 )
             )
-            .disabled(nfcService.isScanning || !nfcService.isNFCAvailable)
+            .disabled(nfcService?.isScanning == true || nfcService?.isNFCAvailable != true)
             .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
-            if !nfcService.isNFCAvailable {
+            if nfcService?.isNFCAvailable != true {
                 Label("NFC is not available on this device", systemImage: "exclamationmark.triangle.fill")
                     .font(.caption)
                     .foregroundStyle(.orange)
             }
 
-            if let error = nfcService.lastError {
+            if let error = nfcService?.lastError {
                 Label(error, systemImage: "xmark.circle.fill")
                     .font(.caption)
                     .foregroundStyle(.red)
@@ -283,34 +288,34 @@ struct NFCAttendanceView: View {
     // MARK: - Helpers
 
     private var scannerGradientColors: [Color] {
-        switch nfcService.scanResult {
+        switch nfcService?.scanResult {
         case .success: [.green, .mint]
         case .error: [.red, .orange]
-        case nil: nfcService.isScanning ? [.purple, .cyan] : [.purple, .blue]
+        case nil, .none: nfcService?.isScanning == true ? [.purple, .cyan] : [.purple, .blue]
         }
     }
 
     private var scannerIconName: String {
-        switch nfcService.scanResult {
+        switch nfcService?.scanResult {
         case .success: "checkmark.circle.fill"
         case .error: "xmark.circle.fill"
-        case nil: "sensor.tag.radiowaves.forward.fill"
+        case nil, .none: "sensor.tag.radiowaves.forward.fill"
         }
     }
 
     private var scannerTitle: String {
-        switch nfcService.scanResult {
+        switch nfcService?.scanResult {
         case .success(let name): "Checked In: \(name)"
         case .error: "Scan Failed"
-        case nil: nfcService.isScanning ? "Scanning..." : "Ready to Scan"
+        case nil, .none: nfcService?.isScanning == true ? "Scanning..." : "Ready to Scan"
         }
     }
 
     private var scannerSubtitle: String {
-        switch nfcService.scanResult {
+        switch nfcService?.scanResult {
         case .success: "Tap to scan another student"
         case .error: "Please try again"
-        case nil: nfcService.isScanning
+        case nil, .none: nfcService?.isScanning == true
             ? "Hold a student ID near the device"
             : "Tap the button below to start NFC scanning"
         }
@@ -321,7 +326,7 @@ struct NFCAttendanceView: View {
 
         // Avoid duplicates
         guard !checkedInStudents.contains(where: { $0.name == name }) else {
-            nfcService.lastError = "\(name) is already checked in"
+            nfcService?.lastError = "\(name) is already checked in"
             return
         }
 
@@ -332,7 +337,7 @@ struct NFCAttendanceView: View {
         // Reset for next scan after a brief delay
         Task {
             try? await Task.sleep(for: .seconds(1.5))
-            nfcService.reset()
+            nfcService?.reset()
         }
     }
 

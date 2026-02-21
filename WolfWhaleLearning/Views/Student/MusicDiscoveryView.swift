@@ -2,7 +2,7 @@ import SwiftUI
 import MusicKit
 
 struct MusicDiscoveryView: View {
-    @State private var musicService = MusicService()
+    @State private var musicService: MusicService?
     @State private var searchText = ""
     @State private var hapticTrigger = false
 
@@ -10,9 +10,9 @@ struct MusicDiscoveryView: View {
         ZStack(alignment: .bottom) {
             ScrollView {
                 VStack(spacing: 24) {
-                    if !musicService.isAuthorized {
+                    if musicService?.isAuthorized != true {
                         authorizationSection
-                    } else if !musicService.hasSubscription {
+                    } else if musicService?.hasSubscription != true {
                         noSubscriptionSection
                     } else {
                         studyPlaylistsSection
@@ -21,7 +21,7 @@ struct MusicDiscoveryView: View {
                     }
                 }
                 .padding(.horizontal)
-                .padding(.bottom, musicService.isPlaying ? 100 : 24)
+                .padding(.bottom, musicService?.isPlaying == true ? 100 : 24)
             }
             .background(
                 LinearGradient(
@@ -31,18 +31,21 @@ struct MusicDiscoveryView: View {
                 )
             )
 
-            if musicService.isPlaying, let track = musicService.nowPlaying {
+            if musicService?.isPlaying == true, let track = musicService?.nowPlaying {
                 nowPlayingBar(track: track)
             }
         }
         .navigationTitle("Discover Music")
         .navigationBarTitleDisplayMode(.inline)
         .task {
-            musicService.checkAuthorizationStatus()
-            if musicService.isAuthorized {
-                musicService.hasSubscription = await musicService.checkSubscriptionStatus()
-                if musicService.hasSubscription {
-                    await musicService.fetchStudyPlaylists()
+            if musicService == nil {
+                musicService = MusicService()
+            }
+            musicService?.checkAuthorizationStatus()
+            if musicService?.isAuthorized == true {
+                musicService?.hasSubscription = await musicService?.checkSubscriptionStatus() ?? false
+                if musicService?.hasSubscription == true {
+                    await musicService?.fetchStudyPlaylists()
                 }
             }
         }
@@ -68,9 +71,9 @@ struct MusicDiscoveryView: View {
             Button {
                 hapticTrigger.toggle()
                 Task {
-                    await musicService.requestAuthorization()
-                    if musicService.isAuthorized && musicService.hasSubscription {
-                        await musicService.fetchStudyPlaylists()
+                    await musicService?.requestAuthorization()
+                    if musicService?.isAuthorized == true && musicService?.hasSubscription == true {
+                        await musicService?.fetchStudyPlaylists()
                     }
                 }
             } label: {
@@ -116,13 +119,13 @@ struct MusicDiscoveryView: View {
                 Text("Study Playlists")
                     .font(.headline)
                 Spacer()
-                if musicService.isLoading && musicService.studyPlaylists.isEmpty {
+                if musicService?.isLoading == true && (musicService?.studyPlaylists.isEmpty ?? true) {
                     ProgressView()
                         .controlSize(.mini)
                 }
             }
 
-            if musicService.studyPlaylists.isEmpty && !musicService.isLoading {
+            if (musicService?.studyPlaylists.isEmpty ?? true) && musicService?.isLoading != true {
                 Text("No playlists found")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -131,7 +134,7 @@ struct MusicDiscoveryView: View {
             } else {
                 ScrollView(.horizontal) {
                     HStack(spacing: 14) {
-                        ForEach(musicService.studyPlaylists) { playlist in
+                        ForEach(musicService?.studyPlaylists ?? []) { playlist in
                             playlistCard(playlist)
                         }
                     }
@@ -146,7 +149,7 @@ struct MusicDiscoveryView: View {
         Button {
             hapticTrigger.toggle()
             Task {
-                await musicService.playPlaylist(playlist)
+                await musicService?.playPlaylist(playlist)
             }
         } label: {
             VStack(spacing: 10) {
@@ -201,14 +204,14 @@ struct MusicDiscoveryView: View {
                     .autocorrectionDisabled()
                     .onSubmit {
                         Task {
-                            await musicService.searchStudyMusic(query: searchText)
+                            await musicService?.searchStudyMusic(query: searchText)
                         }
                     }
 
                 if !searchText.isEmpty {
                     Button {
                         searchText = ""
-                        musicService.searchResults = nil
+                        musicService?.searchResults = nil
                     } label: {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundStyle(.secondary)
@@ -223,12 +226,12 @@ struct MusicDiscoveryView: View {
 
     private var searchResultsSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            if musicService.isLoading && musicService.searchResults?.isEmpty == false {
+            if musicService?.isLoading == true && musicService?.searchResults?.isEmpty == false {
                 ProgressView()
                     .frame(maxWidth: .infinity, alignment: .center)
             }
 
-            if let errorMessage = musicService.error {
+            if let errorMessage = musicService?.error {
                 Text(errorMessage)
                     .font(.caption)
                     .foregroundStyle(.red)
@@ -236,7 +239,7 @@ struct MusicDiscoveryView: View {
                     .frame(maxWidth: .infinity)
             }
 
-            if let results = musicService.searchResults, !results.isEmpty {
+            if let results = musicService?.searchResults, !results.isEmpty {
                 Text("Results")
                     .font(.headline)
 
@@ -253,7 +256,7 @@ struct MusicDiscoveryView: View {
         Button {
             hapticTrigger.toggle()
             Task {
-                await musicService.play(song: song)
+                await musicService?.play(song: song)
             }
         } label: {
             HStack(spacing: 12) {
@@ -332,9 +335,9 @@ struct MusicDiscoveryView: View {
 
             Button {
                 hapticTrigger.toggle()
-                musicService.togglePlayback()
+                musicService?.togglePlayback()
             } label: {
-                Image(systemName: musicService.isPlaying ? "pause.fill" : "play.fill")
+                Image(systemName: musicService?.isPlaying == true ? "pause.fill" : "play.fill")
                     .font(.title3)
                     .foregroundStyle(.primary)
                     .contentTransition(.symbolEffect(.replace))
@@ -343,7 +346,7 @@ struct MusicDiscoveryView: View {
 
             Button {
                 hapticTrigger.toggle()
-                musicService.skip()
+                musicService?.skip()
             } label: {
                 Image(systemName: "forward.fill")
                     .font(.subheadline)
