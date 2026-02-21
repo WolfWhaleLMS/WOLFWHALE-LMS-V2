@@ -431,7 +431,8 @@ struct GrammarQuestView: View {
             withAnimation(.spring(response: 0.3, dampingFraction: 0.3)) {
                 streakFireScale = 1.4
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            Task {
+                try? await Task.sleep(for: .seconds(0.3))
                 withAnimation(.spring) { streakFireScale = 1.0 }
             }
         } else {
@@ -441,7 +442,8 @@ struct GrammarQuestView: View {
             withAnimation(.default.repeatCount(4, autoreverses: true).speed(6)) {
                 shakeOffset = 10
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            Task {
+                try? await Task.sleep(for: .seconds(0.5))
                 shakeOffset = 0
             }
         }

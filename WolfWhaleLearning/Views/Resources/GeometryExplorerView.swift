@@ -887,12 +887,23 @@ struct GeometryExplorerView: View {
 
         var choices = Set<Double>()
         choices.insert(correct)
-        while choices.count < 4 {
+        var attempts = 0
+        while choices.count < 4 && attempts < 100 {
+            attempts += 1
             let offset = Double.random(in: -max(10, correct * 0.4)...max(10, correct * 0.4))
             let wrong = ((correct + offset) * 100).rounded() / 100
             if wrong > 0 && wrong != correct {
                 choices.insert(wrong)
             }
+        }
+        // Fallback: fill remaining choices with simple offsets if loop exhausted
+        var fallback = 1.0
+        while choices.count < 4 {
+            let candidate = ((correct + fallback) * 100).rounded() / 100
+            if candidate > 0 && !choices.contains(candidate) {
+                choices.insert(candidate)
+            }
+            fallback += 1.0
         }
 
         withAnimation(.spring(response: 0.3)) {

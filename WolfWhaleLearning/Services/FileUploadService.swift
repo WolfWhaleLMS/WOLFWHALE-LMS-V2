@@ -53,25 +53,35 @@ struct FileUploadService: Sendable {
     /// - Returns: The public URL string of the uploaded file.
     /// - Throws: `FileUploadError` if validation or upload fails.
     func uploadFile(bucket: String, path: String, fileURL: URL) async throws -> String {
-        // Verify the file exists
-        guard FileManager.default.fileExists(atPath: fileURL.path) else {
-            throw FileUploadError.fileNotFound
-        }
+        // Capture constants before entering the detached context to avoid
+        // cross-actor warnings on static properties.
+        let maxSize = FileUploadService.maxFileSize
+        let maxSizeMB = FileUploadService.maxFileSizeMB
+        let pathExt = fileURL.pathExtension
 
-        // Check file size
-        let attributes = try FileManager.default.attributesOfItem(atPath: fileURL.path)
-        let fileSize = attributes[.size] as? Int64 ?? 0
-        guard fileSize <= FileUploadService.maxFileSize else {
-            throw FileUploadError.fileTooLarge(maxMB: FileUploadService.maxFileSizeMB)
-        }
+        // Perform file-system I/O off the main actor to avoid blocking the UI.
+        let (fileData, contentType) = try await Task.detached(priority: .userInitiated) {
+            // Verify the file exists
+            guard FileManager.default.fileExists(atPath: fileURL.path) else {
+                throw FileUploadError.fileNotFound
+            }
 
-        // Read file data
-        guard let fileData = try? Data(contentsOf: fileURL) else {
-            throw FileUploadError.invalidFileData
-        }
+            // Check file size
+            let attributes = try FileManager.default.attributesOfItem(atPath: fileURL.path)
+            let fileSize = attributes[.size] as? Int64 ?? 0
+            guard fileSize <= maxSize else {
+                throw FileUploadError.fileTooLarge(maxMB: maxSizeMB)
+            }
 
-        // Determine MIME type from file extension
-        let contentType = mimeType(for: fileURL.pathExtension)
+            // Read file data
+            guard let data = try? Data(contentsOf: fileURL) else {
+                throw FileUploadError.invalidFileData
+            }
+
+            // Determine MIME type from file extension
+            let mime = FileUploadService.resolvedMimeType(for: pathExt)
+            return (data, mime)
+        }.value
 
         // Upload to Supabase Storage
         do {
@@ -133,6 +143,11 @@ struct FileUploadService: Sendable {
 
     /// Maps a file extension to a MIME type string.
     private func mimeType(for pathExtension: String) -> String {
+        Self.resolvedMimeType(for: pathExtension)
+    }
+
+    /// Static variant usable from detached tasks without actor isolation.
+    private nonisolated static func resolvedMimeType(for pathExtension: String) -> String {
         switch pathExtension.lowercased() {
         case "pdf":
             return "application/pdf"

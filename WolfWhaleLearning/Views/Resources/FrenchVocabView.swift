@@ -873,7 +873,7 @@ struct VocabQuizModeView: View {
 // MARK: - Vocabulary Data
 
 struct FrenchVocabData {
-    static var allCategories: [VocabCategory] {
+    static let allCategories: [VocabCategory] =
         [
             VocabCategory(name: "Greetings", icon: "hand.wave.fill", color1: .blue, color2: .cyan, words: greetings),
             VocabCategory(name: "Family", icon: "figure.2.and.child.holdinghands", color1: .pink, color2: .red, words: family),
@@ -886,9 +886,8 @@ struct FrenchVocabData {
             VocabCategory(name: "Weather", icon: "cloud.sun.fill", color1: .cyan, color2: .blue, words: weather),
             VocabCategory(name: "Clothing", icon: "tshirt.fill", color1: .brown, color2: .orange, words: clothing),
         ]
-    }
 
-    static var greetings: [FrenchWord] {
+    static let greetings: [FrenchWord] =
         [
             FrenchWord(french: "Bonjour", english: "Hello / Good morning", phonetic: "bohn-ZHOOR"),
             FrenchWord(french: "Bonsoir", english: "Good evening", phonetic: "bohn-SWAHR"),
@@ -913,9 +912,8 @@ struct FrenchVocabData {
             FrenchWord(french: "Oui", english: "Yes", phonetic: "WEE"),
             FrenchWord(french: "Non", english: "No", phonetic: "NOHN"),
         ]
-    }
 
-    static var family: [FrenchWord] {
+    static let family: [FrenchWord] =
         [
             FrenchWord(french: "La mère", english: "Mother", phonetic: "lah MEHR"),
             FrenchWord(french: "Le père", english: "Father", phonetic: "luh PEHR"),
@@ -938,9 +936,8 @@ struct FrenchVocabData {
             FrenchWord(french: "Le neveu", english: "Nephew", phonetic: "luh nuh-VUH"),
             FrenchWord(french: "La nièce", english: "Niece", phonetic: "lah NYEHS"),
         ]
-    }
 
-    static var food: [FrenchWord] {
+    static let food: [FrenchWord] =
         [
             FrenchWord(french: "Le pain", english: "Bread", phonetic: "luh PEHN"),
             FrenchWord(french: "Le fromage", english: "Cheese", phonetic: "luh froh-MAHZH"),
@@ -964,9 +961,8 @@ struct FrenchVocabData {
             FrenchWord(french: "Le sirop d'érable", english: "Maple syrup", phonetic: "luh see-ROH day-RAHBL"),
             FrenchWord(french: "La crêpe", english: "Crepe / Pancake", phonetic: "lah KREHP"),
         ]
-    }
 
-    static var school: [FrenchWord] {
+    static let school: [FrenchWord] =
         [
             FrenchWord(french: "L'école", english: "School", phonetic: "lay-KOHL"),
             FrenchWord(french: "Le professeur", english: "Teacher", phonetic: "luh proh-feh-SUHR"),
@@ -989,9 +985,8 @@ struct FrenchVocabData {
             FrenchWord(french: "L'ordinateur", english: "Computer", phonetic: "lor-dee-nah-TUHR"),
             FrenchWord(french: "La bibliothèque", english: "Library", phonetic: "lah bee-blee-oh-TEHK"),
         ]
-    }
 
-    static var animals: [FrenchWord] {
+    static let animals: [FrenchWord] =
         [
             FrenchWord(french: "Le chat", english: "Cat", phonetic: "luh SHAH"),
             FrenchWord(french: "Le chien", english: "Dog", phonetic: "luh SHYEHN"),
@@ -1015,9 +1010,8 @@ struct FrenchVocabData {
             FrenchWord(french: "L'orignal", english: "Moose", phonetic: "loh-ree-NYAHL"),
             FrenchWord(french: "Le castor", english: "Beaver", phonetic: "luh kahs-TOHR"),
         ]
-    }
 
-    static var bodyParts: [FrenchWord] {
+    static let bodyParts: [FrenchWord] =
         [
             FrenchWord(french: "La tête", english: "Head", phonetic: "lah TEHT"),
             FrenchWord(french: "Les yeux", english: "Eyes", phonetic: "layz YUH"),
@@ -1040,9 +1034,8 @@ struct FrenchVocabData {
             FrenchWord(french: "La langue", english: "Tongue", phonetic: "lah LAHNGH"),
             FrenchWord(french: "Le visage", english: "Face", phonetic: "luh vee-ZAHZH"),
         ]
-    }
 
-    static var colours: [FrenchWord] {
+    static let colours: [FrenchWord] =
         [
             FrenchWord(french: "Rouge", english: "Red", phonetic: "ROOZH"),
             FrenchWord(french: "Bleu", english: "Blue", phonetic: "BLUH"),
@@ -1065,9 +1058,8 @@ struct FrenchVocabData {
             FrenchWord(french: "Clair", english: "Light (colour)", phonetic: "KLEHR"),
             FrenchWord(french: "Foncé", english: "Dark (colour)", phonetic: "fohn-SAY"),
         ]
-    }
 
-    static var numbers: [FrenchWord] {
+    static let numbers: [FrenchWord] =
         [
             FrenchWord(french: "Un", english: "One (1)", phonetic: "UHN"),
             FrenchWord(french: "Deux", english: "Two (2)", phonetic: "DUH"),
@@ -1090,9 +1082,8 @@ struct FrenchVocabData {
             FrenchWord(french: "Cent", english: "One hundred (100)", phonetic: "SAHN"),
             FrenchWord(french: "Mille", english: "One thousand (1000)", phonetic: "MEEL"),
         ]
-    }
 
-    static var weather: [FrenchWord] {
+    static let weather: [FrenchWord] =
         [
             FrenchWord(french: "Il fait soleil", english: "It's sunny", phonetic: "eel feh soh-LAY"),
             FrenchWord(french: "Il pleut", english: "It's raining", phonetic: "eel PLUH"),
@@ -1115,9 +1106,8 @@ struct FrenchVocabData {
             FrenchWord(french: "La glace", english: "Ice", phonetic: "lah GLAHS"),
             FrenchWord(french: "Le verglas", english: "Black ice", phonetic: "luh vehr-GLAH"),
         ]
-    }
 
-    static var clothing: [FrenchWord] {
+    static let clothing: [FrenchWord] =
         [
             FrenchWord(french: "Le chandail", english: "Sweater", phonetic: "luh shahn-DAH-yuh"),
             FrenchWord(french: "Le pantalon", english: "Pants", phonetic: "luh pahn-tah-LOHN"),
@@ -1140,7 +1130,6 @@ struct FrenchVocabData {
             FrenchWord(french: "La veste", english: "Jacket", phonetic: "lah VEHST"),
             FrenchWord(french: "Le costume de neige", english: "Snowsuit", phonetic: "luh kohs-TOOM duh NEHZH"),
         ]
-    }
 }
 
 #Preview {

@@ -124,7 +124,16 @@ final class CallService: NSObject {
 
     // MARK: - State Management
 
+    /// Idempotent — safe to call from multiple paths (end-call callback,
+    /// providerDidReset, CXEndCallAction).  Guard prevents redundant work
+    /// and conflicting concurrent resets.
+    private var isResettingCallState = false
+
     private func resetCallState() {
+        guard !isResettingCallState else { return }
+        isResettingCallState = true
+        defer { isResettingCallState = false }
+
         stopCallTimer()
         stopAudioEngine()
         deactivateAudioSession()

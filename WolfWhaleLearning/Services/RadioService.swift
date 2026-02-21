@@ -95,8 +95,7 @@ class RadioService {
                 self.player = newPlayer
                 self.player?.volume = self.volume
 
-                self.playerItemObserver = playerItem.observe(\.status, options: [.new]) { [weak playerItem] item, _ in
-                    guard playerItem != nil else { return }
+                self.playerItemObserver = playerItem.observe(\.status, options: [.new]) { item, _ in
                     Task { @MainActor [weak self] in
                         guard let self else { return }
                         switch item.status {

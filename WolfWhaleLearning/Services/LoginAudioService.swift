@@ -437,9 +437,32 @@ private extension AVAudioUnitSampler {
 // MARK: - Duration * Double
 
 private extension Duration {
+    /// Multiply a `Duration` by a `Double` scalar while preserving attosecond-level
+    /// precision.  The previous implementation converted everything to nanoseconds
+    /// via floating-point, which loses precision for short clips (small durations)
+    /// because `Double` only has ~53 bits of mantissa.
+    ///
+    /// This version scales seconds and attoseconds separately, carries the
+    /// overflow properly, and builds the result from the precise components.
     static func * (lhs: Duration, rhs: Double) -> Duration {
-        let totalNanos = Double(lhs.components.seconds) * 1_000_000_000 + Double(lhs.components.attoseconds) / 1_000_000_000
-        let resultNanos = totalNanos * rhs
-        return .nanoseconds(Int64(resultNanos))
+        let (sec, atto) = lhs.components                       // (Int64, Int64)
+        let attoPerSec: Double = 1_000_000_000_000_000_000     // 1e18
+
+        // Scale each component independently to minimise floating-point magnitude.
+        let scaledSec  = Double(sec)  * rhs                    // fractional seconds
+        let scaledAtto = Double(atto) * rhs                    // fractional attoseconds
+
+        // Whole seconds from the seconds component
+        let wholeSec  = Int64(scaledSec)
+        // Remaining fractional second → attoseconds
+        let fracAtto  = (scaledSec - Double(wholeSec)) * attoPerSec
+
+        let totalAtto = Int64(fracAtto + scaledAtto)
+
+        // Carry: attoseconds may exceed 1 second
+        let carrySeconds = totalAtto / 1_000_000_000_000_000_000
+        let remainAtto   = totalAtto % 1_000_000_000_000_000_000
+
+        return .seconds(wholeSec + carrySeconds) + .nanoseconds(remainAtto / 1_000_000_000)
     }
 }

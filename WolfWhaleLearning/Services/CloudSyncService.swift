@@ -5,14 +5,38 @@ import CloudKit
 
 private struct CloudUserPreferences: Codable {
     var userId: String
+    /// Masked: only first character + "***" stored to avoid PII in CloudKit.
     var firstName: String
+    /// Masked: only first character + "***" stored to avoid PII in CloudKit.
     var lastName: String
+    /// Masked: local-part partially redacted, domain kept.
     var email: String
     var role: String
     var avatarSystemName: String
     var colorSchemePreference: String?
     var biometricEnabled: Bool
     var calendarSyncEnabled: Bool
+
+    // MARK: - PII Masking
+
+    /// Returns a masked version of a name: first character visible, rest replaced.
+    /// e.g. "Ryland" -> "R***"
+    static func maskName(_ name: String) -> String {
+        guard let first = name.first else { return "***" }
+        return "\(first)***"
+    }
+
+    /// Returns a masked email: first two characters of local part visible, rest redacted.
+    /// e.g. "ryland@example.com" -> "ry***@example.com"
+    static func maskEmail(_ email: String) -> String {
+        let parts = email.split(separator: "@", maxSplits: 1)
+        guard parts.count == 2 else { return "***" }
+        let local = parts[0]
+        let domain = parts[1]
+        let visibleCount = min(2, local.count)
+        let visible = local.prefix(visibleCount)
+        return "\(visible)***@\(domain)"
+    }
 }
 
 // MARK: - CloudSyncService
@@ -90,6 +114,8 @@ final class CloudSyncService {
         isSyncing = true
         syncError = nil
 
+        defer { isSyncing = false }
+
         do {
             let recordID = CKRecord.ID(recordName: Self.preferencesRecordName)
 
@@ -104,9 +130,9 @@ final class CloudSyncService {
 
             let prefs = CloudUserPreferences(
                 userId: user.id.uuidString,
-                firstName: user.firstName,
-                lastName: user.lastName,
-                email: user.email,
+                firstName: CloudUserPreferences.maskName(user.firstName),
+                lastName: CloudUserPreferences.maskName(user.lastName),
+                email: CloudUserPreferences.maskEmail(user.email),
                 role: user.role.rawValue,
                 avatarSystemName: user.avatarSystemName,
                 colorSchemePreference: UserDefaults.standard.string(forKey: UserDefaultsKeys.colorSchemePreference),
@@ -131,8 +157,6 @@ final class CloudSyncService {
             print("[CloudSync] Sync to cloud failed: \(error)")
             #endif
         }
-
-        isSyncing = false
     }
 
     // MARK: - Fetch From Cloud

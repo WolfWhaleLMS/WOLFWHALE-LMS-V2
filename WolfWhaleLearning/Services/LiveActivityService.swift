@@ -89,7 +89,7 @@ class LiveActivityService {
             currentTopic: topic,
             progress: progress
         )
-        Task {
+        Task.detached {
             await activity.update(ActivityContent(state: state, staleDate: nil))
         }
     }
@@ -101,9 +101,11 @@ class LiveActivityService {
             currentTopic: "Class Ended",
             progress: 1.0
         )
-        Task {
+        Task.detached { [weak self] in
             await activity.end(ActivityContent(state: finalState, staleDate: nil), dismissalPolicy: .after(.now + 60))
-            activeClassActivity = nil
+            await MainActor.run {
+                self?.activeClassActivity = nil
+            }
         }
     }
 
@@ -139,9 +141,11 @@ class LiveActivityService {
     func markAssignmentSubmitted() {
         guard let activity = activeAssignmentActivity else { return }
         let state = AssignmentDueAttributes.ContentState(hoursRemaining: 0, isSubmitted: true)
-        Task {
+        Task.detached { [weak self] in
             await activity.end(ActivityContent(state: state, staleDate: nil), dismissalPolicy: .after(.now + 30))
-            activeAssignmentActivity = nil
+            await MainActor.run {
+                self?.activeAssignmentActivity = nil
+            }
         }
     }
 }

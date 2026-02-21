@@ -64,16 +64,16 @@ class PeerService: NSObject {
     // MARK: - Browsing
 
     func startBrowsing() {
-        guard let peer = peerID, let _ = session else {
-            let peer = MCPeerID(displayName: UIDevice.current.name)
-            peerID = peer
-            let newSession = MCSession(peer: peer, securityIdentity: nil, encryptionPreference: .required)
+        guard let existingPeer = peerID, let _ = session else {
+            let newPeer = MCPeerID(displayName: UIDevice.current.name)
+            peerID = newPeer
+            let newSession = MCSession(peer: newPeer, securityIdentity: nil, encryptionPreference: .required)
             newSession.delegate = self
             session = newSession
-            startBrowsingInternal(peer: peer)
+            startBrowsingInternal(peer: newPeer)
             return
         }
-        startBrowsingInternal(peer: peer)
+        startBrowsingInternal(peer: existingPeer)
     }
 
     private func startBrowsingInternal(peer: MCPeerID) {
