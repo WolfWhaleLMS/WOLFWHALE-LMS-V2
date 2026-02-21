@@ -142,6 +142,7 @@ class RadioService {
         stopPlayer()
         currentStation = nil
         MPNowPlayingInfoCenter.default().nowPlayingInfo = nil
+        clearRemoteCommandCenter()
     }
 
     func setVolume(_ newVolume: Float) {
@@ -173,11 +174,21 @@ class RadioService {
         MPNowPlayingInfoCenter.default().nowPlayingInfo = info
     }
 
+    private func clearRemoteCommandCenter() {
+        let commandCenter = MPRemoteCommandCenter.shared()
+        commandCenter.playCommand.removeTarget(nil)
+        commandCenter.pauseCommand.removeTarget(nil)
+        commandCenter.togglePlayPauseCommand.removeTarget(nil)
+    }
+
     private func setupRemoteCommandCenter() {
         guard !commandCenterConfigured else { return }
         commandCenterConfigured = true
 
         let commandCenter = MPRemoteCommandCenter.shared()
+
+        // Remove any existing targets to prevent accumulation
+        clearRemoteCommandCenter()
 
         commandCenter.playCommand.isEnabled = true
         commandCenter.playCommand.addTarget { [weak self] _ in

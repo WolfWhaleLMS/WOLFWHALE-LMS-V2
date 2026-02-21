@@ -119,7 +119,9 @@ class PeerService: NSObject {
                                  withName: name,
                                  toPeer: peer) { error in
                 if let error {
+                    #if DEBUG
                     print("PeerService: file send error — \(error.localizedDescription)")
+                    #endif
                 }
             }
         }
@@ -187,7 +189,9 @@ extension PeerService: MCNearbyServiceAdvertiserDelegate {
     }
 
     nonisolated func advertiser(_ advertiser: MCNearbyServiceAdvertiser, didNotStartAdvertisingPeer error: Error) {
+        #if DEBUG
         print("PeerService: advertising failed — \(error.localizedDescription)")
+        #endif
         Task { @MainActor in
             isAdvertising = false
         }
@@ -212,7 +216,9 @@ extension PeerService: MCNearbyServiceBrowserDelegate {
     }
 
     nonisolated func browser(_ browser: MCNearbyServiceBrowser, didNotStartBrowsingForPeers error: Error) {
+        #if DEBUG
         print("PeerService: browsing failed — \(error.localizedDescription)")
+        #endif
         Task { @MainActor in
             isBrowsing = false
         }

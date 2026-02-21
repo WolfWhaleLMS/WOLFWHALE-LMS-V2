@@ -20,7 +20,13 @@ struct QuizView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if isSubmitted {
+            if quiz.questions.isEmpty {
+                ContentUnavailableView(
+                    "No Questions",
+                    systemImage: "questionmark.circle",
+                    description: Text("This quiz has no questions yet.")
+                )
+            } else if isSubmitted {
                 resultsView
             } else {
                 quizContent
@@ -97,7 +103,7 @@ struct QuizView: View {
                     Capsule().fill(.quaternary)
                     Capsule()
                         .fill(.purple.gradient)
-                        .frame(width: geo.size.width * (Double(currentQuestion + 1) / Double(quiz.questions.count)))
+                        .frame(width: geo.size.width * (quiz.questions.isEmpty ? 0 : Double(currentQuestion + 1) / Double(quiz.questions.count)))
                 }
             }
             .frame(height: 4)

@@ -12,7 +12,7 @@ nonisolated struct CheckGradesIntent: AppIntent {
     func perform() async throws -> some IntentResult & ProvidesDialog {
         let defaults = UserDefaults.standard
 
-        guard let data = defaults.data(forKey: "wolfwhale_grades_summary"),
+        guard let data = defaults.data(forKey: UserDefaultsKeys.gradesSummary),
               let gradesSummary = try? JSONDecoder().decode(CachedGradesSummary.self, from: data) else {
             return .result(dialog: "I don't have your grades yet. Open WolfWhale to load your data.")
         }

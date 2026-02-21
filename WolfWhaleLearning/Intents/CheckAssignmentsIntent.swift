@@ -10,7 +10,7 @@ nonisolated struct CheckAssignmentsIntent: AppIntent {
     func perform() async throws -> some IntentResult & ProvidesDialog {
         let defaults = UserDefaults.standard
 
-        guard let data = defaults.data(forKey: "wolfwhale_upcoming_assignments"),
+        guard let data = defaults.data(forKey: UserDefaultsKeys.upcomingAssignments),
               let assignments = try? JSONDecoder().decode([CachedAssignment].self, from: data),
               !assignments.isEmpty else {
             return .result(dialog: "You have no upcoming assignments right now. Open WolfWhale to refresh your data.")

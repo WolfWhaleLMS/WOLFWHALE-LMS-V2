@@ -1,10 +1,7 @@
 import Foundation
-import CallKit
-import AVFoundation
-import SwiftUI
-import Observation
-
 @preconcurrency import CallKit
+import AVFoundation
+import Observation
 
 @MainActor
 @Observable

@@ -1,5 +1,4 @@
 import SwiftUI
-import AVFoundation
 
 struct LoginView: View {
     @Bindable var viewModel: AppViewModel

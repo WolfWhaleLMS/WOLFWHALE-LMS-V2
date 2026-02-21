@@ -75,11 +75,13 @@ struct RadioView: View {
 
         return Button {
             hapticTrigger.toggle()
-            withAnimation(.snappy) {
-                if isActive {
+            if isActive {
+                withAnimation(.snappy) {
                     radioService.togglePlayback()
-                } else {
-                    radioService.play(station: station)
+                }
+            } else {
+                radioService.play(station: station)
+                withAnimation(.snappy) {
                     selectedStation = station
                 }
             }
@@ -507,16 +509,16 @@ struct RadioView: View {
             nextIndex = currentIndex == 0 ? stations.count - 1 : currentIndex - 1
         }
 
+        let newStation = stations[nextIndex]
+        radioService.play(station: newStation)
         withAnimation(.snappy) {
-            let newStation = stations[nextIndex]
-            radioService.play(station: newStation)
             selectedStation = newStation
         }
     }
 
     private func startVisualizerAnimation() {
         visualizerTimer?.invalidate()
-        visualizerTimer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: true) { [weak visualizerTimer] _ in
+        visualizerTimer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: true) { _ in
             Task { @MainActor in
                 guard visualizerTimer != nil else { return }
                 if radioService.isPlaying {

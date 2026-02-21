@@ -10,7 +10,7 @@ nonisolated struct CheckScheduleIntent: AppIntent {
     func perform() async throws -> some IntentResult & ProvidesDialog {
         let defaults = UserDefaults.standard
 
-        guard let data = defaults.data(forKey: "wolfwhale_schedule_today"),
+        guard let data = defaults.data(forKey: UserDefaultsKeys.scheduleToday),
               let classes = try? JSONDecoder().decode([CachedScheduleEntry].self, from: data),
               !classes.isEmpty else {
             return .result(dialog: "You don't have any classes scheduled for today. Open WolfWhale to refresh your schedule.")

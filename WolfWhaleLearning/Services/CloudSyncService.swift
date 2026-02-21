@@ -109,9 +109,9 @@ final class CloudSyncService {
                 email: user.email,
                 role: user.role.rawValue,
                 avatarSystemName: user.avatarSystemName,
-                colorSchemePreference: UserDefaults.standard.string(forKey: "colorSchemePreference"),
-                biometricEnabled: UserDefaults.standard.bool(forKey: "biometricEnabled"),
-                calendarSyncEnabled: UserDefaults.standard.bool(forKey: "wolfwhale_calendar_sync_enabled")
+                colorSchemePreference: UserDefaults.standard.string(forKey: UserDefaultsKeys.colorSchemePreference),
+                biometricEnabled: UserDefaults.standard.bool(forKey: UserDefaultsKeys.biometricEnabled),
+                calendarSyncEnabled: UserDefaults.standard.bool(forKey: UserDefaultsKeys.calendarSyncEnabled)
             )
 
             let encoder = JSONEncoder()

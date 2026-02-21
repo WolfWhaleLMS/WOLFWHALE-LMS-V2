@@ -58,10 +58,19 @@ final class RealtimeService {
         listenTask = Task { [weak self] in
             guard let self else { return }
 
-            try? await ch.subscribeWithError()
-
-            await MainActor.run {
-                self.isConnected = true
+            do {
+                try await ch.subscribeWithError()
+                await MainActor.run {
+                    self.isConnected = true
+                }
+            } catch {
+                await MainActor.run {
+                    self.isConnected = false
+                }
+                #if DEBUG
+                print("RealtimeService: subscription failed: \(error)")
+                #endif
+                return
             }
 
             for await action in insertions {

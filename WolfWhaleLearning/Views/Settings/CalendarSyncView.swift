@@ -4,7 +4,7 @@ import EventKit
 struct CalendarSyncView: View {
     let viewModel: AppViewModel
 
-    @State private var syncEnabled: Bool = UserDefaults.standard.bool(forKey: "wolfwhale_calendar_sync_enabled")
+    @State private var syncEnabled: Bool = UserDefaults.standard.bool(forKey: UserDefaultsKeys.calendarSyncEnabled)
     @State private var isSyncing = false
     @State private var showRemoveConfirmation = false
     @State private var showCalendarPicker = false
@@ -92,7 +92,7 @@ struct CalendarSyncView: View {
                     .labelsHidden()
                     .sensoryFeedback(.selection, trigger: syncEnabled)
                     .onChange(of: syncEnabled) { _, newValue in
-                        UserDefaults.standard.set(newValue, forKey: "wolfwhale_calendar_sync_enabled")
+                        UserDefaults.standard.set(newValue, forKey: UserDefaultsKeys.calendarSyncEnabled)
                         if !newValue {
                             calendarService.removeAllWolfWhaleEvents()
                         }

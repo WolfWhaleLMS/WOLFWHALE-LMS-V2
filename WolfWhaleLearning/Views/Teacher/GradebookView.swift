@@ -12,6 +12,7 @@ struct GradebookView: View {
     @State private var newDueDate = Date().addingTimeInterval(7 * 86400)
     @State private var newPoints: Int = 100
     @State private var isCreating = false
+    @State private var createError: String?
     @State private var showEditCourse = false
     @State private var hapticTrigger = false
 
@@ -372,7 +373,7 @@ struct GradebookView: View {
                 .padding(.vertical, 20)
                 .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
             } else {
-                ForEach(Array(courseAssignments.enumerated()), id: \.offset) { _, assignment in
+                ForEach(courseAssignments) { assignment in
                     assignmentRow(assignment)
                 }
             }
@@ -483,11 +484,20 @@ struct GradebookView: View {
                     }
                 }
             }
+            .alert("Error", isPresented: Binding(
+                get: { createError != nil },
+                set: { if !$0 { createError = nil } }
+            )) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(createError ?? "")
+            }
         }
     }
 
     private func createAssignment() {
         isCreating = true
+        createError = nil
         Task {
             do {
                 try await viewModel.createAssignment(
@@ -500,6 +510,7 @@ struct GradebookView: View {
                 resetAssignmentForm()
                 showAddAssignment = false
             } catch {
+                createError = "Failed to create assignment: \(error.localizedDescription)"
             }
             isCreating = false
         }

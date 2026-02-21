@@ -32,6 +32,7 @@ class AppViewModel {
     var isDemoMode = false
     private let mockService = MockDataService.shared
     private let dataService = DataService.shared
+    private var refreshTask: Task<Void, Never>?
     let networkMonitor = NetworkMonitor()
 
     // MARK: - Notifications
@@ -50,8 +51,8 @@ class AppViewModel {
     var isAppLocked: Bool = false
 
     var biometricEnabled: Bool {
-        get { UserDefaults.standard.bool(forKey: "biometricEnabled") }
-        set { UserDefaults.standard.set(newValue, forKey: "biometricEnabled") }
+        get { UserDefaults.standard.bool(forKey: UserDefaultsKeys.biometricEnabled) }
+        set { UserDefaults.standard.set(newValue, forKey: UserDefaultsKeys.biometricEnabled) }
     }
 
     // MARK: - Calendar Sync
@@ -62,8 +63,8 @@ class AppViewModel {
         return _calendarService!
     }
     var calendarSyncEnabled: Bool {
-        get { UserDefaults.standard.bool(forKey: "wolfwhale_calendar_sync_enabled") }
-        set { UserDefaults.standard.set(newValue, forKey: "wolfwhale_calendar_sync_enabled") }
+        get { UserDefaults.standard.bool(forKey: UserDefaultsKeys.calendarSyncEnabled) }
+        set { UserDefaults.standard.set(newValue, forKey: UserDefaultsKeys.calendarSyncEnabled) }
     }
 
     // MARK: - Offline Storage & Cloud Sync
@@ -153,8 +154,12 @@ class AppViewModel {
                 // Register device for remote push notifications
                 pushService.registerForRemoteNotifications()
                 await pushService.sendTokenToServer(userId: session.user.id)
+
+                // Clear password from memory after successful login
+                password = ""
             } catch {
                 loginError = mapAuthError(error)
+                password = ""
             }
             isLoading = false
         }
@@ -270,24 +275,26 @@ class AppViewModel {
         }
         offlineStorage.clearAllData()
         isDemoMode = false
+        // Animate only the auth transition; clear data arrays outside animation
+        // to avoid a burst of cascading view recalculations
         withAnimation(.smooth) {
             isAuthenticated = false
-            currentUser = nil
-            email = ""
-            password = ""
-            courses = []
-            assignments = []
-            quizzes = []
-            grades = []
-            attendance = []
-            achievements = []
-            leaderboard = []
-            conversations = []
-            announcements = []
-            children = []
-            schoolMetrics = nil
-            allUsers = []
         }
+        currentUser = nil
+        email = ""
+        password = ""
+        courses = []
+        assignments = []
+        quizzes = []
+        grades = []
+        attendance = []
+        achievements = []
+        leaderboard = []
+        conversations = []
+        announcements = []
+        children = []
+        schoolMetrics = nil
+        allUsers = []
     }
 
     // MARK: - Fetch Profile
@@ -434,9 +441,14 @@ class AppViewModel {
                 }
             }
             isDataLoading = false
-            cacheDataForSiri()
-            saveDataToOfflineStorage()
-            notificationService.scheduleAllAssignmentReminders(assignments: assignments)
+
+            // Move expensive I/O operations off the main thread
+            let assignmentsForReminders = assignments
+            Task.detached(priority: .utility) { @MainActor [weak self] in
+                self?.cacheDataForSiri()
+                self?.saveDataToOfflineStorage()
+                self?.notificationService.scheduleAllAssignmentReminders(assignments: assignmentsForReminders)
+            }
         } catch {
             isDataLoading = false
             if offlineStorage.hasOfflineData {
@@ -504,7 +516,11 @@ class AppViewModel {
     }
 
     func refreshData() {
-        Task {
+        // Cancel any pending refresh to prevent network storms
+        refreshTask?.cancel()
+        refreshTask = Task {
+            try? await Task.sleep(for: .milliseconds(300))
+            guard !Task.isCancelled else { return }
             await loadData()
         }
     }
@@ -526,7 +542,7 @@ class AppViewModel {
             )
         }
         if let data = try? JSONEncoder().encode(Array(upcomingItems)) {
-            defaults.set(data, forKey: "wolfwhale_upcoming_assignments")
+            defaults.set(data, forKey: UserDefaultsKeys.upcomingAssignments)
         }
 
         // 2. Grades summary
@@ -539,7 +555,7 @@ class AppViewModel {
         }
         let gradesSummary = CachedGradesSummary(gpa: gpa, courseGrades: courseGrades)
         if let data = try? JSONEncoder().encode(gradesSummary) {
-            defaults.set(data, forKey: "wolfwhale_grades_summary")
+            defaults.set(data, forKey: UserDefaultsKeys.gradesSummary)
         }
 
         // 3. Today's schedule (derived from enrolled courses)
@@ -547,7 +563,7 @@ class AppViewModel {
             CachedScheduleEntry(courseName: course.title, time: nil)
         }
         if let data = try? JSONEncoder().encode(scheduleEntries) {
-            defaults.set(data, forKey: "wolfwhale_schedule_today")
+            defaults.set(data, forKey: UserDefaultsKeys.scheduleToday)
         }
     }
 
