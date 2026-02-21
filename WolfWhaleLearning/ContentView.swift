@@ -13,12 +13,8 @@ struct ContentView: View {
                     splashView
                 } else if viewModel.isAuthenticated {
                     authenticatedView
-                        .transition(.opacity.combined(with: .scale(scale: 0.98)))
-                        .transaction { $0.animation = .smooth(duration: 0.4) }
                 } else {
                     LoginView(viewModel: viewModel)
-                        .transition(.opacity)
-                        .transaction { $0.animation = .smooth(duration: 0.4) }
                 }
             }
 
