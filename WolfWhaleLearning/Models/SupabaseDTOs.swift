@@ -79,6 +79,8 @@ nonisolated struct UpdateCourseDTO: Encodable, Sendable {
     let syllabusUrl: String?
     let credits: Double?
     let status: String?
+    let colorName: String?
+    let iconSystemName: String?
 
     enum CodingKeys: String, CodingKey {
         case name, description, subject, semester, credits, status
@@ -86,6 +88,8 @@ nonisolated struct UpdateCourseDTO: Encodable, Sendable {
         case startDate = "start_date"
         case endDate = "end_date"
         case syllabusUrl = "syllabus_url"
+        case colorName = "color_name"
+        case iconSystemName = "icon_system_name"
     }
 }
 
@@ -145,12 +149,12 @@ nonisolated struct LessonDTO: Codable, Sendable {
     let updatedAt: String?
     let moduleId: UUID?
 
-    var duration: Int? { nil }
-    var type: String? { nil }
-    var xpReward: Int? { nil }
+    let duration: Int?
+    let type: String?
+    let xpReward: Int?
 
     enum CodingKeys: String, CodingKey {
-        case id, title, description, content, status
+        case id, title, description, content, status, duration, type
         case tenantId = "tenant_id"
         case courseId = "course_id"
         case orderIndex = "order_index"
@@ -159,6 +163,7 @@ nonisolated struct LessonDTO: Codable, Sendable {
         case createdAt = "created_at"
         case updatedAt = "updated_at"
         case moduleId = "module_id"
+        case xpReward = "xp_reward"
     }
 }
 

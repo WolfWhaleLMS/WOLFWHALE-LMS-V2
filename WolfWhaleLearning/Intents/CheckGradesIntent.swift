@@ -22,7 +22,7 @@ nonisolated struct CheckGradesIntent: AppIntent {
         }
 
         let gpaString = String(format: "%.1f", gradesSummary.gpa)
-        var lines: [String] = ["Your GPA is \(gpaString)%."]
+        var lines: [String] = ["Your GPA is \(gpaString)."]
 
         let limit = min(gradesSummary.courseGrades.count, 6)
         for grade in gradesSummary.courseGrades.prefix(limit) {

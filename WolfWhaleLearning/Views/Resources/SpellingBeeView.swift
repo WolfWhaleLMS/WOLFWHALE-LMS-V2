@@ -453,19 +453,22 @@ struct SpellingBeeView: View {
             withAnimation(.default.repeatCount(4, autoreverses: true).speed(6)) {
                 shakeOffset = 10
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(500))
                 shakeOffset = 0
             }
 
             withAnimation(.spring(response: 0.3, dampingFraction: 0.3)) {
                 heartScale = 1.4
             }
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(300))
                 withAnimation(.spring) { heartScale = 1.0 }
             }
 
             if lives <= 0 {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(1500))
                     withAnimation(.spring) { gameOver = true }
                 }
             }

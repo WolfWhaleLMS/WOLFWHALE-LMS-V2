@@ -928,6 +928,7 @@ private struct GeographyQuizSection: View {
     private func startQuiz(mode: WorldGeographyQuizMode) {
         score = 0
         streak = 0
+        bestStreak = 0
         totalAnswered = 0
         currentQuestionIndex = 0
         selectedAnswer = nil

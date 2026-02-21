@@ -20,7 +20,7 @@ nonisolated struct ProfileDTO: Codable, Sendable, Identifiable {
     var email: String = ""
 
     enum CodingKeys: String, CodingKey {
-        case id, phone, bio, timezone, language, preferences
+        case id, phone, bio, timezone, language, preferences, role, email
         case firstName = "first_name"
         case lastName = "last_name"
         case avatarUrl = "avatar_url"
@@ -47,8 +47,8 @@ nonisolated struct ProfileDTO: Codable, Sendable, Identifiable {
         updatedAt = try c.decodeIfPresent(String.self, forKey: .updatedAt)
         gradeLevel = try c.decodeIfPresent(String.self, forKey: .gradeLevel)
         fullName = try c.decodeIfPresent(String.self, forKey: .fullName)
-        role = ""
-        email = ""
+        role = try c.decodeIfPresent(String.self, forKey: .role) ?? ""
+        email = try c.decodeIfPresent(String.self, forKey: .email) ?? ""
     }
 
     init(

@@ -205,6 +205,13 @@ final class NotificationService: NSObject {
         pendingNotifications = []
     }
 
+    /// Clear deep-link destinations after navigation has consumed them.
+    func clearDeepLinks() {
+        deepLinkAssignmentId = nil
+        deepLinkConversationId = nil
+        deepLinkGradeId = nil
+    }
+
     // MARK: - Handle Tap Actions
 
     func handleNotificationResponse(_ response: UNNotificationResponse) {
@@ -296,7 +303,7 @@ extension NotificationService: UNUserNotificationCenterDelegate {
     ) {
         Task { @MainActor in
             handleNotificationResponse(response)
+            completionHandler()
         }
-        completionHandler()
     }
 }

@@ -5,6 +5,23 @@ struct FishTankView: View {
     @State private var wavePhase: CGFloat = 0
     @State private var seaweedPhase: CGFloat = 0
 
+    // MARK: - Pre-computed Pebble Data
+
+    struct Pebble: Identifiable {
+        let id = UUID()
+        let width: CGFloat
+        let height: CGFloat
+        let yOffset: CGFloat
+    }
+
+    @State private var sandPebbles: [Pebble] = (0..<8).map { _ in
+        Pebble(
+            width: CGFloat.random(in: 2...4),
+            height: CGFloat.random(in: 2...4),
+            yOffset: CGFloat.random(in: 2...6)
+        )
+    }
+
     // MARK: - Fish Data
 
     struct Fish: Identifiable {
@@ -14,6 +31,16 @@ struct FishTankView: View {
         let yPosition: CGFloat
         let speed: Double
         let delay: Double
+        let bobAmount: CGFloat
+
+        init(color: Color, size: CGFloat, yPosition: CGFloat, speed: Double, delay: Double) {
+            self.color = color
+            self.size = size
+            self.yPosition = yPosition
+            self.speed = speed
+            self.delay = delay
+            self.bobAmount = CGFloat.random(in: 6...12)
+        }
     }
 
     private let fish: [Fish] = [
@@ -139,13 +166,13 @@ struct FishTankView: View {
             )
             .frame(height: 22)
             .overlay(alignment: .top) {
-                // Sand texture dots
+                // Sand texture dots (pre-computed to avoid re-evaluation)
                 HStack(spacing: 12) {
-                    ForEach(0..<8, id: \.self) { i in
+                    ForEach(sandPebbles) { pebble in
                         Circle()
                             .fill(Color(red: 0.75, green: 0.65, blue: 0.48).opacity(0.5))
-                            .frame(width: CGFloat.random(in: 2...4), height: CGFloat.random(in: 2...4))
-                            .offset(y: CGFloat.random(in: 2...6))
+                            .frame(width: pebble.width, height: pebble.height)
+                            .offset(y: pebble.yOffset)
                     }
                 }
             }
@@ -247,11 +274,11 @@ struct FishTankView: View {
 // MARK: - Animated Fish View
 
 /// Each fish manages its own repeating animation independently.
+/// Uses phaseAnimator instead of recursive swim() to avoid main-thread saturation.
 private struct AnimatedFishView: View {
     let fish: FishTankView.Fish
     let animating: Bool
 
-    @State private var atEnd = false
     @State private var bobOffset: CGFloat = 0
 
     var body: some View {
@@ -265,97 +292,83 @@ private struct AnimatedFishView: View {
                 .font(.system(size: fish.size))
                 .foregroundStyle(fish.color.gradient)
                 .shadow(color: fish.color.opacity(0.4), radius: 3, y: 1)
-                .scaleEffect(x: atEnd ? 1 : -1, y: 1)
-                .offset(
-                    x: atEnd ? endX : startX,
-                    y: yPos + bobOffset
-                )
+                .offset(y: yPos + bobOffset)
+                .phaseAnimator(
+                    [false, true],
+                    trigger: animating
+                ) { content, phase in
+                    content
+                        .scaleEffect(x: phase ? 1 : -1, y: 1)
+                        .offset(x: phase ? endX : startX)
+                } animation: { phase in
+                    .linear(duration: fish.speed).delay(phase ? 0 : fish.delay)
+                }
                 .onAppear {
-                    // Bobbing animation
+                    // Bobbing animation (non-recursive, uses repeatForever on state)
                     withAnimation(
                         .easeInOut(duration: 1.2 + fish.speed * 0.1)
                             .repeatForever(autoreverses: true)
                             .delay(fish.delay)
                     ) {
-                        bobOffset = CGFloat.random(in: 6...12)
+                        bobOffset = fish.bobAmount
                     }
-
-                    // Swimming animation
-                    startSwimming()
                 }
-        }
-    }
-
-    private func startSwimming() {
-        // Initial delay before first swim
-        DispatchQueue.main.asyncAfter(deadline: .now() + fish.delay) {
-            swim()
-        }
-    }
-
-    private func swim() {
-        withAnimation(.linear(duration: fish.speed)) {
-            atEnd.toggle()
-        } completion: {
-            swim()
         }
     }
 }
 
 // MARK: - Bubble View
 
+/// Bubble uses phaseAnimator to cycle through rise/fade states without recursive dispatch.
 private struct BubbleView: View {
     let bubble: FishTankView.Bubble
     let tankHeight: CGFloat
     let animating: Bool
 
-    @State private var yOffset: CGFloat = 0
-    @State private var opacity: CGFloat = 0
+    // Phases: resting at bottom, then rising, then faded at top
+    enum BubblePhase: CaseIterable {
+        case bottom, rising, fadedTop
+    }
 
     var body: some View {
         Circle()
-            .fill(.white.opacity(opacity))
             .frame(width: bubble.size, height: bubble.size)
-            .overlay(
-                Circle()
-                    .stroke(.white.opacity(opacity * 0.5), lineWidth: 0.5)
-            )
-            .offset(y: yOffset)
-            .onAppear {
-                guard animating else { return }
-                startBubbleAnimation()
+            .phaseAnimator(
+                BubblePhase.allCases,
+                trigger: animating
+            ) { content, phase in
+                content
+                    .foregroundStyle(.white.opacity(bubbleOpacity(for: phase)))
+                    .overlay(
+                        Circle()
+                            .stroke(.white.opacity(bubbleOpacity(for: phase) * 0.5), lineWidth: 0.5)
+                    )
+                    .offset(y: bubbleOffset(for: phase))
+            } animation: { phase in
+                switch phase {
+                case .bottom:
+                    .easeIn(duration: 0.01).delay(bubble.delay)
+                case .rising:
+                    .easeOut(duration: bubble.duration)
+                case .fadedTop:
+                    .easeIn(duration: 0.6)
+                }
             }
     }
 
-    private func startBubbleAnimation() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + bubble.delay) {
-            animateBubble()
+    private func bubbleOpacity(for phase: BubblePhase) -> CGFloat {
+        switch phase {
+        case .bottom: return 0
+        case .rising: return 0.55
+        case .fadedTop: return 0
         }
     }
 
-    private func animateBubble() {
-        // Reset to bottom
-        yOffset = 0
-        opacity = 0
-
-        // Fade in quickly
-        withAnimation(.easeIn(duration: 0.3)) {
-            opacity = 0.55
-        }
-
-        // Float upward
-        withAnimation(.easeOut(duration: bubble.duration)) {
-            yOffset = -(tankHeight * 0.85)
-        }
-
-        // Fade out near the top
-        withAnimation(.easeIn(duration: 0.6).delay(bubble.duration * 0.65)) {
-            opacity = 0
-        }
-
-        // Restart after completing
-        DispatchQueue.main.asyncAfter(deadline: .now() + bubble.duration + 0.2) {
-            animateBubble()
+    private func bubbleOffset(for phase: BubblePhase) -> CGFloat {
+        switch phase {
+        case .bottom: return 0
+        case .rising: return -(tankHeight * 0.5)
+        case .fadedTop: return -(tankHeight * 0.85)
         }
     }
 }

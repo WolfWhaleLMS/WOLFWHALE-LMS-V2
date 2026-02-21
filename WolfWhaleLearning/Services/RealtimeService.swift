@@ -118,9 +118,15 @@ final class RealtimeService {
         listenTask = nil
 
         if let channel {
+            let client = supabaseClient
+            let ch = channel
+            // Clear local state immediately, then await removal.
+            self.channel = nil
+            self.isConnected = false
             Task {
-                await supabaseClient.realtimeV2.removeChannel(channel)
+                await client.realtimeV2.removeChannel(ch)
             }
+            return
         }
 
         channel = nil

@@ -417,7 +417,7 @@ final class OfflineStorageService {
     }
 
     /// Breakdown of individual file sizes for the settings UI.
-    var storagBreakdown: [(label: String, size: Int64)] {
+    var storageBreakdown: [(label: String, size: Int64)] {
         let files: [(String, String)] = [
             ("Courses", Self.coursesFile),
             ("Assignments", Self.assignmentsFile),

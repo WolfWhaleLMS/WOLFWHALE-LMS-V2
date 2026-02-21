@@ -100,6 +100,7 @@ class RadioService {
                         switch item.status {
                         case .readyToPlay:
                             self.isLoading = false
+                            self.isPlaying = true
                         case .failed:
                             self.isLoading = false
                             self.error = "Failed to load stream. Check your connection."
@@ -111,7 +112,6 @@ class RadioService {
                 }
 
                 self.player?.play()
-                self.isPlaying = true
             }
         }
     }
@@ -124,9 +124,10 @@ class RadioService {
 
     func resume() {
         if let currentStation, currentStation.streamURL != nil {
+            guard player != nil else { return }
             player?.play()
         }
-        isPlaying = true
+        isPlaying = player != nil || (currentStation?.streamURL == nil)
         updateNowPlayingPlaybackState()
     }
 
@@ -157,6 +158,7 @@ class RadioService {
         player = nil
         isPlaying = false
         isLoading = false
+        try? AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
     }
 
     private func setupNowPlayingInfo() {
@@ -179,16 +181,20 @@ class RadioService {
         commandCenter.playCommand.removeTarget(nil)
         commandCenter.pauseCommand.removeTarget(nil)
         commandCenter.togglePlayPauseCommand.removeTarget(nil)
+        commandCenterConfigured = false
     }
 
     private func setupRemoteCommandCenter() {
         guard !commandCenterConfigured else { return }
-        commandCenterConfigured = true
 
         let commandCenter = MPRemoteCommandCenter.shared()
 
         // Remove any existing targets to prevent accumulation
-        clearRemoteCommandCenter()
+        commandCenter.playCommand.removeTarget(nil)
+        commandCenter.pauseCommand.removeTarget(nil)
+        commandCenter.togglePlayPauseCommand.removeTarget(nil)
+
+        commandCenterConfigured = true
 
         commandCenter.playCommand.isEnabled = true
         commandCenter.playCommand.addTarget { [weak self] _ in

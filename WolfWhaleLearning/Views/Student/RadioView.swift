@@ -239,9 +239,7 @@ struct RadioView: View {
                     .frame(width: 8)
                     .frame(height: radioService.isPlaying ? barAnimations[index] * 100 : 10)
                     .animation(
-                        .easeInOut(duration: Double.random(in: 0.3...0.6))
-                        .repeatForever(autoreverses: true)
-                        .delay(Double(index) * 0.05),
+                        .easeInOut(duration: 0.3),
                         value: animateVisualizer
                     )
             }

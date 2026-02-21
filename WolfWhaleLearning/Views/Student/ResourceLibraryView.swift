@@ -6,7 +6,7 @@ struct ResourceLibraryView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 28) {
+                LazyVStack(spacing: 28) {
                     heroSection
                     arExperiencesSection
                     mathematicsSection
@@ -52,7 +52,7 @@ struct ResourceLibraryView: View {
                 Image(systemName: "square.grid.2x2.fill")
                     .font(.system(size: 36, weight: .medium))
                     .foregroundStyle(.white)
-                    .symbolEffect(.pulse, options: .repeating)
+                    // .symbolEffect(.pulse, options: .repeating) — removed to avoid perpetual GPU animation
 
                 Text("Resource Library")
                     .font(.title2.bold())

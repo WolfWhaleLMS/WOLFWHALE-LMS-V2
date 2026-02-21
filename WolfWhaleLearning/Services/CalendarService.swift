@@ -48,12 +48,9 @@ final class CalendarService {
     // MARK: - Initializer
 
     init() {
-        // EKEventStore creation and authorization checks are safe without entitlements,
-        // but wrap for resilience in case the framework is unavailable.
-        do {
-            let store = EKEventStore()
-            self.eventStore = store
-        }
+        // EKEventStore() does not throw — no need for do/catch.
+        let store = EKEventStore()
+        self.eventStore = store
         checkAuthorizationStatus()
     }
 

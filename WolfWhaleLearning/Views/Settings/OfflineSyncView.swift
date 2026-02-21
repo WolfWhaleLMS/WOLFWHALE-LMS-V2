@@ -167,7 +167,7 @@ struct OfflineSyncView: View {
 
     private var storageBreakdownSection: some View {
         Section {
-            let breakdown = offlineStorage.storagBreakdown
+            let breakdown = offlineStorage.storageBreakdown
             if breakdown.isEmpty {
                 HStack {
                     Spacer()

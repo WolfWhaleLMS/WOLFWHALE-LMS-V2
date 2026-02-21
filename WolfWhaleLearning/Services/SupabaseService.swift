@@ -101,7 +101,16 @@ struct DataService {
                 .value
         }
 
-        let completedLessonIds: Set<UUID> = []
+        var completedLessonIds: Set<UUID> = []
+        if role == .student {
+            let completions: [LessonCompletionDTO] = try await supabaseClient
+                .from("lesson_completions")
+                .select("lesson_id")
+                .eq("student_id", value: userId.uuidString)
+                .execute()
+                .value
+            completedLessonIds = Set(completions.map(\.lessonId))
+        }
 
         // --- Batch fetch enrollment counts for all courses ---
         let allEnrollments: [EnrollmentDTO] = try await supabaseClient
@@ -226,7 +235,16 @@ struct DataService {
                 .value
         }
 
-        let completedLessonIds: Set<UUID> = []
+        var completedLessonIds: Set<UUID> = []
+        if let studentId {
+            let completions: [LessonCompletionDTO] = try await supabaseClient
+                .from("lesson_completions")
+                .select("lesson_id")
+                .eq("student_id", value: studentId.uuidString)
+                .execute()
+                .value
+            completedLessonIds = Set(completions.map(\.lessonId))
+        }
 
         var lessonsByModule: [UUID: [LessonDTO]] = [:]
         for lesson in allLessonDTOs {
@@ -536,7 +554,7 @@ struct DataService {
                 courseName: courseNames[dto.courseId] ?? "Unknown",
                 questions: questions,
                 timeLimit: dto.timeLimitMinutes ?? 30,
-                dueDate: Date(),
+                dueDate: dto.dueDate != nil ? parseDate(dto.dueDate) : Date.distantFuture,
                 isCompleted: attempt != nil,
                 score: attempt?.score,
                 xpReward: 100
@@ -792,8 +810,8 @@ struct DataService {
                 id: conv.id,
                 participantNames: [],
                 title: conv.subject ?? "Conversation",
-                lastMessage: messages.last?.content ?? "",
-                lastMessageDate: messages.last?.timestamp ?? parseDate(conv.createdAt),
+                lastMessage: messages.first?.content ?? "",
+                lastMessageDate: messages.first?.timestamp ?? parseDate(conv.createdAt),
                 unreadCount: 0,
                 messages: messages,
                 avatarSystemName: otherCount > 1 ? "person.3.fill" : "person.crop.circle.fill"
@@ -945,8 +963,8 @@ struct DataService {
         try await supabaseClient
             .from("lesson_completions")
             .select()
-            .eq("student_id", value: studentId)
-            .eq("course_id", value: courseId)
+            .eq("student_id", value: studentId.uuidString)
+            .eq("course_id", value: courseId.uuidString)
             .execute()
             .value
     }
@@ -1581,7 +1599,7 @@ struct DataService {
     // MARK: - Courses (Update / Delete)
 
     func updateCourse(courseId: UUID, title: String?, description: String?, colorName: String? = nil, iconSystemName: String? = nil) async throws {
-        let dto = UpdateCourseDTO(name: title, description: description, subject: nil, gradeLevel: nil, semester: nil, startDate: nil, endDate: nil, syllabusUrl: nil, credits: nil, status: nil)
+        let dto = UpdateCourseDTO(name: title, description: description, subject: nil, gradeLevel: nil, semester: nil, startDate: nil, endDate: nil, syllabusUrl: nil, credits: nil, status: nil, colorName: colorName, iconSystemName: iconSystemName)
         try await supabaseClient
             .from("courses")
             .update(dto)

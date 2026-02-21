@@ -263,6 +263,13 @@ final class PushNotificationService {
         UNUserNotificationCenter.current().add(request)
     }
 
+    /// Clear deep-link destinations after navigation has consumed them.
+    func clearDeepLinks() {
+        deepLinkAssignmentId = nil
+        deepLinkConversationId = nil
+        deepLinkGradeId = nil
+    }
+
     /// Clear all pending notifications on logout.
     func clearAllNotifications() {
         UNUserNotificationCenter.current().removeAllPendingNotificationRequests()

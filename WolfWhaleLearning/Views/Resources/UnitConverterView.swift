@@ -113,10 +113,11 @@ enum UnitCategory: String, CaseIterable, Identifiable {
 }
 
 struct UnitInfo: Identifiable, Hashable {
-    let id = UUID()
     let name: String
     let symbol: String
     let toBase: Double
+
+    var id: String { symbol }
 }
 
 struct ConversionRecord: Codable, Identifiable {

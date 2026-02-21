@@ -22,24 +22,16 @@ final class CallService: NSObject {
 
     override init() {
         super.init()
-        // CXProvider and CXCallController can crash without proper code signing
-        // (no Apple Developer account). Defer creation and catch failures.
-        do {
-            let config = CXProviderConfiguration()
-            config.supportsVideo = false
-            config.maximumCallGroups = 1
-            config.supportedHandleTypes = [.generic, .phoneNumber]
-            let newProvider = CXProvider(configuration: config)
-            newProvider.setDelegate(self, queue: nil)
-            self.provider = newProvider
-            self.callController = CXCallController()
-            self.callKitAvailable = true
-        } catch {
-            #if DEBUG
-            print("[CallService] CallKit initialization failed (missing entitlement?): \(error)")
-            #endif
-            self.callKitAvailable = false
-        }
+        // CXProvider and CXCallController initializers do not throw.
+        let config = CXProviderConfiguration()
+        config.supportsVideo = false
+        config.maximumCallGroups = 1
+        config.supportedHandleTypes = [.generic, .phoneNumber]
+        let newProvider = CXProvider(configuration: config)
+        newProvider.setDelegate(self, queue: nil)
+        self.provider = newProvider
+        self.callController = CXCallController()
+        self.callKitAvailable = true
     }
 
     // MARK: - Start Call

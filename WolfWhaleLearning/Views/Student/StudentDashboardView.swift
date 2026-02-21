@@ -185,11 +185,29 @@ struct StudentDashboardView: View {
             Text("Campus Life")
                 .font(.headline)
 
-            // Compact campus location status
+            // Compact campus location label (static — avoids spawning a duplicate CLLocationManager)
             NavigationLink {
                 CampusLocationView()
             } label: {
-                CampusLocationView(isCompact: true)
+                HStack(spacing: 10) {
+                    Image(systemName: "location.fill")
+                        .font(.title3)
+                        .foregroundStyle(.orange)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Campus Location")
+                            .font(.subheadline.bold())
+                            .foregroundStyle(.primary)
+                        Text("Tap to view location status")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
+                .padding(14)
+                .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
             }
             .buttonStyle(.plain)
 

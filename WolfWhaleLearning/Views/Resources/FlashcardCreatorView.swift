@@ -1099,7 +1099,6 @@ private struct QuizStudyView: View {
     @State private var score = 0
     @State private var isComplete = false
 
-    private var cards: [Flashcard] { deck.cards.shuffled() }
     @State private var shuffledCards: [Flashcard] = []
 
     var body: some View {
@@ -1414,7 +1413,8 @@ private struct MatchStudyView: View {
             }
         } else {
             wrongPair = true
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            Task { @MainActor in
+                try? await Task.sleep(for: .milliseconds(500))
                 selectedFront = nil
                 selectedBack = nil
                 wrongPair = false

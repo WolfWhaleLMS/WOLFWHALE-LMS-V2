@@ -123,8 +123,9 @@ struct TypingTutorView: View {
 
     private var currentWPM: Double {
         guard elapsedSeconds > 0 else { return 0 }
-        let wordCount = Double(userInput.split(separator: " ").count)
-        return (wordCount / elapsedSeconds) * 60
+        // Standard WPM: 1 word = 5 characters (industry standard)
+        let standardWordCount = Double(userInput.count) / 5.0
+        return (standardWordCount / elapsedSeconds) * 60
     }
 
     private var currentAccuracy: Double {

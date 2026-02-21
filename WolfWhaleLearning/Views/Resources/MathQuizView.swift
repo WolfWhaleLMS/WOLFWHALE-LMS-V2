@@ -549,15 +549,9 @@ struct MathQuizView: View {
                 .background(.ultraThinMaterial, in: Capsule())
                 .animation(.easeInOut(duration: 0.3), value: timeRemaining <= 10)
             } else {
-                HStack(spacing: 6) {
-                    Image(systemName: "number")
-                        .foregroundStyle(.blue)
-                    Text("\(totalAnswered)")
-                        .font(.title3.bold().monospacedDigit())
+                PracticeModeEndButton {
+                    endGame()
                 }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 8)
-                .background(.ultraThinMaterial, in: Capsule())
             }
         }
     }
@@ -874,23 +868,23 @@ struct MathQuizView: View {
             feedbackOpacity = 1.0
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(800))
             withAnimation(.easeIn(duration: 0.2)) {
                 feedbackOpacity = 0
                 animateScore = false
             }
 
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                showFeedback = false
-                selectedAnswer = nil
-                currentQuestion = MathQuestionGenerator.generate(difficulty: difficulty)
+            try? await Task.sleep(for: .milliseconds(200))
+            showFeedback = false
+            selectedAnswer = nil
+            currentQuestion = MathQuestionGenerator.generate(difficulty: difficulty)
 
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
-                    questionScale = 0.9
-                }
-                withAnimation(.spring(response: 0.3, dampingFraction: 0.6).delay(0.05)) {
-                    questionScale = 1.0
-                }
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                questionScale = 0.9
+            }
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.6).delay(0.05)) {
+                questionScale = 1.0
             }
         }
     }

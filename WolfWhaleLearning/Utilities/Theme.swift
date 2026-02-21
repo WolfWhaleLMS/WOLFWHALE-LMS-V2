@@ -7,7 +7,7 @@ struct Theme {
         case .teacher: .pink
         case .parent: .green
         case .admin: .blue
-        case .superAdmin: .indigo
+        case .superAdmin: .purple
         }
     }
 

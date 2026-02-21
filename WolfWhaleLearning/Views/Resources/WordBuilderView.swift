@@ -58,10 +58,11 @@ struct WordBuilderView: View {
             }
         }
         .onAppear { loadNewWord() }
-        .task {
-            while true {
+        .task(id: timerActive) {
+            guard challengeMode && timerActive else { return }
+            while timerActive && timeRemaining > 0 {
                 try? await Task.sleep(for: .seconds(1))
-                if challengeMode && timerActive && timeRemaining > 0 {
+                if timerActive && timeRemaining > 0 {
                     timeRemaining -= 1
                     if timeRemaining <= 0 {
                         withAnimation(.spring) { gameOver = true }
@@ -180,55 +181,59 @@ struct WordBuilderView: View {
                     .foregroundStyle(.secondary)
             }
 
-            HStack(spacing: 8) {
-                ForEach(0..<currentWord.count, id: \.self) { index in
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 10)
-                            .fill(
-                                index < placedLetters.count
-                                    ? (showResult && isCorrect == true
-                                        ? Color.green.opacity(0.2)
-                                        : showResult && isCorrect == false
-                                            ? Color.red.opacity(0.2)
-                                            : Color.purple.opacity(0.15))
-                                    : Color(.tertiarySystemFill)
-                            )
-                            .frame(width: tileSize, height: tileSize)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 10)
-                                    .strokeBorder(
-                                        index < placedLetters.count
-                                            ? (showResult && isCorrect == true
-                                                ? .green
-                                                : showResult && isCorrect == false
-                                                    ? .red
-                                                    : .purple)
-                                            : .secondary.opacity(0.3),
-                                        lineWidth: 2
-                                    )
-                            )
-
-                        if index < placedLetters.count {
-                            Text(placedLetters[index].character.uppercased())
-                                .font(.title2.bold())
-                                .foregroundStyle(
-                                    showResult && isCorrect == true ? .green
-                                    : showResult && isCorrect == false ? .red
-                                    : .primary
+            GeometryReader { geo in
+                HStack(spacing: 8) {
+                    ForEach(0..<currentWord.count, id: \.self) { index in
+                        let size = tileSize(for: geo.size.width + 80)
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(
+                                    index < placedLetters.count
+                                        ? (showResult && isCorrect == true
+                                            ? Color.green.opacity(0.2)
+                                            : showResult && isCorrect == false
+                                                ? Color.red.opacity(0.2)
+                                                : Color.purple.opacity(0.15))
+                                        : Color(.tertiarySystemFill)
                                 )
-                                .transition(.scale.combined(with: .opacity))
+                                .frame(width: size, height: size)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .strokeBorder(
+                                            index < placedLetters.count
+                                                ? (showResult && isCorrect == true
+                                                    ? .green
+                                                    : showResult && isCorrect == false
+                                                        ? .red
+                                                        : .purple)
+                                                : .secondary.opacity(0.3),
+                                            lineWidth: 2
+                                        )
+                                )
+
+                            if index < placedLetters.count {
+                                Text(placedLetters[index].character.uppercased())
+                                    .font(.title2.bold())
+                                    .foregroundStyle(
+                                        showResult && isCorrect == true ? .green
+                                        : showResult && isCorrect == false ? .red
+                                        : .primary
+                                    )
+                                    .transition(.scale.combined(with: .opacity))
+                            }
                         }
-                    }
-                    .onTapGesture {
-                        guard index < placedLetters.count, !showResult else { return }
-                        withAnimation(.snappy) {
-                            let letter = placedLetters.remove(at: index)
-                            scrambledLetters.append(letter)
+                        .onTapGesture {
+                            guard index < placedLetters.count, !showResult else { return }
+                            withAnimation(.snappy) {
+                                let letter = placedLetters.remove(at: index)
+                                scrambledLetters.append(letter)
+                            }
                         }
                     }
                 }
+                .offset(x: shakeOffset)
             }
-            .offset(x: shakeOffset)
+            .frame(height: 56)
             .padding(.vertical, 8)
         }
         .padding(16)
@@ -236,9 +241,9 @@ struct WordBuilderView: View {
         .sensoryFeedback(.impact(flexibility: .soft), trigger: placedLetters.count)
     }
 
-    private var tileSize: CGFloat {
+    private func tileSize(for screenWidth: CGFloat) -> CGFloat {
         let count = CGFloat(currentWord.count)
-        let available: CGFloat = UIScreen.main.bounds.width - 80
+        let available: CGFloat = screenWidth - 80
         let maxSize: CGFloat = 48
         return min(maxSize, (available - (count - 1) * 8) / count)
     }
@@ -577,7 +582,8 @@ struct WordBuilderView: View {
         withAnimation(.default.repeatCount(4, autoreverses: true).speed(6)) {
             shakeOffset = 10
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+        Task { @MainActor in
+            try? await Task.sleep(for: .milliseconds(500))
             shakeOffset = 0
         }
     }
@@ -791,7 +797,7 @@ enum WordBuilderDifficulty: String, CaseIterable, Identifiable {
 
 // MARK: - Confetti View
 
-struct WordBuilderConfettiView: View {
+private struct WordBuilderConfettiView: View {
     let trigger: Int
     @State private var particles: [WordBuilderConfettiParticle] = []
     @State private var animating = false
@@ -826,7 +832,7 @@ struct WordBuilderConfettiView: View {
     }
 }
 
-struct WordBuilderConfettiParticle: Identifiable {
+private struct WordBuilderConfettiParticle: Identifiable {
     let id = UUID()
     let color: Color
     let size: CGFloat

@@ -18,7 +18,7 @@ class GeoFenceService: NSObject, CLLocationManagerDelegate {
     override init() {
         super.init()
         locationManager.delegate = self
-        locationManager.desiredAccuracy = kCLLocationAccuracyBest
+        locationManager.desiredAccuracy = kCLLocationAccuracyHundredMeters
     }
 
     func requestPermission() {
@@ -46,13 +46,19 @@ class GeoFenceService: NSObject, CLLocationManagerDelegate {
 
     nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
-        let campusCenterLocal = CLLocation(latitude: 37.7749, longitude: -122.4194)
-        let distance = location.distance(from: campusCenterLocal)
         Task { @MainActor in
+            let campusCenterLocation = CLLocation(latitude: self.campusCenter.latitude, longitude: self.campusCenter.longitude)
+            let distance = location.distance(from: campusCenterLocation)
             self.currentLocation = location.coordinate
             self.distanceFromCampus = distance
             self.isOnCampus = distance <= self.campusRadius
         }
+    }
+
+    nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        #if DEBUG
+        print("[GeoFenceService] Location manager error: \(error.localizedDescription)")
+        #endif
     }
 
     nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
