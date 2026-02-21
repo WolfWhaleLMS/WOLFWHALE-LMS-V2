@@ -10,24 +10,47 @@ let supabaseClient: SupabaseClient = {
     return SupabaseClient(supabaseURL: url, supabaseKey: anonKey)
 }()
 
-struct DataService: @unchecked Sendable {
+private func withRetry<T>(maxAttempts: Int = 3, delay: Duration = .seconds(1), _ operation: () async throws -> T) async throws -> T {
+    var lastError: Error?
+    for attempt in 0..<maxAttempts {
+        do {
+            return try await operation()
+        } catch {
+            lastError = error
+            if attempt < maxAttempts - 1 {
+                try await Task.sleep(for: delay * (attempt + 1))
+            }
+        }
+    }
+    throw lastError!
+}
+
+struct DataService: Sendable {
     static let shared = DataService()
 
-    private let iso8601: ISO8601DateFormatter = {
+    // MARK: - Date Parsing
+    //
+    // Supabase returns dates in three formats depending on column type:
+    //   1. `timestamptz` -> "2024-01-15T10:30:00.123456+00:00" (ISO 8601 with fractional seconds)
+    //   2. `timestamp`   -> "2024-01-15T10:30:00" (no timezone suffix, no fractional seconds)
+    //   3. `date`        -> "2024-01-15" (plain date, used by e.g. attendance_date)
+    //
+    // All three formatters are required. `parseDate` tries them in order, most-specific first.
+
+    nonisolated(unsafe) private let iso8601: ISO8601DateFormatter = {
         let f = ISO8601DateFormatter()
         f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return f
     }()
 
-    private let dateFormatter: DateFormatter = {
+    nonisolated(unsafe) private let dateFormatter: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
         f.timeZone = TimeZone(identifier: "UTC")
         return f
     }()
 
-    /// Plain date formatter for columns like attendance_date that store "yyyy-MM-dd"
-    private let plainDateFormatter: DateFormatter = {
+    nonisolated(unsafe) private let plainDateFormatter: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "yyyy-MM-dd"
         f.timeZone = TimeZone(identifier: "UTC")
@@ -48,59 +71,60 @@ struct DataService: @unchecked Sendable {
 
     // MARK: - Courses
 
-    func fetchCourses(for userId: UUID, role: UserRole, schoolId: String? = nil) async throws -> [Course] {
-        var courseDTOs: [CourseDTO] = []
-
-        switch role {
-        case .student:
-            let enrollments: [EnrollmentDTO] = try await supabaseClient
-                .from("course_enrollments")
-                .select()
-                .eq("student_id", value: userId.uuidString)
-                .execute()
-                .value
-            let courseIds = enrollments.map(\.courseId)
-            if !courseIds.isEmpty {
-                courseDTOs = try await supabaseClient
+    func fetchCourses(for userId: UUID, role: UserRole, schoolId: String? = nil, offset: Int = 0, limit: Int = 100) async throws -> [Course] {
+        let courseDTOs: [CourseDTO] = try await withRetry {
+            switch role {
+            case .student:
+                let enrollments: [EnrollmentDTO] = try await supabaseClient
+                    .from("course_enrollments")
+                    .select()
+                    .eq("student_id", value: userId.uuidString)
+                    .execute()
+                    .value
+                let courseIds = enrollments.map(\.courseId)
+                if !courseIds.isEmpty {
+                    return try await supabaseClient
+                        .from("courses")
+                        .select()
+                        .in("id", values: courseIds.map(\.uuidString))
+                        .execute()
+                        .value
+                }
+                return []
+            case .teacher:
+                return try await supabaseClient
                     .from("courses")
                     .select()
-                    .in("id", values: courseIds.map(\.uuidString))
+                    .eq("created_by", value: userId.uuidString)
+                    .execute()
+                    .value
+            case .admin, .parent:
+                // Filter by tenant when a schoolId is available so admins/parents only see their school's courses
+                if let schoolId, let tenantUUID = UUID(uuidString: schoolId) {
+                    return try await supabaseClient
+                        .from("courses")
+                        .select()
+                        .eq("tenant_id", value: tenantUUID.uuidString)
+                        .range(from: offset, to: offset + limit - 1)
+                        .execute()
+                        .value
+                } else {
+                    return try await supabaseClient
+                        .from("courses")
+                        .select()
+                        .range(from: offset, to: offset + limit - 1)
+                        .execute()
+                        .value
+                }
+            case .superAdmin:
+                // SuperAdmin sees all courses across all tenants
+                return try await supabaseClient
+                    .from("courses")
+                    .select()
+                    .range(from: offset, to: offset + limit - 1)
                     .execute()
                     .value
             }
-        case .teacher:
-            courseDTOs = try await supabaseClient
-                .from("courses")
-                .select()
-                .eq("created_by", value: userId.uuidString)
-                .execute()
-                .value
-        case .admin, .parent:
-            // Filter by tenant when a schoolId is available so admins/parents only see their school's courses
-            if let schoolId, let tenantUUID = UUID(uuidString: schoolId) {
-                courseDTOs = try await supabaseClient
-                    .from("courses")
-                    .select()
-                    .eq("tenant_id", value: tenantUUID.uuidString)
-                    .limit(100)
-                    .execute()
-                    .value
-            } else {
-                courseDTOs = try await supabaseClient
-                    .from("courses")
-                    .select()
-                    .limit(100)
-                    .execute()
-                    .value
-            }
-        case .superAdmin:
-            // SuperAdmin sees all courses across all tenants
-            courseDTOs = try await supabaseClient
-                .from("courses")
-                .select()
-                .limit(100)
-                .execute()
-                .value
         }
 
         if courseDTOs.isEmpty { return [] }
@@ -343,21 +367,21 @@ struct DataService: @unchecked Sendable {
 
     // MARK: - Assignments
 
-    func fetchAssignments(for userId: UUID, role: UserRole, courseIds: [UUID]) async throws -> [Assignment] {
-        var assignmentDTOs: [AssignmentDTO] = []
-
+    func fetchAssignments(for userId: UUID, role: UserRole, courseIds: [UUID], offset: Int = 0, limit: Int = 50) async throws -> [Assignment] {
         if courseIds.isEmpty {
             return []
         }
 
-        assignmentDTOs = try await supabaseClient
-            .from("assignments")
-            .select()
-            .in("course_id", values: courseIds.map(\.uuidString))
-            .order("due_date")
-            .limit(50)
-            .execute()
-            .value
+        let assignmentDTOs: [AssignmentDTO] = try await withRetry {
+            try await supabaseClient
+                .from("assignments")
+                .select()
+                .in("course_id", values: courseIds.map(\.uuidString))
+                .order("due_date")
+                .range(from: offset, to: offset + limit - 1)
+                .execute()
+                .value
+        }
 
         var courseNames: [UUID: String] = [:]
         let courseDTOs: [CourseDTO] = try await supabaseClient
@@ -515,14 +539,14 @@ struct DataService: @unchecked Sendable {
 
     // MARK: - Quizzes
 
-    func fetchQuizzes(for userId: UUID, courseIds: [UUID]) async throws -> [Quiz] {
+    func fetchQuizzes(for userId: UUID, courseIds: [UUID], offset: Int = 0, limit: Int = 50) async throws -> [Quiz] {
         if courseIds.isEmpty { return [] }
 
         let quizDTOs: [QuizDTO] = try await supabaseClient
             .from("quizzes")
             .select()
             .in("course_id", values: courseIds.map(\.uuidString))
-            .limit(50)
+            .range(from: offset, to: offset + limit - 1)
             .execute()
             .value
 
@@ -808,24 +832,26 @@ struct DataService: @unchecked Sendable {
 
     // MARK: - Conversations & Messages
 
-    func fetchConversations(for userId: UUID) async throws -> [Conversation] {
-        let members: [ConversationMemberDTO] = try await supabaseClient
-            .from("conversation_members")
-            .select()
-            .eq("user_id", value: userId.uuidString)
-            .execute()
-            .value
+    func fetchConversations(for userId: UUID, offset: Int = 0, limit: Int = 50) async throws -> [Conversation] {
+        let convDTOs: [ConversationDTO] = try await withRetry {
+            let members: [ConversationMemberDTO] = try await supabaseClient
+                .from("conversation_members")
+                .select()
+                .eq("user_id", value: userId.uuidString)
+                .execute()
+                .value
 
-        let conversationIds = members.map(\.conversationId)
-        if conversationIds.isEmpty { return [] }
+            let conversationIds = members.map(\.conversationId)
+            if conversationIds.isEmpty { return [] }
 
-        let convDTOs: [ConversationDTO] = try await supabaseClient
-            .from("conversations")
-            .select()
-            .in("id", values: conversationIds.map(\.uuidString))
-            .limit(50)
-            .execute()
-            .value
+            return try await supabaseClient
+                .from("conversations")
+                .select()
+                .in("id", values: conversationIds.map(\.uuidString))
+                .range(from: offset, to: offset + limit - 1)
+                .execute()
+                .value
+        }
 
         if convDTOs.isEmpty { return [] }
 
@@ -916,6 +942,7 @@ struct DataService: @unchecked Sendable {
             .execute()
     }
 
+    // TODO: Migrate callers to use fetchMessages(conversationId:before:limit:) below instead.
     func fetchOlderMessages(conversationId: UUID, before: Date, limit: Int = 30) async throws -> [MessageDTO] {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
@@ -934,13 +961,68 @@ struct DataService: @unchecked Sendable {
         return messages.reversed()
     }
 
+    /// Fetch messages for a single conversation with cursor-based pagination.
+    /// Use `before` to page backward through older messages.
+    func fetchMessages(conversationId: UUID, before: Date? = nil, limit: Int = 30, currentUserId: UUID? = nil) async throws -> [ChatMessage] {
+        let messageDTOs: [MessageDTO]
+        if let before {
+            let formatter = ISO8601DateFormatter()
+            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            let beforeString = formatter.string(from: before)
+            messageDTOs = try await supabaseClient
+                .from("messages")
+                .select()
+                .eq("conversation_id", value: conversationId.uuidString)
+                .lt("created_at", value: beforeString)
+                .order("created_at", ascending: false)
+                .limit(limit)
+                .execute()
+                .value
+        } else {
+            messageDTOs = try await supabaseClient
+                .from("messages")
+                .select()
+                .eq("conversation_id", value: conversationId.uuidString)
+                .order("created_at", ascending: false)
+                .limit(limit)
+                .execute()
+                .value
+        }
+
+        // Resolve sender names
+        let senderIds = Array(Set(messageDTOs.map(\.senderId)))
+        var senderNameMap: [UUID: String] = [:]
+        if !senderIds.isEmpty {
+            let profiles: [ProfileDTO] = try await supabaseClient
+                .from("profiles")
+                .select()
+                .in("id", values: senderIds.map(\.uuidString))
+                .execute()
+                .value
+            for p in profiles {
+                senderNameMap[p.id] = "\(p.firstName ?? "") \(p.lastName ?? "")"
+            }
+        }
+
+        // Return in chronological order (oldest first)
+        return messageDTOs.reversed().map { m in
+            ChatMessage(
+                id: m.id,
+                senderName: senderNameMap[m.senderId] ?? "Unknown",
+                content: m.content,
+                timestamp: parseDate(m.createdAt),
+                isFromCurrentUser: currentUserId.map { m.senderId == $0 } ?? false
+            )
+        }
+    }
+
     // MARK: - Achievements
 
-    func fetchAchievements(for studentId: UUID) async throws -> [Achievement] {
+    func fetchAchievements(for studentId: UUID, offset: Int = 0, limit: Int = 100) async throws -> [Achievement] {
         let allAchievements: [AchievementDTO] = try await supabaseClient
             .from("achievements")
             .select()
-            .limit(100)
+            .range(from: offset, to: offset + limit - 1)
             .execute()
             .value
 
@@ -1010,13 +1092,13 @@ struct DataService: @unchecked Sendable {
 
     // MARK: - Attendance
 
-    func fetchAttendance(for studentId: UUID) async throws -> [AttendanceRecord] {
+    func fetchAttendance(for studentId: UUID, offset: Int = 0, limit: Int = 50) async throws -> [AttendanceRecord] {
         let dtos: [AttendanceDTO] = try await supabaseClient
             .from("attendance_records")
             .select()
             .eq("student_id", value: studentId.uuidString)
             .order("attendance_date", ascending: false)
-            .limit(50)
+            .range(from: offset, to: offset + limit - 1)
             .execute()
             .value
 
@@ -1124,107 +1206,123 @@ struct DataService: @unchecked Sendable {
     // MARK: - Admin: School Metrics
 
     func fetchSchoolMetrics(schoolId: String?) async throws -> SchoolMetrics {
-        // fetchAllUsers already populates the .role property on each ProfileDTO,
-        // so reuse that instead of fetching memberships again.
-        let profiles = try await fetchAllUsers(schoolId: schoolId)
+        // Use count-only queries instead of loading full arrays into memory.
+        let studentCount: Int
+        let teacherCount: Int
+        let activeCount: Int
+        let courseCount: Int
 
-        let students = profiles.filter { $0.role == "Student" }.count
-        let teachers = profiles.filter { $0.role == "Teacher" }.count
-        let active = profiles.count
+        if let schoolId, let tenantUUID = UUID(uuidString: schoolId) {
+            // Count students via tenant_memberships
+            let studentResp = try await supabaseClient
+                .from("tenant_memberships")
+                .select("id", head: true, count: .exact)
+                .eq("tenant_id", value: tenantUUID.uuidString)
+                .eq("role", value: "Student")
+                .execute()
+            studentCount = studentResp.count ?? 0
 
-        let courses: [CourseDTO] = try await supabaseClient
-            .from("courses")
-            .select()
-            .limit(100)
-            .execute()
-            .value
+            // Count teachers via tenant_memberships
+            let teacherResp = try await supabaseClient
+                .from("tenant_memberships")
+                .select("id", head: true, count: .exact)
+                .eq("tenant_id", value: tenantUUID.uuidString)
+                .eq("role", value: "Teacher")
+                .execute()
+            teacherCount = teacherResp.count ?? 0
+
+            // Count all active members
+            let activeResp = try await supabaseClient
+                .from("tenant_memberships")
+                .select("id", head: true, count: .exact)
+                .eq("tenant_id", value: tenantUUID.uuidString)
+                .execute()
+            activeCount = activeResp.count ?? 0
+
+            // Count courses for this tenant
+            let courseResp = try await supabaseClient
+                .from("courses")
+                .select("id", head: true, count: .exact)
+                .eq("tenant_id", value: tenantUUID.uuidString)
+                .execute()
+            courseCount = courseResp.count ?? 0
+        } else {
+            // No school filter — count all profiles
+            let profileResp = try await supabaseClient
+                .from("profiles")
+                .select("id", head: true, count: .exact)
+                .execute()
+            activeCount = profileResp.count ?? 0
+
+            // Count students and teachers from all memberships
+            let studentResp = try await supabaseClient
+                .from("tenant_memberships")
+                .select("id", head: true, count: .exact)
+                .eq("role", value: "Student")
+                .execute()
+            studentCount = studentResp.count ?? 0
+
+            let teacherResp = try await supabaseClient
+                .from("tenant_memberships")
+                .select("id", head: true, count: .exact)
+                .eq("role", value: "Teacher")
+                .execute()
+            teacherCount = teacherResp.count ?? 0
+
+            let courseResp = try await supabaseClient
+                .from("courses")
+                .select("id", head: true, count: .exact)
+                .execute()
+            courseCount = courseResp.count ?? 0
+        }
 
         let attendanceRate = try await calculateRealAttendanceRate(courseId: nil)
 
-        let studentProfiles = Array(profiles.filter { $0.role == "Student" }.prefix(200))
-        let studentIds = studentProfiles.map(\.id)
-
+        // For GPA: paginate grade loading in batches of 200 to avoid memory explosion
         var averageGPA = 0.0
-        if !studentIds.isEmpty {
-            let allEnrollments: [EnrollmentDTO] = try await supabaseClient
-                .from("course_enrollments")
+        let gradeBatchSize = 200
+        var gradeOffset = 0
+        var totalPercentageSum = 0.0
+        var totalGradeCount = 0
+
+        while true {
+            let gradeBatch: [GradeDTO] = try await supabaseClient
+                .from("grades")
                 .select()
-                .in("student_id", values: studentIds.map(\.uuidString))
+                .order("id")
+                .range(from: gradeOffset, to: gradeOffset + gradeBatchSize - 1)
                 .execute()
                 .value
 
-            let allCourseIds = Array(Set(allEnrollments.map(\.courseId)))
+            if gradeBatch.isEmpty { break }
 
-            if !allCourseIds.isEmpty {
-                let allGrades: [GradeDTO] = try await supabaseClient
-                    .from("grades")
-                    .select()
-                    .in("student_id", values: studentIds.map(\.uuidString))
-                    .in("course_id", values: allCourseIds.map(\.uuidString))
-                    .execute()
-                    .value
-
-                // Fetch assignments to get actual max_points for accurate GPA
-                let metricsAssignmentDTOs: [AssignmentDTO] = try await supabaseClient
-                    .from("assignments")
-                    .select()
-                    .in("course_id", values: allCourseIds.map(\.uuidString))
-                    .execute()
-                    .value
-                var assignmentMaxPointsMap: [UUID: Double] = [:]
-                for a in metricsAssignmentDTOs {
-                    assignmentMaxPointsMap[a.id] = Double(a.maxPoints ?? 100)
+            for g in gradeBatch {
+                if let pct = g.percentage {
+                    totalPercentageSum += pct
+                    totalGradeCount += 1
+                } else if let score = g.pointsEarned {
+                    // Fallback: assume 100 max if no percentage available
+                    totalPercentageSum += score
+                    totalGradeCount += 1
                 }
-
-                var enrollmentsByStudent: [UUID: [EnrollmentDTO]] = [:]
-                for e in allEnrollments {
-                    enrollmentsByStudent[e.studentId, default: []].append(e)
-                }
-
-                var gradesByStudentCourse: [UUID: [UUID: [GradeDTO]]] = [:]
-                for g in allGrades {
-                    gradesByStudentCourse[g.studentId, default: [:]][g.courseId, default: []].append(g)
-                }
-
-                var totalGPA = 0.0
-                var gpaCount = 0
-                for student in studentProfiles {
-                    let studentEnrollments = enrollmentsByStudent[student.id] ?? []
-                    let studentCourseIds = studentEnrollments.map(\.courseId)
-                    if studentCourseIds.isEmpty { continue }
-
-                    var courseAverages: [Double] = []
-                    for courseId in studentCourseIds {
-                        let courseGrades = gradesByStudentCourse[student.id]?[courseId] ?? []
-                        if courseGrades.isEmpty { continue }
-
-                        let assignmentGrades = courseGrades.map { g -> Double in
-                            // Prefer pre-calculated percentage from DB
-                            if let pct = g.percentage { return pct }
-                            let score = g.pointsEarned ?? 0
-                            let maxScore = g.assignmentId.flatMap { assignmentMaxPointsMap[$0] } ?? 100.0
-                            return maxScore > 0 ? (score / maxScore * 100) : 0
-                        }
-                        let avg = assignmentGrades.reduce(0.0, +) / Double(assignmentGrades.count)
-                        courseAverages.append(avg)
-                    }
-
-                    if courseAverages.isEmpty { continue }
-                    let studentAvg = courseAverages.reduce(0.0, +) / Double(courseAverages.count)
-                    totalGPA += studentAvg / 100.0 * 4.0
-                    gpaCount += 1
-                }
-                averageGPA = gpaCount > 0 ? totalGPA / Double(gpaCount) : 0.0
             }
+
+            if gradeBatch.count < gradeBatchSize { break }
+            gradeOffset += gradeBatchSize
+        }
+
+        if totalGradeCount > 0 {
+            let avgPercentage = totalPercentageSum / Double(totalGradeCount)
+            averageGPA = avgPercentage / 100.0 * 4.0
         }
 
         return SchoolMetrics(
-            totalStudents: students,
-            totalTeachers: teachers,
-            totalCourses: courses.count,
+            totalStudents: studentCount,
+            totalTeachers: teacherCount,
+            totalCourses: courseCount,
             averageAttendance: attendanceRate,
             averageGPA: averageGPA,
-            activeUsers: active
+            activeUsers: activeCount
         )
     }
 
@@ -1603,7 +1701,9 @@ struct DataService: @unchecked Sendable {
     }
 
     func enrollByClassCode(studentId: UUID, classCode: String) async throws -> String {
-        try DataService.enrollmentRateLimiter.checkRateLimit(userId: studentId)
+        guard await DataService.enrollmentRateLimiter.canEnroll(userId: studentId) else {
+            throw NSError(domain: "RateLimit", code: 429, userInfo: [NSLocalizedDescriptionKey: "Too many enrollment attempts. Please wait a minute."])
+        }
 
         let codes: [ClassCodeDTO] = try await supabaseClient
             .from("class_codes")
@@ -2120,23 +2220,16 @@ struct DataService: @unchecked Sendable {
     }
 }
 
-final class EnrollmentRateLimiter: @unchecked Sendable {
+actor EnrollmentRateLimiter {
     private var attempts: [(userId: UUID, time: Date)] = []
-    private let maxAttempts = 5
-    private let window: TimeInterval = 60
-    private let lock = NSLock()
 
-    func checkRateLimit(userId: UUID) throws {
-        lock.lock()
-        defer { lock.unlock() }
-
-        let cutoff = Date().addingTimeInterval(-window)
+    func canEnroll(userId: UUID) -> Bool {
+        let cutoff = Date().addingTimeInterval(-60)
         attempts.removeAll { $0.time < cutoff }
-        let recentAttempts = attempts.filter { $0.userId == userId }
-        guard recentAttempts.count < maxAttempts else {
-            throw NSError(domain: "RateLimit", code: 429, userInfo: [NSLocalizedDescriptionKey: "Too many enrollment attempts. Please wait a minute."])
-        }
-        attempts.append((userId: userId, time: Date()))
+        let recentCount = attempts.filter { $0.userId == userId }.count
+        if recentCount >= 5 { return false }
+        attempts.append((userId, Date()))
+        return true
     }
 }
 

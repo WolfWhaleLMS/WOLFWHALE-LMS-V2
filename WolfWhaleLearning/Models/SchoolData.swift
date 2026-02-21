@@ -1,6 +1,6 @@
 import Foundation
 
-nonisolated struct Announcement: Identifiable, Hashable, Sendable {
+nonisolated struct Announcement: Identifiable, Hashable, Sendable, Codable {
     let id: UUID
     var title: String
     var content: String
@@ -9,7 +9,7 @@ nonisolated struct Announcement: Identifiable, Hashable, Sendable {
     var isPinned: Bool
 }
 
-nonisolated struct AttendanceRecord: Identifiable, Hashable, Sendable {
+nonisolated struct AttendanceRecord: Identifiable, Hashable, Sendable, Codable {
     let id: UUID
     var date: Date
     var status: AttendanceStatus
@@ -18,7 +18,7 @@ nonisolated struct AttendanceRecord: Identifiable, Hashable, Sendable {
     var notes: String?
 }
 
-nonisolated enum AttendanceStatus: String, CaseIterable, Sendable {
+nonisolated enum AttendanceStatus: String, CaseIterable, Sendable, Codable {
     case present = "Present"
     case absent = "Absent"
     case tardy = "Tardy"
@@ -48,7 +48,7 @@ nonisolated enum AttendanceStatus: String, CaseIterable, Sendable {
     }
 }
 
-nonisolated struct GradeEntry: Identifiable, Hashable, Sendable {
+nonisolated struct GradeEntry: Identifiable, Hashable, Sendable, Codable {
     let id: UUID
     var courseId: UUID
     var courseName: String
@@ -59,7 +59,7 @@ nonisolated struct GradeEntry: Identifiable, Hashable, Sendable {
     var assignmentGrades: [AssignmentGrade]
 }
 
-nonisolated struct AssignmentGrade: Identifiable, Hashable, Sendable {
+nonisolated struct AssignmentGrade: Identifiable, Hashable, Sendable, Codable {
     let id: UUID
     var title: String
     var score: Double
@@ -68,7 +68,7 @@ nonisolated struct AssignmentGrade: Identifiable, Hashable, Sendable {
     var type: String
 }
 
-nonisolated struct ChildInfo: Identifiable, Hashable, Sendable {
+nonisolated struct ChildInfo: Identifiable, Hashable, Sendable, Codable {
     let id: UUID
     var name: String
     var grade: String
@@ -79,7 +79,7 @@ nonisolated struct ChildInfo: Identifiable, Hashable, Sendable {
     var recentAssignments: [Assignment]
 }
 
-nonisolated struct SchoolMetrics: Sendable {
+nonisolated struct SchoolMetrics: Sendable, Codable {
     var totalStudents: Int
     var totalTeachers: Int
     var totalCourses: Int

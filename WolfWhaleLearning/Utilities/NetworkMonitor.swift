@@ -16,6 +16,10 @@ final class NetworkMonitor {
 
     var isConnected = true
     var connectionType: ConnectionType = .wifi
+    /// True when the path uses an expensive interface (e.g. cellular).
+    var isExpensive = false
+    /// True when the system is in Low Data Mode.
+    var isConstrained = false
 
     // MARK: - Private
 
@@ -41,10 +45,14 @@ final class NetworkMonitor {
             guard let self else { return }
             let connected = path.status == .satisfied
             let type = self.resolveConnectionType(path)
+            let expensive = path.isExpensive
+            let constrained = path.isConstrained
 
             Task { @MainActor in
                 self.isConnected = connected
                 self.connectionType = type
+                self.isExpensive = expensive
+                self.isConstrained = constrained
             }
         }
         monitor.start(queue: queue)

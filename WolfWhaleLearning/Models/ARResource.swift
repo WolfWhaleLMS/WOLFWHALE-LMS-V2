@@ -1,6 +1,6 @@
 import Foundation
 
-nonisolated struct ARResource: Identifiable, Hashable, Sendable {
+nonisolated struct ARResource: Identifiable, Hashable, Sendable, Codable {
     let id: UUID
     let title: String
     let subtitle: String
@@ -16,7 +16,7 @@ nonisolated struct ARResource: Identifiable, Hashable, Sendable {
     let linkedLessonKeywords: [String]
 }
 
-nonisolated enum ARResourceCategory: String, CaseIterable, Sendable, Hashable {
+nonisolated enum ARResourceCategory: String, CaseIterable, Sendable, Hashable, Codable {
     case biology = "Biology"
     case history = "History"
     case geography = "Geography"
@@ -53,14 +53,14 @@ nonisolated enum ARResourceCategory: String, CaseIterable, Sendable, Hashable {
     }
 }
 
-nonisolated enum ARSubject: String, CaseIterable, Sendable, Hashable {
+nonisolated enum ARSubject: String, CaseIterable, Sendable, Hashable, Codable {
     case science = "Science"
     case socialStudies = "Social Studies"
     case math = "Mathematics"
     case art = "Art"
 }
 
-nonisolated enum ARExperienceType: String, Sendable, Hashable {
+nonisolated enum ARExperienceType: String, Sendable, Hashable, Codable {
     case humanCell = "human_cell"
     case placeholder = "placeholder"
 }

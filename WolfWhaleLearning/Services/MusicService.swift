@@ -1,3 +1,4 @@
+import AVFoundation
 import Foundation
 import MusicKit
 import Observation
@@ -17,6 +18,9 @@ class MusicService {
     // Lazily access ApplicationMusicPlayer.shared to avoid crash at init
     // when MusicKit entitlement is missing (no Apple Developer account).
     private var player: ApplicationMusicPlayer { ApplicationMusicPlayer.shared }
+
+    /// In-flight search task; cancelled on each new search to debounce requests.
+    private var searchTask: Task<Void, Never>?
 
     // MARK: - Authorization
 
@@ -64,6 +68,16 @@ class MusicService {
         }
 
         isLoading = false
+    }
+
+    /// Debounced search: cancels any in-flight search and waits 300ms before executing.
+    func searchDebounced(query: String) {
+        searchTask?.cancel()
+        searchTask = Task {
+            try? await Task.sleep(for: .milliseconds(300))
+            guard !Task.isCancelled else { return }
+            await searchStudyMusic(query: query)
+        }
     }
 
     func fetchStudyPlaylists() async {
@@ -143,6 +157,34 @@ class MusicService {
     func pause() {
         player.pause()
         isPlaying = false
+    }
+
+    /// Stops playback and clears the current track.
+    func stop() {
+        player.stop()
+        isPlaying = false
+        currentTrack = nil
+    }
+
+    /// Stops all playback, clears state, cancels pending searches,
+    /// and deactivates the audio session. Call on logout or app teardown.
+    func stopAll() {
+        searchTask?.cancel()
+        searchTask = nil
+
+        player.stop()
+        isPlaying = false
+        currentTrack = nil
+        searchResults = nil
+        error = nil
+
+        do {
+            try AVAudioSession.sharedInstance().setActive(false, options: .notifyOthersOnDeactivation)
+        } catch {
+            #if DEBUG
+            print("[MusicService] Failed to deactivate audio session: \(error)")
+            #endif
+        }
     }
 
     func resume() {

@@ -99,7 +99,7 @@ struct AdminSetupView: View {
                 .background(Color(.systemBackground), in: .rect(cornerRadius: 12))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(focusedField == .schoolName ? Color.purple.opacity(0.5) : Color(.separator).opacity(0.3), lineWidth: 1)
+                        .strokeBorder(focusedField == .schoolName ? Color.purple.opacity(0.5) : Color.gray.opacity(0.3), lineWidth: 1)
                 )
             }
 
@@ -126,7 +126,7 @@ struct AdminSetupView: View {
                 .background(Color(.systemBackground), in: .rect(cornerRadius: 12))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(focusedField == .adminName ? Color.purple.opacity(0.5) : Color(.separator).opacity(0.3), lineWidth: 1)
+                        .strokeBorder(focusedField == .adminName ? Color.purple.opacity(0.5) : Color.gray.opacity(0.3), lineWidth: 1)
                 )
 
                 // Email
@@ -147,7 +147,7 @@ struct AdminSetupView: View {
                 .background(Color(.systemBackground), in: .rect(cornerRadius: 12))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(focusedField == .email ? Color.purple.opacity(0.5) : Color(.separator).opacity(0.3), lineWidth: 1)
+                        .strokeBorder(focusedField == .email ? Color.purple.opacity(0.5) : Color.gray.opacity(0.3), lineWidth: 1)
                 )
 
                 // Password
@@ -165,7 +165,7 @@ struct AdminSetupView: View {
                 .background(Color(.systemBackground), in: .rect(cornerRadius: 12))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(focusedField == .password ? Color.purple.opacity(0.5) : Color(.separator).opacity(0.3), lineWidth: 1)
+                        .strokeBorder(focusedField == .password ? Color.purple.opacity(0.5) : Color.gray.opacity(0.3), lineWidth: 1)
                 )
 
                 // Confirm Password
@@ -183,7 +183,7 @@ struct AdminSetupView: View {
                 .background(Color(.systemBackground), in: .rect(cornerRadius: 12))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(focusedField == .confirmPassword ? Color.purple.opacity(0.5) : Color(.separator).opacity(0.3), lineWidth: 1)
+                        .strokeBorder(focusedField == .confirmPassword ? Color.purple.opacity(0.5) : Color.gray.opacity(0.3), lineWidth: 1)
                 )
             }
 

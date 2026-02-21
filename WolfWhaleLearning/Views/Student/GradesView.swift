@@ -22,7 +22,7 @@ struct GradesView: View {
                     .accessibilityLabel("Loading grades")
             } else {
                 ScrollView {
-                    VStack(spacing: 16) {
+                    LazyVStack(spacing: 16) {
                         gpaCard
                         gradesList
                     }
@@ -87,6 +87,7 @@ struct GradesView: View {
         .accessibilityLabel("Overall Performance: GPA \(String(format: "%.2f", gpa)), \(String(format: "%.1f", averagePercent)) percent average, \(viewModel.grades.count) courses this semester")
     }
 
+    @ViewBuilder
     private var gradesList: some View {
         ForEach(viewModel.grades) { grade in
             VStack(spacing: 0) {
@@ -143,6 +144,16 @@ struct GradesView: View {
             .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
             .accessibilityElement(children: .combine)
             .accessibilityLabel("\(grade.courseName): Grade \(grade.letterGrade), \(String(format: "%.1f", grade.numericGrade)) percent, \(grade.assignmentGrades.count) graded items")
+            .onAppear {
+                if grade.id == viewModel.grades.last?.id {
+                    Task { await viewModel.loadMoreAssignments() }
+                }
+            }
+        }
+        if viewModel.assignmentPagination.isLoadingMore {
+            ProgressView()
+                .frame(maxWidth: .infinity)
+                .padding()
         }
     }
 }

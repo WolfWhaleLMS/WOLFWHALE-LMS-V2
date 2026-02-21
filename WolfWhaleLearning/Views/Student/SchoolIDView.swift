@@ -166,7 +166,7 @@ struct SchoolIDView: View {
         .background(Color(.systemBackground))
         .overlay {
             RoundedRectangle(cornerRadius: 8)
-                .strokeBorder(Color(.separator), lineWidth: 0.5)
+                .strokeBorder(Color.gray.opacity(0.3), lineWidth: 0.5)
         }
     }
 

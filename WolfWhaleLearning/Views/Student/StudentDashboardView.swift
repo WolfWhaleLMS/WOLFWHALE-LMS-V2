@@ -61,7 +61,7 @@ struct StudentDashboardView: View {
                     .padding(.top, 40)
                 } else {
                     GlassEffectContainer {
-                        VStack(spacing: 20) {
+                        LazyVStack(spacing: 20) {
                             if let dataError = viewModel.dataError {
                                 HStack(spacing: 10) {
                                     Image(systemName: "exclamationmark.triangle.fill")

@@ -20,10 +20,20 @@ struct AssignmentsView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 14) {
+                LazyVStack(spacing: 14) {
                     filterBar
                     ForEach(filtered) { assignment in
                         assignmentRow(assignment)
+                            .onAppear {
+                                if assignment.id == filtered.last?.id {
+                                    Task { await viewModel.loadMoreAssignments() }
+                                }
+                            }
+                    }
+                    if viewModel.assignmentPagination.isLoadingMore {
+                        ProgressView()
+                            .frame(maxWidth: .infinity)
+                            .padding()
                     }
                 }
                 .padding(.horizontal)
@@ -45,6 +55,7 @@ struct AssignmentsView: View {
                 }
             }
             .navigationTitle("Assignments")
+            .task { await viewModel.loadAssignmentsIfNeeded() }
             .sheet(item: $selectedAssignment) { assignment in
                 submitSheet(assignment)
             }

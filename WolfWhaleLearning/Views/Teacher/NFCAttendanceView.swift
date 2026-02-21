@@ -291,7 +291,7 @@ struct NFCAttendanceView: View {
         switch nfcService?.scanResult {
         case .success: [.green, .mint]
         case .error: [.red, .orange]
-        case nil, .none: nfcService?.isScanning == true ? [.purple, .cyan] : [.purple, .blue]
+        case nil: nfcService?.isScanning == true ? [.purple, .cyan] : [.purple, .blue]
         }
     }
 
@@ -299,7 +299,7 @@ struct NFCAttendanceView: View {
         switch nfcService?.scanResult {
         case .success: "checkmark.circle.fill"
         case .error: "xmark.circle.fill"
-        case nil, .none: "sensor.tag.radiowaves.forward.fill"
+        case nil: "sensor.tag.radiowaves.forward.fill"
         }
     }
 
@@ -307,7 +307,7 @@ struct NFCAttendanceView: View {
         switch nfcService?.scanResult {
         case .success(let name): "Checked In: \(name)"
         case .error: "Scan Failed"
-        case nil, .none: nfcService?.isScanning == true ? "Scanning..." : "Ready to Scan"
+        case nil: nfcService?.isScanning == true ? "Scanning..." : "Ready to Scan"
         }
     }
 
@@ -315,7 +315,7 @@ struct NFCAttendanceView: View {
         switch nfcService?.scanResult {
         case .success: "Tap to scan another student"
         case .error: "Please try again"
-        case nil, .none: nfcService?.isScanning == true
+        case nil: nfcService?.isScanning == true
             ? "Hold a student ID near the device"
             : "Tap the button below to start NFC scanning"
         }

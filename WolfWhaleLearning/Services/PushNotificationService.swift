@@ -85,31 +85,24 @@ final class PushNotificationService {
             return
         }
 
-        let dto = InsertDeviceTokenDTO(
-            userId: userId,
-            token: token,
-            platform: "ios"
-        )
-
         do {
-            // Upsert: if a row with the same user_id + token already exists,
-            // Supabase will handle the conflict (or we just insert a fresh row).
-            // We delete old tokens for this user first, then insert the new one
-            // to avoid stale entries.
-            try await supabaseClient
-                .from("device_tokens")
-                .delete()
-                .eq("user_id", value: userId.uuidString)
-                .eq("platform", value: "ios")
-                .execute()
+            // Upsert keyed on user_id + device_id so that logging in on a
+            // new device does NOT remove push tokens from other devices.
+            let deviceId = await UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
 
             try await supabaseClient
                 .from("device_tokens")
-                .insert(dto)
+                .upsert([
+                    "user_id": userId.uuidString,
+                    "device_id": deviceId,
+                    "token": token,
+                    "platform": "ios",
+                    "updated_at": ISO8601DateFormatter().string(from: Date())
+                ], onConflict: "user_id,device_id")
                 .execute()
 
             #if DEBUG
-            print("[PushNotificationService] Token uploaded for user \(userId.uuidString)")
+            print("[PushNotificationService] Token uploaded for user \(userId.uuidString) device \(deviceId.prefix(8))...")
             #endif
         } catch {
             #if DEBUG
@@ -121,16 +114,18 @@ final class PushNotificationService {
     /// Remove the device token from the server on logout so the user no
     /// longer receives push notifications on this device.
     func removeTokenFromServer(userId: UUID) async {
+        let deviceId = await UIDevice.current.identifierForVendor?.uuidString ?? ""
+
         do {
             try await supabaseClient
                 .from("device_tokens")
                 .delete()
                 .eq("user_id", value: userId.uuidString)
-                .eq("platform", value: "ios")
+                .eq("device_id", value: deviceId)
                 .execute()
 
             #if DEBUG
-            print("[PushNotificationService] Token removed for user \(userId.uuidString)")
+            print("[PushNotificationService] Token removed for user \(userId.uuidString) device \(deviceId.prefix(8))...")
             #endif
         } catch {
             #if DEBUG

@@ -149,7 +149,7 @@ struct AttendanceHistoryView: View {
                     )
                 } else {
                     ScrollView {
-                        VStack(spacing: 16) {
+                        LazyVStack(spacing: 16) {
                             courseFilterPicker
                             statsSection
                             calendarSection
@@ -163,6 +163,7 @@ struct AttendanceHistoryView: View {
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Attendance History")
             .navigationBarTitleDisplayMode(.inline)
+            .task { await viewModel.loadAttendanceIfNeeded() }
         }
     }
 

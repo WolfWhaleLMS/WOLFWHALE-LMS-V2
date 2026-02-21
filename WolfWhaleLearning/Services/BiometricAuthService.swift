@@ -54,6 +54,7 @@ class BiometricAuthService {
 
     /// Triggers the biometric prompt. Returns `true` on success.
     /// Throws `BiometricError` on failure so callers can react to specific cases.
+    /// Automatically times out after 30 seconds to prevent hanging indefinitely.
     @discardableResult
     func authenticate() async throws -> Bool {
         let context = LAContext()
@@ -65,14 +66,29 @@ class BiometricAuthService {
         }
 
         do {
-            let success = try await context.evaluatePolicy(
-                .deviceOwnerAuthenticationWithBiometrics,
-                localizedReason: "Unlock WolfWhale"
-            )
+            let success = try await withThrowingTaskGroup(of: Bool.self) { group in
+                group.addTask {
+                    try await context.evaluatePolicy(
+                        .deviceOwnerAuthenticationWithBiometrics,
+                        localizedReason: "Unlock WolfWhale"
+                    )
+                }
+                group.addTask {
+                    try await Task.sleep(for: .seconds(30))
+                    throw BiometricError.timeout
+                }
+                guard let result = try await group.next() else {
+                    throw BiometricError.unknown("No result from biometric evaluation.")
+                }
+                group.cancelAll()
+                return result
+            }
             if success {
                 isUnlocked = true
             }
             return success
+        } catch let error as BiometricError {
+            throw error
         } catch let error as LAError {
             throw mapLAError(error)
         } catch {
@@ -119,6 +135,7 @@ enum BiometricError: LocalizedError, Sendable {
     case userFallback
     case authenticationFailed
     case passcodeNotSet
+    case timeout
     case unknown(String)
 
     var errorDescription: String? {
@@ -137,6 +154,8 @@ enum BiometricError: LocalizedError, Sendable {
             return "Biometric authentication failed. Please try again."
         case .passcodeNotSet:
             return "A device passcode is required to use biometric authentication."
+        case .timeout:
+            return "Biometric authentication timed out. Please try again."
         case .unknown(let message):
             return message
         }

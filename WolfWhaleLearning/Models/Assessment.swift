@@ -1,6 +1,6 @@
 import Foundation
 
-nonisolated struct Quiz: Identifiable, Hashable, Sendable {
+nonisolated struct Quiz: Identifiable, Hashable, Sendable, Codable {
     let id: UUID
     var title: String
     var courseId: UUID
@@ -13,7 +13,7 @@ nonisolated struct Quiz: Identifiable, Hashable, Sendable {
     var xpReward: Int             // not directly in quizzes table; may come from app logic
 }
 
-nonisolated struct QuizQuestion: Identifiable, Hashable, Sendable {
+nonisolated struct QuizQuestion: Identifiable, Hashable, Sendable, Codable {
     let id: UUID
     var text: String              // from QuizQuestionDTO.questionText
     var options: [String]         // from quiz_options table, not directly on quiz_questions
@@ -26,7 +26,7 @@ nonisolated struct QuizQuestion: Identifiable, Hashable, Sendable {
 /// `xpReward` is not a direct DB column on assignments; populated by app logic.
 /// `courseName`, `isSubmitted`, `submission`, `grade`, `feedback`, `studentName`
 /// are all resolved by the service from joins/lookups.
-nonisolated struct Assignment: Identifiable, Hashable, Sendable {
+nonisolated struct Assignment: Identifiable, Hashable, Sendable, Codable {
     let id: UUID
     var title: String
     var courseId: UUID

@@ -11,6 +11,12 @@ final class RealtimeService {
     private(set) var isConnected = false
     private var channel: RealtimeChannelV2?
     private var listenTask: Task<Void, Never>?
+    private var networkObservationTask: Task<Void, Never>?
+
+    /// Stored subscription parameters so we can reconnect automatically.
+    private var lastConversationId: UUID?
+    private var lastCurrentUserId: UUID?
+    private var lastOnMessage: (@MainActor (ChatMessage) -> Void)?
 
     /// In-memory cache of sender ID -> display name.
     /// Populated by profile lookups so we only fetch each sender once.
@@ -43,6 +49,11 @@ final class RealtimeService {
         currentUserId: UUID?,
         onMessage: @escaping @MainActor (ChatMessage) -> Void
     ) {
+        // Store parameters for potential reconnection
+        lastConversationId = conversationId
+        lastCurrentUserId = currentUserId
+        lastOnMessage = onMessage
+
         // Tear down any previous subscription first
         unsubscribe()
 
@@ -117,6 +128,8 @@ final class RealtimeService {
     func unsubscribe() {
         listenTask?.cancel()
         listenTask = nil
+        networkObservationTask?.cancel()
+        networkObservationTask = nil
 
         if let channel {
             let client = supabaseClient
@@ -132,6 +145,57 @@ final class RealtimeService {
 
         channel = nil
         isConnected = false
+    }
+
+    /// Tears down everything including stored reconnection parameters.
+    func disconnect() {
+        lastConversationId = nil
+        lastCurrentUserId = nil
+        lastOnMessage = nil
+        unsubscribe()
+    }
+
+    // MARK: - Reconnection
+
+    /// Tears down the existing subscription and re-subscribes using the last known parameters.
+    func reconnect() {
+        guard let conversationId = lastConversationId,
+              let onMessage = lastOnMessage else { return }
+        subscribeToConversation(conversationId, currentUserId: lastCurrentUserId, onMessage: onMessage)
+    }
+
+    /// Attempts to reconnect with exponential back-off (3 attempts).
+    private func attemptReconnect() async {
+        for attempt in 1...3 {
+            do {
+                try await Task.sleep(for: .seconds(Double(attempt) * 2))
+                guard !Task.isCancelled else { return }
+                reconnect()
+                // If we successfully reconnected, stop retrying
+                if isConnected { return }
+            } catch {
+                continue
+            }
+        }
+    }
+
+    /// Starts observing the provided `NetworkMonitor` and triggers reconnection
+    /// when the network transitions from offline to online.
+    func observeNetwork(_ networkMonitor: NetworkMonitor) {
+        networkObservationTask?.cancel()
+        networkObservationTask = Task { [weak self] in
+            var wasConnected = networkMonitor.isConnected
+            // Use a polling approach to observe @Observable changes from a non-View context.
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(2))
+                guard !Task.isCancelled, let self else { return }
+                let nowConnected = networkMonitor.isConnected
+                if !wasConnected && nowConnected && !self.isConnected {
+                    await self.attemptReconnect()
+                }
+                wasConnected = nowConnected
+            }
+        }
     }
 
     // MARK: - Helpers

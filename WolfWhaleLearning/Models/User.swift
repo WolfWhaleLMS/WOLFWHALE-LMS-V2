@@ -1,6 +1,6 @@
 import Foundation
 
-nonisolated enum UserRole: String, CaseIterable, Sendable, Identifiable {
+nonisolated enum UserRole: String, CaseIterable, Sendable, Identifiable, Codable {
     case student = "Student"
     case teacher = "Teacher"
     case parent = "Parent"
@@ -25,7 +25,7 @@ nonisolated enum UserRole: String, CaseIterable, Sendable, Identifiable {
     }
 }
 
-nonisolated struct User: Identifiable, Hashable, Sendable {
+nonisolated struct User: Identifiable, Hashable, Sendable, Codable {
     let id: UUID
     var firstName: String
     var lastName: String

@@ -807,7 +807,7 @@ struct VocabQuizModeView: View {
     }
 
     private func startQuiz() {
-        var pool = category.words
+        let pool = category.words
         // Spaced repetition: words with more wrong answers appear more often
         var weighted: [FrenchWord] = []
         for word in pool {

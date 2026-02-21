@@ -33,6 +33,16 @@ struct CoursesListView: View {
                                     courseRow(course)
                                 }
                                 .buttonStyle(.plain)
+                                .onAppear {
+                                    if course.id == filteredCourses.last?.id {
+                                        Task { await viewModel.loadMoreCourses() }
+                                    }
+                                }
+                            }
+                            if viewModel.coursePagination.isLoadingMore {
+                                ProgressView()
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
                             }
                         }
                         .padding(.horizontal)

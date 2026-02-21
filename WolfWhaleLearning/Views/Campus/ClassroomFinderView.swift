@@ -89,7 +89,7 @@ final class ClassroomFinderViewModel: NSObject, CLLocationManagerDelegate {
         route = nil
 
         let request = MKDirections.Request()
-        request.source = MKMapItem(placemark: MKPlacemark(coordinate: source))
+        request.source = MKMapItem.forCurrentLocation()
         request.destination = MKMapItem(placemark: MKPlacemark(coordinate: target.coordinate))
         request.transportType = .walking
 

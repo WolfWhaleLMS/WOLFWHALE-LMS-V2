@@ -12,9 +12,23 @@ struct MessagesListView: View {
                     NavigationLink(value: conversation.id) {
                         conversationRow(conversation)
                     }
+                    .onAppear {
+                        if conversation.id == viewModel.conversations.last?.id {
+                            Task { await viewModel.loadMoreConversations() }
+                        }
+                    }
+                }
+                if viewModel.conversationPagination.isLoadingMore {
+                    HStack {
+                        Spacer()
+                        ProgressView()
+                        Spacer()
+                    }
+                    .padding()
                 }
             }
             .navigationTitle("Messages")
+            .task { await viewModel.loadConversationsIfNeeded() }
             .overlay {
                 if viewModel.conversations.isEmpty {
                     ContentUnavailableView("No Messages", systemImage: "message", description: Text("Conversations will appear here"))

@@ -31,7 +31,7 @@ struct SuperAdminDashboardView: View {
         NavigationStack {
             ScrollView {
                 GlassEffectContainer {
-                    VStack(spacing: 16) {
+                    LazyVStack(spacing: 16) {
                         headerSection
                         systemHealthCard
                         userStatisticsSection

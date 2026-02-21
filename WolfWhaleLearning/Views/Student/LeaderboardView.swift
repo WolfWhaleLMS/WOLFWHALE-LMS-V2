@@ -50,6 +50,7 @@ struct LeaderboardView: View {
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Leaderboard")
+            .task { await viewModel.loadLeaderboardIfNeeded() }
             .refreshable {
                 await viewModel.loadData()
             }
@@ -60,7 +61,7 @@ struct LeaderboardView: View {
 
     private var leaderboardContent: some View {
         ScrollView {
-            VStack(spacing: 20) {
+            LazyVStack(spacing: 20) {
                 scopePicker
                 userStatsCard
                 podiumSection

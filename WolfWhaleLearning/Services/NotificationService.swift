@@ -146,9 +146,29 @@ final class NotificationService: NSObject {
         }
     }
 
+    /// Maximum number of assignment notifications to schedule.
+    /// Each assignment gets up to 2 reminders (24h + 1h), so this caps at 15 assignments.
+    /// iOS enforces a hard limit of 64 pending notifications.
+    private static let maxAssignmentNotifications = 30
+
     func scheduleAllAssignmentReminders(assignments: [Assignment]) {
-        let upcoming = assignments.filter { !$0.isSubmitted && !$0.isOverdue }
-        for assignment in upcoming {
+        // Clear all previously scheduled assignment reminders to avoid exceeding iOS limits.
+        center.removeAllPendingNotificationRequests()
+
+        let now = Date()
+        guard let sevenDaysFromNow = Calendar.current.date(byAdding: .day, value: 7, to: now) else { return }
+
+        // Only schedule for unsubmitted, non-overdue assignments due within the next 7 days,
+        // sorted by soonest due date first.
+        let upcoming = assignments
+            .filter { !$0.isSubmitted && !$0.isOverdue && $0.dueDate <= sevenDaysFromNow }
+            .sorted { $0.dueDate < $1.dueDate }
+
+        // Cap at 15 assignments (each gets up to 2 reminders = 30 max notifications).
+        let maxAssignments = Self.maxAssignmentNotifications / 2
+        let capped = upcoming.prefix(maxAssignments)
+
+        for assignment in capped {
             scheduleAssignmentReminder(assignment: assignment)
         }
         Task { await refreshPendingNotifications() }

@@ -47,6 +47,19 @@ struct UserManagementView: View {
                     } else {
                         ForEach(filteredUsers, id: \.id) { user in
                             userRow(user)
+                                .onAppear {
+                                    if user.id == filteredUsers.last?.id {
+                                        Task { await viewModel.loadMoreUsers() }
+                                    }
+                                }
+                        }
+                        if viewModel.userPagination.isLoadingMore {
+                            HStack {
+                                Spacer()
+                                ProgressView()
+                                Spacer()
+                            }
+                            .padding()
                         }
                     }
                 } header: {

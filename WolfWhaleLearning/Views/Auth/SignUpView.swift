@@ -157,7 +157,7 @@ struct SignUpView: View {
             .background(Color(.systemBackground), in: .rect(cornerRadius: 12))
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .strokeBorder(focusedField == .fullName ? Color.purple.opacity(0.5) : Color(.separator).opacity(0.3), lineWidth: 1)
+                    .strokeBorder(focusedField == .fullName ? Color.purple.opacity(0.5) : Color.gray.opacity(0.3), lineWidth: 1)
             )
 
             // Email
@@ -185,7 +185,7 @@ struct SignUpView: View {
                         .strokeBorder(
                             emailError != nil ? Color.red.opacity(0.5)
                             : focusedField == .email ? Color.purple.opacity(0.5)
-                            : Color(.separator).opacity(0.3),
+                            : Color.gray.opacity(0.3),
                             lineWidth: 1
                         )
                 )
@@ -221,7 +221,7 @@ struct SignUpView: View {
                         .strokeBorder(
                             passwordError != nil ? Color.red.opacity(0.5)
                             : focusedField == .password ? Color.purple.opacity(0.5)
-                            : Color(.separator).opacity(0.3),
+                            : Color.gray.opacity(0.3),
                             lineWidth: 1
                         )
                 )
@@ -257,7 +257,7 @@ struct SignUpView: View {
                         .strokeBorder(
                             confirmPasswordError != nil ? Color.red.opacity(0.5)
                             : focusedField == .confirmPassword ? Color.purple.opacity(0.5)
-                            : Color(.separator).opacity(0.3),
+                            : Color.gray.opacity(0.3),
                             lineWidth: 1
                         )
                 )
@@ -303,7 +303,7 @@ struct SignUpView: View {
                                     .strokeBorder(
                                         selectedRole == role
                                             ? Color.purple.opacity(0.5)
-                                            : Color(.separator).opacity(0.3),
+                                            : Color.gray.opacity(0.3),
                                         lineWidth: 1
                                     )
                             )
@@ -344,7 +344,7 @@ struct SignUpView: View {
                         .strokeBorder(
                             schoolCodeError != nil ? Color.red.opacity(0.5)
                             : focusedField == .schoolCode ? Color.purple.opacity(0.5)
-                            : Color(.separator).opacity(0.3),
+                            : Color.gray.opacity(0.3),
                             lineWidth: 1
                         )
                 )

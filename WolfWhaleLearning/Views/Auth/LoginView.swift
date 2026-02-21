@@ -7,7 +7,6 @@ struct LoginView: View {
     @State private var showForgotPassword = false
     @State private var hapticTrigger = false
     @State private var glowPulse = false
-    @State private var loginAudio = LoginAudioService()
     @FocusState private var focusedField: Field?
 
     private enum Field { case email, password }
@@ -45,15 +44,6 @@ struct LoginView: View {
         .onAppear {
             withAnimation(.spring(duration: 0.7)) { appeared = true }
             withAnimation(.spring(duration: 0.6).delay(0.3)) { showDemoSection = true }
-            loginAudio.startPlaying()
-        }
-        .onChange(of: viewModel.isAuthenticated) { _, authenticated in
-            if authenticated {
-                loginAudio.fadeOutAndStop()
-            }
-        }
-        .onDisappear {
-            loginAudio.stop()
         }
     }
 
@@ -131,14 +121,10 @@ struct LoginView: View {
                         .accessibilityHint("Enter your school email to sign in")
                 }
                 .padding(14)
-                .background {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(.clear)
-                        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
-                }
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(focusedField == .email ? Color.accentColor.opacity(0.5) : Color(.separator).opacity(0.3), lineWidth: 1)
+                        .strokeBorder(focusedField == .email ? Color.accentColor.opacity(0.5) : Color.gray.opacity(0.3), lineWidth: 1)
                 )
 
                 HStack(spacing: 12) {
@@ -155,14 +141,10 @@ struct LoginView: View {
                         .accessibilityHint("Enter your password to sign in")
                 }
                 .padding(14)
-                .background {
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(.clear)
-                        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
-                }
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(focusedField == .password ? Color.accentColor.opacity(0.5) : Color(.separator).opacity(0.3), lineWidth: 1)
+                        .strokeBorder(focusedField == .password ? Color.accentColor.opacity(0.5) : Color.gray.opacity(0.3), lineWidth: 1)
                 )
             }
 
@@ -223,14 +205,14 @@ struct LoginView: View {
     private var dividerSection: some View {
         HStack(spacing: 16) {
             Rectangle()
-                .fill(Color(.separator).opacity(0.3))
+                .fill(Color.gray.opacity(0.3))
                 .frame(height: 1)
             Text("OR TRY A DEMO")
                 .font(.system(size: 11, weight: .semibold, design: .serif))
                 .foregroundStyle(.secondary)
                 .tracking(1.5)
             Rectangle()
-                .fill(Color(.separator).opacity(0.3))
+                .fill(Color.gray.opacity(0.3))
                 .frame(height: 1)
         }
     }
@@ -319,11 +301,7 @@ struct DemoRoleButton: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
-            .background {
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(.clear)
-                    .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 14))
-            }
+            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 14))
         }
         .buttonStyle(.plain)
         .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)

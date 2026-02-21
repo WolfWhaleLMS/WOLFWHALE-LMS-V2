@@ -1,6 +1,6 @@
 import Foundation
 
-nonisolated struct Conversation: Identifiable, Hashable, Sendable {
+nonisolated struct Conversation: Identifiable, Hashable, Sendable, Codable {
     let id: UUID
     var participantNames: [String]
     var title: String
@@ -11,7 +11,7 @@ nonisolated struct Conversation: Identifiable, Hashable, Sendable {
     var avatarSystemName: String
 }
 
-nonisolated struct ChatMessage: Identifiable, Hashable, Sendable {
+nonisolated struct ChatMessage: Identifiable, Hashable, Sendable, Codable {
     let id: UUID
     var senderName: String
     var content: String

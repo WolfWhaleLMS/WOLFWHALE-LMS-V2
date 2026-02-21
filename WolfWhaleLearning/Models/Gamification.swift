@@ -1,6 +1,6 @@
 import Foundation
 
-nonisolated struct Achievement: Identifiable, Hashable, Sendable {
+nonisolated struct Achievement: Identifiable, Hashable, Sendable, Codable {
     let id: UUID
     var title: String
     var description: String
@@ -11,7 +11,7 @@ nonisolated struct Achievement: Identifiable, Hashable, Sendable {
     var rarity: AchievementRarity
 }
 
-nonisolated enum AchievementRarity: String, Sendable {
+nonisolated enum AchievementRarity: String, Sendable, Codable {
     case common = "Common"
     case rare = "Rare"
     case epic = "Epic"
@@ -27,7 +27,7 @@ nonisolated enum AchievementRarity: String, Sendable {
     }
 }
 
-nonisolated struct LeaderboardEntry: Identifiable, Hashable, Sendable {
+nonisolated struct LeaderboardEntry: Identifiable, Hashable, Sendable, Codable {
     let id: UUID
     var userName: String
     var xp: Int

@@ -4,6 +4,34 @@ import Supabase
 @Observable
 @MainActor
 class AppViewModel {
+
+    // MARK: - Pagination Helper
+
+    struct PaginationState {
+        var offset: Int = 0
+        var hasMore: Bool = true
+        var isLoadingMore: Bool = false
+        let pageSize: Int
+
+        init(pageSize: Int = 50) {
+            self.pageSize = pageSize
+        }
+
+        mutating func reset() {
+            offset = 0
+            hasMore = true
+            isLoadingMore = false
+        }
+    }
+
+    // MARK: - Search Context
+
+    enum SearchContext {
+        case courses, assignments, users, conversations
+    }
+
+    // MARK: - Properties
+
     var currentUser: User?
     var isAuthenticated = false
     var email = ""
@@ -28,6 +56,24 @@ class AppViewModel {
     var dataError: String?
     var gradeError: String?
     var enrollmentError: String?
+
+    // MARK: - Pagination State
+    var coursePagination = PaginationState(pageSize: 50)
+    var assignmentPagination = PaginationState(pageSize: 50)
+    var conversationPagination = PaginationState(pageSize: 50)
+    var userPagination = PaginationState(pageSize: 30)
+
+    // MARK: - Lazy Loading Flags
+    private var assignmentsLoaded = false
+    private var conversationsLoaded = false
+    private var gradesLoaded = false
+    private var leaderboardLoaded = false
+    private var quizzesLoaded = false
+    private var attendanceLoaded = false
+    private var achievementsLoaded = false
+
+    // MARK: - Search Debouncing
+    private var searchTask: Task<Void, Never>?
 
     var isDemoMode = false
     private let mockService = MockDataService.shared
@@ -83,6 +129,73 @@ class AppViewModel {
         if let existing = _cloudSync { return existing }
         let service = CloudSyncService()
         _cloudSync = service
+        return service
+    }
+
+    // MARK: - Speech Recognition
+    // Lazy: Microphone & speech recognition require entitlements/permissions
+    private var _speechService: SpeechService?
+    var speechService: SpeechService {
+        if let existing = _speechService { return existing }
+        let service = SpeechService()
+        _speechService = service
+        return service
+    }
+
+    // MARK: - CoreSpotlight Search Indexing
+    private var _spotlightService: SpotlightService?
+    var spotlightService: SpotlightService {
+        if let existing = _spotlightService { return existing }
+        let service = SpotlightService()
+        _spotlightService = service
+        return service
+    }
+
+    // MARK: - AI Learning Recommendations (CoreML)
+    private var _recommendationService: LearningRecommendationService?
+    var recommendationService: LearningRecommendationService {
+        if let existing = _recommendationService { return existing }
+        let service = LearningRecommendationService()
+        _recommendationService = service
+        return service
+    }
+
+    // MARK: - SharePlay (GroupActivities)
+    #if canImport(GroupActivities)
+    private var _sharePlayService: SharePlayService?
+    var sharePlayService: SharePlayService {
+        if let existing = _sharePlayService { return existing }
+        let service = SharePlayService()
+        _sharePlayService = service
+        return service
+    }
+    #endif
+
+    // MARK: - HealthKit Wellness
+    // Lazy: HealthKit requires entitlements and authorization
+    private var _healthService: HealthService?
+    var healthService: HealthService {
+        if let existing = _healthService { return existing }
+        let service = HealthService()
+        _healthService = service
+        return service
+    }
+
+    // MARK: - VisionKit Document Scanner
+    private var _documentScannerService: DocumentScannerService?
+    var documentScannerService: DocumentScannerService {
+        if let existing = _documentScannerService { return existing }
+        let service = DocumentScannerService()
+        _documentScannerService = service
+        return service
+    }
+
+    // MARK: - PencilKit Drawing
+    private var _drawingService: DrawingService?
+    var drawingService: DrawingService {
+        if let existing = _drawingService { return existing }
+        let service = DrawingService()
+        _drawingService = service
         return service
     }
 
@@ -326,16 +439,47 @@ class AppViewModel {
         _pushService = nil
         _calendarService = nil
         _cloudSync = nil
+        _speechService = nil
+        _recommendationService = nil
+        _healthService = nil
+        _documentScannerService = nil
+        _drawingService = nil
+        #if canImport(GroupActivities)
+        _sharePlayService = nil
+        #endif
+
+        // 8. Deindex all Spotlight items for the previous user
+        Task { await spotlightService.deindexAllContent() }
+        _spotlightService = nil
 
         isDemoMode = false
 
-        // 8. Animate only the auth transition; clear data arrays outside animation
+        // 8. Reset pagination state so the next session starts fresh
+        coursePagination.reset()
+        assignmentPagination.reset()
+        conversationPagination.reset()
+        userPagination.reset()
+
+        // 9. Reset lazy-loading flags
+        assignmentsLoaded = false
+        conversationsLoaded = false
+        gradesLoaded = false
+        leaderboardLoaded = false
+        quizzesLoaded = false
+        attendanceLoaded = false
+        achievementsLoaded = false
+
+        // 10. Cancel any pending search
+        searchTask?.cancel()
+        searchTask = nil
+
+        // 11. Animate only the auth transition; clear data arrays outside animation
         // to avoid a burst of cascading view recalculations
         withAnimation(.smooth) {
             isAuthenticated = false
         }
 
-        // 9. Clear all user data and error states
+        // 12. Clear all user data and error states
         currentUser = nil
         email = ""
         password = ""
@@ -444,60 +588,60 @@ class AppViewModel {
         isDataLoading = true
         dataError = nil
 
+        // Reset lazy-loading flags so fresh data can be fetched on-demand
+        assignmentsLoaded = false
+        conversationsLoaded = false
+        gradesLoaded = false
+        leaderboardLoaded = false
+        quizzesLoaded = false
+        attendanceLoaded = false
+        achievementsLoaded = false
+
         do {
-            courses = try await dataService.fetchCourses(for: user.id, role: user.role, schoolId: user.schoolId)
-            let courseIds = courses.map(\.id)
+            // Always load: courses (first page) and announcements — these power the dashboard
+            coursePagination.reset()
+            let newCourses = try await dataService.fetchCourses(
+                for: user.id,
+                role: user.role,
+                schoolId: user.schoolId,
+                offset: coursePagination.offset,
+                limit: coursePagination.pageSize
+            )
+            courses = newCourses
+            coursePagination.offset = newCourses.count
+            coursePagination.hasMore = newCourses.count >= coursePagination.pageSize
 
-            // Batch common fetches concurrently using TaskGroup
-            await withTaskGroup(of: Void.self) { group in
-                group.addTask { @MainActor in
-                    self.assignments = (try? await self.dataService.fetchAssignments(for: user.id, role: user.role, courseIds: courseIds)) ?? []
-                }
-                group.addTask { @MainActor in
-                    self.announcements = (try? await self.dataService.fetchAnnouncements()) ?? []
-                }
-                group.addTask { @MainActor in
-                    self.conversations = (try? await self.dataService.fetchConversations(for: user.id)) ?? []
-                }
-            }
+            // Always load announcements (small, capped at 20 by the service)
+            announcements = (try? await dataService.fetchAnnouncements()) ?? []
 
+            // Per-role essential data for the dashboard
             switch user.role {
             case .student:
-                await withTaskGroup(of: Void.self) { group in
-                    group.addTask { @MainActor in
-                        self.quizzes = (try? await self.dataService.fetchQuizzes(for: user.id, courseIds: courseIds)) ?? []
-                    }
-                    group.addTask { @MainActor in
-                        self.grades = (try? await self.dataService.fetchGrades(for: user.id, courseIds: courseIds)) ?? []
-                    }
-                    group.addTask { @MainActor in
-                        self.attendance = (try? await self.dataService.fetchAttendance(for: user.id)) ?? []
-                    }
-                    group.addTask { @MainActor in
-                        self.achievements = (try? await self.dataService.fetchAchievements(for: user.id)) ?? []
-                    }
-                    group.addTask { @MainActor in
-                        await self.loadLeaderboard()
-                    }
-                }
+                // Students need grades summary on the dashboard
+                let courseIds = courses.map(\.id)
+                grades = (try? await dataService.fetchGrades(for: user.id, courseIds: courseIds)) ?? []
+                gradesLoaded = true
 
             case .teacher:
+                // Courses already loaded above — that is what teachers see on dashboard
                 break
 
             case .parent:
-                await withTaskGroup(of: Void.self) { group in
-                    group.addTask { @MainActor in
-                        self.children = (try? await self.dataService.fetchChildren(for: user.id)) ?? []
-                    }
-                    group.addTask { @MainActor in
-                        self.allUsers = (try? await self.dataService.fetchAllUsers(schoolId: user.schoolId)) ?? []
-                    }
-                }
+                children = (try? await dataService.fetchChildren(for: user.id)) ?? []
 
             case .admin, .superAdmin:
+                // Load school metrics and first page of users for admin dashboard
                 await withTaskGroup(of: Void.self) { group in
                     group.addTask { @MainActor in
-                        self.allUsers = (try? await self.dataService.fetchAllUsers(schoolId: user.schoolId)) ?? []
+                        self.userPagination.reset()
+                        let newUsers = (try? await self.dataService.fetchAllUsers(
+                            schoolId: user.schoolId,
+                            offset: self.userPagination.offset,
+                            limit: self.userPagination.pageSize
+                        )) ?? []
+                        self.allUsers = newUsers
+                        self.userPagination.offset = newUsers.count
+                        self.userPagination.hasMore = newUsers.count >= self.userPagination.pageSize
                     }
                     group.addTask { @MainActor in
                         self.schoolMetrics = try? await self.dataService.fetchSchoolMetrics(schoolId: user.schoolId)
@@ -510,8 +654,29 @@ class AppViewModel {
             let assignmentsForReminders = assignments
             Task.detached(priority: .utility) { @MainActor [weak self] in
                 self?.cacheDataForSiri()
+                self?.cacheDataForWidgets()
                 self?.saveDataToOfflineStorage()
                 self?.notificationService.scheduleAllAssignmentReminders(assignments: assignmentsForReminders)
+
+                // Index content for Spotlight search
+                if let self {
+                    await self.spotlightService.indexAllContent(
+                        courses: self.courses,
+                        assignments: self.assignments,
+                        quizzes: self.quizzes
+                    )
+                }
+
+                // Generate AI learning recommendations for students
+                if let self, self.currentUser?.role == .student {
+                    self.recommendationService.generateRecommendations(
+                        courses: self.courses,
+                        assignments: self.assignments,
+                        quizzes: self.quizzes,
+                        grades: self.grades,
+                        streakDays: self.currentUser?.streak ?? 0
+                    )
+                }
             }
         } catch {
             isDataLoading = false
@@ -522,6 +687,211 @@ class AppViewModel {
                 dataError = "Could not load data. Using offline mode."
                 loadMockData()
             }
+        }
+    }
+
+    // MARK: - Lazy "If Needed" Loaders
+
+    /// Called when user opens the Assignments tab. Loads assignments only if not already loaded.
+    func loadAssignmentsIfNeeded() async {
+        guard !assignmentsLoaded, !isDemoMode, let user = currentUser else { return }
+        let courseIds = courses.map(\.id)
+        assignmentPagination.reset()
+        let newAssignments = (try? await dataService.fetchAssignments(
+            for: user.id,
+            role: user.role,
+            courseIds: courseIds,
+            offset: assignmentPagination.offset,
+            limit: assignmentPagination.pageSize
+        )) ?? []
+        assignments = newAssignments
+        assignmentPagination.offset = newAssignments.count
+        assignmentPagination.hasMore = newAssignments.count >= assignmentPagination.pageSize
+        assignmentsLoaded = true
+    }
+
+    /// Called when user opens the Messages tab. Loads conversations only if not already loaded.
+    func loadConversationsIfNeeded() async {
+        guard !conversationsLoaded, !isDemoMode, let user = currentUser else { return }
+        conversationPagination.reset()
+        let newConversations = (try? await dataService.fetchConversations(
+            for: user.id,
+            offset: conversationPagination.offset,
+            limit: conversationPagination.pageSize
+        )) ?? []
+        conversations = newConversations
+        conversationPagination.offset = newConversations.count
+        conversationPagination.hasMore = newConversations.count >= conversationPagination.pageSize
+        conversationsLoaded = true
+    }
+
+    /// Called when user opens the Grades tab. Loads grades only if not already loaded.
+    func loadGradesIfNeeded() async {
+        guard !gradesLoaded, !isDemoMode, let user = currentUser else { return }
+        let courseIds = courses.map(\.id)
+        grades = (try? await dataService.fetchGrades(for: user.id, courseIds: courseIds)) ?? []
+        gradesLoaded = true
+    }
+
+    /// Called when user opens the Leaderboard. Loads leaderboard only if not already loaded.
+    func loadLeaderboardIfNeeded() async {
+        guard !leaderboardLoaded, !isDemoMode else { return }
+        await loadLeaderboard()
+        leaderboardLoaded = true
+    }
+
+    /// Called when user opens the Quizzes section. Loads quizzes only if not already loaded.
+    func loadQuizzesIfNeeded() async {
+        guard !quizzesLoaded, !isDemoMode, let user = currentUser else { return }
+        let courseIds = courses.map(\.id)
+        quizzes = (try? await dataService.fetchQuizzes(for: user.id, courseIds: courseIds)) ?? []
+        quizzesLoaded = true
+    }
+
+    /// Called when user opens the Attendance section. Loads attendance only if not already loaded.
+    func loadAttendanceIfNeeded() async {
+        guard !attendanceLoaded, !isDemoMode, let user = currentUser else { return }
+        attendance = (try? await dataService.fetchAttendance(for: user.id)) ?? []
+        attendanceLoaded = true
+    }
+
+    /// Called when user opens the Achievements section. Loads achievements only if not already loaded.
+    func loadAchievementsIfNeeded() async {
+        guard !achievementsLoaded, !isDemoMode, let user = currentUser else { return }
+        achievements = (try? await dataService.fetchAchievements(for: user.id)) ?? []
+        achievementsLoaded = true
+    }
+
+    // MARK: - Load More (Pagination)
+
+    func loadMoreCourses() async {
+        guard !coursePagination.isLoadingMore, coursePagination.hasMore, let user = currentUser, !isDemoMode else { return }
+        coursePagination.isLoadingMore = true
+        defer { coursePagination.isLoadingMore = false }
+
+        do {
+            let newCourses = try await dataService.fetchCourses(
+                for: user.id,
+                role: user.role,
+                schoolId: user.schoolId,
+                offset: coursePagination.offset,
+                limit: coursePagination.pageSize
+            )
+            courses.append(contentsOf: newCourses)
+            coursePagination.offset += newCourses.count
+            coursePagination.hasMore = newCourses.count >= coursePagination.pageSize
+        } catch {
+            #if DEBUG
+            print("[AppViewModel] Failed to load more courses: \(error)")
+            #endif
+        }
+    }
+
+    func loadMoreAssignments() async {
+        guard !assignmentPagination.isLoadingMore, assignmentPagination.hasMore, let user = currentUser, !isDemoMode else { return }
+        assignmentPagination.isLoadingMore = true
+        defer { assignmentPagination.isLoadingMore = false }
+
+        do {
+            let courseIds = courses.map(\.id)
+            let newAssignments = try await dataService.fetchAssignments(
+                for: user.id,
+                role: user.role,
+                courseIds: courseIds,
+                offset: assignmentPagination.offset,
+                limit: assignmentPagination.pageSize
+            )
+            assignments.append(contentsOf: newAssignments)
+            assignmentPagination.offset += newAssignments.count
+            assignmentPagination.hasMore = newAssignments.count >= assignmentPagination.pageSize
+        } catch {
+            #if DEBUG
+            print("[AppViewModel] Failed to load more assignments: \(error)")
+            #endif
+        }
+    }
+
+    func loadMoreConversations() async {
+        guard !conversationPagination.isLoadingMore, conversationPagination.hasMore, let user = currentUser, !isDemoMode else { return }
+        conversationPagination.isLoadingMore = true
+        defer { conversationPagination.isLoadingMore = false }
+
+        do {
+            let newConversations = try await dataService.fetchConversations(
+                for: user.id,
+                offset: conversationPagination.offset,
+                limit: conversationPagination.pageSize
+            )
+            conversations.append(contentsOf: newConversations)
+            conversationPagination.offset += newConversations.count
+            conversationPagination.hasMore = newConversations.count >= conversationPagination.pageSize
+        } catch {
+            #if DEBUG
+            print("[AppViewModel] Failed to load more conversations: \(error)")
+            #endif
+        }
+    }
+
+    func loadMoreUsers() async {
+        guard !userPagination.isLoadingMore, userPagination.hasMore, let user = currentUser, !isDemoMode else { return }
+        userPagination.isLoadingMore = true
+        defer { userPagination.isLoadingMore = false }
+
+        do {
+            let newUsers = try await dataService.fetchAllUsers(
+                schoolId: user.schoolId,
+                offset: userPagination.offset,
+                limit: userPagination.pageSize
+            )
+            allUsers.append(contentsOf: newUsers)
+            userPagination.offset += newUsers.count
+            userPagination.hasMore = newUsers.count >= userPagination.pageSize
+        } catch {
+            #if DEBUG
+            print("[AppViewModel] Failed to load more users: \(error)")
+            #endif
+        }
+    }
+
+    // MARK: - Search Debouncing
+
+    func debouncedSearch(query: String, context: SearchContext) {
+        searchTask?.cancel()
+        searchTask = Task {
+            try? await Task.sleep(for: .milliseconds(300))
+            guard !Task.isCancelled else { return }
+            await performSearch(query: query, context: context)
+        }
+    }
+
+    private func performSearch(query: String, context: SearchContext) async {
+        guard let user = currentUser, !isDemoMode else { return }
+        let trimmed = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+
+        switch context {
+        case .courses:
+            // Client-side filter since courses are already loaded
+            break
+        case .assignments:
+            // Client-side filter since assignments are already loaded
+            break
+        case .users:
+            // Server-side search: reload users filtered by name
+            do {
+                allUsers = try await dataService.fetchAllUsers(
+                    schoolId: user.schoolId,
+                    offset: 0,
+                    limit: userPagination.pageSize
+                )
+            } catch {
+                #if DEBUG
+                print("[AppViewModel] User search failed: \(error)")
+                #endif
+            }
+        case .conversations:
+            // Client-side filter since conversations are already loaded
+            break
         }
     }
 
@@ -673,6 +1043,48 @@ class AppViewModel {
         }
     }
 
+    // MARK: - Cache Data for Widgets (App Group)
+    /// Writes the same cached data to the shared App Group UserDefaults so
+    /// WidgetKit widgets can display grades, assignments, and schedule.
+    func cacheDataForWidgets() {
+        guard let sharedDefaults = UserDefaults(suiteName: "group.com.wolfwhale.lms") else { return }
+        let isoFormatter = ISO8601DateFormatter()
+        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
+        // 1. Upcoming assignments
+        let upcomingItems = upcomingAssignments.prefix(10).map { assignment in
+            CachedAssignment(
+                title: assignment.title,
+                dueDate: isoFormatter.string(from: assignment.dueDate),
+                courseName: assignment.courseName
+            )
+        }
+        if let data = try? JSONEncoder().encode(Array(upcomingItems)) {
+            sharedDefaults.set(data, forKey: UserDefaultsKeys.upcomingAssignments)
+        }
+
+        // 2. Grades summary
+        let courseGrades = grades.map { entry in
+            CachedCourseGrade(
+                courseName: entry.courseName,
+                letterGrade: entry.letterGrade,
+                numericGrade: entry.numericGrade
+            )
+        }
+        let gradesSummary = CachedGradesSummary(gpa: gpa, courseGrades: courseGrades)
+        if let data = try? JSONEncoder().encode(gradesSummary) {
+            sharedDefaults.set(data, forKey: UserDefaultsKeys.gradesSummary)
+        }
+
+        // 3. Today's schedule
+        let scheduleEntries = courses.map { course in
+            CachedScheduleEntry(courseName: course.title, time: nil)
+        }
+        if let data = try? JSONEncoder().encode(scheduleEntries) {
+            sharedDefaults.set(data, forKey: UserDefaultsKeys.scheduleToday)
+        }
+    }
+
     // MARK: - Admin: Create User
     // Role goes into tenant_memberships, NOT profiles.
     func createUser(
@@ -756,7 +1168,16 @@ class AppViewModel {
         // Slot tracking: userSlotsTotal/userSlotsUsed are not DB columns on profiles.
         // They are tracked locally on the User model for plan-based limits.
         currentUser?.userSlotsUsed += 1
-        allUsers = try await dataService.fetchAllUsers(schoolId: admin.schoolId)
+        // Reload first page of users instead of fetching all users into memory
+        userPagination.reset()
+        let freshUsers = try await dataService.fetchAllUsers(
+            schoolId: admin.schoolId,
+            offset: userPagination.offset,
+            limit: userPagination.pageSize
+        )
+        allUsers = freshUsers
+        userPagination.offset = freshUsers.count
+        userPagination.hasMore = freshUsers.count >= userPagination.pageSize
     }
 
     func deleteUser(userId: UUID) async throws {

@@ -21,10 +21,14 @@ actor CacheService {
         if cache.count >= maxEntries {
             evictExpired()
         }
-        // If still at capacity after eviction, remove the oldest entry.
+        // If still at capacity after eviction, batch-remove the oldest 10% of entries.
         if cache.count >= maxEntries {
-            if let oldestKey = cache.min(by: { $0.value.expiry < $1.value.expiry })?.key {
-                cache.removeValue(forKey: oldestKey)
+            let evictCount = max(1, maxEntries / 10)
+            let sortedKeys = cache.sorted { $0.value.expiry < $1.value.expiry }
+                .prefix(evictCount)
+                .map(\.key)
+            for key in sortedKeys {
+                cache.removeValue(forKey: key)
             }
         }
         cache[key] = (data: value, expiry: Date().addingTimeInterval(ttl))

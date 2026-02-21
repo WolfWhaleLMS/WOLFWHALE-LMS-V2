@@ -1,6 +1,6 @@
 import Foundation
 
-nonisolated struct Course: Identifiable, Hashable, Sendable {
+nonisolated struct Course: Identifiable, Hashable, Sendable, Codable {
     let id: UUID
     var title: String
     var description: String
@@ -23,14 +23,14 @@ nonisolated struct Course: Identifiable, Hashable, Sendable {
     }
 }
 
-nonisolated struct Module: Identifiable, Hashable, Sendable {
+nonisolated struct Module: Identifiable, Hashable, Sendable, Codable {
     let id: UUID
     var title: String
     var lessons: [Lesson]
     var orderIndex: Int
 }
 
-nonisolated struct Lesson: Identifiable, Hashable, Sendable {
+nonisolated struct Lesson: Identifiable, Hashable, Sendable, Codable {
     let id: UUID
     var title: String
     var content: String
@@ -40,7 +40,7 @@ nonisolated struct Lesson: Identifiable, Hashable, Sendable {
     var xpReward: Int
 }
 
-nonisolated enum LessonType: String, Sendable {
+nonisolated enum LessonType: String, Sendable, Codable {
     case reading = "Reading"
     case video = "Video"
     case activity = "Activity"
