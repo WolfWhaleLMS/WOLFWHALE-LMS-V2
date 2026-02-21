@@ -7,6 +7,7 @@ struct RadioView: View {
     @State private var barAnimations: [CGFloat] = Array(repeating: 0.3, count: 12)
     @State private var animateVisualizer = false
     @State private var hapticTrigger = false
+    @State private var visualizerTimer: Timer?
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -41,6 +42,10 @@ struct RadioView: View {
             }
             .onAppear {
                 startVisualizerAnimation()
+            }
+            .onDisappear {
+                visualizerTimer?.invalidate()
+                visualizerTimer = nil
             }
         }
     }
@@ -510,9 +515,10 @@ struct RadioView: View {
     }
 
     private func startVisualizerAnimation() {
-        // Generate random bar heights for the visualizer
-        Timer.scheduledTimer(withTimeInterval: 0.3, repeats: true) { _ in
+        visualizerTimer?.invalidate()
+        visualizerTimer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: true) { [weak visualizerTimer] _ in
             Task { @MainActor in
+                guard visualizerTimer != nil else { return }
                 if radioService.isPlaying {
                     for i in 0..<barAnimations.count {
                         barAnimations[i] = CGFloat.random(in: 0.2...1.0)
