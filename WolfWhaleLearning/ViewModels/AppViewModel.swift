@@ -33,6 +33,9 @@ class AppViewModel {
     private let mockService = MockDataService.shared
     private let dataService = DataService.shared
     private var refreshTask: Task<Void, Never>?
+    private var autoRefreshTask: Task<Void, Never>?
+    /// Auto-refresh interval in seconds (5 minutes).
+    private let autoRefreshInterval: TimeInterval = 300
     let networkMonitor = NetworkMonitor()
 
     // MARK: - Notifications
@@ -40,7 +43,8 @@ class AppViewModel {
 
     // MARK: - Push Notifications (Remote)
     // Lazy: APNs registration can crash without proper provisioning/entitlements
-    private var _pushService: PushNotificationService?
+    // Internal so ContentView can wire the AppDelegate's shared instance.
+    var _pushService: PushNotificationService?
     var pushService: PushNotificationService {
         if let existing = _pushService { return existing }
         let service = PushNotificationService()
@@ -82,9 +86,11 @@ class AppViewModel {
         return service
     }
 
+    /// GPA on a 4.0 scale, derived from average percentage across all graded courses.
     var gpa: Double {
         guard !grades.isEmpty else { return 0 }
-        return grades.reduce(0) { $0 + $1.numericGrade } / Double(grades.count)
+        let avgPercent = grades.reduce(0) { $0 + $1.numericGrade } / Double(grades.count)
+        return avgPercent / 100.0 * 4.0
     }
 
     var upcomingAssignments: [Assignment] {
@@ -132,6 +138,7 @@ class AppViewModel {
                 try await fetchProfile(userId: session.user.id)
                 await loadData()
                 isAuthenticated = true
+                startAutoRefresh()
 
                 // Re-register push token on session restore
                 pushService.registerForRemoteNotifications()
@@ -160,6 +167,7 @@ class AppViewModel {
                 try await fetchProfile(userId: session.user.id)
                 await loadData()
                 isAuthenticated = true
+                startAutoRefresh()
 
                 // Register device for remote push notifications
                 pushService.registerForRemoteNotifications()
@@ -275,6 +283,8 @@ class AppViewModel {
         // 1. Cancel any pending background refresh to prevent network storms
         refreshTask?.cancel()
         refreshTask = nil
+        autoRefreshTask?.cancel()
+        autoRefreshTask = nil
 
         if !isDemoMode {
             Task {
@@ -284,15 +294,18 @@ class AppViewModel {
                 }
                 pushService.clearAllNotifications()
                 try? await supabaseClient.auth.signOut()
-                await CacheService.shared.invalidateAll()
             }
         }
+
+        // Always invalidate cache, even in demo mode, to prevent data leakage
+        Task { await CacheService.shared.invalidateAll() }
 
         // 2. Stop radio playback so audio doesn't persist after logout
         RadioService.shared.stop()
 
-        // 3. Clear offline storage
+        // 3. Clear offline storage and user scope
         offlineStorage.clearAllData()
+        offlineStorage.clearCurrentUser()
 
         // 4. Clear Siri / App Intents cached data from UserDefaults
         //    so the next user doesn't see stale grades, assignments, or schedule
@@ -414,6 +427,9 @@ class AppViewModel {
             return
         }
 
+        // Scope offline storage to the current user to prevent cross-user data leakage
+        offlineStorage.setCurrentUser(user.id)
+
         guard networkMonitor.isConnected else {
             if offlineStorage.hasOfflineData {
                 dataError = "No internet connection. Using offline data."
@@ -429,7 +445,7 @@ class AppViewModel {
         dataError = nil
 
         do {
-            courses = try await dataService.fetchCourses(for: user.id, role: user.role)
+            courses = try await dataService.fetchCourses(for: user.id, role: user.role, schoolId: user.schoolId)
             let courseIds = courses.map(\.id)
 
             // Batch common fetches concurrently using TaskGroup
@@ -509,14 +525,21 @@ class AppViewModel {
         }
     }
 
+    /// Returns a cache key scoped to the current user to prevent cross-user data leakage.
+    private func userCacheKey(_ base: String) -> String {
+        guard let userId = currentUser?.id else { return base }
+        return "\(userId.uuidString)-\(base)"
+    }
+
     func loadLeaderboard() async {
-        if let cached: [LeaderboardEntry] = await CacheService.shared.get("leaderboard") {
+        let key = userCacheKey("leaderboard")
+        if let cached: [LeaderboardEntry] = await CacheService.shared.get(key) {
             leaderboard = cached
             return
         }
         do {
             leaderboard = try await dataService.fetchLeaderboard()
-            await CacheService.shared.set("leaderboard", value: leaderboard, ttl: 60)
+            await CacheService.shared.set(key, value: leaderboard, ttl: 60)
         } catch {
             #if DEBUG
             print("[AppViewModel] Failed to load leaderboard: \(error)")
@@ -553,6 +576,10 @@ class AppViewModel {
     }
 
     private func loadOfflineData() {
+        // Ensure offline storage is scoped to the current user before loading
+        if let userId = currentUser?.id {
+            offlineStorage.setCurrentUser(userId)
+        }
         courses = offlineStorage.loadCourses()
         assignments = offlineStorage.loadAssignments()
         grades = offlineStorage.loadGrades()
@@ -571,6 +598,37 @@ class AppViewModel {
             guard !Task.isCancelled else { return }
             await loadData()
         }
+    }
+
+    // MARK: - Auto-Refresh
+
+    /// Starts a repeating auto-refresh timer. Call when the app enters the foreground
+    /// or when the user first authenticates. The timer stops itself when cancelled.
+    func startAutoRefresh() {
+        autoRefreshTask?.cancel()
+        autoRefreshTask = Task {
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(autoRefreshInterval))
+                guard !Task.isCancelled, isAuthenticated, !isDemoMode, networkMonitor.isConnected else { continue }
+                await loadData()
+            }
+        }
+    }
+
+    /// Stops the auto-refresh timer. Call when the app backgrounds or the user logs out.
+    func stopAutoRefresh() {
+        autoRefreshTask?.cancel()
+        autoRefreshTask = nil
+    }
+
+    /// Called when the app returns to the foreground. Refreshes data if the last
+    /// fetch is stale and restarts the auto-refresh timer.
+    func handleForegroundResume() {
+        guard isAuthenticated, !isDemoMode else { return }
+        startAutoRefresh()
+        // Only refresh if we have a network connection
+        guard networkMonitor.isConnected else { return }
+        refreshData()
     }
 
     // MARK: - Cache Data for Siri Intents
@@ -702,8 +760,11 @@ class AppViewModel {
     }
 
     func deleteUser(userId: UUID) async throws {
-        guard let admin = currentUser, admin.role == .admin else {
+        guard let admin = currentUser, admin.role == .admin || admin.role == .superAdmin else {
             throw UserManagementError.unauthorized
+        }
+        guard userId != admin.id else {
+            throw UserManagementError.cannotDeleteSelf
         }
         try await dataService.deleteUser(userId: userId)
         allUsers.removeAll { $0.id == userId }
@@ -764,7 +825,7 @@ class AppViewModel {
                 .insert(classCodeDTO)
                 .execute()
 
-            courses = try await dataService.fetchCourses(for: user.id, role: user.role)
+            courses = try await dataService.fetchCourses(for: user.id, role: user.role, schoolId: user.schoolId)
         } else {
             let newCourse = Course(
                 id: UUID(), title: title, description: description,
@@ -830,7 +891,7 @@ class AppViewModel {
                 createdBy: user.id,
                 publishedAt: nil,
                 expiresAt: nil,
-                status: nil
+                status: isPinned ? "pinned" : nil
             )
             try await dataService.createAnnouncement(dto)
             announcements = try await dataService.fetchAnnouncements()
@@ -851,11 +912,9 @@ class AppViewModel {
                 courses[courseIndex].modules[moduleIndex].lessons[lessonIndex].isCompleted = true
 
                 if !isDemoMode, let user = currentUser {
-                    let tenantUUID = user.schoolId.flatMap { UUID(uuidString: $0) }
-                    if let tenantUUID {
-                        Task {
-                            try? await dataService.completeLesson(studentId: user.id, lessonId: lesson.id, courseId: course.id, tenantId: tenantUUID)
-                        }
+                    let tenantUUID = user.schoolId.flatMap { UUID(uuidString: $0) } ?? UUID(uuidString: "00000000-0000-0000-0000-000000000000")!
+                    Task {
+                        try? await dataService.completeLesson(studentId: user.id, lessonId: lesson.id, courseId: course.id, tenantId: tenantUUID)
                     }
                 }
                 syncProfile()
@@ -866,6 +925,8 @@ class AppViewModel {
 
     func submitAssignment(_ assignment: Assignment, text: String) {
         guard let index = assignments.firstIndex(where: { $0.id == assignment.id }) else { return }
+        // Prevent double-submission: if already submitted locally, bail out
+        guard !assignments[index].isSubmitted else { return }
         assignments[index].isSubmitted = true
         assignments[index].submission = text
 
@@ -945,18 +1006,33 @@ class AppViewModel {
     func sendMessage(in conversationId: UUID, text: String) {
         guard let index = conversations.firstIndex(where: { $0.id == conversationId }) else { return }
         let message = ChatMessage(id: UUID(), senderName: currentUser?.fullName ?? "You", content: text, timestamp: Date(), isFromCurrentUser: true)
+        let previousLastMessage = conversations[index].lastMessage
+        let previousLastMessageDate = conversations[index].lastMessageDate
         conversations[index].messages.append(message)
         conversations[index].lastMessage = text
         conversations[index].lastMessageDate = Date()
 
         if !isDemoMode, let user = currentUser {
             Task {
-                try? await dataService.sendMessage(
-                    conversationId: conversationId,
-                    senderId: user.id,
-                    senderName: user.fullName,
-                    content: text
-                )
+                do {
+                    try await dataService.sendMessage(
+                        conversationId: conversationId,
+                        senderId: user.id,
+                        senderName: user.fullName,
+                        content: text
+                    )
+                } catch {
+                    // Rollback the optimistic message on failure
+                    if let idx = conversations.firstIndex(where: { $0.id == conversationId }) {
+                        conversations[idx].messages.removeAll { $0.id == message.id }
+                        conversations[idx].lastMessage = previousLastMessage
+                        conversations[idx].lastMessageDate = previousLastMessageDate
+                    }
+                    dataError = "Failed to send message. Please try again."
+                    #if DEBUG
+                    print("[AppViewModel] sendMessage failed: \(error)")
+                    #endif
+                }
             }
         }
     }
@@ -985,7 +1061,7 @@ class AppViewModel {
         }
 
         let courseName = try await dataService.enrollByClassCode(studentId: user.id, classCode: trimmedCode)
-        courses = try await dataService.fetchCourses(for: user.id, role: user.role)
+        courses = try await dataService.fetchCourses(for: user.id, role: user.role, schoolId: user.schoolId)
         let courseIds = courses.map(\.id)
         assignments = try await dataService.fetchAssignments(for: user.id, role: user.role, courseIds: courseIds)
         return courseName
@@ -1485,11 +1561,13 @@ class AppViewModel {
 nonisolated enum UserManagementError: LocalizedError, Sendable {
     case unauthorized
     case noSlotsRemaining
+    case cannotDeleteSelf
 
     var errorDescription: String? {
         switch self {
         case .unauthorized: "Only admins can manage users."
         case .noSlotsRemaining: "You have used all available user slots. Upgrade your plan to add more users."
+        case .cannotDeleteSelf: "You cannot delete your own account."
         }
     }
 }

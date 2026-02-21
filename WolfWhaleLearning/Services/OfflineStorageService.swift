@@ -248,9 +248,12 @@ final class OfflineStorageService {
 
     // MARK: - State
 
+    /// The user ID that scopes all offline data. Set via `setCurrentUser(_:)`.
+    private var currentUserId: String?
+
     var lastSyncDate: Date? {
-        get { UserDefaults.standard.object(forKey: Self.lastSyncKey) as? Date }
-        set { UserDefaults.standard.set(newValue, forKey: Self.lastSyncKey) }
+        get { UserDefaults.standard.object(forKey: lastSyncKey) as? Date }
+        set { UserDefaults.standard.set(newValue, forKey: lastSyncKey) }
     }
 
     /// Approximate total size of cached files in bytes.
@@ -258,18 +261,29 @@ final class OfflineStorageService {
 
     // MARK: - Constants
 
-    private static let lastSyncKey = "wolfwhale_offline_last_sync"
+    /// Per-user UserDefaults key for the last sync timestamp.
+    private var lastSyncKey: String {
+        guard let uid = currentUserId else { return "wolfwhale_offline_last_sync" }
+        return "wolfwhale_offline_last_sync_\(uid)"
+    }
     private static let coursesFile = "offline_courses.json"
     private static let assignmentsFile = "offline_assignments.json"
     private static let gradesFile = "offline_grades.json"
     private static let conversationsFile = "offline_conversations.json"
     private static let userProfileFile = "offline_user_profile.json"
 
-    // MARK: - Directory
+    // MARK: - Directory (per-user)
 
     private var cacheDirectory: URL {
         guard let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return URL(fileURLWithPath: NSTemporaryDirectory()) }
-        let dir = docs.appendingPathComponent("OfflineCache", isDirectory: true)
+        // Scope offline data to the current user to prevent data leakage between users
+        let subpath: String
+        if let uid = currentUserId {
+            subpath = "OfflineCache/\(uid)"
+        } else {
+            subpath = "OfflineCache"
+        }
+        let dir = docs.appendingPathComponent(subpath, isDirectory: true)
         if !FileManager.default.fileExists(atPath: dir.path) {
             try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         }
@@ -280,6 +294,19 @@ final class OfflineStorageService {
 
     init() {
         recalculateCacheSize()
+    }
+
+    /// Set the current user so all offline data is scoped per-user.
+    /// Must be called after login and before saving or loading offline data.
+    func setCurrentUser(_ userId: UUID) {
+        currentUserId = userId.uuidString
+        recalculateCacheSize()
+    }
+
+    /// Clear the current user scope (called on logout).
+    func clearCurrentUser() {
+        currentUserId = nil
+        cachedDataSize = 0
     }
 
     // MARK: - Generic Helpers

@@ -93,6 +93,9 @@ struct StudentDashboardView: View {
                     .padding(.bottom, 20)
                 }
             }
+            .refreshable {
+                viewModel.refreshData()
+            }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("\(greeting), \(viewModel.currentUser?.firstName ?? "Student")")
             .toolbar {

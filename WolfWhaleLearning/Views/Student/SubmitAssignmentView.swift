@@ -215,7 +215,7 @@ struct SubmitAssignmentView: View {
     // MARK: - Helpers
 
     private var isSubmitDisabled: Bool {
-        (responseText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && attachments.isEmpty) || isSubmitting
+        (responseText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && attachments.isEmpty) || isSubmitting || assignment.isSubmitted
     }
 
     private func infoLabel(icon: String, text: String, color: Color) -> some View {

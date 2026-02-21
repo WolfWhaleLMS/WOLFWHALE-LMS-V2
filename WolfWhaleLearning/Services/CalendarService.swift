@@ -144,8 +144,11 @@ final class CalendarService {
     // MARK: - Sync Assignment
 
     /// Create a calendar event for a single assignment's due date.
+    /// Skips assignments whose due date is already in the past.
     func syncAssignmentToCalendar(assignment: Assignment) {
         guard isAuthorized, let eventStore else { return }
+        // Do not create calendar events for assignments that are already past due
+        guard assignment.dueDate > Date() else { return }
         guard let calendar = selectedCalendar ?? getOrCreateWolfWhaleCalendar() else { return }
         let key = "assignment-\(assignment.id.uuidString)"
 

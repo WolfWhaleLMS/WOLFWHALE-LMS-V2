@@ -1,6 +1,4 @@
 import SwiftUI
-import Supabase
-import PostgREST
 
 struct TakeAttendanceView: View {
     @Bindable var viewModel: AppViewModel
@@ -9,36 +7,15 @@ struct TakeAttendanceView: View {
     @State private var attendanceDate = Date()
     @State private var studentStatuses: [UUID: AttendanceStatus] = [:]
     @State private var isLoading = false
+    @State private var isLoadingStudents = true
     @State private var showSuccess = false
     @State private var errorMessage: String?
     @State private var hapticTrigger = false
+    @State private var fetchedStudents: [(id: UUID, name: String)] = []
 
-    // Placeholder student list for the selected course.
-    // Uses viewModel.allUsers if populated; otherwise falls back to generated names.
+    // Use actually-fetched enrolled students; empty until loaded.
     private var enrolledStudents: [(id: UUID, name: String)] {
-        let fromUsers = viewModel.allUsers
-            .filter { $0.role.lowercased() == "student" }
-            .prefix(course.enrolledStudentCount)
-            .map { (id: $0.id, name: "\($0.firstName ?? "") \($0.lastName ?? "")") }
-
-        if !fromUsers.isEmpty {
-            return Array(fromUsers)
-        }
-
-        let placeholderNames = [
-            "Alex Rivera", "Jordan Kim", "Sam Patel", "Taylor Brooks",
-            "Casey Nguyen", "Morgan Lee", "Jamie Chen", "Riley Scott",
-            "Avery Davis", "Quinn Foster", "Dakota Martinez", "Skyler Thompson",
-            "Reese Walker", "Finley Adams", "Emery Clark", "Hayden Wright",
-            "Parker Young", "Rowan Hall", "Sage Allen", "Blair King",
-            "Drew Nelson", "Jules Carter", "Kai Mitchell", "Lane Roberts",
-            "Peyton Turner", "Remy Phillips", "Shay Campbell", "Tatum Parker",
-        ]
-        let count = max(course.enrolledStudentCount, 1)
-        return (0..<count).map { index in
-            let name = index < placeholderNames.count ? placeholderNames[index] : "Student \(index + 1)"
-            return (id: UUID(), name: name)
-        }
+        fetchedStudents
     }
 
     var body: some View {
@@ -54,8 +31,8 @@ struct TakeAttendanceView: View {
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Take Attendance")
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear {
-            initializeStatuses()
+        .task {
+            await loadEnrolledStudents()
         }
         .overlay {
             if showSuccess {
@@ -97,7 +74,16 @@ struct TakeAttendanceView: View {
                     .foregroundStyle(.secondary)
             }
 
-            if enrolledStudents.isEmpty {
+            if isLoadingStudents {
+                HStack {
+                    Spacer()
+                    ProgressView("Loading students...")
+                        .tint(.pink)
+                    Spacer()
+                }
+                .padding(.vertical, 24)
+                .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
+            } else if enrolledStudents.isEmpty {
                 HStack {
                     Image(systemName: "person.slash")
                         .foregroundStyle(.secondary)
@@ -252,54 +238,60 @@ struct TakeAttendanceView: View {
 
     // MARK: - Helpers
 
-    private func initializeStatuses() {
-        guard studentStatuses.isEmpty else { return }
-        for student in enrolledStudents {
-            studentStatuses[student.id] = .present
+    private func loadEnrolledStudents() async {
+        isLoadingStudents = true
+        let users = await viewModel.fetchStudentsInCourse(course.id)
+        fetchedStudents = users.map { (id: $0.id, name: $0.fullName) }
+        // If no real students found in demo mode, use placeholders
+        if fetchedStudents.isEmpty && viewModel.isDemoMode {
+            let placeholderNames = [
+                "Alex Rivera", "Jordan Kim", "Sam Patel", "Taylor Brooks",
+                "Casey Nguyen", "Morgan Lee", "Jamie Chen", "Riley Scott",
+            ]
+            let count = max(course.enrolledStudentCount, 1)
+            fetchedStudents = (0..<count).map { index in
+                let name = index < placeholderNames.count ? placeholderNames[index] : "Student \(index + 1)"
+                return (id: UUID(), name: name)
+            }
         }
+        // Initialize all statuses to present
+        for student in fetchedStudents {
+            if studentStatuses[student.id] == nil {
+                studentStatuses[student.id] = .present
+            }
+        }
+        isLoadingStudents = false
     }
 
     private func saveAttendance() {
         isLoading = true
         errorMessage = nil
 
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = TimeZone(identifier: "UTC")
+        let dateString = formatter.string(from: attendanceDate)
+
+        let records: [(studentId: UUID, courseId: UUID, courseName: String, date: String, status: String)] = enrolledStudents.map { student in
+            let status = studentStatuses[student.id] ?? .present
+            return (studentId: student.id, courseId: course.id, courseName: course.title, date: dateString, status: status.rawValue)
+        }
+
+        // Also append to local attendance for immediate UI feedback
+        for student in enrolledStudents {
+            let status = studentStatuses[student.id] ?? .present
+            let record = AttendanceRecord(
+                id: UUID(),
+                date: attendanceDate,
+                status: status,
+                courseName: course.title,
+                studentName: student.name
+            )
+            viewModel.attendance.append(record)
+        }
+
         Task {
-            // Simulate a brief network delay for demo mode
-            try? await Task.sleep(for: .seconds(0.8))
-
-            let formatter = ISO8601DateFormatter()
-            formatter.formatOptions = [.withFullDate]
-            let dateString = formatter.string(from: attendanceDate)
-
-            for student in enrolledStudents {
-                let status = studentStatuses[student.id] ?? .present
-                let record = AttendanceRecord(
-                    id: UUID(),
-                    date: attendanceDate,
-                    status: status,
-                    courseName: course.title,
-                    studentName: student.name
-                )
-                viewModel.attendance.append(record)
-
-                if !viewModel.isDemoMode {
-                    let dto = InsertAttendanceDTO(
-                        tenantId: nil,
-                        courseId: course.id,
-                        studentId: student.id,
-                        attendanceDate: dateString,
-                        status: status.rawValue,
-                        notes: nil,
-                        markedBy: nil
-                    )
-                    // Fire-and-forget insert; errors are silently handled
-                    // since the local state is already updated.
-                    _ = try? await supabaseClient
-                        .from("attendance_records")
-                        .insert(dto)
-                        .execute()
-                }
-            }
+            await viewModel.takeAttendance(records: records)
 
             isLoading = false
             withAnimation(.snappy) {

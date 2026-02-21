@@ -1,8 +1,23 @@
 import SwiftUI
 
 struct CourseDetailView: View {
-    let course: Course
+    let courseId: UUID
     let viewModel: AppViewModel
+
+    /// Use the live version from the viewModel so lesson-completion updates are reflected
+    /// immediately (progress bar, lesson checkmarks). Falls back to an empty course if removed.
+    private var course: Course {
+        viewModel.courses.first(where: { $0.id == courseId }) ?? Course(
+            id: courseId, title: "Course", description: "", teacherName: "",
+            iconSystemName: "book.fill", colorName: "blue", modules: [],
+            enrolledStudentCount: 0, progress: 0, classCode: ""
+        )
+    }
+
+    init(course: Course, viewModel: AppViewModel) {
+        self.courseId = course.id
+        self.viewModel = viewModel
+    }
 
     var body: some View {
         ScrollView {

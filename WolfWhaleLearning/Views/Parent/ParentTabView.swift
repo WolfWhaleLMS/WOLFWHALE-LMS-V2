@@ -14,6 +14,7 @@ struct ParentTabView: View {
             Tab("Messages", systemImage: "message.fill", value: 1) {
                 MessagesListView(viewModel: viewModel)
             }
+            .badge(viewModel.totalUnreadMessages)
             .accessibilityLabel("Messages")
             .accessibilityHint("Double tap to view your messages")
             Tab("Settings", systemImage: "gearshape.fill", value: 2) {
@@ -26,6 +27,16 @@ struct ParentTabView: View {
         .tint(.accentColor)
         .overlay(alignment: .top) {
             OfflineBannerView(isConnected: viewModel.networkMonitor.isConnected)
+        }
+        // Deep-link handling: navigate to the correct tab when a notification is tapped
+        .onChange(of: viewModel.notificationService.deepLinkConversationId) { _, newValue in
+            if newValue != nil {
+                selectedTab = 1 // Messages tab
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(500))
+                    viewModel.notificationService.deepLinkConversationId = nil
+                }
+            }
         }
     }
 }

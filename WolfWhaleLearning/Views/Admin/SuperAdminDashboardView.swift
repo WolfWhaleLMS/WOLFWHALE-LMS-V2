@@ -363,44 +363,128 @@ struct SuperAdminDashboardView: View {
 
     // MARK: - Sheets
 
+    @State private var newTenantName = ""
+    @State private var newTenantUserLimit = "50"
+    @State private var addTenantError: String?
+    @State private var isAddingTenant = false
+
     private var addTenantSheet: some View {
         NavigationStack {
-            VStack(spacing: 20) {
-                Image(systemName: "building.2.fill")
-                    .font(.system(size: 48))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [.purple, .cyan],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .padding(.top, 20)
+            Form {
+                Section("Tenant Details") {
+                    HStack {
+                        Image(systemName: "building.2.fill")
+                            .foregroundStyle(.indigo)
+                            .frame(width: 20)
+                        TextField("School Name", text: $newTenantName)
+                            .autocorrectionDisabled()
+                    }
 
-                Text("Add New Tenant")
-                    .font(.title2.bold())
+                    HStack {
+                        Image(systemName: "person.3.fill")
+                            .foregroundStyle(.indigo)
+                            .frame(width: 20)
+                        TextField("User Limit", text: $newTenantUserLimit)
+                            .keyboardType(.numberPad)
+                    }
+                }
 
-                Text("Tenant creation will be available once the backend integration is complete.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
+                if let error = addTenantError {
+                    Section {
+                        Label(error, systemImage: "exclamationmark.triangle.fill")
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
+                }
 
-                Spacer()
+                Section {
+                    Label("An invite code will be auto-generated for the new tenant.", systemImage: "info.circle")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .listRowBackground(Color.clear)
             }
             .navigationTitle("New Tenant")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Close") {
+                    Button("Cancel") {
                         hapticTrigger.toggle()
+                        resetAddTenantForm()
                         showAddTenant = false
                     }
                     .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Create") {
+                        hapticTrigger.toggle()
+                        createTenant()
+                    }
+                    .fontWeight(.semibold)
+                    .disabled(newTenantName.trimmingCharacters(in: .whitespaces).isEmpty || isAddingTenant)
+                    .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                }
+            }
+            .overlay {
+                if isAddingTenant {
+                    ZStack {
+                        Color.black.opacity(0.3).ignoresSafeArea()
+                        ProgressView("Creating tenant...")
+                            .padding(24)
+                            .background(.regularMaterial, in: .rect(cornerRadius: 16))
+                    }
+                }
             }
         }
         .presentationDetents([.medium])
+    }
+
+    private func createTenant() {
+        let trimmedName = newTenantName.trimmingCharacters(in: .whitespaces)
+        guard !trimmedName.isEmpty else { return }
+        let limit = Int(newTenantUserLimit) ?? 50
+
+        // Generate a random 6-char invite code
+        let chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+        let inviteCode = String((0..<6).map { _ in chars.randomElement()! })
+
+        isAddingTenant = true
+        addTenantError = nil
+
+        Task {
+            do {
+                struct InsertTenantDTO: Encodable {
+                    let name: String
+                    let inviteCode: String
+                    let userLimit: Int
+
+                    enum CodingKeys: String, CodingKey {
+                        case name
+                        case inviteCode = "invite_code"
+                        case userLimit = "user_limit"
+                    }
+                }
+                let dto = InsertTenantDTO(name: trimmedName, inviteCode: inviteCode, userLimit: limit)
+                try await supabaseClient
+                    .from("tenants")
+                    .insert(dto)
+                    .execute()
+
+                await loadTenants()
+                isAddingTenant = false
+                resetAddTenantForm()
+                showAddTenant = false
+            } catch {
+                isAddingTenant = false
+                addTenantError = "Failed to create tenant: \(error.localizedDescription)"
+            }
+        }
+    }
+
+    private func resetAddTenantForm() {
+        newTenantName = ""
+        newTenantUserLimit = "50"
+        addTenantError = nil
     }
 
     private func editUserLimitSheet(for tenant: TenantInfo) -> some View {
@@ -428,15 +512,28 @@ struct SuperAdminDashboardView: View {
                 Button {
                     hapticTrigger.toggle()
                     if let limit = Int(newUserLimit), limit > 0 {
-                        if let index = tenants.firstIndex(where: { $0.id == tenant.id }) {
-                            tenants[index] = TenantInfo(
-                                id: tenant.id,
-                                name: tenant.name,
-                                inviteCode: tenant.inviteCode,
-                                userCount: tenant.userCount,
-                                userLimit: limit,
-                                createdAt: tenant.createdAt
-                            )
+                        Task {
+                            do {
+                                try await supabaseClient
+                                    .from("tenants")
+                                    .update(["user_limit": limit])
+                                    .eq("id", value: tenant.id.uuidString)
+                                    .execute()
+                                if let index = tenants.firstIndex(where: { $0.id == tenant.id }) {
+                                    tenants[index] = TenantInfo(
+                                        id: tenant.id,
+                                        name: tenant.name,
+                                        inviteCode: tenant.inviteCode,
+                                        userCount: tenant.userCount,
+                                        userLimit: limit,
+                                        createdAt: tenant.createdAt
+                                    )
+                                }
+                            } catch {
+                                #if DEBUG
+                                print("[SuperAdminDashboard] Failed to update user limit: \(error)")
+                                #endif
+                            }
                         }
                         editingTenant = nil
                     }

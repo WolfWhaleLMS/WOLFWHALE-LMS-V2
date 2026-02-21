@@ -24,6 +24,7 @@ struct StudentTabView: View {
             Tab("Messages", systemImage: "message.fill", value: 3) {
                 MessagesListView(viewModel: viewModel)
             }
+            .badge(viewModel.totalUnreadMessages)
             .accessibilityLabel("Messages")
             .accessibilityHint("Double tap to view your messages")
             Tab("Profile", systemImage: "person.fill", value: 4) {
@@ -36,6 +37,35 @@ struct StudentTabView: View {
         .tint(.accentColor)
         .overlay(alignment: .top) {
             OfflineBannerView(isConnected: viewModel.networkMonitor.isConnected)
+        }
+        // Deep-link handling: navigate to the correct tab when a notification is tapped
+        .onChange(of: viewModel.notificationService.deepLinkAssignmentId) { _, newValue in
+            if newValue != nil {
+                selectedTab = 0 // Home tab shows upcoming assignments
+                // Clear after a brief delay to allow navigation to settle
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(500))
+                    viewModel.notificationService.deepLinkAssignmentId = nil
+                }
+            }
+        }
+        .onChange(of: viewModel.notificationService.deepLinkConversationId) { _, newValue in
+            if newValue != nil {
+                selectedTab = 3 // Messages tab
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(500))
+                    viewModel.notificationService.deepLinkConversationId = nil
+                }
+            }
+        }
+        .onChange(of: viewModel.notificationService.deepLinkGradeId) { _, newValue in
+            if newValue != nil {
+                selectedTab = 0 // Home tab (grades accessible from profile/dashboard)
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(500))
+                    viewModel.notificationService.deepLinkGradeId = nil
+                }
+            }
         }
     }
 }

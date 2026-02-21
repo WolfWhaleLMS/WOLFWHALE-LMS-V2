@@ -26,9 +26,20 @@ struct DataService: @unchecked Sendable {
         return f
     }()
 
+    /// Plain date formatter for columns like attendance_date that store "yyyy-MM-dd"
+    private let plainDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        f.timeZone = TimeZone(identifier: "UTC")
+        return f
+    }()
+
     private func parseDate(_ str: String?) -> Date {
         guard let str else { return Date() }
-        return iso8601.date(from: str) ?? dateFormatter.date(from: str) ?? Date()
+        return iso8601.date(from: str)
+            ?? dateFormatter.date(from: str)
+            ?? plainDateFormatter.date(from: str)
+            ?? Date()
     }
 
     private func formatDate(_ date: Date) -> String {
@@ -37,7 +48,7 @@ struct DataService: @unchecked Sendable {
 
     // MARK: - Courses
 
-    func fetchCourses(for userId: UUID, role: UserRole) async throws -> [Course] {
+    func fetchCourses(for userId: UUID, role: UserRole, schoolId: String? = nil) async throws -> [Course] {
         var courseDTOs: [CourseDTO] = []
 
         switch role {
@@ -64,7 +75,26 @@ struct DataService: @unchecked Sendable {
                 .eq("created_by", value: userId.uuidString)
                 .execute()
                 .value
-        case .admin, .parent, .superAdmin:
+        case .admin, .parent:
+            // Filter by tenant when a schoolId is available so admins/parents only see their school's courses
+            if let schoolId, let tenantUUID = UUID(uuidString: schoolId) {
+                courseDTOs = try await supabaseClient
+                    .from("courses")
+                    .select()
+                    .eq("tenant_id", value: tenantUUID.uuidString)
+                    .limit(100)
+                    .execute()
+                    .value
+            } else {
+                courseDTOs = try await supabaseClient
+                    .from("courses")
+                    .select()
+                    .limit(100)
+                    .execute()
+                    .value
+            }
+        case .superAdmin:
+            // SuperAdmin sees all courses across all tenants
             courseDTOs = try await supabaseClient
                 .from("courses")
                 .select()
@@ -397,6 +427,25 @@ struct DataService: @unchecked Sendable {
                 }
             }
 
+            // Fetch grades for all assignments so teacher can see graded status
+            var allGrades: [GradeDTO] = []
+            if !assignmentIds.isEmpty {
+                allGrades = try await supabaseClient
+                    .from("grades")
+                    .select()
+                    .in("assignment_id", values: assignmentIds.map(\.uuidString))
+                    .execute()
+                    .value
+            }
+            // Build lookup: (assignmentId, studentId) -> GradeDTO
+            var gradeLookup: [String: GradeDTO] = [:]
+            for g in allGrades {
+                if let aId = g.assignmentId {
+                    let key = "\(aId.uuidString)-\(g.studentId.uuidString)"
+                    gradeLookup[key] = g
+                }
+            }
+
             var submissionsByAssignment: [UUID: [SubmissionDTO]] = [:]
             for sub in allSubmissions {
                 submissionsByAssignment[sub.assignmentId, default: []].append(sub)
@@ -424,6 +473,8 @@ struct DataService: @unchecked Sendable {
                     ))
                 } else {
                     for sub in subs {
+                        let gradeKey = "\(dto.id.uuidString)-\(sub.studentId.uuidString)"
+                        let gradeDTO = gradeLookup[gradeKey]
                         results.append(Assignment(
                             id: dto.id,
                             title: dto.title,
@@ -434,8 +485,8 @@ struct DataService: @unchecked Sendable {
                             points: dto.maxPoints ?? 100,
                             isSubmitted: true,
                             submission: sub.submissionText,
-                            grade: nil,
-                            feedback: nil,
+                            grade: gradeDTO?.percentage,
+                            feedback: gradeDTO?.feedback,
                             xpReward: 50,
                             studentId: sub.studentId,
                             studentName: studentNames[sub.studentId] ?? "Unknown Student"
@@ -614,7 +665,7 @@ struct DataService: @unchecked Sendable {
             .execute()
             .value
 
-        // Fetch assignments for these courses so we can show actual titles on grades
+        // Fetch assignments for these courses so we can show actual titles and maxPoints on grades
         let assignmentDTOs: [AssignmentDTO] = try await supabaseClient
             .from("assignments")
             .select()
@@ -623,6 +674,10 @@ struct DataService: @unchecked Sendable {
             .value
         let assignmentNames: [UUID: String] = Dictionary(
             assignmentDTOs.map { ($0.id, $0.title) },
+            uniquingKeysWith: { first, _ in first }
+        )
+        let assignmentMaxPoints: [UUID: Int] = Dictionary(
+            assignmentDTOs.map { ($0.id, $0.maxPoints ?? 100) },
             uniquingKeysWith: { first, _ in first }
         )
 
@@ -640,18 +695,26 @@ struct DataService: @unchecked Sendable {
             if gradeDTOs.isEmpty { continue }
 
             let assignmentGrades = gradeDTOs.map { g in
-                AssignmentGrade(
+                let aId = g.assignmentId ?? UUID()
+                let maxPts = Double(assignmentMaxPoints[aId] ?? 100)
+                return AssignmentGrade(
                     id: g.id,
-                    title: assignmentNames[g.assignmentId ?? UUID()] ?? "Assignment",
+                    title: assignmentNames[aId] ?? "Assignment",
                     score: g.pointsEarned ?? 0,
-                    maxScore: 100,
+                    maxScore: maxPts > 0 ? maxPts : 100,
                     date: parseDate(g.gradedAt),
                     type: "Assignment"
                 )
             }
 
-            let avg = assignmentGrades.isEmpty ? 0 :
-                assignmentGrades.reduce(0.0) { $0 + ($1.score / $1.maxScore * 100) } / Double(assignmentGrades.count)
+            let avg: Double = {
+                guard !assignmentGrades.isEmpty else { return 0 }
+                // Prefer the pre-calculated percentage from the DB when available
+                let percentages = zip(gradeDTOs, assignmentGrades).map { dto, ag in
+                    dto.percentage ?? (ag.maxScore > 0 ? ag.score / ag.maxScore * 100 : 0)
+                }
+                return percentages.reduce(0.0, +) / Double(percentages.count)
+            }()
 
             let letter = letterGrade(for: avg)
 
@@ -731,7 +794,7 @@ struct DataService: @unchecked Sendable {
                 content: dto.content ?? "",
                 authorName: authorName,
                 date: parseDate(dto.createdAt),
-                isPinned: false
+                isPinned: dto.status == "pinned"
             )
         }
     }
@@ -1101,6 +1164,18 @@ struct DataService: @unchecked Sendable {
                     .execute()
                     .value
 
+                // Fetch assignments to get actual max_points for accurate GPA
+                let metricsAssignmentDTOs: [AssignmentDTO] = try await supabaseClient
+                    .from("assignments")
+                    .select()
+                    .in("course_id", values: allCourseIds.map(\.uuidString))
+                    .execute()
+                    .value
+                var assignmentMaxPointsMap: [UUID: Double] = [:]
+                for a in metricsAssignmentDTOs {
+                    assignmentMaxPointsMap[a.id] = Double(a.maxPoints ?? 100)
+                }
+
                 var enrollmentsByStudent: [UUID: [EnrollmentDTO]] = [:]
                 for e in allEnrollments {
                     enrollmentsByStudent[e.studentId, default: []].append(e)
@@ -1124,8 +1199,10 @@ struct DataService: @unchecked Sendable {
                         if courseGrades.isEmpty { continue }
 
                         let assignmentGrades = courseGrades.map { g -> Double in
+                            // Prefer pre-calculated percentage from DB
+                            if let pct = g.percentage { return pct }
                             let score = g.pointsEarned ?? 0
-                            let maxScore = 100.0
+                            let maxScore = g.assignmentId.flatMap { assignmentMaxPointsMap[$0] } ?? 100.0
                             return maxScore > 0 ? (score / maxScore * 100) : 0
                         }
                         let avg = assignmentGrades.reduce(0.0, +) / Double(assignmentGrades.count)
@@ -1246,6 +1323,14 @@ struct DataService: @unchecked Sendable {
             assignmentsByCourse[a.courseId, default: []].append(a)
         }
 
+        // Build lookup maps for assignment names and max points
+        var childAssignmentNameMap: [UUID: String] = [:]
+        var childAssignmentMaxPointsMap: [UUID: Double] = [:]
+        for a in allAssignmentDTOs {
+            childAssignmentNameMap[a.id] = a.title
+            childAssignmentMaxPointsMap[a.id] = Double(a.maxPoints ?? 100)
+        }
+
         let allAttendance: [AttendanceDTO] = try await supabaseClient
             .from("attendance_records")
             .select()
@@ -1272,18 +1357,26 @@ struct DataService: @unchecked Sendable {
                 if gradeDTOs.isEmpty { continue }
 
                 let assignmentGrades = gradeDTOs.map { g in
-                    AssignmentGrade(
+                    let aId = g.assignmentId ?? UUID()
+                    let maxPts = childAssignmentMaxPointsMap[aId] ?? 100.0
+                    return AssignmentGrade(
                         id: g.id,
-                        title: "Assignment",
+                        title: childAssignmentNameMap[aId] ?? "Assignment",
                         score: g.pointsEarned ?? 0,
-                        maxScore: 100,
+                        maxScore: maxPts > 0 ? maxPts : 100,
                         date: parseDate(g.gradedAt),
                         type: "Assignment"
                     )
                 }
 
-                let avg = assignmentGrades.isEmpty ? 0 :
-                    assignmentGrades.reduce(0.0) { $0 + ($1.score / $1.maxScore * 100) } / Double(assignmentGrades.count)
+                let avg: Double = {
+                    guard !assignmentGrades.isEmpty else { return 0 }
+                    // Prefer pre-calculated percentage from DB when available
+                    let percentages = zip(gradeDTOs, assignmentGrades).map { dto, ag in
+                        dto.percentage ?? (ag.maxScore > 0 ? ag.score / ag.maxScore * 100 : 0)
+                    }
+                    return percentages.reduce(0.0, +) / Double(percentages.count)
+                }()
                 let letter = letterGrade(for: avg)
 
                 gradeEntries.append(GradeEntry(
@@ -1824,6 +1917,25 @@ struct DataService: @unchecked Sendable {
                 }
             }
 
+            // Fetch grades for all assignments so teacher can see graded status
+            var allGradesPaginated: [GradeDTO] = []
+            if !assignmentIds.isEmpty {
+                allGradesPaginated = try await supabaseClient
+                    .from("grades")
+                    .select()
+                    .in("assignment_id", values: assignmentIds.map(\.uuidString))
+                    .execute()
+                    .value
+            }
+            // Build lookup: (assignmentId, studentId) -> GradeDTO
+            var gradeLookupPaginated: [String: GradeDTO] = [:]
+            for g in allGradesPaginated {
+                if let aId = g.assignmentId {
+                    let key = "\(aId.uuidString)-\(g.studentId.uuidString)"
+                    gradeLookupPaginated[key] = g
+                }
+            }
+
             var submissionsByAssignment: [UUID: [SubmissionDTO]] = [:]
             for sub in allSubmissions {
                 submissionsByAssignment[sub.assignmentId, default: []].append(sub)
@@ -1851,6 +1963,8 @@ struct DataService: @unchecked Sendable {
                     ))
                 } else {
                     for sub in subs {
+                        let gradeKey = "\(dto.id.uuidString)-\(sub.studentId.uuidString)"
+                        let gradeDTO = gradeLookupPaginated[gradeKey]
                         results.append(Assignment(
                             id: dto.id,
                             title: dto.title,
@@ -1861,8 +1975,8 @@ struct DataService: @unchecked Sendable {
                             points: dto.maxPoints ?? 100,
                             isSubmitted: true,
                             submission: sub.submissionText,
-                            grade: nil,
-                            feedback: nil,
+                            grade: gradeDTO?.percentage,
+                            feedback: gradeDTO?.feedback,
                             xpReward: 50,
                             studentId: sub.studentId,
                             studentName: studentNames[sub.studentId] ?? "Unknown Student"
@@ -1939,7 +2053,7 @@ struct DataService: @unchecked Sendable {
                 content: dto.content ?? "",
                 authorName: authorName,
                 date: parseDate(dto.createdAt),
-                isPinned: false
+                isPinned: dto.status == "pinned"
             )
         }
     }

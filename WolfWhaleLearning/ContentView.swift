@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import UserNotifications
 
 struct ContentView: View {
@@ -40,9 +41,47 @@ struct ContentView: View {
 
             viewModel.checkSession()
         }
+        .onAppear {
+            // Wire the AppDelegate's push service to the AppViewModel so both
+            // share the same instance. This ensures device tokens received by
+            // the AppDelegate are visible to the view model, and deep-link
+            // destinations set by remote push payloads are observed by the UI.
+            if let delegate = UIApplication.shared.delegate as? AppDelegate,
+               let delegatePushService = delegate.pushService {
+                viewModel._pushService = delegatePushService
+            }
+        }
         .onChange(of: scenePhase) { oldPhase, newPhase in
-            if newPhase == .background, viewModel.biometricEnabled {
-                viewModel.lockApp()
+            switch newPhase {
+            case .background:
+                if viewModel.biometricEnabled {
+                    viewModel.lockApp()
+                }
+                viewModel.stopAutoRefresh()
+            case .active:
+                viewModel.handleForegroundResume()
+            default:
+                break
+            }
+        }
+        // Bridge remote push deep-links (PushNotificationService) to the local
+        // NotificationService that all TabViews observe for navigation.
+        .onChange(of: viewModel.pushService.deepLinkConversationId) { _, newValue in
+            if let id = newValue {
+                viewModel.notificationService.deepLinkConversationId = id
+                viewModel.pushService.deepLinkConversationId = nil
+            }
+        }
+        .onChange(of: viewModel.pushService.deepLinkAssignmentId) { _, newValue in
+            if let id = newValue {
+                viewModel.notificationService.deepLinkAssignmentId = id
+                viewModel.pushService.deepLinkAssignmentId = nil
+            }
+        }
+        .onChange(of: viewModel.pushService.deepLinkGradeId) { _, newValue in
+            if let id = newValue {
+                viewModel.notificationService.deepLinkGradeId = id
+                viewModel.pushService.deepLinkGradeId = nil
             }
         }
     }

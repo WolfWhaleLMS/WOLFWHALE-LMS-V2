@@ -217,14 +217,12 @@ final class NotificationService: NSObject {
     func handleNotificationResponse(_ response: UNNotificationResponse) {
         let userInfo = response.notification.request.content.userInfo
 
+        let category = response.notification.request.content.categoryIdentifier
+
         switch response.actionIdentifier {
-        case NotificationAction.viewAssignment.rawValue,
-             UNNotificationDefaultActionIdentifier:
+        case NotificationAction.viewAssignment.rawValue:
             if let idString = userInfo["assignmentId"] as? String {
                 deepLinkAssignmentId = UUID(uuidString: idString)
-            }
-            if let idString = userInfo["conversationId"] as? String {
-                deepLinkConversationId = UUID(uuidString: idString)
             }
 
         case NotificationAction.viewMessage.rawValue:
@@ -242,6 +240,30 @@ final class NotificationService: NSObject {
 
         case NotificationAction.dismiss.rawValue:
             break
+
+        case UNNotificationDefaultActionIdentifier:
+            // Default tap: route based on the notification category
+            switch category {
+            case NotificationCategory.gradePosted.rawValue:
+                if let idString = userInfo["assignmentId"] as? String {
+                    deepLinkGradeId = UUID(uuidString: idString)
+                }
+            case NotificationCategory.newMessage.rawValue:
+                if let idString = userInfo["conversationId"] as? String {
+                    deepLinkConversationId = UUID(uuidString: idString)
+                }
+            case NotificationCategory.assignmentDue.rawValue:
+                if let idString = userInfo["assignmentId"] as? String {
+                    deepLinkAssignmentId = UUID(uuidString: idString)
+                }
+            default:
+                // Fallback: try assignmentId, then conversationId
+                if let idString = userInfo["assignmentId"] as? String {
+                    deepLinkAssignmentId = UUID(uuidString: idString)
+                } else if let idString = userInfo["conversationId"] as? String {
+                    deepLinkConversationId = UUID(uuidString: idString)
+                }
+            }
 
         default:
             if let idString = userInfo["assignmentId"] as? String {

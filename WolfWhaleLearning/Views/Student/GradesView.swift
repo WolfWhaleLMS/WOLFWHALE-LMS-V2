@@ -3,9 +3,15 @@ import SwiftUI
 struct GradesView: View {
     @Bindable var viewModel: AppViewModel
 
-    private var gpa: Double {
+    /// Average percentage across all courses (0-100 scale)
+    private var averagePercent: Double {
         guard !viewModel.grades.isEmpty else { return 0 }
         return viewModel.grades.reduce(0) { $0 + $1.numericGrade } / Double(viewModel.grades.count)
+    }
+
+    /// GPA on a 4.0 scale, derived from the percentage average
+    private var gpa: Double {
+        averagePercent / 100.0 * 4.0
     }
 
     var body: some View {
@@ -51,11 +57,11 @@ struct GradesView: View {
                 Circle()
                     .stroke(.quaternary, lineWidth: 8)
                 Circle()
-                    .trim(from: 0, to: gpa / 100)
-                    .stroke(Theme.gradeColor(gpa), style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                    .trim(from: 0, to: min(gpa / 4.0, 1.0))
+                    .stroke(Theme.gradeColor(averagePercent), style: StrokeStyle(lineWidth: 8, lineCap: .round))
                     .rotationEffect(.degrees(-90))
                 VStack(spacing: 2) {
-                    Text(String(format: "%.1f", gpa))
+                    Text(String(format: "%.2f", gpa))
                         .font(.title2.bold())
                     Text("GPA")
                         .font(.caption)
@@ -70,22 +76,16 @@ struct GradesView: View {
                 Text("\(viewModel.grades.count) courses this semester")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-                HStack(spacing: 4) {
-                    Image(systemName: "arrow.up.right")
-                        .font(.caption)
-                        .accessibilityHidden(true)
-                    Text("Trending up from last semester")
-                        .font(.caption)
-                }
-                .foregroundStyle(.green)
-                .accessibilityLabel("Trending up from last semester")
+                Text(String(format: "%.1f%% average", averagePercent))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
             Spacer()
         }
         .padding(16)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Overall Performance: GPA \(String(format: "%.1f", gpa)), \(viewModel.grades.count) courses this semester")
+        .accessibilityLabel("Overall Performance: GPA \(String(format: "%.2f", gpa)), \(String(format: "%.1f", averagePercent)) percent average, \(viewModel.grades.count) courses this semester")
     }
 
     private var gradesList: some View {

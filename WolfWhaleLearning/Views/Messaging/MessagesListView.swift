@@ -108,7 +108,7 @@ struct NewConversationSheet: View {
         guard !recipientText.isEmpty else { return [] }
         let currentUserId = viewModel.currentUser?.id
         return viewModel.allUsers.filter { profile in
-            let fullName = "\(profile.firstName) \(profile.lastName)"
+            let fullName = "\(profile.firstName ?? "") \(profile.lastName ?? "")"
             let alreadyAdded = recipients.contains(where: { $0.localizedStandardContains(fullName) })
             let isSelf = profile.id == currentUserId
             return !alreadyAdded && !isSelf &&
@@ -168,7 +168,7 @@ struct NewConversationSheet: View {
                     if !filteredProfiles.isEmpty {
                         ForEach(filteredProfiles.prefix(5)) { profile in
                             Button {
-                                let fullName = "\(profile.firstName) \(profile.lastName)"
+                                let fullName = "\(profile.firstName ?? "") \(profile.lastName ?? "")"
                                 recipients.append(fullName)
                                 recipientText = ""
                             } label: {
@@ -182,7 +182,7 @@ struct NewConversationSheet: View {
                                                 .foregroundStyle(.white)
                                         }
                                     VStack(alignment: .leading, spacing: 2) {
-                                        Text("\(profile.firstName) \(profile.lastName)")
+                                        Text("\(profile.firstName ?? "") \(profile.lastName ?? "")")
                                             .font(.subheadline)
                                             .foregroundStyle(.primary)
                                         Text(profile.role)

@@ -7,15 +7,15 @@ struct ChildDetailView: View {
     // MARK: - Computed Properties
 
     private var gpaProgress: Double {
-        min(child.gpa / 4.0, 1.0)
+        min(displayChild.gpa / 4.0, 1.0)
     }
 
     private var gpaColor: Color {
-        Theme.gradeColor(child.gpa / 4.0 * 100)
+        Theme.gradeColor(displayChild.gpa / 4.0 * 100)
     }
 
     private var attendanceColor: Color {
-        switch child.attendanceRate {
+        switch displayChild.attendanceRate {
         case 0.9...: .green
         case 0.7..<0.9: .orange
         default: .red
@@ -23,6 +23,12 @@ struct ChildDetailView: View {
     }
 
     // MARK: - Body
+
+    /// The child data currently displayed. Starts with the passed-in snapshot and
+    /// is updated when the parent pulls-to-refresh.
+    private var displayChild: ChildInfo {
+        viewModel.children.first(where: { $0.id == child.id }) ?? child
+    }
 
     var body: some View {
         ScrollView {
@@ -37,8 +43,11 @@ struct ChildDetailView: View {
             .padding(.bottom, 20)
         }
         .background(Color(.systemGroupedBackground))
-        .navigationTitle(child.name)
+        .navigationTitle(displayChild.name)
         .navigationBarTitleDisplayMode(.inline)
+        .refreshable {
+            viewModel.refreshData()
+        }
     }
 
     // MARK: - Child Header
@@ -49,18 +58,18 @@ struct ChildDetailView: View {
                 .fill(LinearGradient(colors: [.green, .teal], startPoint: .topLeading, endPoint: .bottomTrailing))
                 .frame(width: 64, height: 64)
                 .overlay {
-                    Image(systemName: child.avatarSystemName)
+                    Image(systemName: displayChild.avatarSystemName)
                         .font(.title2)
                         .foregroundStyle(.white)
                 }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(child.name)
+                Text(displayChild.name)
                     .font(.title3.bold())
-                Text(child.grade)
+                Text(displayChild.grade)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-                Text("\(child.courses.count) courses enrolled")
+                Text("\(displayChild.courses.count) courses enrolled")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -70,7 +79,7 @@ struct ChildDetailView: View {
         .padding(16)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(child.name), \(child.grade), \(child.courses.count) courses enrolled")
+        .accessibilityLabel("\(displayChild.name), \(displayChild.grade), \(displayChild.courses.count) courses enrolled")
     }
 
     // MARK: - Academic Summary
@@ -91,7 +100,7 @@ struct ChildDetailView: View {
                             .stroke(gpaColor, style: StrokeStyle(lineWidth: 10, lineCap: .round))
                             .rotationEffect(.degrees(-90))
                         VStack(spacing: 2) {
-                            Text(String(format: "%.1f", child.gpa))
+                            Text(String(format: "%.1f", displayChild.gpa))
                                 .font(.title3.bold())
                             Text("GPA")
                                 .font(.caption2)
@@ -108,11 +117,11 @@ struct ChildDetailView: View {
                         Circle()
                             .stroke(attendanceColor.opacity(0.2), lineWidth: 10)
                         Circle()
-                            .trim(from: 0, to: min(child.attendanceRate, 1.0))
+                            .trim(from: 0, to: min(displayChild.attendanceRate, 1.0))
                             .stroke(attendanceColor, style: StrokeStyle(lineWidth: 10, lineCap: .round))
                             .rotationEffect(.degrees(-90))
                         VStack(spacing: 2) {
-                            Text("\(Int(child.attendanceRate * 100))%")
+                            Text("\(Int(displayChild.attendanceRate * 100))%")
                                 .font(.title3.bold())
                             Text("Attend.")
                                 .font(.caption2)
@@ -128,7 +137,7 @@ struct ChildDetailView: View {
         .padding(16)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Academic Summary: GPA \(String(format: "%.1f", child.gpa)) out of 4.0, Attendance \(Int(child.attendanceRate * 100)) percent")
+        .accessibilityLabel("Academic Summary: GPA \(String(format: "%.1f", displayChild.gpa)) out of 4.0, Attendance \(Int(displayChild.attendanceRate * 100)) percent")
     }
 
     // MARK: - Course Grades
@@ -138,7 +147,7 @@ struct ChildDetailView: View {
             Text("Course Grades")
                 .font(.headline)
 
-            if child.courses.isEmpty {
+            if displayChild.courses.isEmpty {
                 HStack {
                     Image(systemName: "book.closed")
                         .foregroundStyle(.secondary)
@@ -150,7 +159,7 @@ struct ChildDetailView: View {
                 .padding(.vertical, 20)
                 .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
             } else {
-                ForEach(child.courses) { grade in
+                ForEach(displayChild.courses) { grade in
                     courseGradeRow(grade)
                 }
             }
@@ -213,7 +222,7 @@ struct ChildDetailView: View {
             Text("Recent Assignments")
                 .font(.headline)
 
-            if child.recentAssignments.isEmpty {
+            if displayChild.recentAssignments.isEmpty {
                 HStack {
                     Image(systemName: "tray")
                         .foregroundStyle(.secondary)
@@ -225,7 +234,7 @@ struct ChildDetailView: View {
                 .padding(.vertical, 20)
                 .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
             } else {
-                ForEach(child.recentAssignments) { assignment in
+                ForEach(displayChild.recentAssignments) { assignment in
                     assignmentRow(assignment)
                 }
             }

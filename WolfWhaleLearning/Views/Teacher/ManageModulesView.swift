@@ -466,6 +466,21 @@ struct ManageModulesView: View {
             viewModel.courses[courseIndex].modules[moduleIndex].title = trimmed
         }
         editingModuleId = nil
+
+        // Persist to Supabase
+        if !viewModel.isDemoMode {
+            Task {
+                do {
+                    try await supabaseClient
+                        .from("modules")
+                        .update(["title": trimmed])
+                        .eq("id", value: module.id.uuidString)
+                        .execute()
+                } catch {
+                    errorMessage = "Failed to rename module on server."
+                }
+            }
+        }
     }
 
     private func saveLessonTitle(_ lesson: Lesson, in module: Module) {
@@ -478,6 +493,21 @@ struct ManageModulesView: View {
             viewModel.courses[courseIndex].modules[moduleIndex].lessons[lessonIndex].title = trimmed
         }
         editingLessonId = nil
+
+        // Persist to Supabase
+        if !viewModel.isDemoMode {
+            Task {
+                do {
+                    try await supabaseClient
+                        .from("lessons")
+                        .update(["title": trimmed])
+                        .eq("id", value: lesson.id.uuidString)
+                        .execute()
+                } catch {
+                    errorMessage = "Failed to rename lesson on server."
+                }
+            }
+        }
     }
 
     private func deleteModule(_ module: Module) {
@@ -492,11 +522,8 @@ struct ManageModulesView: View {
         if !viewModel.isDemoMode {
             Task {
                 do {
-                    try await supabaseClient
-                        .from("modules")
-                        .delete()
-                        .eq("id", value: module.id.uuidString)
-                        .execute()
+                    // Delete lessons in the module first, then delete the module itself
+                    try await DataService.shared.deleteModule(moduleId: module.id)
                 } catch {
                     errorMessage = "Failed to delete module from server."
                 }
@@ -517,11 +544,7 @@ struct ManageModulesView: View {
         if !viewModel.isDemoMode {
             Task {
                 do {
-                    try await supabaseClient
-                        .from("lessons")
-                        .delete()
-                        .eq("id", value: lessonId.uuidString)
-                        .execute()
+                    try await DataService.shared.deleteLesson(lessonId: lessonId)
                 } catch {
                     errorMessage = "Failed to delete lesson from server."
                 }

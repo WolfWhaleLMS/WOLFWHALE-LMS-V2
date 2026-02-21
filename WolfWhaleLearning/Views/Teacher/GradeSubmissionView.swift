@@ -20,7 +20,9 @@ struct GradeSubmissionView: View {
 
     private var autoLetterGrade: String {
         guard let score = numericScore else { return "--" }
-        switch score {
+        let maxPoints = Double(assignment.points)
+        let pct = maxPoints > 0 ? (score / maxPoints) * 100 : 0
+        switch pct {
         case 93...: return "A"
         case 90..<93: return "A-"
         case 87..<90: return "B+"
