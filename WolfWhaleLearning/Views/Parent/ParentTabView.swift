@@ -6,22 +6,19 @@ struct ParentTabView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            Tab("Home", systemImage: "house.fill") {
+            Tab("Home", systemImage: "house.fill", value: 0) {
                 ParentDashboardView(viewModel: viewModel)
             }
-            .tag(0)
             .accessibilityLabel("Home")
             .accessibilityHint("Double tap to view your children's overview")
-            Tab("Messages", systemImage: "message.fill") {
+            Tab("Messages", systemImage: "message.fill", value: 1) {
                 MessagesListView(viewModel: viewModel)
             }
-            .tag(1)
             .accessibilityLabel("Messages")
             .accessibilityHint("Double tap to view your messages")
-            Tab("Settings", systemImage: "gearshape.fill") {
+            Tab("Settings", systemImage: "gearshape.fill", value: 2) {
                 ParentSettingsView(viewModel: viewModel)
             }
-            .tag(2)
             .accessibilityLabel("Settings")
             .accessibilityHint("Double tap to view settings")
         }

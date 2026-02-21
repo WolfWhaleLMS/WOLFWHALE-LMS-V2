@@ -6,32 +6,28 @@ struct SuperAdminTabView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            Tab("Console", systemImage: "shield.lefthalf.filled") {
+            Tab("Console", systemImage: "shield.lefthalf.filled", value: 0) {
                 SuperAdminDashboardView(viewModel: viewModel)
             }
-            .tag(0)
             .accessibilityLabel("Console")
             .accessibilityHint("Double tap to view the super admin console")
-            Tab("Tenants", systemImage: "building.2.fill") {
+            Tab("Tenants", systemImage: "building.2.fill", value: 1) {
                 NavigationStack {
                     UserManagementView(viewModel: viewModel)
                 }
             }
-            .tag(1)
             .accessibilityLabel("Tenants")
             .accessibilityHint("Double tap to manage tenants and users")
-            Tab("Messages", systemImage: "message.fill") {
+            Tab("Messages", systemImage: "message.fill", value: 2) {
                 MessagesListView(viewModel: viewModel)
             }
-            .tag(2)
             .accessibilityLabel("Messages")
             .accessibilityHint("Double tap to view your messages")
-            Tab("Settings", systemImage: "gearshape.fill") {
+            Tab("Settings", systemImage: "gearshape.fill", value: 3) {
                 NavigationStack {
                     AppSettingsView(viewModel: viewModel)
                 }
             }
-            .tag(3)
             .accessibilityLabel("Settings")
             .accessibilityHint("Double tap to view settings and sign out")
         }

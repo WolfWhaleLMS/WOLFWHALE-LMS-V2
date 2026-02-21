@@ -6,36 +6,31 @@ struct AdminTabView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            Tab("Dashboard", systemImage: "chart.bar.fill") {
+            Tab("Dashboard", systemImage: "chart.bar.fill", value: 0) {
                 AdminDashboardView(viewModel: viewModel)
             }
-            .tag(0)
             .accessibilityLabel("Dashboard")
             .accessibilityHint("Double tap to view school overview")
-            Tab("Users", systemImage: "person.3.fill") {
+            Tab("Users", systemImage: "person.3.fill", value: 1) {
                 UserManagementView(viewModel: viewModel)
             }
-            .tag(1)
             .accessibilityLabel("Users")
             .accessibilityHint("Double tap to manage users")
-            Tab("Announce", systemImage: "megaphone.fill") {
+            Tab("Announce", systemImage: "megaphone.fill", value: 2) {
                 AnnouncementsView(viewModel: viewModel)
             }
-            .tag(2)
             .accessibilityLabel("Announcements")
             .accessibilityHint("Double tap to view announcements")
-            Tab("Messages", systemImage: "message.fill") {
+            Tab("Messages", systemImage: "message.fill", value: 3) {
                 MessagesListView(viewModel: viewModel)
             }
-            .tag(3)
             .accessibilityLabel("Messages")
             .accessibilityHint("Double tap to view your messages")
-            Tab("Settings", systemImage: "gearshape.fill") {
+            Tab("Settings", systemImage: "gearshape.fill", value: 4) {
                 NavigationStack {
                     AppSettingsView(viewModel: viewModel)
                 }
             }
-            .tag(4)
             .accessibilityLabel("Settings")
             .accessibilityHint("Double tap to view settings and sign out")
         }

@@ -6,34 +6,29 @@ struct TeacherTabView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            Tab("Home", systemImage: "house.fill") {
+            Tab("Home", systemImage: "house.fill", value: 0) {
                 TeacherDashboardView(viewModel: viewModel)
             }
-            .tag(0)
             .accessibilityLabel("Home")
             .accessibilityHint("Double tap to view your dashboard")
-            Tab("Courses", systemImage: "book.fill") {
+            Tab("Courses", systemImage: "book.fill", value: 1) {
                 TeacherCoursesView(viewModel: viewModel)
             }
-            .tag(1)
             .accessibilityLabel("Courses")
             .accessibilityHint("Double tap to view your courses")
-            Tab("Resources", systemImage: "square.grid.2x2.fill") {
+            Tab("Resources", systemImage: "square.grid.2x2.fill", value: 2) {
                 ResourceLibraryView(viewModel: viewModel)
             }
-            .tag(2)
             .accessibilityLabel("Resources")
             .accessibilityHint("Double tap to explore learning resources")
-            Tab("Messages", systemImage: "message.fill") {
+            Tab("Messages", systemImage: "message.fill", value: 3) {
                 MessagesListView(viewModel: viewModel)
             }
-            .tag(3)
             .accessibilityLabel("Messages")
             .accessibilityHint("Double tap to view your messages")
-            Tab("Profile", systemImage: "person.fill") {
+            Tab("Profile", systemImage: "person.fill", value: 4) {
                 TeacherProfileView(viewModel: viewModel)
             }
-            .tag(4)
             .accessibilityLabel("Profile")
             .accessibilityHint("Double tap to view your profile")
         }
