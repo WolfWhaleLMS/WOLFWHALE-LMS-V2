@@ -94,6 +94,7 @@ struct StudentDashboardView: View {
                             FishTankView()
                             campusLifeSection
                             upcomingSection
+                            browseCatalogCard
                             coursesSection
                         }
                     }
@@ -269,6 +270,38 @@ struct StudentDashboardView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 16))
             }
             .accessibilityHint("Double tap to view attendance history")
+
+            NavigationLink {
+                TimetableView(viewModel: viewModel)
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "calendar.day.timeline.leading")
+                        .font(.title3)
+                        .foregroundStyle(.indigo)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Weekly Schedule")
+                            .font(.subheadline.bold())
+                            .foregroundStyle(.primary)
+                        Text("View your class timetable")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
+                .padding(14)
+                .background(Color(.secondarySystemGroupedBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .strokeBorder(.indigo.opacity(0.3), lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Weekly Schedule")
+            .accessibilityHint("Double tap to view your weekly class timetable")
         }
     }
 
@@ -542,6 +575,50 @@ struct StudentDashboardView: View {
                 }
             }
         }
+    }
+
+    // MARK: - Browse Course Catalog
+
+    private var browseCatalogCard: some View {
+        NavigationLink {
+            CourseCatalogView(viewModel: viewModel)
+        } label: {
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle()
+                        .fill(LinearGradient(colors: [.indigo, .purple], startPoint: .topLeading, endPoint: .bottomTrailing))
+                        .frame(width: 44, height: 44)
+                    Image(systemName: "book.and.wrench.fill")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(.white)
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Browse Courses")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(Color(.label))
+                    Text("Discover and enroll in new courses")
+                        .font(.caption)
+                        .foregroundStyle(Color(.secondaryLabel))
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(14)
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .strokeBorder(.indigo.opacity(0.25), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Browse Courses")
+        .accessibilityHint("Double tap to discover and enroll in new courses")
     }
 
     private var coursesSection: some View {

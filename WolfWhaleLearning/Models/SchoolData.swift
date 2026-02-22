@@ -145,3 +145,107 @@ nonisolated struct SchoolMetrics: Sendable, Codable {
     var averageGPA: Double
     var activeUsers: Int
 }
+
+// MARK: - Attendance Report
+
+nonisolated struct AttendanceReport: Sendable {
+    var startDate: Date
+    var endDate: Date
+    var courseName: String?
+    var totalDays: Int
+    var totalRecords: Int
+    var presentCount: Int
+    var absentCount: Int
+    var tardyCount: Int
+    var excusedCount: Int
+    var studentBreakdowns: [StudentAttendanceBreakdown]
+    var dailyRates: [DailyAttendanceRate]
+
+    var presentPercent: Double {
+        guard totalRecords > 0 else { return 0 }
+        return Double(presentCount) / Double(totalRecords) * 100
+    }
+
+    var absentPercent: Double {
+        guard totalRecords > 0 else { return 0 }
+        return Double(absentCount) / Double(totalRecords) * 100
+    }
+
+    var tardyPercent: Double {
+        guard totalRecords > 0 else { return 0 }
+        return Double(tardyCount) / Double(totalRecords) * 100
+    }
+
+    var excusedPercent: Double {
+        guard totalRecords > 0 else { return 0 }
+        return Double(excusedCount) / Double(totalRecords) * 100
+    }
+
+    var overallRate: Double {
+        guard totalRecords > 0 else { return 0 }
+        return Double(presentCount + tardyCount) / Double(totalRecords) * 100
+    }
+
+    func toCSV() -> String {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateStyle = .short
+
+        var csv = "Attendance Report\n"
+        csv += "Period:,\(dateFormatter.string(from: startDate)),to,\(dateFormatter.string(from: endDate))\n"
+        if let course = courseName {
+            csv += "Course:,\(course)\n"
+        } else {
+            csv += "Scope:,School-wide\n"
+        }
+        csv += "\n"
+        csv += "Summary\n"
+        csv += "Total Days:,\(totalDays)\n"
+        csv += "Total Records:,\(totalRecords)\n"
+        csv += "Present:,\(presentCount),\(String(format: "%.1f", presentPercent))%\n"
+        csv += "Absent:,\(absentCount),\(String(format: "%.1f", absentPercent))%\n"
+        csv += "Tardy:,\(tardyCount),\(String(format: "%.1f", tardyPercent))%\n"
+        csv += "Excused:,\(excusedCount),\(String(format: "%.1f", excusedPercent))%\n"
+        csv += "Overall Rate:,\(String(format: "%.1f", overallRate))%\n"
+        csv += "\n"
+        csv += "Student,Present,Absent,Tardy,Excused,Total,Rate\n"
+        for student in studentBreakdowns {
+            csv += "\(student.studentName),\(student.presentCount),\(student.absentCount),\(student.tardyCount),\(student.excusedCount),\(student.totalRecords),\(String(format: "%.1f", student.attendanceRate))%\n"
+        }
+        csv += "\n"
+        csv += "Date,Rate\n"
+        for daily in dailyRates {
+            csv += "\(dateFormatter.string(from: daily.date)),\(String(format: "%.1f", daily.rate))%\n"
+        }
+        return csv
+    }
+}
+
+nonisolated struct StudentAttendanceBreakdown: Identifiable, Sendable {
+    let id: UUID
+    var studentName: String
+    var presentCount: Int
+    var absentCount: Int
+    var tardyCount: Int
+    var excusedCount: Int
+
+    var totalRecords: Int {
+        presentCount + absentCount + tardyCount + excusedCount
+    }
+
+    var attendanceRate: Double {
+        guard totalRecords > 0 else { return 0 }
+        return Double(presentCount + tardyCount) / Double(totalRecords) * 100
+    }
+}
+
+nonisolated struct DailyAttendanceRate: Identifiable, Sendable {
+    let id: UUID
+    var date: Date
+    var totalCount: Int
+    var presentCount: Int
+
+    var rate: Double {
+        guard totalCount > 0 else { return 0 }
+        return Double(presentCount) / Double(totalCount) * 100
+    }
+}

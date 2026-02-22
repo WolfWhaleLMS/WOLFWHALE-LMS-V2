@@ -23,6 +23,7 @@ struct CourseDetailView: View {
         ScrollView {
             VStack(spacing: 0) {
                 headerSection
+                discussionLink
                 modulesSection
             }
         }
@@ -71,6 +72,42 @@ struct CourseDetailView: View {
             .padding(.horizontal)
         }
         .padding(.vertical)
+    }
+
+    private var discussionLink: some View {
+        NavigationLink {
+            DiscussionForumView(course: course, viewModel: viewModel)
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "bubble.left.and.bubble.right.fill")
+                    .font(.title3)
+                    .foregroundStyle(.accent)
+                    .frame(width: 36, height: 36)
+                    .background(.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Discussion Forum")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(Color(.label))
+                    Text("Ask questions and share ideas")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(14)
+            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+        }
+        .buttonStyle(.plain)
+        .padding(.horizontal)
+        .padding(.bottom, 8)
+        .accessibilityLabel("Discussion Forum")
+        .accessibilityHint("Double tap to open course discussions")
     }
 
     private var modulesSection: some View {

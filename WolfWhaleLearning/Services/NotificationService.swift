@@ -8,6 +8,7 @@ nonisolated enum NotificationCategory: String, Sendable {
     case assignmentDue = "ASSIGNMENT_DUE"
     case newMessage = "NEW_MESSAGE"
     case gradePosted = "GRADE_POSTED"
+    case announcement = "ANNOUNCEMENT"
 }
 
 nonisolated enum NotificationAction: String, Sendable {
@@ -15,6 +16,7 @@ nonisolated enum NotificationAction: String, Sendable {
     case markAsRead = "MARK_AS_READ"
     case viewMessage = "VIEW_MESSAGE"
     case viewGrade = "VIEW_GRADE"
+    case viewAnnouncement = "VIEW_ANNOUNCEMENT"
     case dismiss = "DISMISS"
 }
 
@@ -106,7 +108,20 @@ final class NotificationService: NSObject {
             options: []
         )
 
-        center.setNotificationCategories([assignmentCategory, messageCategory, gradeCategory])
+        let viewAnnouncementAction = UNNotificationAction(
+            identifier: NotificationAction.viewAnnouncement.rawValue,
+            title: "View",
+            options: [.foreground]
+        )
+
+        let announcementCategory = UNNotificationCategory(
+            identifier: NotificationCategory.announcement.rawValue,
+            actions: [viewAnnouncementAction, dismissAction],
+            intentIdentifiers: [],
+            options: []
+        )
+
+        center.setNotificationCategories([assignmentCategory, messageCategory, gradeCategory, announcementCategory])
     }
 
     // MARK: - Schedule Assignment Reminders
@@ -212,6 +227,47 @@ final class NotificationService: NSObject {
         center.add(request)
     }
 
+    // MARK: - Announcement Notification
+
+    func postAnnouncementNotification(title: String, body: String) {
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.sound = .default
+        content.categoryIdentifier = NotificationCategory.announcement.rawValue
+
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+        let request = UNNotificationRequest(
+            identifier: "announcement-\(UUID().uuidString)",
+            content: content,
+            trigger: trigger
+        )
+        center.add(request)
+    }
+
+    // MARK: - Preference-Aware Dispatchers
+
+    /// Sends a grade notification only if the user has grade notifications enabled in preferences.
+    func sendGradeNotificationIfEnabled(assignmentTitle: String, grade: String, assignmentId: UUID) {
+        let prefs = NotificationPreferences.load()
+        guard prefs.gradeNotifications else { return }
+        postGradePostedNotification(assignmentTitle: assignmentTitle, grade: grade, assignmentId: assignmentId)
+    }
+
+    /// Sends an announcement notification only if the user has announcement notifications enabled in preferences.
+    func sendAnnouncementNotificationIfEnabled(title: String, body: String) {
+        let prefs = NotificationPreferences.load()
+        guard prefs.announcementNotifications else { return }
+        postAnnouncementNotification(title: title, body: body)
+    }
+
+    /// Schedules due-date reminders only if the user has assignment reminders enabled in preferences.
+    func scheduleDueDateRemindersIfEnabled(assignments: [Assignment]) {
+        let prefs = NotificationPreferences.load()
+        guard prefs.assignmentReminders else { return }
+        scheduleAllAssignmentReminders(assignments: assignments)
+    }
+
     // MARK: - Cancel
 
     func cancelNotification(identifier: String) {
@@ -254,6 +310,11 @@ final class NotificationService: NSObject {
             if let idString = userInfo["assignmentId"] as? String {
                 deepLinkGradeId = UUID(uuidString: idString)
             }
+
+        case NotificationAction.viewAnnouncement.rawValue:
+            // Announcements don't have a specific deep link target;
+            // the app can navigate to the announcements list on launch.
+            break
 
         case NotificationAction.markAsRead.rawValue:
             break

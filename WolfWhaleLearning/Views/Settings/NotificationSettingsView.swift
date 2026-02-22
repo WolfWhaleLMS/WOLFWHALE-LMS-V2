@@ -7,6 +7,7 @@ struct NotificationSettingsView: View {
     @AppStorage("notificationsAssignmentReminders") private var assignmentReminders = true
     @AppStorage("notificationsMessageAlerts") private var messageAlerts = true
     @AppStorage("notificationsGradeNotifications") private var gradeNotifications = true
+    @AppStorage("notificationsAnnouncementAlerts") private var announcementAlerts = true
 
     @State private var systemPermission: UNAuthorizationStatus = .notDetermined
     @State private var pendingCount = 0
@@ -114,6 +115,14 @@ struct NotificationSettingsView: View {
                 color: .green,
                 isOn: $gradeNotifications
             )
+
+            toggleRow(
+                title: "Announcements",
+                subtitle: "School-wide announcements",
+                icon: "megaphone.fill",
+                color: .purple,
+                isOn: $announcementAlerts
+            )
         } header: {
             sectionHeader(title: "Notification Types", icon: "bell.fill")
         } footer: {
@@ -181,6 +190,15 @@ struct NotificationSettingsView: View {
                     color: .green,
                     title: "Grade Posted",
                     body: "You received 92% on \"Midterm Exam\"."
+                )
+
+                Divider()
+
+                notificationPreview(
+                    icon: "megaphone.fill",
+                    color: .purple,
+                    title: "School Closure",
+                    body: "Due to weather, all classes are cancelled tomorrow."
                 )
             }
             .padding(.vertical, 4)

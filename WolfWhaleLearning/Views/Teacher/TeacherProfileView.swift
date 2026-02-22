@@ -107,7 +107,12 @@ struct TeacherProfileView: View {
             }
             .padding(14)
             Divider().padding(.leading, 48)
-            settingRow(icon: "bell.fill", title: "Notifications", color: .red)
+            NavigationLink {
+                NotificationSettingsView(notificationService: viewModel.notificationService)
+            } label: {
+                settingRow(icon: "bell.fill", title: "Notifications", color: .red)
+            }
+            .buttonStyle(.plain)
             Divider().padding(.leading, 48)
             settingRow(icon: "lock.fill", title: "Privacy", color: .blue)
             Divider().padding(.leading, 48)

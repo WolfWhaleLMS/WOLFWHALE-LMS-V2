@@ -7,6 +7,9 @@ struct TeacherDashboardView: View {
     @State private var showCreateAssignment = false
     @State private var showCreateAnnouncement = false
     @State private var showAttendancePicker = false
+    @State private var showAttendanceReport = false
+    @State private var showBulkGrading = false
+    @State private var showGradeExport = false
     @State private var hapticTrigger = false
 
     var body: some View {
@@ -53,6 +56,7 @@ struct TeacherDashboardView: View {
                                 .accessibilityLabel("Warning: \(dataError)")
                             }
                             overviewCards
+                            enrollmentRequestsBanner
                             liveActivityBanner
                             quickActions
                             recentActivity
@@ -69,10 +73,63 @@ struct TeacherDashboardView: View {
                 if liveActivityService == nil {
                     liveActivityService = LiveActivityService()
                 }
+                await viewModel.loadEnrollmentRequests()
             }
             .refreshable {
                 await viewModel.loadData()
+                await viewModel.loadEnrollmentRequests()
             }
+        }
+    }
+
+    @ViewBuilder
+    private var enrollmentRequestsBanner: some View {
+        if viewModel.pendingEnrollmentCount > 0 {
+            NavigationLink {
+                EnrollmentRequestsView(viewModel: viewModel)
+            } label: {
+                HStack(spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(LinearGradient(colors: [.indigo, .purple], startPoint: .topLeading, endPoint: .bottomTrailing))
+                            .frame(width: 40, height: 40)
+                        Image(systemName: "person.badge.clock.fill")
+                            .font(.subheadline)
+                            .foregroundStyle(.white)
+                    }
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Enrollment Requests")
+                            .font(.subheadline.bold())
+                            .foregroundStyle(Color(.label))
+                        Text("\(viewModel.pendingEnrollmentCount) pending approval\(viewModel.pendingEnrollmentCount == 1 ? "" : "s")")
+                            .font(.caption)
+                            .foregroundStyle(Color(.secondaryLabel))
+                    }
+
+                    Spacer()
+
+                    Text("\(viewModel.pendingEnrollmentCount)")
+                        .font(.caption.bold())
+                        .foregroundStyle(.white)
+                        .frame(minWidth: 24, minHeight: 24)
+                        .background(.red, in: Circle())
+
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(Color(.tertiaryLabel))
+                }
+                .padding(14)
+                .background(Color(.secondarySystemGroupedBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .strokeBorder(.indigo.opacity(0.3), lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Enrollment Requests: \(viewModel.pendingEnrollmentCount) pending")
+            .accessibilityHint("Double tap to review enrollment requests")
         }
     }
 
@@ -137,6 +194,24 @@ struct TeacherDashboardView: View {
                     showAttendancePicker = true
                 }
             }
+
+            HStack(spacing: 12) {
+                quickActionButton(icon: "chart.bar.doc.horizontal.fill", label: "Report", color: .teal) {
+                    showAttendanceReport = true
+                }
+                quickActionButton(icon: "pencil.and.list.clipboard", label: "Bulk Grade", color: .purple) {
+                    showBulkGrading = true
+                }
+                quickActionButton(icon: "arrow.down.doc.fill", label: "Export", color: .indigo) {
+                    showGradeExport = true
+                }
+            }
+        }
+        .sheet(isPresented: $showBulkGrading) {
+            BulkGradingView(viewModel: viewModel)
+        }
+        .sheet(isPresented: $showGradeExport) {
+            GradeExportView(viewModel: viewModel)
         }
         .sheet(isPresented: $showCreateCourse) {
             EnhancedCourseCreationView(viewModel: viewModel)
@@ -146,6 +221,18 @@ struct TeacherDashboardView: View {
         }
         .sheet(isPresented: $showAttendancePicker) {
             AttendanceCoursePickerSheet(viewModel: viewModel)
+        }
+        .sheet(isPresented: $showAttendanceReport) {
+            NavigationStack {
+                AttendanceAnalyticsView(viewModel: viewModel, isAdmin: false)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Done") {
+                                showAttendanceReport = false
+                            }
+                        }
+                    }
+            }
         }
     }
 

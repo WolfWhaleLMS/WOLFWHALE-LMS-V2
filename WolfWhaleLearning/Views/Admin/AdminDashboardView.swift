@@ -6,6 +6,7 @@ struct AdminDashboardView: View {
     @State private var showBulkImport = false
     @State private var showSchoolConfig = false
     @State private var showAuditLog = false
+    @State private var showAttendanceReport = false
     @State private var hapticTrigger = false
 
     private var metrics: SchoolMetrics {
@@ -80,6 +81,18 @@ struct AdminDashboardView: View {
             }
             .sheet(isPresented: $showAuditLog) {
                 AuditLogView(viewModel: viewModel)
+            }
+            .sheet(isPresented: $showAttendanceReport) {
+                NavigationStack {
+                    AttendanceAnalyticsView(viewModel: viewModel, isAdmin: true)
+                        .toolbar {
+                            ToolbarItem(placement: .cancellationAction) {
+                                Button("Done") {
+                                    showAttendanceReport = false
+                                }
+                            }
+                        }
+                }
             }
         }
     }
@@ -207,6 +220,42 @@ struct AdminDashboardView: View {
                 .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 .accessibilityLabel("Audit Log")
                 .accessibilityHint("Opens the FERPA and GDPR compliance audit log viewer")
+            }
+
+            HStack(spacing: 12) {
+                Button {
+                    hapticTrigger.toggle()
+                    showAttendanceReport = true
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "chart.bar.doc.horizontal.fill")
+                            .font(.title3)
+                            .foregroundStyle(.green)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Attendance Report")
+                                .font(.subheadline.bold())
+                                .foregroundStyle(Color(.label))
+                            Text("School-wide attendance analytics")
+                                .font(.caption2)
+                                .foregroundStyle(Color(.secondaryLabel))
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(Color(.tertiaryLabel))
+                    }
+                    .padding(14)
+                    .background(Color(.secondarySystemGroupedBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .strokeBorder(Color.green.opacity(0.2), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .accessibilityLabel("Attendance Report")
+                .accessibilityHint("Opens school-wide attendance report with charts and export")
             }
         }
     }

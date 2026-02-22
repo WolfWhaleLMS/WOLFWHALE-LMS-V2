@@ -13,6 +13,11 @@ struct CourseCatalogView: View {
 
     private let subjects = ["All", "Math", "Science", "English", "History", "Art", "Music", "Computer Science", "Physical Education"]
 
+    /// Set of course IDs the student is already enrolled in (from AppViewModel.courses).
+    private var enrolledCourseIds: Set<UUID> {
+        Set(viewModel.courses.map(\.id))
+    }
+
     private var filteredCourses: [CourseCatalogEntry] {
         var results: [CourseCatalogEntry]
 
@@ -39,9 +44,14 @@ struct CourseCatalogView: View {
         NavigationStack {
             Group {
                 if enrollmentService.isLoading && enrollmentService.catalogCourses.isEmpty {
-                    ProgressView()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .accessibilityLabel("Loading course catalog")
+                    VStack(spacing: 20) {
+                        ProgressView()
+                        Text("Loading courses...")
+                            .font(.subheadline)
+                            .foregroundStyle(Color(.secondaryLabel))
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .accessibilityLabel("Loading course catalog")
                 } else {
                     ScrollView {
                         VStack(spacing: 12) {
@@ -55,6 +65,7 @@ struct CourseCatalogView: View {
                             .padding(.horizontal)
                         }
                         .padding(.top, 8)
+                        .padding(.bottom, 20)
                     }
                     .overlay {
                         if filteredCourses.isEmpty {
@@ -67,7 +78,7 @@ struct CourseCatalogView: View {
                     }
                 }
             }
-            .background(Color(UIColor.systemGroupedBackground))
+            .background(Color(.systemGroupedBackground))
             .navigationTitle("Course Catalog")
             .searchable(text: $searchText, prompt: "Search courses")
             .refreshable {
@@ -93,7 +104,7 @@ struct CourseCatalogView: View {
                 titleVisibility: .visible
             ) {
                 if let course = enrollConfirmCourse {
-                    Button("Enroll in \(course.name)") {
+                    Button("Request to Join \(course.name)") {
                         hapticTrigger.toggle()
                         Task { await enroll(in: course) }
                     }
@@ -101,7 +112,7 @@ struct CourseCatalogView: View {
                 }
             } message: {
                 if let course = enrollConfirmCourse {
-                    Text("You will be enrolled in \(course.name) taught by \(course.teacherName). This may require teacher approval.")
+                    Text("You will request enrollment in \(course.name) taught by \(course.teacherName). This may require teacher approval.")
                 }
             }
             .confirmationDialog(
@@ -165,7 +176,7 @@ struct CourseCatalogView: View {
                                     ? AnyShapeStyle(.indigo)
                                     : AnyShapeStyle(.ultraThinMaterial)
                             )
-                            .foregroundStyle(selectedSubject == subject ? .white : .primary)
+                            .foregroundStyle(selectedSubject == subject ? .white : Color(.label))
                             .clipShape(.capsule)
                     }
                     .buttonStyle(.plain)
@@ -186,7 +197,7 @@ struct CourseCatalogView: View {
                                 ? AnyShapeStyle(.green.opacity(0.8))
                                 : AnyShapeStyle(.ultraThinMaterial)
                         )
-                        .foregroundStyle(showAvailableOnly ? .white : .primary)
+                        .foregroundStyle(showAvailableOnly ? .white : Color(.label))
                         .clipShape(.capsule)
                 }
                 .buttonStyle(.plain)
@@ -198,34 +209,56 @@ struct CourseCatalogView: View {
     // MARK: - Catalog Card
 
     private func catalogCard(_ course: CourseCatalogEntry) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            // Header: name + status badge
-            HStack(alignment: .top) {
+        let accentColor = cardAccentColor(for: course)
+        let isEnrolled = course.enrollmentStatus == .enrolled || enrolledCourseIds.contains(course.id)
+
+        return VStack(alignment: .leading, spacing: 10) {
+            // Header: icon, name, teacher, status badge
+            HStack(alignment: .top, spacing: 12) {
+                // Color accent icon
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(accentColor.opacity(0.15))
+                        .frame(width: 40, height: 40)
+                    Image(systemName: subjectIcon(for: course.subject))
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(accentColor)
+                }
+
                 VStack(alignment: .leading, spacing: 3) {
                     Text(course.name)
                         .font(.headline)
+                        .foregroundStyle(Color(.label))
                         .lineLimit(1)
 
                     Text(course.teacherName)
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color(.secondaryLabel))
 
                     if let schedule = course.schedule {
                         Label(schedule, systemImage: "calendar")
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color(.secondaryLabel))
                     }
                 }
 
                 Spacer()
 
-                statusBadge(for: course)
+                if isEnrolled {
+                    // Already enrolled: show checkmark
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.title3)
+                        .foregroundStyle(.green)
+                        .accessibilityLabel("Enrolled")
+                } else {
+                    statusBadge(for: course)
+                }
             }
 
             // Description
             Text(course.description)
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color(.secondaryLabel))
                 .lineLimit(2)
 
             // Subject + Grade Level tags
@@ -235,8 +268,8 @@ struct CourseCatalogView: View {
                         .font(.caption2.weight(.medium))
                         .padding(.horizontal, 8)
                         .padding(.vertical, 3)
-                        .background(.indigo.opacity(0.12))
-                        .foregroundStyle(.indigo)
+                        .background(accentColor.opacity(0.12))
+                        .foregroundStyle(accentColor)
                         .clipShape(.capsule)
                 }
                 if let gradeLevel = course.gradeLevel {
@@ -250,11 +283,11 @@ struct CourseCatalogView: View {
                 }
             }
 
-            // Capacity bar
+            // Enrolled count + capacity bar
             HStack(spacing: 8) {
                 Image(systemName: "person.2.fill")
                     .font(.caption2)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(Color(.secondaryLabel))
 
                 EnrollmentCapacityBar(
                     current: course.currentEnrollment,
@@ -263,10 +296,28 @@ struct CourseCatalogView: View {
             }
 
             // Action button
-            actionButton(for: course)
+            if isEnrolled {
+                Button(role: .destructive) {
+                    dropConfirmCourse = course
+                } label: {
+                    Label("Drop Course", systemImage: "xmark.circle")
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.red)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                }
+                .buttonStyle(.plain)
+            } else {
+                actionButton(for: course)
+            }
         }
         .padding(14)
-        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .strokeBorder(accentColor.opacity(0.25), lineWidth: 1)
+        )
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(course.name), \(course.teacherName), \(course.currentEnrollment) of \(course.maxEnrollment) students, \(course.enrollmentStatus?.displayName ?? "Available")")
     }
@@ -323,10 +374,10 @@ struct CourseCatalogView: View {
         case .pending:
             Label("Pending Approval...", systemImage: "clock.fill")
                 .font(.subheadline.weight(.medium))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color(.secondaryLabel))
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
-                .background(.gray.opacity(0.1), in: .rect(cornerRadius: 10))
+                .background(Color(.secondaryLabel).opacity(0.1), in: .rect(cornerRadius: 10))
 
         case .waitlisted:
             Label("On Waitlist", systemImage: "hourglass")
@@ -353,7 +404,7 @@ struct CourseCatalogView: View {
                 Button {
                     enrollConfirmCourse = course
                 } label: {
-                    Label("Enroll", systemImage: "plus.circle.fill")
+                    Label("Request to Join", systemImage: "plus.circle.fill")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
@@ -371,6 +422,41 @@ struct CourseCatalogView: View {
         Theme.courseColor(status.color)
     }
 
+    /// Maps a subject string to a color accent for the card border and icon.
+    private func cardAccentColor(for course: CourseCatalogEntry) -> Color {
+        guard let subject = course.subject?.lowercased() else { return .indigo }
+        switch subject {
+        case let s where s.contains("math"): return .blue
+        case let s where s.contains("science") || s.contains("bio") || s.contains("chem") || s.contains("physics"): return .green
+        case let s where s.contains("english") || s.contains("literature") || s.contains("writing"): return .purple
+        case let s where s.contains("history") || s.contains("social"): return .orange
+        case let s where s.contains("art") || s.contains("design"): return .pink
+        case let s where s.contains("music"): return .indigo
+        case let s where s.contains("computer") || s.contains("tech") || s.contains("programming"): return .cyan
+        case let s where s.contains("physical") || s.contains("pe") || s.contains("sport"): return .red
+        default: return .indigo
+        }
+    }
+
+    /// Maps a subject string to an SF Symbol icon name.
+    private func subjectIcon(for subject: String?) -> String {
+        guard let subject = subject?.lowercased() else { return "book.fill" }
+        switch subject {
+        case let s where s.contains("math"): return "function"
+        case let s where s.contains("science") || s.contains("bio"): return "leaf.fill"
+        case let s where s.contains("chem"): return "flask.fill"
+        case let s where s.contains("physics"): return "atom"
+        case let s where s.contains("english") || s.contains("literature"): return "text.book.closed.fill"
+        case let s where s.contains("writing"): return "pencil.and.outline"
+        case let s where s.contains("history"): return "globe.americas.fill"
+        case let s where s.contains("art"): return "paintpalette.fill"
+        case let s where s.contains("music"): return "music.note.list"
+        case let s where s.contains("computer") || s.contains("programming"): return "desktopcomputer"
+        case let s where s.contains("physical") || s.contains("pe"): return "figure.run"
+        default: return "book.fill"
+        }
+    }
+
     private func loadCatalog() async {
         guard let user = viewModel.currentUser,
               let schoolId = user.schoolId,
@@ -386,11 +472,9 @@ struct CourseCatalogView: View {
 
     private func dropCourse(_ course: CourseCatalogEntry) async {
         guard let user = viewModel.currentUser else { return }
-        // Find enrollment ID from myEnrollments or fetch
         if let enrollment = enrollmentService.myEnrollments.first(where: { $0.courseId == course.id }) {
             _ = await enrollmentService.dropCourse(enrollmentId: enrollment.id, studentId: user.id)
         } else {
-            // Refresh enrollments to get the ID, then try again
             await enrollmentService.fetchMyEnrollments(studentId: user.id)
             if let enrollment = enrollmentService.myEnrollments.first(where: { $0.courseId == course.id }) {
                 _ = await enrollmentService.dropCourse(enrollmentId: enrollment.id, studentId: user.id)

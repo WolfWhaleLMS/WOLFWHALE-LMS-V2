@@ -7,6 +7,7 @@ struct QuizPreviewView: View {
     @State private var currentQuestionIndex = 0
     @State private var selectedOptions: [UUID: Set<UUID>] = [:]      // questionId -> set of optionIds
     @State private var textAnswers: [UUID: String] = [:]             // questionId -> answer text
+    @State private var matchingAnswers: [String: String] = [:]       // "questionId_match_index" -> selected answer
     @State private var showResults = false
     @State private var hapticTrigger = false
     @State private var timerSeconds: Int = 0
@@ -49,6 +50,12 @@ struct QuizPreviewView: View {
                     return answer == acceptable
                 }
                 if isCorrect { correct += question.points }
+            case .matching:
+                // Matching is manual review in preview; skip auto-grading
+                break
+            case .essay:
+                // Essay is manual review in preview; skip auto-grading
+                break
             }
         }
         let percentage = total > 0 ? Int(Double(correct) / Double(total) * 100) : 0
@@ -223,6 +230,10 @@ struct QuizPreviewView: View {
                 shortAnswerView(question)
             case .fillInBlank:
                 fillInBlankAnswerView(question)
+            case .matching:
+                matchingAnswerView(question)
+            case .essay:
+                essayAnswerView(question)
             }
         }
         .padding(16)
@@ -369,6 +380,128 @@ struct QuizPreviewView: View {
                     .font(.caption)
                     .foregroundStyle(.orange)
             }
+        }
+    }
+
+    // MARK: - Matching Answer View
+
+    private func matchingAnswerView(_ question: QuestionDraft) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Match each item on the left with the correct answer on the right.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            let answers = question.matchingPairs.map(\.answer).sorted()
+
+            ForEach(Array(question.matchingPairs.enumerated()), id: \.element.id) { index, pair in
+                HStack(spacing: 10) {
+                    Text(pair.prompt)
+                        .font(.subheadline.bold())
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(8)
+                        .background(Color.indigo.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
+
+                    Image(systemName: "arrow.right")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    Menu {
+                        ForEach(answers, id: \.self) { ans in
+                            Button(ans) {
+                                let key = "\(question.id.uuidString)_match_\(index)"
+                                matchingAnswers[key] = ans
+                            }
+                        }
+                    } label: {
+                        let key = "\(question.id.uuidString)_match_\(index)"
+                        let selected = matchingAnswers[key] ?? ""
+                        HStack {
+                            Text(selected.isEmpty ? "Select..." : selected)
+                                .font(.subheadline)
+                                .foregroundStyle(selected.isEmpty ? .secondary : .primary)
+                            Spacer()
+                            Image(systemName: "chevron.up.chevron.down")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(8)
+                        .frame(maxWidth: .infinity)
+                        .background(Color(.tertiarySystemFill), in: RoundedRectangle(cornerRadius: 8))
+                    }
+                }
+            }
+
+            HStack(spacing: 6) {
+                Image(systemName: "info.circle")
+                    .font(.caption2)
+                Text("Matching questions are flagged for manual review.")
+                    .font(.caption2)
+            }
+            .foregroundStyle(.orange)
+        }
+    }
+
+    // MARK: - Essay Answer View
+
+    private func essayAnswerView(_ question: QuestionDraft) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            if !question.essayPrompt.isEmpty {
+                Text(question.essayPrompt)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .padding(8)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.indigo.opacity(0.06), in: RoundedRectangle(cornerRadius: 8))
+            }
+
+            Text("Write your response below:")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            TextEditor(text: Binding(
+                get: { textAnswers[question.id] ?? "" },
+                set: { textAnswers[question.id] = $0 }
+            ))
+            .frame(minHeight: 120)
+            .padding(8)
+            #if canImport(UIKit)
+            .background(Color(UIColor.systemBackground))
+            #endif
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
+            )
+
+            // Word count
+            HStack {
+                let text = (textAnswers[question.id] ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                let wordCount = text.isEmpty ? 0 : text.components(separatedBy: .whitespacesAndNewlines).filter { !$0.isEmpty }.count
+                let meetsMin = question.essayMinWords <= 0 || wordCount >= question.essayMinWords
+
+                Image(systemName: meetsMin ? "checkmark.circle.fill" : "exclamationmark.circle")
+                    .font(.caption)
+                    .foregroundStyle(meetsMin ? .green : .orange)
+
+                Text("\(wordCount) word\(wordCount == 1 ? "" : "s")")
+                    .font(.caption.monospacedDigit())
+                    .foregroundStyle(.secondary)
+
+                if question.essayMinWords > 0 {
+                    Text("/ \(question.essayMinWords) minimum")
+                        .font(.caption)
+                        .foregroundStyle(meetsMin ? .secondary : .orange)
+                }
+                Spacer()
+            }
+
+            HStack(spacing: 6) {
+                Image(systemName: "info.circle")
+                    .font(.caption2)
+                Text("Essay questions are flagged for manual teacher review.")
+                    .font(.caption2)
+            }
+            .foregroundStyle(.orange)
         }
     }
 
@@ -532,11 +665,18 @@ struct QuizPreviewView: View {
     }
 
     private func questionResultRow(index: Int, question: QuestionDraft) -> some View {
+        let isManualReview = question.type == .matching || question.type == .essay
         let isCorrect = questionIsCorrect(question)
         return HStack(spacing: 10) {
-            Image(systemName: isCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
-                .font(.body)
-                .foregroundStyle(isCorrect ? .green : .red)
+            if isManualReview {
+                Image(systemName: "clock.badge.questionmark")
+                    .font(.body)
+                    .foregroundStyle(.orange)
+            } else {
+                Image(systemName: isCorrect ? "checkmark.circle.fill" : "xmark.circle.fill")
+                    .font(.body)
+                    .foregroundStyle(isCorrect ? .green : .red)
+            }
 
             Text("Q\(index + 1)")
                 .font(.caption.bold())
@@ -548,9 +688,18 @@ struct QuizPreviewView: View {
 
             Spacer()
 
-            Text(isCorrect ? "+\(question.points)" : "0")
-                .font(.caption.bold())
-                .foregroundStyle(isCorrect ? .green : .red)
+            if isManualReview {
+                Text("Review")
+                    .font(.caption2.bold())
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(.orange.opacity(0.15), in: Capsule())
+                    .foregroundStyle(.orange)
+            } else {
+                Text(isCorrect ? "+\(question.points)" : "0")
+                    .font(.caption.bold())
+                    .foregroundStyle(isCorrect ? .green : .red)
+            }
 
             Text("/ \(question.points)")
                 .font(.caption)
@@ -559,7 +708,9 @@ struct QuizPreviewView: View {
         .padding(10)
         #if canImport(UIKit)
         .background(
-            isCorrect ? Color.green.opacity(0.05) : Color.red.opacity(0.05),
+            isManualReview
+                ? Color.orange.opacity(0.05)
+                : (isCorrect ? Color.green.opacity(0.05) : Color.red.opacity(0.05)),
             in: .rect(cornerRadius: 8)
         )
         #endif
@@ -627,6 +778,12 @@ struct QuizPreviewView: View {
                 }
                 return answer == acceptable
             }
+        case .matching:
+            // Matching is manual review; always show as "pending" (not correct/incorrect)
+            return false
+        case .essay:
+            // Essay is manual review; always show as "pending"
+            return false
         }
     }
 
@@ -635,6 +792,7 @@ struct QuizPreviewView: View {
             currentQuestionIndex = 0
             selectedOptions = [:]
             textAnswers = [:]
+            matchingAnswers = [:]
             showResults = false
             timerSeconds = 0
             timerActive = true

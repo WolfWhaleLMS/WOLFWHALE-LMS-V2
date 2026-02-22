@@ -505,6 +505,8 @@ struct EnhancedQuizBuilderView: View {
         case .trueFalse: "Students choose True or False"
         case .shortAnswer: "Students type a short response"
         case .fillInBlank: "Students fill in missing words"
+        case .matching: "Students match prompts to answers"
+        case .essay: "Students write a long-form response"
         }
     }
 
@@ -637,29 +639,57 @@ struct EnhancedQuizBuilderView: View {
         errorMessage = nil
 
         let quizQuestions = draft.questions.map { q -> QuizQuestion in
-            // For backward compatibility, map to the existing QuizQuestion model
-            let optionTexts: [String]
-            let correctIdx: Int
+            let trimmedText = q.text.trimmingCharacters(in: .whitespaces)
             switch q.type {
             case .multipleChoice:
-                optionTexts = q.options.map(\.text)
-                correctIdx = q.options.firstIndex(where: \.isCorrect) ?? 0
+                return QuizQuestion(
+                    id: UUID(),
+                    text: trimmedText,
+                    questionType: .multipleChoice,
+                    options: q.options.map(\.text),
+                    correctIndex: q.options.firstIndex(where: \.isCorrect) ?? 0,
+                    explanation: q.explanation
+                )
             case .trueFalse:
-                optionTexts = q.options.map(\.text)
-                correctIdx = q.options.firstIndex(where: \.isCorrect) ?? 0
-            case .shortAnswer:
-                optionTexts = q.correctAnswers
-                correctIdx = 0
-            case .fillInBlank:
-                optionTexts = q.correctAnswers
-                correctIdx = 0
+                return QuizQuestion(
+                    id: UUID(),
+                    text: trimmedText,
+                    questionType: .trueFalse,
+                    options: q.options.map(\.text),
+                    correctIndex: q.options.firstIndex(where: \.isCorrect) ?? 0,
+                    explanation: q.explanation
+                )
+            case .shortAnswer, .fillInBlank:
+                return QuizQuestion(
+                    id: UUID(),
+                    text: trimmedText,
+                    questionType: .fillInBlank,
+                    acceptedAnswers: q.correctAnswers,
+                    explanation: q.explanation
+                )
+            case .matching:
+                let pairs = q.matchingPairs.map {
+                    MatchingPair(prompt: $0.prompt, answer: $0.answer)
+                }
+                return QuizQuestion(
+                    id: UUID(),
+                    text: trimmedText,
+                    questionType: .matching,
+                    matchingPairs: pairs,
+                    needsManualReview: true,
+                    explanation: q.explanation
+                )
+            case .essay:
+                return QuizQuestion(
+                    id: UUID(),
+                    text: trimmedText,
+                    questionType: .essay,
+                    essayPrompt: q.essayPrompt,
+                    essayMinWords: q.essayMinWords,
+                    needsManualReview: true,
+                    explanation: q.explanation
+                )
             }
-            return QuizQuestion(
-                id: UUID(),
-                text: q.text.trimmingCharacters(in: .whitespaces),
-                options: optionTexts,
-                correctIndex: correctIdx
-            )
         }
 
         Task {

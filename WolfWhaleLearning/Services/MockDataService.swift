@@ -548,11 +548,50 @@ At the sentence level, aim for clarity and precision. Eliminate unnecessary word
 
     private func makeQuizQuestions() -> [QuizQuestion] {
         [
-            QuizQuestion(id: UUID(), text: "What is the standard form of a quadratic equation?", options: ["y = mx + b", "ax² + bx + c = 0", "a² + b² = c²", "y = ab^x"], correctIndex: 1),
-            QuizQuestion(id: UUID(), text: "What is the discriminant of a quadratic equation?", options: ["b² - 4ac", "b² + 4ac", "-b ± √(b²-4ac)", "2a"], correctIndex: 0),
-            QuizQuestion(id: UUID(), text: "How many solutions does a quadratic have when the discriminant is negative?", options: ["Two real solutions", "One real solution", "No real solutions", "Infinite solutions"], correctIndex: 2),
-            QuizQuestion(id: UUID(), text: "What shape does a quadratic function graph?", options: ["Line", "Circle", "Parabola", "Hyperbola"], correctIndex: 2),
-            QuizQuestion(id: UUID(), text: "What is the vertex of y = (x-3)² + 2?", options: ["(3, 2)", "(-3, 2)", "(3, -2)", "(2, 3)"], correctIndex: 0),
+            // Multiple Choice
+            QuizQuestion(
+                id: UUID(),
+                text: "What is the standard form of a quadratic equation?",
+                questionType: .multipleChoice,
+                options: ["y = mx + b", "ax\u{00B2} + bx + c = 0", "a\u{00B2} + b\u{00B2} = c\u{00B2}", "y = ab^x"],
+                correctIndex: 1
+            ),
+            // True / False
+            QuizQuestion(
+                id: UUID(),
+                text: "The discriminant of a quadratic equation determines the number of real solutions.",
+                questionType: .trueFalse,
+                options: ["True", "False"],
+                correctIndex: 0
+            ),
+            // Fill in the Blank
+            QuizQuestion(
+                id: UUID(),
+                text: "A quadratic function graphs a shape called a ___.",
+                questionType: .fillInBlank,
+                acceptedAnswers: ["parabola", "Parabola"]
+            ),
+            // Matching
+            QuizQuestion(
+                id: UUID(),
+                text: "Match each formula with its name.",
+                questionType: .matching,
+                matchingPairs: [
+                    MatchingPair(prompt: "ax\u{00B2} + bx + c = 0", answer: "Standard Form"),
+                    MatchingPair(prompt: "b\u{00B2} - 4ac", answer: "Discriminant"),
+                    MatchingPair(prompt: "(-b \u{00B1} \u{221A}(b\u{00B2}-4ac)) / 2a", answer: "Quadratic Formula"),
+                ],
+                needsManualReview: true
+            ),
+            // Essay
+            QuizQuestion(
+                id: UUID(),
+                text: "Explain how the discriminant relates to the number of solutions of a quadratic equation.",
+                questionType: .essay,
+                essayPrompt: "Use specific examples with positive, zero, and negative discriminant values.",
+                essayMinWords: 50,
+                needsManualReview: true
+            ),
         ]
     }
 }

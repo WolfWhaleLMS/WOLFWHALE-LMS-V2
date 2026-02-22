@@ -613,16 +613,80 @@ struct DataService: Sendable {
         var quizzes: [Quiz] = []
         for dto in quizDTOs {
             let questionDTOs = questionsByQuiz[dto.id] ?? []
-            let questions = questionDTOs.map { q in
+            let questions = questionDTOs.map { q -> QuizQuestion in
                 let opts = optionsByQuestion[q.id] ?? []
-                let optionTexts = opts.map(\.optionText)
-                let correctIdx = opts.firstIndex(where: { $0.isCorrect == true }) ?? 0
-                return QuizQuestion(
-                    id: q.id,
-                    text: q.questionText,
-                    options: optionTexts,
-                    correctIndex: correctIdx
-                )
+                let qType = QuizQuestionType(rawValue: q.type ?? "multiple_choice") ?? .multipleChoice
+
+                switch qType {
+                case .multipleChoice, .trueFalse:
+                    let optionTexts = opts.map(\.optionText)
+                    let correctIdx = opts.firstIndex(where: { $0.isCorrect == true }) ?? 0
+                    return QuizQuestion(
+                        id: q.id,
+                        text: q.questionText,
+                        questionType: qType,
+                        options: optionTexts,
+                        correctIndex: correctIdx,
+                        explanation: q.explanation ?? ""
+                    )
+
+                case .fillInBlank:
+                    // Accepted answers are stored as options with is_correct = true
+                    let accepted = opts.filter { $0.isCorrect == true }.map(\.optionText)
+                    return QuizQuestion(
+                        id: q.id,
+                        text: q.questionText,
+                        questionType: .fillInBlank,
+                        acceptedAnswers: accepted,
+                        explanation: q.explanation ?? ""
+                    )
+
+                case .matching:
+                    // Pairs stored as "prompt|||answer" in option_text
+                    var pairs: [MatchingPair] = []
+                    var explanationText = q.explanation ?? ""
+                    for opt in opts {
+                        let components = opt.optionText.components(separatedBy: "|||")
+                        if components.count == 2 {
+                            pairs.append(MatchingPair(prompt: components[0], answer: components[1]))
+                        }
+                    }
+                    // Try to extract explanation from JSON metadata
+                    if let expData = explanationText.data(using: .utf8),
+                       let json = try? JSONSerialization.jsonObject(with: expData) as? [String: Any],
+                       let exp = json["explanation"] as? String {
+                        explanationText = exp
+                    }
+                    return QuizQuestion(
+                        id: q.id,
+                        text: q.questionText,
+                        questionType: .matching,
+                        matchingPairs: pairs,
+                        needsManualReview: true,
+                        explanation: explanationText
+                    )
+
+                case .essay:
+                    // Parse essay metadata from explanation JSON
+                    var essayPromptText = ""
+                    var minWords = 0
+                    var explanationText = ""
+                    if let expData = (q.explanation ?? "").data(using: .utf8),
+                       let json = try? JSONSerialization.jsonObject(with: expData) as? [String: Any] {
+                        essayPromptText = json["essayPrompt"] as? String ?? ""
+                        minWords = json["essayMinWords"] as? Int ?? 0
+                        explanationText = json["explanation"] as? String ?? ""
+                    }
+                    return QuizQuestion(
+                        id: q.id,
+                        text: q.questionText,
+                        questionType: .essay,
+                        essayPrompt: essayPromptText,
+                        essayMinWords: minWords,
+                        needsManualReview: true,
+                        explanation: explanationText
+                    )
+                }
             }
 
             let attempt = attemptMap[dto.id]
@@ -1608,14 +1672,53 @@ struct DataService: Sendable {
         return result
     }
 
-    func createQuizQuestion(quizId: UUID, text: String, options: [String], correctIndex: Int) async throws {
+    /// Creates a quiz question with full support for all question types.
+    /// For MC/T-F: uses options + correctIndex.
+    /// For fill-in-blank: stores accepted answers as options with is_correct = true.
+    /// For matching: stores pairs as options with prompt|answer format.
+    /// For essay: stores essay config in the explanation field as JSON metadata.
+    func createQuizQuestion(
+        quizId: UUID,
+        text: String,
+        questionType: String = "multiple_choice",
+        options: [String] = [],
+        correctIndex: Int = 0,
+        acceptedAnswers: [String] = [],
+        matchingPairs: [MatchingPair] = [],
+        essayPrompt: String = "",
+        essayMinWords: Int = 0,
+        explanation: String = ""
+    ) async throws {
+        // Build explanation metadata for non-standard types
+        var storedExplanation = explanation
+
+        if questionType == QuizQuestionType.essay.rawValue {
+            // Encode essay config into explanation as JSON
+            let essayMeta: [String: Any] = [
+                "essayPrompt": essayPrompt,
+                "essayMinWords": essayMinWords,
+                "explanation": explanation
+            ]
+            if let data = try? JSONSerialization.data(withJSONObject: essayMeta),
+               let str = String(data: data, encoding: .utf8) {
+                storedExplanation = str
+            }
+        } else if questionType == QuizQuestionType.matching.rawValue {
+            // Encode matching pairs into explanation as JSON
+            let pairs = matchingPairs.map { ["prompt": $0.prompt, "answer": $0.answer] }
+            if let data = try? JSONSerialization.data(withJSONObject: ["pairs": pairs, "explanation": explanation]),
+               let str = String(data: data, encoding: .utf8) {
+                storedExplanation = str
+            }
+        }
+
         let questionDTO = InsertQuizQuestionDTO(
             quizId: quizId,
-            type: "multiple_choice",
+            type: questionType,
             questionText: text,
             points: 1.0,
             orderIndex: nil,
-            explanation: nil
+            explanation: storedExplanation.isEmpty ? nil : storedExplanation
         )
         // Insert question and get back the ID
         let question: QuizQuestionDTO = try await supabaseClient
@@ -1626,19 +1729,79 @@ struct DataService: Sendable {
             .execute()
             .value
 
-        // Insert options
-        let optionDTOs = options.enumerated().map { idx, optText in
-            InsertQuizOptionDTO(
-                questionId: question.id,
-                optionText: optText,
-                isCorrect: idx == correctIndex,
-                orderIndex: idx
-            )
+        // Insert options based on question type
+        switch questionType {
+        case QuizQuestionType.multipleChoice.rawValue, QuizQuestionType.trueFalse.rawValue:
+            let optionDTOs = options.enumerated().map { idx, optText in
+                InsertQuizOptionDTO(
+                    questionId: question.id,
+                    optionText: optText,
+                    isCorrect: idx == correctIndex,
+                    orderIndex: idx
+                )
+            }
+            if !optionDTOs.isEmpty {
+                try await supabaseClient
+                    .from("quiz_options")
+                    .insert(optionDTOs)
+                    .execute()
+            }
+
+        case QuizQuestionType.fillInBlank.rawValue:
+            // Store each accepted answer as a quiz_option with is_correct = true
+            let optionDTOs = acceptedAnswers.enumerated().map { idx, answer in
+                InsertQuizOptionDTO(
+                    questionId: question.id,
+                    optionText: answer,
+                    isCorrect: true,
+                    orderIndex: idx
+                )
+            }
+            if !optionDTOs.isEmpty {
+                try await supabaseClient
+                    .from("quiz_options")
+                    .insert(optionDTOs)
+                    .execute()
+            }
+
+        case QuizQuestionType.matching.rawValue:
+            // Store matching pairs as options: prompt|answer with order_index for pairing
+            let optionDTOs = matchingPairs.enumerated().map { idx, pair in
+                InsertQuizOptionDTO(
+                    questionId: question.id,
+                    optionText: "\(pair.prompt)|||\(pair.answer)",
+                    isCorrect: true,
+                    orderIndex: idx
+                )
+            }
+            if !optionDTOs.isEmpty {
+                try await supabaseClient
+                    .from("quiz_options")
+                    .insert(optionDTOs)
+                    .execute()
+            }
+
+        case QuizQuestionType.essay.rawValue:
+            // No options needed for essay; metadata is in explanation
+            break
+
+        default:
+            // Fallback: store as MC options
+            let optionDTOs = options.enumerated().map { idx, optText in
+                InsertQuizOptionDTO(
+                    questionId: question.id,
+                    optionText: optText,
+                    isCorrect: idx == correctIndex,
+                    orderIndex: idx
+                )
+            }
+            if !optionDTOs.isEmpty {
+                try await supabaseClient
+                    .from("quiz_options")
+                    .insert(optionDTOs)
+                    .execute()
+            }
         }
-        try await supabaseClient
-            .from("quiz_options")
-            .insert(optionDTOs)
-            .execute()
     }
 
     // MARK: - Lessons (Create)

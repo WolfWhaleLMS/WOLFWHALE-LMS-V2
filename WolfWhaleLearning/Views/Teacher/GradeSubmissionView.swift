@@ -17,7 +17,21 @@ struct GradeSubmissionView: View {
     @State private var showFilePreview = false
     @State private var isLoadingFile = false
 
+    // MARK: - Rubric Grading State
+    /// Maps criterion ID -> selected level points. Updated when teacher taps a rubric level.
+    @State private var rubricSelections: [UUID: Int] = [:]
+
     @Environment(\.dismiss) private var dismiss
+
+    /// The rubric attached to this assignment, if any.
+    private var attachedRubric: Rubric? {
+        viewModel.rubric(for: assignment.rubricId)
+    }
+
+    /// Sum of points selected across all rubric criteria.
+    private var rubricTotalSelected: Int {
+        rubricSelections.values.reduce(0, +)
+    }
 
     private var numericScore: Double? {
         Double(scoreText)
@@ -60,6 +74,9 @@ struct GradeSubmissionView: View {
                 submissionSection
                 if !attachmentURLs.isEmpty {
                     attachedFilesSection
+                }
+                if attachedRubric != nil {
+                    rubricGradingSection
                 }
                 gradingSection
                 feedbackSection
@@ -281,6 +298,111 @@ struct GradeSubmissionView: View {
         }
     }
 
+    // MARK: - Rubric Grading Section
+
+    private var rubricGradingSection: some View {
+        guard let rubric = attachedRubric else { return AnyView(EmptyView()) }
+
+        return AnyView(
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Label(rubric.title, systemImage: "list.bullet.rectangle.portrait")
+                        .font(.headline)
+                    Spacer()
+                    Text("\(rubricTotalSelected) / \(rubric.totalPoints) pts")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.pink)
+                }
+
+                ForEach(rubric.criteria) { criterion in
+                    rubricCriterionRow(criterion: criterion)
+                }
+
+                // Apply rubric score button
+                Button {
+                    hapticTrigger.toggle()
+                    scoreText = "\(rubricTotalSelected)"
+                } label: {
+                    Label("Apply Rubric Score", systemImage: "arrow.down.circle.fill")
+                        .font(.subheadline.bold())
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 10)
+                }
+                .buttonStyle(.bordered)
+                .tint(.pink)
+                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            }
+            .padding(14)
+            .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        )
+    }
+
+    private func rubricCriterionRow(criterion: RubricCriterion) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            // Criterion header
+            HStack {
+                Text(criterion.name)
+                    .font(.subheadline.bold())
+                    .foregroundStyle(Color(.label))
+                Spacer()
+                let selected = rubricSelections[criterion.id]
+                Text(selected != nil ? "\(selected!) / \(criterion.maxPoints)" : "-- / \(criterion.maxPoints)")
+                    .font(.caption.bold())
+                    .foregroundStyle(selected != nil ? .pink : .secondary)
+            }
+
+            if !criterion.description.isEmpty {
+                Text(criterion.description)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            // Performance levels as selectable chips
+            FlowLayout(spacing: 6) {
+                ForEach(criterion.levels) { level in
+                    rubricLevelChip(criterionId: criterion.id, level: level)
+                }
+            }
+        }
+        .padding(10)
+        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 10))
+    }
+
+    private func rubricLevelChip(criterionId: UUID, level: RubricLevel) -> some View {
+        let isSelected = rubricSelections[criterionId] == level.points
+
+        return Button {
+            hapticTrigger.toggle()
+            withAnimation(.snappy) {
+                if isSelected {
+                    rubricSelections.removeValue(forKey: criterionId)
+                } else {
+                    rubricSelections[criterionId] = level.points
+                }
+            }
+        } label: {
+            VStack(spacing: 2) {
+                Text(level.label)
+                    .font(.caption.bold())
+                Text("\(level.points) pts")
+                    .font(.caption2)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(
+                isSelected ? .pink.opacity(0.2) : Color(.tertiarySystemFill),
+                in: .rect(cornerRadius: 8)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(isSelected ? .pink : .clear, lineWidth: 1.5)
+            )
+            .foregroundStyle(isSelected ? .pink : Color(.label))
+        }
+        .buttonStyle(.plain)
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+    }
+
     // MARK: - Grading Section
 
     private var gradingSection: some View {
@@ -469,5 +591,59 @@ struct GradeSubmissionView: View {
                 isLoading = false
             }
         }
+    }
+}
+
+// MARK: - FlowLayout (for rubric level chips)
+
+/// A simple flow layout that wraps children into multiple lines.
+private struct FlowLayout: Layout {
+    var spacing: CGFloat = 8
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let result = computeLayout(proposal: proposal, subviews: subviews)
+        return result.size
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let result = computeLayout(proposal: proposal, subviews: subviews)
+        for (index, position) in result.positions.enumerated() {
+            subviews[index].place(
+                at: CGPoint(x: bounds.minX + position.x, y: bounds.minY + position.y),
+                proposal: .unspecified
+            )
+        }
+    }
+
+    private struct LayoutResult {
+        var positions: [CGPoint]
+        var size: CGSize
+    }
+
+    private func computeLayout(proposal: ProposedViewSize, subviews: Subviews) -> LayoutResult {
+        let maxWidth = proposal.width ?? .infinity
+        var positions: [CGPoint] = []
+        var currentX: CGFloat = 0
+        var currentY: CGFloat = 0
+        var lineHeight: CGFloat = 0
+        var totalWidth: CGFloat = 0
+
+        for subview in subviews {
+            let size = subview.sizeThatFits(.unspecified)
+            if currentX + size.width > maxWidth, currentX > 0 {
+                currentX = 0
+                currentY += lineHeight + spacing
+                lineHeight = 0
+            }
+            positions.append(CGPoint(x: currentX, y: currentY))
+            lineHeight = max(lineHeight, size.height)
+            currentX += size.width + spacing
+            totalWidth = max(totalWidth, currentX - spacing)
+        }
+
+        return LayoutResult(
+            positions: positions,
+            size: CGSize(width: totalWidth, height: currentY + lineHeight)
+        )
     }
 }

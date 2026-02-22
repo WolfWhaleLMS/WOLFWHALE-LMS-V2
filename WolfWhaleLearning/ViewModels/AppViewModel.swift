@@ -55,9 +55,15 @@ class AppViewModel {
     var parentAlerts: [ParentAlert] = []
     var schoolMetrics: SchoolMetrics?
     var allUsers: [ProfileDTO] = []
+    var rubrics: [Rubric] = []
+    var courseSchedules: [CourseSchedule] = []
+    var discussionThreads: [DiscussionThread] = []
+    var discussionReplies: [DiscussionReply] = []
     var dataError: String?
     var gradeError: String?
     var enrollmentError: String?
+    var enrollmentRequests: [EnrollmentRequest] = []
+    var allAvailableCourses: [Course] = []
 
     // MARK: - XP & Gamification
     var currentXP: Int = 0
@@ -305,6 +311,10 @@ class AppViewModel {
 
     var pendingGradingCount: Int {
         assignments.filter { $0.isSubmitted && $0.grade == nil }.count
+    }
+
+    var pendingEnrollmentCount: Int {
+        enrollmentRequests.filter { $0.status == .pending }.count
     }
 
     var unreadParentAlertCount: Int {
@@ -603,9 +613,12 @@ class AppViewModel {
         parentAlerts = []
         schoolMetrics = nil
         allUsers = []
+        discussionThreads = []
+        discussionReplies = []
         dataError = nil
         gradeError = nil
         enrollmentError = nil
+        enrollmentRequests = []
         loginError = nil
         isDataLoading = false
     }
@@ -822,6 +835,10 @@ class AppViewModel {
         assignmentPagination.offset = newAssignments.count
         assignmentPagination.hasMore = newAssignments.count >= assignmentPagination.pageSize
         assignmentsLoaded = true
+
+        // Schedule due-date reminders for newly loaded assignments
+        notificationService.scheduleDueDateRemindersIfEnabled(assignments: newAssignments)
+        await dueDateReminderService.refreshReminders(assignments: newAssignments)
     }
 
     /// Called when user opens the Messages tab. Loads conversations only if not already loaded.
@@ -1100,6 +1117,9 @@ class AppViewModel {
         children = mockService.sampleChildren()
         schoolMetrics = mockService.sampleSchoolMetrics()
 
+        // Populate course schedules for demo mode
+        courseSchedules = generateMockSchedules(for: courses)
+
         // Populate XP & gamification for demo mode
         currentXP = 475
         currentLevel = XPLevelSystem.level(forXP: currentXP)
@@ -1108,6 +1128,60 @@ class AppViewModel {
         refreshBadges()
 
         cacheDataForSiri()
+    }
+
+    /// Builds a realistic weekly timetable from the enrolled courses.
+    private func generateMockSchedules(for enrolledCourses: [Course]) -> [CourseSchedule] {
+        // Each tuple: (dayOfWeek, startMinute, roomNumber)
+        let slots: [(DayOfWeek, Int, String)] = [
+            // Algebra II  -- MWF 8:00-8:50 AM, Room 204
+            (.monday, 480, "Room 204"),
+            (.wednesday, 480, "Room 204"),
+            (.friday, 480, "Room 204"),
+            // AP Biology -- TTh 9:00-10:15 AM, Lab 112
+            (.tuesday, 540, "Lab 112"),
+            (.thursday, 540, "Lab 112"),
+            // World History -- MWF 10:30-11:20 AM, Room 310
+            (.monday, 630, "Room 310"),
+            (.wednesday, 630, "Room 310"),
+            (.friday, 630, "Room 310"),
+            // English Literature -- TTh 1:00-2:15 PM, Room 105
+            (.tuesday, 780, "Room 105"),
+            (.thursday, 780, "Room 105"),
+        ]
+
+        let mwfDuration = 50
+        let tthDuration = 75
+
+        var schedules: [CourseSchedule] = []
+
+        for (index, course) in enrolledCourses.enumerated() {
+            let courseSlots: [(DayOfWeek, Int, String)]
+            switch index {
+            case 0: courseSlots = Array(slots[0...2])
+            case 1: courseSlots = Array(slots[3...4])
+            case 2: courseSlots = Array(slots[5...7])
+            case 3: courseSlots = Array(slots[8...9])
+            default: continue
+            }
+
+            for (day, start, room) in courseSlots {
+                let isTTh = (day == .tuesday || day == .thursday)
+                let duration = isTTh ? tthDuration : mwfDuration
+                schedules.append(
+                    CourseSchedule(
+                        id: UUID(),
+                        courseId: course.id,
+                        dayOfWeek: day,
+                        startMinute: start,
+                        endMinute: start + duration,
+                        roomNumber: room
+                    )
+                )
+            }
+        }
+
+        return schedules
     }
 
     // MARK: - Offline Storage Helpers
@@ -1697,6 +1771,9 @@ class AppViewModel {
             )
             announcements.insert(newAnnouncement, at: 0)
         }
+
+        // Send local notification for the new announcement
+        notificationService.sendAnnouncementNotificationIfEnabled(title: title, body: content)
     }
 
     // MARK: - Student Actions
@@ -1755,6 +1832,7 @@ class AppViewModel {
         syncProfile()
     }
 
+    /// Legacy submit for backward compatibility (MC-only quizzes).
     func submitQuiz(_ quiz: Quiz, answers: [Int]) -> Double {
         guard let index = quizzes.firstIndex(where: { $0.id == quiz.id }) else { return 0 }
         var correct = 0
@@ -1774,6 +1852,77 @@ class AppViewModel {
         }
         syncProfile()
         return score
+    }
+
+    /// Result from submitting an advanced quiz with multiple question types.
+    struct AdvancedQuizResult {
+        let score: Double           // percentage of auto-graded questions correct
+        let hasPendingReview: Bool  // true if essay or matching questions need teacher review
+    }
+
+    /// Submits a quiz that may contain multiple question types. Auto-grades what it can,
+    /// flags essay and matching for manual review.
+    func submitAdvancedQuiz(
+        _ quiz: Quiz,
+        selectedAnswers: [Int],
+        fillInAnswers: [String],
+        matchingSelections: [[String]],
+        essayTexts: [String]
+    ) -> AdvancedQuizResult {
+        guard let index = quizzes.firstIndex(where: { $0.id == quiz.id }) else {
+            return AdvancedQuizResult(score: 0, hasPendingReview: false)
+        }
+
+        var autoGradableCount = 0
+        var correctCount = 0
+        var hasPending = false
+
+        for (i, question) in quiz.questions.enumerated() {
+            switch question.questionType {
+            case .multipleChoice, .trueFalse:
+                autoGradableCount += 1
+                if i < selectedAnswers.count && selectedAnswers[i] == question.correctIndex {
+                    correctCount += 1
+                }
+
+            case .fillInBlank:
+                autoGradableCount += 1
+                if i < fillInAnswers.count {
+                    let studentAnswer = fillInAnswers[i]
+                        .trimmingCharacters(in: .whitespacesAndNewlines)
+                        .lowercased()
+                    let isCorrect = question.acceptedAnswers.contains { accepted in
+                        accepted.trimmingCharacters(in: .whitespacesAndNewlines)
+                            .lowercased() == studentAnswer
+                    }
+                    if isCorrect { correctCount += 1 }
+                }
+
+            case .matching:
+                hasPending = true
+
+            case .essay:
+                hasPending = true
+            }
+        }
+
+        let score: Double
+        if autoGradableCount > 0 {
+            score = Double(correctCount) / Double(autoGradableCount) * 100
+        } else {
+            score = 0
+        }
+
+        quizzes[index].isCompleted = true
+        quizzes[index].score = score
+
+        if !isDemoMode, let user = currentUser {
+            Task {
+                try? await dataService.submitQuizAttempt(quizId: quiz.id, studentId: user.id, score: score)
+            }
+        }
+        syncProfile()
+        return AdvancedQuizResult(score: score, hasPendingReview: hasPending)
     }
 
     // MARK: - Conversations
@@ -1892,6 +2041,103 @@ class AppViewModel {
         return courseName
     }
 
+    // MARK: - Student: Load Course Catalog
+
+    /// Fetches all courses in the student's school and filters out already-enrolled courses.
+    /// Populates `allAvailableCourses` with courses the student is NOT currently enrolled in.
+    func loadCourseCatalog() async {
+        guard let user = currentUser, user.role == .student else { return }
+
+        if isDemoMode {
+            let allMock = mockService.sampleCourses()
+            let enrolledIds = Set(courses.map(\.id))
+            let extraCourses: [Course] = [
+                Course(
+                    id: UUID(), title: "Computer Science 101",
+                    description: "Introduction to programming, algorithms, and computational thinking.",
+                    teacherName: "Mr. Alan Turing", iconSystemName: "desktopcomputer", colorName: "cyan",
+                    modules: [], enrolledStudentCount: 22, progress: 0, classCode: "CS-101"
+                ),
+                Course(
+                    id: UUID(), title: "Creative Writing",
+                    description: "Explore fiction, poetry, and narrative through weekly workshops.",
+                    teacherName: "Ms. Maya Angelou", iconSystemName: "pencil.and.outline", colorName: "pink",
+                    modules: [], enrolledStudentCount: 18, progress: 0, classCode: "CW-2024"
+                ),
+                Course(
+                    id: UUID(), title: "Music Theory",
+                    description: "Fundamentals of rhythm, melody, harmony, and composition.",
+                    teacherName: "Dr. Ludwig Bach", iconSystemName: "music.note.list", colorName: "indigo",
+                    modules: [], enrolledStudentCount: 15, progress: 0, classCode: "MUS-2024"
+                ),
+                Course(
+                    id: UUID(), title: "Physical Education",
+                    description: "Fitness, team sports, and healthy lifestyle habits.",
+                    teacherName: "Coach Jordan", iconSystemName: "figure.run", colorName: "red",
+                    modules: [], enrolledStudentCount: 30, progress: 0, classCode: "PE-2024"
+                ),
+            ]
+            allAvailableCourses = (allMock + extraCourses).filter { !enrolledIds.contains($0.id) }
+            return
+        }
+
+        do {
+            let allSchoolCourses = try await dataService.fetchCourses(
+                for: user.id,
+                role: .admin,
+                schoolId: user.schoolId
+            )
+            let enrolledIds = Set(courses.map(\.id))
+            allAvailableCourses = allSchoolCourses.filter { !enrolledIds.contains($0.id) }
+        } catch {
+            #if DEBUG
+            print("[AppViewModel] loadCourseCatalog failed: \(error)")
+            #endif
+        }
+    }
+
+    // MARK: - Enrollment Approval Workflow
+
+    private let enrollmentWorkflowService = EnrollmentService()
+
+    /// Student: request enrollment in a course by courseId.
+    func requestEnrollment(courseId: UUID) async {
+        guard let user = currentUser, user.role == .student else { return }
+        let success = await enrollmentWorkflowService.requestEnrollment(courseId: courseId, studentId: user.id)
+        if !success {
+            enrollmentError = enrollmentWorkflowService.error
+        }
+    }
+
+    /// Teacher: load all pending enrollment requests for courses they own.
+    func loadEnrollmentRequests() async {
+        guard let user = currentUser, user.role == .teacher else { return }
+        await enrollmentWorkflowService.fetchPendingRequests(teacherId: user.id)
+        enrollmentRequests = enrollmentWorkflowService.pendingRequests
+    }
+
+    /// Teacher: approve a pending enrollment request.
+    func approveEnrollment(requestId: UUID) async {
+        guard let user = currentUser else { return }
+        let success = await enrollmentWorkflowService.approveEnrollment(requestId: requestId, reviewerId: user.id)
+        if success {
+            enrollmentRequests.removeAll { $0.id == requestId }
+        } else {
+            enrollmentError = enrollmentWorkflowService.error
+        }
+    }
+
+    /// Teacher: deny a pending enrollment request.
+    func denyEnrollment(requestId: UUID) async {
+        guard let user = currentUser else { return }
+        let success = await enrollmentWorkflowService.denyEnrollment(requestId: requestId, reviewerId: user.id, reason: nil)
+        if success {
+            enrollmentRequests.removeAll { $0.id == requestId }
+        } else {
+            enrollmentError = enrollmentWorkflowService.error
+        }
+    }
+
     // MARK: - Teacher: Grade Submission
     func gradeSubmission(assignmentId: UUID, studentId: UUID?, score: Double, letterGrade: String, feedback: String?) async throws {
         isLoading = true
@@ -1950,6 +2196,14 @@ class AppViewModel {
                 feedback: feedback ?? ""
             )
             refreshData()
+
+            // Send local notification for the posted grade
+            let gradeDisplay = "\(letterGrade) (\(Int(percentage))%)"
+            notificationService.sendGradeNotificationIfEnabled(
+                assignmentTitle: assignment.title,
+                grade: gradeDisplay,
+                assignmentId: assignmentId
+            )
 
             // Audit: record grade change (FERPA compliance — grade changes must be tracked)
             await auditLog.log(
@@ -2010,8 +2264,14 @@ class AppViewModel {
                 try await dataService.createQuizQuestion(
                     quizId: quizDTO.id,
                     text: question.text,
+                    questionType: question.questionType.rawValue,
                     options: question.options,
-                    correctIndex: question.correctIndex
+                    correctIndex: question.correctIndex,
+                    acceptedAnswers: question.acceptedAnswers,
+                    matchingPairs: question.matchingPairs,
+                    essayPrompt: question.essayPrompt,
+                    essayMinWords: question.essayMinWords,
+                    explanation: question.explanation
                 )
             }
 
@@ -2280,6 +2540,81 @@ class AppViewModel {
         }
     }
 
+    // MARK: - Attendance Report Generation
+
+    /// Generates an attendance report for a specific course or school-wide within a date range.
+    /// Pass `nil` for `courseId` to generate a school-wide report (admin).
+    func generateAttendanceReport(courseId: String?, startDate: Date, endDate: Date) -> AttendanceReport {
+        let calendar = Calendar.current
+
+        // Filter records by date range
+        var filtered = attendance.filter { record in
+            let recordDay = calendar.startOfDay(for: record.date)
+            let start = calendar.startOfDay(for: startDate)
+            let end = calendar.startOfDay(for: endDate)
+            return recordDay >= start && recordDay <= end
+        }
+
+        // Filter by course if specified
+        var resolvedCourseName: String? = nil
+        if let courseId, let courseUUID = UUID(uuidString: courseId) {
+            let matchingCourse = courses.first(where: { $0.id == courseUUID })
+            resolvedCourseName = matchingCourse?.title
+            if let name = resolvedCourseName {
+                filtered = filtered.filter { $0.courseName == name }
+            }
+        }
+
+        // Count statuses
+        let presentCount = filtered.filter { $0.status == .present }.count
+        let absentCount = filtered.filter { $0.status == .absent }.count
+        let tardyCount = filtered.filter { $0.status == .tardy }.count
+        let excusedCount = filtered.filter { $0.status == .excused }.count
+
+        // Calculate unique days
+        let uniqueDays = Set(filtered.map { calendar.startOfDay(for: $0.date) })
+        let totalDays = uniqueDays.count
+
+        // Build per-student breakdowns
+        let studentGroups = Dictionary(grouping: filtered) { $0.studentName ?? "Unknown" }
+        let studentBreakdowns: [StudentAttendanceBreakdown] = studentGroups.map { name, records in
+            StudentAttendanceBreakdown(
+                id: UUID(),
+                studentName: name,
+                presentCount: records.filter { $0.status == .present }.count,
+                absentCount: records.filter { $0.status == .absent }.count,
+                tardyCount: records.filter { $0.status == .tardy }.count,
+                excusedCount: records.filter { $0.status == .excused }.count
+            )
+        }.sorted { $0.studentName < $1.studentName }
+
+        // Build daily rates sorted by date
+        let dailyGroups = Dictionary(grouping: filtered) { calendar.startOfDay(for: $0.date) }
+        let dailyRates: [DailyAttendanceRate] = dailyGroups.map { date, records in
+            let present = records.filter { $0.status == .present || $0.status == .tardy }.count
+            return DailyAttendanceRate(
+                id: UUID(),
+                date: date,
+                totalCount: records.count,
+                presentCount: present
+            )
+        }.sorted { $0.date < $1.date }
+
+        return AttendanceReport(
+            startDate: startDate,
+            endDate: endDate,
+            courseName: resolvedCourseName,
+            totalDays: totalDays,
+            totalRecords: filtered.count,
+            presentCount: presentCount,
+            absentCount: absentCount,
+            tardyCount: tardyCount,
+            excusedCount: excusedCount,
+            studentBreakdowns: studentBreakdowns,
+            dailyRates: dailyRates
+        )
+    }
+
     // MARK: - Attendance + Parent
     // Uses attendance_records table (not "attendance") and attendance_date column (not "date")
     func fetchAttendanceForCourse(courseId: UUID) async -> [AttendanceRecord] {
@@ -2515,6 +2850,99 @@ class AppViewModel {
             return "Network error. Please check your connection"
         }
         return "Sign in failed. Please try again."
+    }
+
+    // MARK: - Rubrics
+
+    /// Loads all rubrics for a given course. Falls back to local storage in demo mode.
+    func loadRubrics(for courseId: UUID) async {
+        if isDemoMode {
+            // In demo mode rubrics are already stored in-memory; nothing to fetch.
+            return
+        }
+
+        do {
+            // Attempt to fetch rubrics from a Supabase `rubrics` table
+            let rows: [Rubric] = try await supabaseClient
+                .from("rubrics")
+                .select()
+                .eq("course_id", value: courseId.uuidString)
+                .order("created_at", ascending: false)
+                .execute()
+                .value
+
+            // Merge fetched rubrics into the local array (avoid duplicates)
+            let existingIds = Set(rubrics.map(\.id))
+            let newOnes = rows.filter { !existingIds.contains($0.id) }
+            rubrics.append(contentsOf: newOnes)
+            // Update any that already exist
+            for row in rows {
+                if let idx = rubrics.firstIndex(where: { $0.id == row.id }) {
+                    rubrics[idx] = row
+                }
+            }
+        } catch {
+            #if DEBUG
+            print("[AppViewModel] Failed to load rubrics: \(error)")
+            #endif
+            // Non-fatal — teacher can still create rubrics locally
+        }
+    }
+
+    /// Creates a new rubric and adds it to local state. Persists to Supabase when not in demo mode.
+    func createRubric(title: String, courseId: UUID, criteria: [RubricCriterion]) async throws {
+        guard currentUser != nil else { return }
+
+        let sanitizedTitle = InputValidator.sanitizeText(title)
+        guard !sanitizedTitle.trimmingCharacters(in: .whitespaces).isEmpty else {
+            dataError = "Rubric title cannot be empty."
+            throw ValidationError.invalidInput("Rubric title cannot be empty.")
+        }
+        guard !criteria.isEmpty else {
+            dataError = "Rubric must have at least one criterion."
+            throw ValidationError.invalidInput("Rubric must have at least one criterion.")
+        }
+
+        let rubric = Rubric(
+            id: UUID(),
+            title: sanitizedTitle,
+            courseId: courseId,
+            criteria: criteria,
+            createdAt: Date()
+        )
+
+        if !isDemoMode {
+            do {
+                let encoder = JSONEncoder()
+                encoder.dateEncodingStrategy = .iso8601
+                let criteriaJSON = try encoder.encode(criteria)
+                let criteriaString = String(data: criteriaJSON, encoding: .utf8) ?? "[]"
+
+                try await supabaseClient
+                    .from("rubrics")
+                    .insert([
+                        "id": rubric.id.uuidString,
+                        "course_id": courseId.uuidString,
+                        "title": sanitizedTitle,
+                        "criteria": criteriaString,
+                        "created_at": ISO8601DateFormatter().string(from: rubric.createdAt)
+                    ])
+                    .execute()
+            } catch {
+                #if DEBUG
+                print("[AppViewModel] Failed to persist rubric: \(error)")
+                #endif
+                // Still add locally so the teacher can use it this session
+            }
+        }
+
+        rubrics.append(rubric)
+    }
+
+    /// Returns the rubric for a given ID, if it exists in local state.
+    func rubric(for id: UUID?) -> Rubric? {
+        guard let id else { return nil }
+        return rubrics.first(where: { $0.id == id })
     }
 }
 

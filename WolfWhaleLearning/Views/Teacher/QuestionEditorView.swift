@@ -24,6 +24,10 @@ struct QuestionEditorView: View {
                     shortAnswerSection
                 case .fillInBlank:
                     fillInBlankSection
+                case .matching:
+                    matchingSection
+                case .essay:
+                    essaySection
                 }
 
                 explanationSection
@@ -68,16 +72,43 @@ struct QuestionEditorView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
-            Picker("Type", selection: $question.type) {
+            // Use a Menu-based picker since segmented doesn't scale well to 6 items
+            Menu {
                 ForEach(QuestionType.allCases, id: \.self) { type in
-                    Label(type.displayName, systemImage: type.iconName)
-                        .tag(type)
+                    Button {
+                        if question.type != type {
+                            hapticTrigger.toggle()
+                            question.type = type
+                            resetOptionsForType(type)
+                        }
+                    } label: {
+                        Label(type.displayName, systemImage: type.iconName)
+                    }
                 }
-            }
-            .pickerStyle(.segmented)
-            .onChange(of: question.type) { _, newType in
-                hapticTrigger.toggle()
-                resetOptionsForType(newType)
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: question.type.iconName)
+                        .font(.body)
+                        .foregroundStyle(.indigo)
+                        .frame(width: 32, height: 32)
+                        .background(.indigo.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+
+                    Text(question.type.displayName)
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.primary)
+
+                    Spacer()
+
+                    Image(systemName: "chevron.up.chevron.down")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(12)
+                .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 12))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
+                )
             }
         }
         .padding(14)
@@ -452,6 +483,147 @@ struct QuestionEditorView: View {
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
     }
 
+    // MARK: - Matching
+
+    private var matchingSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Matching Pairs", systemImage: "arrow.left.arrow.right")
+                .font(.headline)
+                .foregroundStyle(.indigo)
+
+            Text("Create pairs of prompts and answers. Students will match each prompt to its correct answer.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+
+            ForEach(Array(question.matchingPairs.enumerated()), id: \.element.id) { index, _ in
+                VStack(spacing: 8) {
+                    HStack(spacing: 4) {
+                        Text("Pair \(index + 1)")
+                            .font(.caption2.bold())
+                            .foregroundStyle(.indigo)
+                        Spacer()
+                        if question.matchingPairs.count > 2 {
+                            Button {
+                                hapticTrigger.toggle()
+                                withAnimation(.snappy) {
+                                    _ = question.matchingPairs.remove(at: index)
+                                }
+                            } label: {
+                                Image(systemName: "minus.circle.fill")
+                                    .font(.caption)
+                                    .foregroundStyle(.red.opacity(0.7))
+                            }
+                            .buttonStyle(.plain)
+                            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                        }
+                    }
+
+                    HStack(spacing: 8) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Prompt")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                            TextField("Left side", text: $question.matchingPairs[index].prompt)
+                                .textFieldStyle(.roundedBorder)
+                                .font(.subheadline)
+                        }
+
+                        Image(systemName: "arrow.right")
+                            .font(.caption)
+                            .foregroundStyle(.indigo)
+                            .padding(.top, 14)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Answer")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                            TextField("Right side", text: $question.matchingPairs[index].answer)
+                                .textFieldStyle(.roundedBorder)
+                                .font(.subheadline)
+                        }
+                    }
+                }
+                .padding(10)
+                #if canImport(UIKit)
+                .background(Color(UIColor.systemBackground), in: RoundedRectangle(cornerRadius: 10))
+                #endif
+            }
+
+            if question.matchingPairs.count < 8 {
+                Button {
+                    hapticTrigger.toggle()
+                    withAnimation(.snappy) {
+                        question.matchingPairs.append(MatchingPairDraft())
+                    }
+                } label: {
+                    Label("Add Pair", systemImage: "plus.circle")
+                        .font(.subheadline)
+                        .foregroundStyle(.indigo)
+                }
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            }
+
+            HStack(spacing: 6) {
+                Image(systemName: "info.circle")
+                    .font(.caption2)
+                Text("Matching questions are flagged for manual review.")
+                    .font(.caption2)
+            }
+            .foregroundStyle(.orange)
+        }
+        .padding(14)
+        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+    }
+
+    // MARK: - Essay
+
+    private var essaySection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Essay Settings", systemImage: "doc.text.fill")
+                .font(.headline)
+                .foregroundStyle(.indigo)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Essay Prompt (optional)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text("Additional instructions shown below the question text.")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+
+                TextEditor(text: $question.essayPrompt)
+                    .frame(minHeight: 60)
+                    .padding(8)
+                    #if canImport(UIKit)
+                    .background(Color(UIColor.systemBackground))
+                    #endif
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 10)
+                            .stroke(Color.secondary.opacity(0.2), lineWidth: 1)
+                    )
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Minimum Word Count")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Stepper("\(question.essayMinWords) words", value: $question.essayMinWords, in: 0...1000, step: 25)
+                    .font(.subheadline)
+            }
+
+            HStack(spacing: 6) {
+                Image(systemName: "info.circle")
+                    .font(.caption2)
+                Text("Essay questions are always flagged for manual teacher review.")
+                    .font(.caption2)
+            }
+            .foregroundStyle(.orange)
+        }
+        .padding(14)
+        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+    }
+
     // MARK: - Explanation
 
     private var explanationSection: some View {
@@ -494,22 +666,40 @@ struct QuestionEditorView: View {
                 ]
             }
             question.correctAnswers = []
+            question.matchingPairs = []
         case .trueFalse:
             question.options = [
                 OptionDraft(text: "True", isCorrect: true),
                 OptionDraft(text: "False", isCorrect: false)
             ]
             question.correctAnswers = []
+            question.matchingPairs = []
         case .shortAnswer:
             question.options = []
+            question.matchingPairs = []
             if question.correctAnswers.isEmpty {
                 question.correctAnswers = [""]
             }
         case .fillInBlank:
             question.options = []
+            question.matchingPairs = []
             if question.correctAnswers.isEmpty {
                 question.correctAnswers = [""]
             }
+        case .matching:
+            question.options = []
+            question.correctAnswers = []
+            if question.matchingPairs.isEmpty {
+                question.matchingPairs = [
+                    MatchingPairDraft(),
+                    MatchingPairDraft(),
+                    MatchingPairDraft()
+                ]
+            }
+        case .essay:
+            question.options = []
+            question.correctAnswers = []
+            question.matchingPairs = []
         }
     }
 }

@@ -35,6 +35,7 @@ struct GradebookView: View {
                 statsSection
                 studentSubmissionsSection
                 contentActionsSection
+                teacherDiscussionLink
                 courseContentSection
                 enrolledStudentsSection
                 assignmentsSection
@@ -243,6 +244,52 @@ struct GradebookView: View {
             .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
         }
         .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+    }
+
+    // MARK: - Discussion Forum Link
+
+    private var teacherDiscussionLink: some View {
+        NavigationLink {
+            DiscussionForumView(course: course, viewModel: viewModel)
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "bubble.left.and.bubble.right.fill")
+                    .font(.title3)
+                    .foregroundStyle(.accent)
+                    .frame(width: 36, height: 36)
+                    .background(.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Discussion Forum")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(Color(.label))
+                    Text("View and manage course discussions")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                let threadCount = viewModel.discussionThreads.filter { $0.courseId == course.id }.count
+                if threadCount > 0 {
+                    Text("\(threadCount)")
+                        .font(.caption2.bold())
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(.accent.opacity(0.15), in: .capsule)
+                        .foregroundStyle(.accent)
+                }
+
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(14)
+            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Discussion Forum")
+        .accessibilityHint("Double tap to open course discussions")
     }
 
     // MARK: - Course Content (Modules & Lessons)

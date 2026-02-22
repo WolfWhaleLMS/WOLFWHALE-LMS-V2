@@ -7,6 +7,8 @@ nonisolated enum QuestionType: String, Codable, CaseIterable, Sendable {
     case trueFalse = "true_false"
     case shortAnswer = "short_answer"
     case fillInBlank = "fill_in_blank"
+    case matching = "matching"
+    case essay = "essay"
 
     var displayName: String {
         switch self {
@@ -14,6 +16,8 @@ nonisolated enum QuestionType: String, Codable, CaseIterable, Sendable {
         case .trueFalse: "True / False"
         case .shortAnswer: "Short Answer"
         case .fillInBlank: "Fill in the Blank"
+        case .matching: "Matching"
+        case .essay: "Essay"
         }
     }
 
@@ -23,7 +27,35 @@ nonisolated enum QuestionType: String, Codable, CaseIterable, Sendable {
         case .trueFalse: "checkmark.circle.fill"
         case .shortAnswer: "text.bubble.fill"
         case .fillInBlank: "rectangle.and.pencil.and.ellipsis"
+        case .matching: "arrow.left.arrow.right"
+        case .essay: "doc.text.fill"
         }
+    }
+
+    /// Maps to the view-facing QuizQuestionType for the Quiz model.
+    var quizQuestionType: QuizQuestionType {
+        switch self {
+        case .multipleChoice: .multipleChoice
+        case .trueFalse: .trueFalse
+        case .shortAnswer: .fillInBlank   // treat short answer as fill-in for grading
+        case .fillInBlank: .fillInBlank
+        case .matching: .matching
+        case .essay: .essay
+        }
+    }
+}
+
+// MARK: - Matching Pair Draft
+
+nonisolated struct MatchingPairDraft: Identifiable, Sendable {
+    let id: UUID
+    var prompt: String
+    var answer: String
+
+    init(id: UUID = UUID(), prompt: String = "", answer: String = "") {
+        self.id = id
+        self.prompt = prompt
+        self.answer = answer
     }
 }
 
@@ -93,6 +125,9 @@ nonisolated struct QuestionDraft: Identifiable, Sendable {
     var points: Int
     var options: [OptionDraft]          // For MC and T/F
     var correctAnswers: [String]        // For short answer / fill-in
+    var matchingPairs: [MatchingPairDraft]  // For matching questions
+    var essayPrompt: String             // Additional essay instructions
+    var essayMinWords: Int              // Minimum word count for essay
     var explanation: String             // Shown after answering
     var caseInsensitive: Bool
     var allowPartialMatch: Bool
@@ -115,6 +150,14 @@ nonisolated struct QuestionDraft: Identifiable, Sendable {
             let hasBlanks = text.contains("___")
             return textOK && hasBlanks && !correctAnswers.isEmpty
                 && correctAnswers.allSatisfy { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+        case .matching:
+            return textOK && matchingPairs.count >= 2
+                && matchingPairs.allSatisfy {
+                    !$0.prompt.trimmingCharacters(in: .whitespaces).isEmpty
+                    && !$0.answer.trimmingCharacters(in: .whitespaces).isEmpty
+                }
+        case .essay:
+            return textOK
         }
     }
 
@@ -125,6 +168,9 @@ nonisolated struct QuestionDraft: Identifiable, Sendable {
         points: Int = 10,
         options: [OptionDraft]? = nil,
         correctAnswers: [String] = [],
+        matchingPairs: [MatchingPairDraft] = [],
+        essayPrompt: String = "",
+        essayMinWords: Int = 50,
         explanation: String = "",
         caseInsensitive: Bool = true,
         allowPartialMatch: Bool = false
@@ -134,6 +180,9 @@ nonisolated struct QuestionDraft: Identifiable, Sendable {
         self.type = type
         self.points = points
         self.correctAnswers = correctAnswers
+        self.matchingPairs = matchingPairs
+        self.essayPrompt = essayPrompt
+        self.essayMinWords = essayMinWords
         self.explanation = explanation
         self.caseInsensitive = caseInsensitive
         self.allowPartialMatch = allowPartialMatch
@@ -156,6 +205,17 @@ nonisolated struct QuestionDraft: Identifiable, Sendable {
                 ]
             case .shortAnswer, .fillInBlank:
                 self.options = []
+            case .matching:
+                self.options = []
+                if matchingPairs.isEmpty {
+                    self.matchingPairs = [
+                        MatchingPairDraft(),
+                        MatchingPairDraft(),
+                        MatchingPairDraft()
+                    ]
+                }
+            case .essay:
+                self.options = []
             }
         }
     }
@@ -169,6 +229,9 @@ nonisolated struct QuestionDraft: Identifiable, Sendable {
             points: points,
             options: options.map { OptionDraft(text: $0.text, isCorrect: $0.isCorrect) },
             correctAnswers: correctAnswers,
+            matchingPairs: matchingPairs.map { MatchingPairDraft(prompt: $0.prompt, answer: $0.answer) },
+            essayPrompt: essayPrompt,
+            essayMinWords: essayMinWords,
             explanation: explanation,
             caseInsensitive: caseInsensitive,
             allowPartialMatch: allowPartialMatch
