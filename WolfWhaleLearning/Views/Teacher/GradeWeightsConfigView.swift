@@ -22,7 +22,7 @@ struct GradeWeightsConfigView: View {
     }
 
     private var totalWeight: Double {
-        weights.assignments + weights.quizzes + weights.participation + weights.midterm + weights.finalExam
+        weights.assignments + weights.quizzes + weights.participation + weights.attendance
     }
 
     private var isValid: Bool {
@@ -84,8 +84,7 @@ struct GradeWeightsConfigView: View {
                 (weights.assignments, .blue),
                 (weights.quizzes, .orange),
                 (weights.participation, .green),
-                (weights.midterm, .purple),
-                (weights.finalExam, .pink)
+                (weights.attendance, .teal)
             ]
 
             var startAngle = Angle.degrees(-90)
@@ -124,8 +123,7 @@ struct GradeWeightsConfigView: View {
             ("Assignments", .blue, weights.assignments),
             ("Quizzes", .orange, weights.quizzes),
             ("Participation", .green, weights.participation),
-            ("Midterm", .purple, weights.midterm),
-            ("Final Exam", .pink, weights.finalExam)
+            ("Attendance", .teal, weights.attendance)
         ]
 
         return LazyVGrid(columns: [
@@ -171,14 +169,9 @@ struct GradeWeightsConfigView: View {
                 color: .green
             )
             weightSlider(
-                category: .midterm,
-                value: $weights.midterm,
-                color: .purple
-            )
-            weightSlider(
-                category: .finalExam,
-                value: $weights.finalExam,
-                color: .pink
+                category: .attendance,
+                value: $weights.attendance,
+                color: .teal
             )
         }
         .padding(16)
@@ -277,6 +270,8 @@ struct GradeWeightsConfigView: View {
                 hapticTrigger.toggle()
                 guard isValid else { return }
                 gradeService.setWeights(weights, for: course.id)
+                // Notify the view model so weighted GPA recalculates immediately
+                viewModel.invalidateGradeCalculations()
                 isSaved = true
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                     isSaved = false

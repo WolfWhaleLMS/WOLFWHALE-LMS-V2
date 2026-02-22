@@ -44,8 +44,16 @@ struct EnhancedCourseCreationView: View {
         Theme.courseColor(selectedColor)
     }
 
+    /// Live validation result for the course title using InputValidator.
+    private var courseTitleValidation: (valid: Bool, message: String) {
+        let trimmed = courseTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Don't show an error when the field is still empty (user hasn't typed yet)
+        if trimmed.isEmpty { return (false, "") }
+        return InputValidator.validateCourseName(trimmed)
+    }
+
     private var isValid: Bool {
-        !courseTitle.trimmingCharacters(in: .whitespaces).isEmpty
+        courseTitleValidation.valid
     }
 
     // MARK: - Body
@@ -147,6 +155,12 @@ struct EnhancedCourseCreationView: View {
                 TextField("e.g. Introduction to Biology", text: $courseTitle)
                     .textFieldStyle(.roundedBorder)
                     .accessibilityLabel("Course title")
+                if !courseTitleValidation.valid && !courseTitleValidation.message.isEmpty {
+                    Text(courseTitleValidation.message)
+                        .font(.caption2)
+                        .foregroundStyle(.red)
+                        .transition(.opacity)
+                }
             }
 
             VStack(alignment: .leading, spacing: 8) {
@@ -393,6 +407,9 @@ struct EnhancedCourseCreationView: View {
                 try? await Task.sleep(for: .seconds(2))
                 withAnimation { showSuccess = false }
                 dismiss()
+            } catch let validationError as ValidationError {
+                errorMessage = validationError.localizedDescription
+                isCreating = false
             } catch {
                 errorMessage = "Failed to create course. Please try again."
                 isCreating = false

@@ -89,6 +89,7 @@ struct StudentDashboardView: View {
                                 .accessibilityLabel("Warning: \(dataError)")
                             }
                             activitySection
+                            xpCard
                             statsRow
                             FishTankView()
                             campusLifeSection
@@ -140,6 +141,84 @@ struct StudentDashboardView: View {
                 WidgetGalleryView(viewModel: viewModel)
             }
         }
+    }
+
+
+    // MARK: - XP Card
+
+    private var xpCard: some View {
+        NavigationLink {
+            XPProfileView(viewModel: viewModel)
+        } label: {
+            HStack(spacing: 14) {
+                // Mini XP ring
+                ZStack {
+                    Circle()
+                        .stroke(Color.indigo.opacity(0.15), lineWidth: 6)
+                    Circle()
+                        .trim(from: 0, to: viewModel.xpProgressInLevel)
+                        .stroke(
+                            LinearGradient(
+                                colors: [.indigo, .purple],
+                                startPoint: .leading,
+                                endPoint: .trailing
+                            ),
+                            style: StrokeStyle(lineWidth: 6, lineCap: .round)
+                        )
+                        .rotationEffect(.degrees(-90))
+
+                    Text("Lv.\(viewModel.currentLevel)")
+                        .font(.system(size: 11, weight: .bold, design: .rounded))
+                        .foregroundStyle(.indigo)
+                }
+                .frame(width: 48, height: 48)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack(spacing: 6) {
+                        Text("\(viewModel.currentXP) XP")
+                            .font(.headline.bold())
+                            .foregroundStyle(Color(.label))
+                        Text(viewModel.levelTierName)
+                            .font(.caption2.bold())
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(.indigo, in: Capsule())
+                    }
+                    Text("\(viewModel.xpToNextLevel) XP to next level")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                // Streak mini
+                if viewModel.currentStreak > 0 {
+                    HStack(spacing: 4) {
+                        Image(systemName: "flame.fill")
+                            .font(.subheadline)
+                            .foregroundStyle(.orange)
+                        Text("\(viewModel.currentStreak)")
+                            .font(.subheadline.bold())
+                            .foregroundStyle(Color(.label))
+                    }
+                }
+
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(14)
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .strokeBorder(.indigo.opacity(0.3), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("XP Profile: Level \(viewModel.currentLevel), \(viewModel.currentXP) XP, \(viewModel.currentStreak) day streak")
+        .accessibilityHint("Double tap to view your XP profile and badges")
     }
 
     private var activitySection: some View {

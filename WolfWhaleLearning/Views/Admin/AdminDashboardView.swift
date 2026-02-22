@@ -3,6 +3,10 @@ import SwiftUI
 struct AdminDashboardView: View {
     let viewModel: AppViewModel
     @State private var refreshHapticTrigger = false
+    @State private var showBulkImport = false
+    @State private var showSchoolConfig = false
+    @State private var showAuditLog = false
+    @State private var hapticTrigger = false
 
     private var metrics: SchoolMetrics {
         viewModel.schoolMetrics ?? SchoolMetrics(totalStudents: 0, totalTeachers: 0, totalCourses: 0, averageAttendance: 0, averageGPA: 0, activeUsers: 0)
@@ -52,6 +56,7 @@ struct AdminDashboardView: View {
                                 .accessibilityLabel("Warning: \(dataError)")
                             }
                             metricsGrid
+                            quickActionsSection
                             attendanceCard
                             recentSection
                         }
@@ -67,6 +72,15 @@ struct AdminDashboardView: View {
                 await viewModel.loadData()
             }
             .sensoryFeedback(.impact(weight: .medium), trigger: refreshHapticTrigger)
+            .sheet(isPresented: $showBulkImport) {
+                BulkImportView(viewModel: viewModel)
+            }
+            .sheet(isPresented: $showSchoolConfig) {
+                SchoolConfigView(viewModel: viewModel)
+            }
+            .sheet(isPresented: $showAuditLog) {
+                AuditLogView(viewModel: viewModel)
+            }
         }
     }
 
@@ -79,6 +93,121 @@ struct AdminDashboardView: View {
             metricCard(icon: "checkmark.circle.fill", value: "\(Int(metrics.averageAttendance * 100))%", label: "Attendance", color: .green)
             metricCard(icon: "chart.bar.fill", value: String(format: "%.1f", metrics.averageGPA), label: "Avg GPA", color: .orange)
             metricCard(icon: "person.wave.2.fill", value: "\(metrics.activeUsers)", label: "Active", color: .teal)
+        }
+    }
+
+    private var quickActionsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Quick Actions")
+                .font(.headline)
+
+            HStack(spacing: 12) {
+                Button {
+                    hapticTrigger.toggle()
+                    showBulkImport = true
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "person.3.sequence.fill")
+                            .font(.title3)
+                            .foregroundStyle(.blue)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Import Users")
+                                .font(.subheadline.bold())
+                                .foregroundStyle(Color(.label))
+                            Text("CSV roster upload")
+                                .font(.caption2)
+                                .foregroundStyle(Color(.secondaryLabel))
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(Color(.tertiaryLabel))
+                    }
+                    .padding(14)
+                    .background(Color(.secondarySystemGroupedBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .strokeBorder(Color.blue.opacity(0.2), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .accessibilityLabel("Import Users")
+                .accessibilityHint("Opens the bulk CSV user import screen")
+            }
+
+            HStack(spacing: 12) {
+                Button {
+                    hapticTrigger.toggle()
+                    showSchoolConfig = true
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "gearshape.2.fill")
+                            .font(.title3)
+                            .foregroundStyle(.purple)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("School Settings")
+                                .font(.subheadline.bold())
+                                .foregroundStyle(Color(.label))
+                            Text("Grading, semesters, weights")
+                                .font(.caption2)
+                                .foregroundStyle(Color(.secondaryLabel))
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(Color(.tertiaryLabel))
+                    }
+                    .padding(14)
+                    .background(Color(.secondarySystemGroupedBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .strokeBorder(Color.purple.opacity(0.2), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .accessibilityLabel("School Settings")
+                .accessibilityHint("Opens school configuration for grading scale, semester dates, and grade weights")
+            }
+
+            HStack(spacing: 12) {
+                Button {
+                    hapticTrigger.toggle()
+                    showAuditLog = true
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "doc.text.magnifyingglass")
+                            .font(.title3)
+                            .foregroundStyle(.indigo)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Audit Log")
+                                .font(.subheadline.bold())
+                                .foregroundStyle(Color(.label))
+                            Text("FERPA/GDPR compliance trail")
+                                .font(.caption2)
+                                .foregroundStyle(Color(.secondaryLabel))
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(Color(.tertiaryLabel))
+                    }
+                    .padding(14)
+                    .background(Color(.secondarySystemGroupedBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .strokeBorder(Color.indigo.opacity(0.2), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .accessibilityLabel("Audit Log")
+                .accessibilityHint("Opens the FERPA and GDPR compliance audit log viewer")
+            }
         }
     }
 

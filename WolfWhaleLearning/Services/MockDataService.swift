@@ -72,12 +72,18 @@ struct MockDataService {
                 AssignmentGrade(id: UUID(), title: "Homework 2: Systems of Equations", score: 92, maxScore: 100, date: Date().addingTimeInterval(-86400 * 14), type: "Homework"),
                 AssignmentGrade(id: UUID(), title: "Linear Equations Worksheet", score: 44, maxScore: 50, date: Date().addingTimeInterval(-86400 * 5), type: "Homework"),
                 AssignmentGrade(id: UUID(), title: "Midterm Exam", score: 92, maxScore: 100, date: Date().addingTimeInterval(-86400 * 3), type: "Exam"),
+                AssignmentGrade(id: UUID(), title: "Class Participation: Week 1-4", score: 90, maxScore: 100, date: Date().addingTimeInterval(-86400 * 7), type: "Participation"),
+                AssignmentGrade(id: UUID(), title: "Attendance: January", score: 18, maxScore: 20, date: Date().addingTimeInterval(-86400 * 15), type: "Attendance"),
+                AssignmentGrade(id: UUID(), title: "Attendance: February", score: 19, maxScore: 20, date: Date().addingTimeInterval(-86400 * 2), type: "Attendance"),
             ]),
             GradeEntry(id: UUID(), courseId: UUID(), courseName: "AP Biology", courseIcon: "leaf.fill", courseColor: "green", letterGrade: "B+", numericGrade: 87.2, assignmentGrades: [
                 AssignmentGrade(id: UUID(), title: "Lab Report 1: Microscopy", score: 85, maxScore: 100, date: Date().addingTimeInterval(-86400 * 25), type: "Lab"),
                 AssignmentGrade(id: UUID(), title: "Quiz: Cell Structures", score: 82, maxScore: 100, date: Date().addingTimeInterval(-86400 * 18), type: "Quiz"),
                 AssignmentGrade(id: UUID(), title: "Cell Organelle Diagram", score: 71.25, maxScore: 75, date: Date().addingTimeInterval(-86400 * 3), type: "Homework"),
                 AssignmentGrade(id: UUID(), title: "Chapter Test: Cells", score: 89, maxScore: 100, date: Date().addingTimeInterval(-86400 * 5), type: "Exam"),
+                AssignmentGrade(id: UUID(), title: "Lab Participation", score: 85, maxScore: 100, date: Date().addingTimeInterval(-86400 * 10), type: "Participation"),
+                AssignmentGrade(id: UUID(), title: "Attendance: January", score: 17, maxScore: 20, date: Date().addingTimeInterval(-86400 * 15), type: "Attendance"),
+                AssignmentGrade(id: UUID(), title: "Attendance: February", score: 20, maxScore: 20, date: Date().addingTimeInterval(-86400 * 2), type: "Attendance"),
             ]),
             GradeEntry(id: UUID(), courseId: UUID(), courseName: "World History", courseIcon: "globe.americas.fill", courseColor: "orange", letterGrade: "A", numericGrade: 95.0, assignmentGrades: [
                 AssignmentGrade(id: UUID(), title: "Essay 1: Mesopotamia", score: 94, maxScore: 100, date: Date().addingTimeInterval(-86400 * 24), type: "Essay"),
@@ -85,12 +91,16 @@ struct MockDataService {
                 AssignmentGrade(id: UUID(), title: "Map Activity: Greek City-States", score: 90, maxScore: 100, date: Date().addingTimeInterval(-86400 * 10), type: "Homework"),
                 AssignmentGrade(id: UUID(), title: "Renaissance Essay", score: 92, maxScore: 100, date: Date().addingTimeInterval(-86400 * 8), type: "Essay"),
                 AssignmentGrade(id: UUID(), title: "Quiz: Roman Republic", score: 96, maxScore: 100, date: Date().addingTimeInterval(-86400 * 4), type: "Quiz"),
+                AssignmentGrade(id: UUID(), title: "Discussion Participation", score: 95, maxScore: 100, date: Date().addingTimeInterval(-86400 * 6), type: "Participation"),
+                AssignmentGrade(id: UUID(), title: "Attendance: January-February", score: 38, maxScore: 40, date: Date().addingTimeInterval(-86400 * 2), type: "Attendance"),
             ]),
             GradeEntry(id: UUID(), courseId: UUID(), courseName: "English Literature", courseIcon: "text.book.closed.fill", courseColor: "purple", letterGrade: "A-", numericGrade: 90.8, assignmentGrades: [
                 AssignmentGrade(id: UUID(), title: "Poetry Analysis: Romantic Era", score: 91, maxScore: 100, date: Date().addingTimeInterval(-86400 * 20), type: "Essay"),
                 AssignmentGrade(id: UUID(), title: "Quiz: Literary Devices", score: 87, maxScore: 100, date: Date().addingTimeInterval(-86400 * 13), type: "Quiz"),
                 AssignmentGrade(id: UUID(), title: "Hamlet Discussion Response", score: 94, maxScore: 100, date: Date().addingTimeInterval(-86400 * 8), type: "Homework"),
                 AssignmentGrade(id: UUID(), title: "Midterm: Poetry & Drama", score: 91, maxScore: 100, date: Date().addingTimeInterval(-86400 * 4), type: "Exam"),
+                AssignmentGrade(id: UUID(), title: "Seminar Participation", score: 92, maxScore: 100, date: Date().addingTimeInterval(-86400 * 6), type: "Participation"),
+                AssignmentGrade(id: UUID(), title: "Attendance: January-February", score: 36, maxScore: 40, date: Date().addingTimeInterval(-86400 * 2), type: "Attendance"),
             ]),
         ]
     }

@@ -5,7 +5,6 @@ struct AssignmentsView: View {
     @State private var selectedFilter = 0
     @State private var showSubmitSheet = false
     @State private var selectedAssignment: Assignment?
-    @State private var submissionText = ""
     @State private var hapticTrigger = false
 
     private var filtered: [Assignment] {
@@ -163,46 +162,6 @@ struct AssignmentsView: View {
     }
 
     private func submitSheet(_ assignment: Assignment) -> some View {
-        NavigationStack {
-            VStack(spacing: 16) {
-                Text(assignment.title)
-                    .font(.headline)
-                Text(assignment.instructions)
-                    .font(.body)
-                    .foregroundStyle(.secondary)
-
-                TextEditor(text: $submissionText)
-                    .frame(minHeight: 150)
-                    .padding(8)
-                    .background(Color(.tertiarySystemFill), in: .rect(cornerRadius: 10))
-
-                Spacer()
-            }
-            .padding()
-            .navigationTitle("Submit Assignment")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") {
-                        hapticTrigger.toggle()
-                        selectedAssignment = nil
-                        submissionText = ""
-                    }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
-                }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button("Submit") {
-                        hapticTrigger.toggle()
-                        viewModel.submitAssignment(assignment, text: submissionText)
-                        selectedAssignment = nil
-                        submissionText = ""
-                    }
-                    .disabled(submissionText.isEmpty)
-                    .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
-                }
-            }
-        }
-        .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.visible)
+        SubmitAssignmentView(assignment: assignment, viewModel: viewModel)
     }
 }

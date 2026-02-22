@@ -4,6 +4,10 @@ struct ChildDetailView: View {
     let child: ChildInfo
     @Bindable var viewModel: AppViewModel
 
+    @State private var isCreatingConversation = false
+    @State private var messageTeacherError: String?
+    @State private var hapticTrigger = false
+
     // MARK: - Computed Properties
 
     private var gpaProgress: Double {
@@ -48,6 +52,11 @@ struct ChildDetailView: View {
         .refreshable {
             viewModel.refreshData()
         }
+        .alert("Error", isPresented: .constant(messageTeacherError != nil)) {
+            Button("OK") { messageTeacherError = nil }
+        } message: {
+            Text(messageTeacherError ?? "")
+        }
     }
 
     // MARK: - Child Header
@@ -77,7 +86,7 @@ struct ChildDetailView: View {
             Spacer()
         }
         .padding(16)
-        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(displayChild.name), \(displayChild.grade), \(displayChild.courses.count) courses enrolled")
     }
@@ -135,7 +144,7 @@ struct ChildDetailView: View {
             .padding(.vertical, 8)
         }
         .padding(16)
-        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Academic Summary: GPA \(String(format: "%.1f", displayChild.gpa)) out of 4.0, Attendance \(Int(displayChild.attendanceRate * 100)) percent")
     }
@@ -157,7 +166,7 @@ struct ChildDetailView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 20)
-                .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
+                .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 12))
             } else {
                 ForEach(displayChild.courses) { grade in
                     courseGradeRow(grade)
@@ -208,9 +217,24 @@ struct ChildDetailView: View {
                 }
             }
             .frame(height: 6)
+
+            // Message Teacher button for this course
+            Button {
+                hapticTrigger.toggle()
+                startConversationForCourse(grade)
+            } label: {
+                Label("Message Teacher", systemImage: "message.fill")
+                    .font(.caption.bold())
+                    .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.pink)
+            .controlSize(.small)
+            .disabled(isCreatingConversation)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         }
         .padding(14)
-        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(grade.courseName): Grade \(grade.letterGrade), \(String(format: "%.0f", grade.numericGrade)) percent, \(grade.assignmentGrades.count) graded assignments")
     }
@@ -232,7 +256,7 @@ struct ChildDetailView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 20)
-                .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
+                .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 12))
             } else {
                 ForEach(displayChild.recentAssignments) { assignment in
                     assignmentRow(assignment)
@@ -277,7 +301,7 @@ struct ChildDetailView: View {
             }
         }
         .padding(12)
-        .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
+        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 12))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(assignment.title) for \(assignment.courseName), \(assignment.statusText), due \(assignment.dueDate.formatted(.dateTime.month(.abbreviated).day()))")
     }
@@ -346,9 +370,65 @@ struct ChildDetailView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 20)
-        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(title): \(subtitle)")
         .accessibilityHint("Double tap to open")
+    }
+
+    // MARK: - Message Teacher per Course
+
+    /// Find the teacher for a specific course and create or navigate to a conversation.
+    private func startConversationForCourse(_ grade: GradeEntry) {
+        isCreatingConversation = true
+        messageTeacherError = nil
+
+        // Look up the matching Course object to get the teacher name
+        let matchedCourse = viewModel.courses.first { $0.title == grade.courseName }
+        let teacherName = matchedCourse?.teacherName ?? ""
+
+        guard !teacherName.isEmpty else {
+            isCreatingConversation = false
+            messageTeacherError = "No teacher found for \(grade.courseName)."
+            return
+        }
+
+        guard let currentUser = viewModel.currentUser else {
+            isCreatingConversation = false
+            messageTeacherError = "You must be logged in to send messages."
+            return
+        }
+
+        let title = "Re: \(displayChild.name) - \(grade.courseName)"
+
+        // Check for an existing conversation
+        if viewModel.conversations.contains(where: { conversation in
+            conversation.participantNames.contains(teacherName) &&
+            conversation.title == title
+        }) {
+            isCreatingConversation = false
+            // The conversation already exists -- the user can find it in the messaging view
+            return
+        }
+
+        // Find the teacher's ProfileDTO to get their UUID
+        let teacherProfile = viewModel.allUsers.first { profile in
+            let fullName = "\(profile.firstName ?? "") \(profile.lastName ?? "")"
+            return fullName == teacherName
+        }
+
+        let teacherId = teacherProfile?.id ?? UUID()
+
+        Task {
+            let participants: [(userId: UUID, userName: String)] = [
+                (userId: currentUser.id, userName: currentUser.fullName),
+                (userId: teacherId, userName: teacherName)
+            ]
+            await viewModel.createConversation(
+                title: title,
+                participantIds: participants
+            )
+            isCreatingConversation = false
+        }
     }
 }

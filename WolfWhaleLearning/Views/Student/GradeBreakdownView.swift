@@ -333,8 +333,7 @@ struct GradeBreakdownView: View {
         case .assignment: return .blue
         case .quiz: return .orange
         case .participation: return .green
-        case .midterm: return .purple
-        case .finalExam: return .pink
+        case .attendance: return .teal
         }
     }
 

@@ -11,6 +11,11 @@ struct GradeSubmissionView: View {
     @State private var showSuccess = false
     @State private var errorMessage: String?
     @State private var hapticTrigger = false
+    @State private var fileService = FileManagerService()
+    @State private var previewFile: FileItem?
+    @State private var previewData: Data?
+    @State private var showFilePreview = false
+    @State private var isLoadingFile = false
 
     @Environment(\.dismiss) private var dismiss
 
@@ -43,11 +48,19 @@ struct GradeSubmissionView: View {
         return score >= 0 && score <= Double(assignment.points)
     }
 
+    /// Attachment URLs extracted from the submission text.
+    private var attachmentURLs: [String] {
+        Assignment.extractAttachmentURLs(from: assignment.submission)
+    }
+
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
                 assignmentHeader
                 submissionSection
+                if !attachmentURLs.isEmpty {
+                    attachedFilesSection
+                }
                 gradingSection
                 feedbackSection
                 saveButton
@@ -61,6 +74,15 @@ struct GradeSubmissionView: View {
         .overlay {
             if showSuccess {
                 successOverlay
+            }
+        }
+        .sheet(isPresented: $showFilePreview) {
+            if let file = previewFile {
+                FilePreviewSheet(file: file, fileData: previewData) {
+                    showFilePreview = false
+                    previewFile = nil
+                    previewData = nil
+                }
             }
         }
     }
@@ -117,17 +139,19 @@ struct GradeSubmissionView: View {
     // MARK: - Submission Section
 
     private var submissionSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        let cleanedText = Assignment.cleanSubmissionText(assignment.submission)
+
+        return VStack(alignment: .leading, spacing: 10) {
             Label("Student Submission", systemImage: "person.text.rectangle")
                 .font(.headline)
 
-            if let submission = assignment.submission, !submission.isEmpty {
-                Text(submission)
+            if let text = cleanedText, !text.isEmpty {
+                Text(text)
                     .font(.body)
                     .padding(12)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .background(Color(.tertiarySystemFill), in: .rect(cornerRadius: 12))
-            } else {
+            } else if attachmentURLs.isEmpty {
                 HStack {
                     Image(systemName: "exclamationmark.triangle")
                         .foregroundStyle(.orange)
@@ -141,6 +165,120 @@ struct GradeSubmissionView: View {
         }
         .padding(14)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+    }
+
+    // MARK: - Attached Files Section
+
+    private var attachedFilesSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label("Attached Files (\(attachmentURLs.count))", systemImage: "paperclip")
+                .font(.headline)
+
+            ForEach(attachmentURLs, id: \.self) { urlString in
+                attachmentFileRow(urlString: urlString)
+            }
+        }
+        .padding(14)
+        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+    }
+
+    private func attachmentFileRow(urlString: String) -> some View {
+        let fileName = Self.fileNameFromURL(urlString)
+        let ext = (fileName as NSString).pathExtension.lowercased()
+        let icon = Self.iconForExtension(ext)
+        let color = Self.colorForExtension(ext)
+
+        return Button {
+            hapticTrigger.toggle()
+            openFilePreview(urlString: urlString, fileName: fileName, ext: ext)
+        } label: {
+            HStack(spacing: 10) {
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(color.opacity(0.15))
+                    .frame(width: 36, height: 36)
+                    .overlay {
+                        Image(systemName: icon)
+                            .foregroundStyle(color)
+                    }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(fileName)
+                        .font(.subheadline)
+                        .foregroundStyle(Color(.label))
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                    Text(ext.uppercased())
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                if isLoadingFile {
+                    ProgressView()
+                        .controlSize(.small)
+                } else {
+                    Image(systemName: "eye.circle.fill")
+                        .font(.title3)
+                        .foregroundStyle(.pink)
+                }
+            }
+            .padding(10)
+            .background(Color(.tertiarySystemFill), in: .rect(cornerRadius: 10))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func openFilePreview(urlString: String, fileName: String, ext: String) {
+        isLoadingFile = true
+        let nameNoExt = (fileName as NSString).deletingPathExtension
+
+        Task {
+            let data = await fileService.downloadFile(url: urlString)
+            isLoadingFile = false
+
+            previewFile = FileItem(
+                id: UUID(),
+                fileName: nameNoExt.isEmpty ? "File" : nameNoExt,
+                fileExtension: ext.isEmpty ? "bin" : ext,
+                fileSize: Int64(data?.count ?? 0),
+                uploadDate: Date(),
+                courseId: nil,
+                courseName: nil,
+                assignmentId: assignment.id,
+                assignmentName: assignment.title,
+                storageURL: urlString,
+                uploaderId: assignment.studentId ?? UUID()
+            )
+            previewData = data
+            showFilePreview = true
+        }
+    }
+
+    private static func fileNameFromURL(_ urlString: String) -> String {
+        guard let url = URL(string: urlString) else { return "Unknown" }
+        let name = url.lastPathComponent
+        return name.removingPercentEncoding ?? name
+    }
+
+    private static func iconForExtension(_ ext: String) -> String {
+        switch ext {
+        case "pdf": return "doc.richtext.fill"
+        case "jpg", "jpeg", "png", "heic", "gif", "webp": return "photo.fill"
+        case "doc", "docx": return "doc.fill"
+        case "txt", "md", "rtf": return "doc.text.fill"
+        default: return "doc.badge.ellipsis"
+        }
+    }
+
+    private static func colorForExtension(_ ext: String) -> Color {
+        switch ext {
+        case "pdf": return .red
+        case "jpg", "jpeg", "png", "heic", "gif", "webp": return .blue
+        case "doc", "docx": return .indigo
+        case "txt", "md", "rtf": return .purple
+        default: return .gray
+        }
     }
 
     // MARK: - Grading Section

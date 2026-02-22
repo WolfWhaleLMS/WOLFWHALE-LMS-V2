@@ -231,7 +231,8 @@ struct DataService: Sendable {
                         duration: 15,
                         isCompleted: completedLessonIds.contains(l.id),
                         type: LessonType(rawValue: l.type ?? "Reading") ?? .reading,
-                        xpReward: 25
+                        xpReward: 25,
+                        videoURL: l.videoUrl
                     )
                 }
                 modules.append(Module(
@@ -315,7 +316,8 @@ struct DataService: Sendable {
                     duration: 15,
                     isCompleted: completedLessonIds.contains(l.id),
                     type: LessonType(rawValue: l.type ?? "Reading") ?? .reading,
-                    xpReward: 25
+                    xpReward: 25,
+                    videoURL: l.videoUrl
                 )
             }
             modules.append(Module(
@@ -408,6 +410,7 @@ struct DataService: Sendable {
 
             return assignmentDTOs.map { dto in
                 let sub = submissions[dto.id]
+                let urls = Assignment.extractAttachmentURLs(from: sub?.submissionText)
                 return Assignment(
                     id: dto.id,
                     title: dto.title,
@@ -421,6 +424,7 @@ struct DataService: Sendable {
                     grade: nil,
                     feedback: nil,
                     xpReward: 50,
+                    attachmentURLs: urls.isEmpty ? nil : urls,
                     studentId: nil,
                     studentName: nil
                 )
@@ -499,6 +503,7 @@ struct DataService: Sendable {
                     for sub in subs {
                         let gradeKey = "\(dto.id.uuidString)-\(sub.studentId.uuidString)"
                         let gradeDTO = gradeLookup[gradeKey]
+                        let urls = Assignment.extractAttachmentURLs(from: sub.submissionText)
                         results.append(Assignment(
                             id: dto.id,
                             title: dto.title,
@@ -512,6 +517,7 @@ struct DataService: Sendable {
                             grade: gradeDTO?.percentage,
                             feedback: gradeDTO?.feedback,
                             xpReward: 50,
+                            attachmentURLs: urls.isEmpty ? nil : urls,
                             studentId: sub.studentId,
                             studentName: studentNames[sub.studentId] ?? "Unknown Student"
                         ))
@@ -1974,6 +1980,7 @@ struct DataService: Sendable {
 
             return assignmentDTOs.map { dto in
                 let sub = submissions[dto.id]
+                let urls = Assignment.extractAttachmentURLs(from: sub?.submissionText)
                 return Assignment(
                     id: dto.id,
                     title: dto.title,
@@ -1987,6 +1994,7 @@ struct DataService: Sendable {
                     grade: nil,
                     feedback: nil,
                     xpReward: 50,
+                    attachmentURLs: urls.isEmpty ? nil : urls,
                     studentId: nil,
                     studentName: nil
                 )

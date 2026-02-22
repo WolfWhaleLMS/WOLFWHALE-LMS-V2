@@ -39,8 +39,39 @@ nonisolated struct Assignment: Identifiable, Hashable, Sendable, Codable {
     var grade: Double?              // from grades table (GradeDTO.pointsEarned or percentage)
     var feedback: String?           // from grades table
     var xpReward: Int               // app logic, not directly in assignments table
+    var attachmentURLs: [String]? = nil  // file URLs from submission [Attachments] section
     var studentId: UUID? = nil      // from submissions, for teacher view
     var studentName: String? = nil  // resolved from student_id -> profiles
+
+    /// Extracts attachment URLs from a submission text that uses the `[Attachments]` convention.
+    static func extractAttachmentURLs(from text: String?) -> [String] {
+        guard let text, text.contains("[Attachments]") else { return [] }
+        let lines = text.components(separatedBy: "\n")
+        guard let startIdx = lines.firstIndex(where: { $0.contains("[Attachments]") }) else { return [] }
+        return lines[(startIdx + 1)...].compactMap { line in
+            let trimmed = line.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmed.hasPrefix("http://") || trimmed.hasPrefix("https://") {
+                return trimmed
+            }
+            return nil
+        }
+    }
+
+    /// Returns the submission text with the `[Attachments]` section stripped out.
+    static func cleanSubmissionText(_ text: String?) -> String? {
+        guard let text else { return nil }
+        if let range = text.range(of: "\n\n[Attachments]") {
+            let cleaned = String(text[text.startIndex..<range.lowerBound])
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            return cleaned.isEmpty ? nil : cleaned
+        }
+        if let range = text.range(of: "[Attachments]") {
+            let cleaned = String(text[text.startIndex..<range.lowerBound])
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            return cleaned.isEmpty ? nil : cleaned
+        }
+        return text
+    }
 
     var isOverdue: Bool {
         !isSubmitted && dueDate < Date()

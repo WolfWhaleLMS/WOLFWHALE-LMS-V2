@@ -6,20 +6,18 @@ nonisolated struct GradeWeights: Codable, Hashable, Sendable {
     var assignments: Double
     var quizzes: Double
     var participation: Double
-    var midterm: Double
-    var finalExam: Double
+    var attendance: Double
 
     static let `default` = GradeWeights(
         assignments: 0.40,
         quizzes: 0.30,
-        participation: 0.10,
-        midterm: 0.10,
-        finalExam: 0.10
+        participation: 0.20,
+        attendance: 0.10
     )
 
     /// All weights must sum to 1.0 (within floating-point tolerance).
     var isValid: Bool {
-        let sum = assignments + quizzes + participation + midterm + finalExam
+        let sum = assignments + quizzes + participation + attendance
         return abs(sum - 1.0) < 0.001
     }
 
@@ -29,8 +27,7 @@ nonisolated struct GradeWeights: Codable, Hashable, Sendable {
         case .assignment: return assignments
         case .quiz: return quizzes
         case .participation: return participation
-        case .midterm: return midterm
-        case .finalExam: return finalExam
+        case .attendance: return attendance
         }
     }
 
@@ -41,8 +38,7 @@ nonisolated struct GradeWeights: Codable, Hashable, Sendable {
         case .assignment: copy.assignments = value
         case .quiz: copy.quizzes = value
         case .participation: copy.participation = value
-        case .midterm: copy.midterm = value
-        case .finalExam: copy.finalExam = value
+        case .attendance: copy.attendance = value
         }
         return copy
     }
@@ -54,16 +50,14 @@ nonisolated enum GradeCategory: String, Codable, CaseIterable, Sendable {
     case assignment
     case quiz
     case participation
-    case midterm
-    case finalExam
+    case attendance
 
     var displayName: String {
         switch self {
         case .assignment: return "Assignments"
         case .quiz: return "Quizzes"
         case .participation: return "Participation"
-        case .midterm: return "Midterm"
-        case .finalExam: return "Final Exam"
+        case .attendance: return "Attendance"
         }
     }
 
@@ -72,8 +66,7 @@ nonisolated enum GradeCategory: String, Codable, CaseIterable, Sendable {
         case .assignment: return "doc.text.fill"
         case .quiz: return "questionmark.circle.fill"
         case .participation: return "hand.raised.fill"
-        case .midterm: return "clock.badge.checkmark.fill"
-        case .finalExam: return "checkmark.seal.fill"
+        case .attendance: return "checkmark.circle.fill"
         }
     }
 }

@@ -213,9 +213,9 @@ final class GradeCalculationService {
     func categorize(_ type: String) -> GradeCategory {
         let lowered = type.lowercased()
         if lowered.contains("quiz") { return .quiz }
-        if lowered.contains("participation") || lowered.contains("attend") { return .participation }
-        if lowered.contains("midterm") || lowered.contains("mid-term") { return .midterm }
-        if lowered.contains("final") { return .finalExam }
+        if lowered.contains("attendance") || lowered.contains("attend") { return .attendance }
+        if lowered.contains("participation") { return .participation }
+        // Midterms, finals, exams, labs, essays, homework all count as assignments
         return .assignment
     }
 }

@@ -25,6 +25,9 @@ nonisolated enum UserDefaultsKeys {
     static let hydrationGlasses = "wolfwhale_hydration_glasses"
     static let hydrationDate = "wolfwhale_hydration_date"
 
+    // MARK: - Audit Log (Offline Queue)
+    static let auditLogOfflineQueue = "wolfwhale_audit_log_offline_queue"
+
     // MARK: - Widgets (App Group)
     static let widgetAppGroup = "group.com.wolfwhale.lms"
 }

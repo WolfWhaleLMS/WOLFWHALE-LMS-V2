@@ -38,6 +38,7 @@ nonisolated struct Lesson: Identifiable, Hashable, Sendable, Codable {
     var isCompleted: Bool
     var type: LessonType
     var xpReward: Int
+    var videoURL: String?
 }
 
 nonisolated enum LessonType: String, Sendable, Codable {

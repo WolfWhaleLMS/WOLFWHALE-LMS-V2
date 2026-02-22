@@ -79,6 +79,64 @@ nonisolated struct ChildInfo: Identifiable, Hashable, Sendable, Codable {
     var recentAssignments: [Assignment]
 }
 
+// MARK: - Parent Alerts
+
+nonisolated enum ParentAlertType: String, Sendable, Codable, CaseIterable {
+    case lowGrade = "Low Grade"
+    case absence = "Absence"
+    case upcomingDueDate = "Upcoming Due Date"
+
+    var iconName: String {
+        switch self {
+        case .lowGrade: "exclamationmark.triangle.fill"
+        case .absence: "xmark.circle.fill"
+        case .upcomingDueDate: "calendar.badge.exclamationmark"
+        }
+    }
+
+    var colorName: String {
+        switch self {
+        case .lowGrade: "red"
+        case .absence: "orange"
+        case .upcomingDueDate: "blue"
+        }
+    }
+}
+
+nonisolated struct ParentAlert: Identifiable, Hashable, Sendable, Codable {
+    let id: UUID
+    var type: ParentAlertType
+    var childId: UUID
+    var childName: String
+    var title: String
+    var message: String
+    var courseName: String
+    var date: Date
+    var isRead: Bool
+
+    init(
+        id: UUID = UUID(),
+        type: ParentAlertType,
+        childId: UUID,
+        childName: String,
+        title: String,
+        message: String,
+        courseName: String,
+        date: Date = Date(),
+        isRead: Bool = false
+    ) {
+        self.id = id
+        self.type = type
+        self.childId = childId
+        self.childName = childName
+        self.title = title
+        self.message = message
+        self.courseName = courseName
+        self.date = date
+        self.isRead = isRead
+    }
+}
+
 nonisolated struct SchoolMetrics: Sendable, Codable {
     var totalStudents: Int
     var totalTeachers: Int

@@ -14,6 +14,8 @@ struct SubmissionReviewView: View {
     @State private var previewData: Data?
     @State private var isLoadingPreview = false
     @State private var hapticTrigger = false
+    @State private var previewFileItem: FileItem?
+    @State private var showFilePreviewSheet = false
 
     // MARK: - Sort Options
 
@@ -109,6 +111,15 @@ struct SubmissionReviewView: View {
         .sheet(isPresented: $showPreviewSheet) {
             if let sub = selectedSubmission {
                 submissionDetailSheet(sub)
+            }
+        }
+        .sheet(isPresented: $showFilePreviewSheet) {
+            if let file = previewFileItem {
+                FilePreviewSheet(file: file, fileData: previewData) {
+                    showFilePreviewSheet = false
+                    previewFileItem = nil
+                    previewData = nil
+                }
             }
         }
         .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
@@ -660,15 +671,19 @@ struct SubmissionReviewView: View {
 
         Task {
             let data = await fileService.downloadFile(url: urlString)
-            previewData = data
             isLoadingPreview = false
-            selectedSubmission = nil
+
+            // Dismiss the detail sheet first
             showPreviewSheet = false
-            // Brief delay to let the current sheet dismiss before presenting the new one
-            try? await Task.sleep(for: .milliseconds(400))
             selectedSubmission = nil
-            // Show file preview as a new sheet via the parent -- for now, present inline
-            // by reusing the detail sheet with file data
+
+            // Brief delay to let the current sheet dismiss before presenting the file preview
+            try? await Task.sleep(for: .milliseconds(500))
+
+            // Present file preview sheet
+            previewFileItem = fileItem
+            previewData = data
+            showFilePreviewSheet = true
         }
     }
 }

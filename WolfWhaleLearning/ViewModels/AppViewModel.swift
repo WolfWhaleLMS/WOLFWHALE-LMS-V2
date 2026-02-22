@@ -1,5 +1,6 @@
 import SwiftUI
 import Supabase
+import UserNotifications
 
 @Observable
 @MainActor
@@ -51,11 +52,35 @@ class AppViewModel {
     var conversations: [Conversation] = []
     var announcements: [Announcement] = []
     var children: [ChildInfo] = []
+    var parentAlerts: [ParentAlert] = []
     var schoolMetrics: SchoolMetrics?
     var allUsers: [ProfileDTO] = []
     var dataError: String?
     var gradeError: String?
     var enrollmentError: String?
+
+    // MARK: - XP & Gamification
+    var currentXP: Int = 0
+    var currentLevel: Int = 1
+    var currentStreak: Int = 0
+    var currentCoins: Int = 0
+    var badges: [Badge] = []
+    /// Temporarily set when XP is gained; views animate this value then clear it.
+    var xpGainAmount: Int = 0
+    var showXPGain: Bool = false
+    private var xpLoaded = false
+
+    var xpProgressInLevel: Double {
+        XPLevelSystem.progressInLevel(xp: currentXP)
+    }
+
+    var xpToNextLevel: Int {
+        XPLevelSystem.xpToNextLevel(xp: currentXP)
+    }
+
+    var levelTierName: String {
+        XPLevelSystem.tierName(forLevel: currentLevel)
+    }
 
     // MARK: - Pagination State
     var coursePagination = PaginationState(pageSize: 50)
@@ -83,6 +108,31 @@ class AppViewModel {
     /// Auto-refresh interval in seconds (5 minutes).
     private let autoRefreshInterval: TimeInterval = 300
     let networkMonitor = NetworkMonitor()
+
+    // MARK: - Audit Logging (FERPA/GDPR Compliance)
+    private let auditLog = AuditLogService()
+
+    // MARK: - Grade Calculation (Weighted)
+    var gradeService = GradeCalculationService()
+
+    /// Weighted grade results for every course the student is enrolled in.
+    /// Each result includes per-category breakdowns, letter grade, and GPA points
+    /// computed using the teacher-configured weights (or defaults).
+    var courseGradeResults: [CourseGradeResult] {
+        // Build a unique set of courseIds from grade entries
+        let uniqueCourseIds = Set(grades.map(\.courseId))
+        return uniqueCourseIds.compactMap { courseId -> CourseGradeResult? in
+            let courseGrades = grades.filter { $0.courseId == courseId }
+            guard let first = courseGrades.first else { return nil }
+            let weights = gradeService.getWeights(for: courseId)
+            return gradeService.calculateCourseGrade(
+                grades: courseGrades,
+                weights: weights,
+                courseId: courseId,
+                courseName: first.courseName
+            )
+        }
+    }
 
     // MARK: - Notifications
     var notificationService = NotificationService()
@@ -210,11 +260,34 @@ class AppViewModel {
         return service
     }
 
-    /// GPA on a 4.0 scale, derived from average percentage across all graded courses.
+    /// GPA on a 4.0 scale, computed from weighted course grades.
+    /// Uses teacher-configured weights per course (defaults if none set).
     var gpa: Double {
-        guard !grades.isEmpty else { return 0 }
-        let avgPercent = grades.reduce(0) { $0 + $1.numericGrade } / Double(grades.count)
-        return avgPercent / 100.0 * 4.0
+        let results = courseGradeResults
+        guard !results.isEmpty else { return 0 }
+        return gradeService.calculateGPA(courseResults: results)
+    }
+
+    /// Overall weighted percentage across all courses (0-100).
+    var weightedAveragePercent: Double {
+        let results = courseGradeResults
+        guard !results.isEmpty else { return 0 }
+        return results.reduce(0.0) { $0 + $1.overallPercentage } / Double(results.count)
+    }
+
+    /// Overall letter grade derived from the weighted average percentage.
+    var overallLetterGrade: String {
+        gradeService.letterGrade(from: weightedAveragePercent)
+    }
+
+    /// Forces a recalculation of weighted grades (called after teacher saves new weights).
+    /// Because `courseGradeResults` is a computed property reading from `grades`,
+    /// we trigger an observation update by toggling a flag the view model publishes.
+    func invalidateGradeCalculations() {
+        // Touch the grades array to trigger @Observable recalculation
+        // This is a lightweight operation that notifies observers
+        let current = grades
+        grades = current
     }
 
     var upcomingAssignments: [Assignment] {
@@ -232,6 +305,10 @@ class AppViewModel {
 
     var pendingGradingCount: Int {
         assignments.filter { $0.isSubmitted && $0.grade == nil }.count
+    }
+
+    var unreadParentAlertCount: Int {
+        parentAlerts.filter { !$0.isRead }.count
     }
 
     var remainingUserSlots: Int {
@@ -296,6 +373,10 @@ class AppViewModel {
                 // Register device for remote push notifications
                 pushService.registerForRemoteNotifications()
                 await pushService.sendTokenToServer(userId: session.user.id)
+
+                // Audit: record successful login
+                auditLog.setUser(session.user.id)
+                await auditLog.log(AuditAction.login, entityType: AuditEntityType.user, entityId: session.user.id.uuidString)
 
                 // Clear password from memory after successful login
                 password = ""
@@ -404,6 +485,12 @@ class AppViewModel {
     }
 
     func logout() {
+        // Audit: record logout before clearing state
+        if !isDemoMode {
+            Task { await auditLog.log(AuditAction.logout, entityType: AuditEntityType.user, entityId: currentUser?.id.uuidString) }
+            Task { await auditLog.clearUser() }
+        }
+
         // 1. Cancel any pending background refresh to prevent network storms
         refreshTask?.cancel()
         refreshTask = nil
@@ -513,6 +600,7 @@ class AppViewModel {
         conversations = []
         announcements = []
         children = []
+        parentAlerts = []
         schoolMetrics = nil
         allUsers = []
         dataError = nil
@@ -648,6 +736,7 @@ class AppViewModel {
 
             case .parent:
                 children = (try? await dataService.fetchChildren(for: user.id)) ?? []
+                scheduleParentAlerts()
 
             case .admin, .superAdmin:
                 // Load school metrics and first page of users for admin dashboard
@@ -785,6 +874,62 @@ class AppViewModel {
         guard !achievementsLoaded, !isDemoMode, let user = currentUser else { return }
         achievements = (try? await dataService.fetchAchievements(for: user.id)) ?? []
         achievementsLoaded = true
+    }
+
+
+    /// Called when user opens XPProfileView. Loads XP, level, streak, and badges from Supabase.
+    func loadXPIfNeeded() async {
+        guard !xpLoaded, !isDemoMode, let user = currentUser else { return }
+
+        do {
+            let entries: [StudentXpDTO] = try await supabaseClient
+                .from("student_xp")
+                .select()
+                .eq("student_id", value: user.id.uuidString)
+                .execute()
+                .value
+
+            if let entry = entries.first {
+                currentXP = entry.totalXp ?? 0
+                currentLevel = XPLevelSystem.level(forXP: currentXP)
+                currentStreak = entry.streakDays ?? 0
+                currentCoins = entry.coins ?? 0
+            }
+        } catch {
+            #if DEBUG
+            print("[AppViewModel] Failed to load XP data: \(error)")
+            #endif
+        }
+
+        refreshBadges()
+        xpLoaded = true
+    }
+
+    /// Recomputes badge earned/progress state from current data.
+    func refreshBadges() {
+        let submittedCount = assignments.filter(\.isSubmitted).count
+        let completedQuizCount = quizzes.filter(\.isCompleted).count
+        let hasPerfectScore = grades.contains { $0.numericGrade >= 100.0 }
+        let completedLessonCount = courses.reduce(0) { $0 + $1.completedLessons }
+        let hasCourseComplete = courses.contains { $0.totalLessons > 0 && $0.completedLessons == $0.totalLessons }
+        let messageCount = conversations.reduce(0) { $0 + $1.messages.count }
+
+        var result: [Badge] = []
+
+        result.append(Badge(badgeType: .firstAssignment, isEarned: submittedCount >= 1, progress: min(Double(submittedCount), 1.0)))
+        result.append(Badge(badgeType: .quizMaster, isEarned: completedQuizCount >= 5, progress: min(Double(completedQuizCount) / 5.0, 1.0)))
+        result.append(Badge(badgeType: .perfectScore, isEarned: hasPerfectScore, progress: hasPerfectScore ? 1.0 : 0.0))
+        result.append(Badge(badgeType: .sevenDayStreak, isEarned: currentStreak >= 7, progress: min(Double(currentStreak) / 7.0, 1.0)))
+        result.append(Badge(badgeType: .courseComplete, isEarned: hasCourseComplete, progress: hasCourseComplete ? 1.0 : 0.0))
+
+        let earlyCount = assignments.filter { $0.isSubmitted && ($0.submission != nil) }.count
+        result.append(Badge(badgeType: .earlyBird, isEarned: earlyCount >= 3, progress: min(Double(earlyCount) / 3.0, 1.0)))
+        result.append(Badge(badgeType: .socialLearner, isEarned: messageCount >= 10, progress: min(Double(messageCount) / 10.0, 1.0)))
+        result.append(Badge(badgeType: .firstSteps, isEarned: completedLessonCount >= 1, progress: min(Double(completedLessonCount), 1.0)))
+        result.append(Badge(badgeType: .tenLessons, isEarned: completedLessonCount >= 10, progress: min(Double(completedLessonCount) / 10.0, 1.0)))
+        result.append(Badge(badgeType: .thirtyDayStreak, isEarned: currentStreak >= 30, progress: min(Double(currentStreak) / 30.0, 1.0)))
+
+        badges = result
     }
 
     // MARK: - Load More (Pagination)
@@ -954,6 +1099,14 @@ class AppViewModel {
         announcements = mockService.sampleAnnouncements()
         children = mockService.sampleChildren()
         schoolMetrics = mockService.sampleSchoolMetrics()
+
+        // Populate XP & gamification for demo mode
+        currentXP = 475
+        currentLevel = XPLevelSystem.level(forXP: currentXP)
+        currentStreak = currentUser?.streak ?? 5
+        currentCoins = 120
+        refreshBadges()
+
         cacheDataForSiri()
     }
 
@@ -1245,8 +1398,29 @@ class AppViewModel {
             throw UserManagementError.unauthorized
         }
 
-        let trimFirst = firstName.trimmingCharacters(in: .whitespaces)
-        let trimLast = lastName.trimmingCharacters(in: .whitespaces)
+        // Input validation
+        guard InputValidator.validateEmail(email) else {
+            dataError = "Please enter a valid email address."
+            throw ValidationError.invalidInput("Please enter a valid email address.")
+        }
+        let passwordResult = InputValidator.validatePassword(password)
+        guard passwordResult.valid else {
+            dataError = passwordResult.message
+            throw ValidationError.invalidInput(passwordResult.message)
+        }
+        let firstNameResult = InputValidator.validateName(firstName, fieldName: "First name")
+        guard firstNameResult.valid else {
+            dataError = firstNameResult.message
+            throw ValidationError.invalidInput(firstNameResult.message)
+        }
+        let lastNameResult = InputValidator.validateName(lastName, fieldName: "Last name")
+        guard lastNameResult.valid else {
+            dataError = lastNameResult.message
+            throw ValidationError.invalidInput(lastNameResult.message)
+        }
+
+        let trimFirst = InputValidator.sanitizeText(firstName)
+        let trimLast = InputValidator.sanitizeText(lastName)
 
         let result = try await supabaseClient.auth.signUp(
             email: email,
@@ -1339,6 +1513,14 @@ class AppViewModel {
         if currentUser?.userSlotsUsed ?? 0 > 0 {
             currentUser?.userSlotsUsed -= 1
         }
+
+        // Audit: record user deletion (FERPA/GDPR)
+        await auditLog.log(
+            AuditAction.delete,
+            entityType: AuditEntityType.user,
+            entityId: userId.uuidString,
+            details: ["deleted_by": admin.id.uuidString]
+        )
     }
 
     // MARK: - Teacher: Create Course
@@ -1357,12 +1539,22 @@ class AppViewModel {
         credits: Double? = nil
     ) async throws {
         guard let user = currentUser else { return }
-        let classCode = "\(title.prefix(4).uppercased())-\(Int.random(in: 1000...9999))"
+
+        // Input validation
+        let sanitizedTitle = InputValidator.sanitizeText(title)
+        let courseNameResult = InputValidator.validateCourseName(sanitizedTitle)
+        guard courseNameResult.valid else {
+            dataError = courseNameResult.message
+            throw ValidationError.invalidInput(courseNameResult.message)
+        }
+        let sanitizedDescription = InputValidator.sanitizeHTML(InputValidator.sanitizeText(description))
+
+        let classCode = "\(sanitizedTitle.prefix(4).uppercased())-\(Int.random(in: 1000...9999))"
 
         let dto = InsertCourseDTO(
             tenantId: nil,
-            name: title,
-            description: description,
+            name: sanitizedTitle,
+            description: sanitizedDescription,
             subject: subject,
             gradeLevel: gradeLevel,
             createdBy: user.id,
@@ -1394,9 +1586,17 @@ class AppViewModel {
                 .execute()
 
             courses = try await dataService.fetchCourses(for: user.id, role: user.role, schoolId: user.schoolId)
+
+            // Audit: record course creation
+            await auditLog.log(
+                AuditAction.create,
+                entityType: AuditEntityType.course,
+                entityId: createdCourse.id.uuidString,
+                details: ["title": sanitizedTitle, "created_by": user.id.uuidString]
+            )
         } else {
             let newCourse = Course(
-                id: UUID(), title: title, description: description,
+                id: UUID(), title: sanitizedTitle, description: sanitizedDescription,
                 teacherName: user.fullName, iconSystemName: iconSystemName,
                 colorName: colorName, modules: [], enrolledStudentCount: 0,
                 progress: 0, classCode: classCode
@@ -1409,6 +1609,25 @@ class AppViewModel {
     // InsertAssignmentDTO uses 'maxPoints' (via CodingKey mapped to 'max_points')
     func createAssignment(courseId: UUID, title: String, instructions: String, dueDate: Date, points: Int) async throws {
         guard let user = currentUser else { return }
+
+        // Input validation
+        let sanitizedTitle = InputValidator.sanitizeText(title)
+        let titleResult = InputValidator.validateAssignmentTitle(sanitizedTitle)
+        guard titleResult.valid else {
+            dataError = titleResult.message
+            throw ValidationError.invalidInput(titleResult.message)
+        }
+        guard InputValidator.validatePoints(points) else {
+            dataError = "Points must be between 0 and 1000."
+            throw ValidationError.invalidInput("Points must be between 0 and 1000.")
+        }
+        let dueDateResult = InputValidator.validateDueDate(dueDate)
+        guard dueDateResult.valid else {
+            dataError = dueDateResult.message
+            throw ValidationError.invalidInput(dueDateResult.message)
+        }
+        let sanitizedInstructions = InputValidator.sanitizeHTML(InputValidator.sanitizeText(instructions))
+
         let xpReward = points / 2
 
         if !isDemoMode {
@@ -1417,9 +1636,9 @@ class AppViewModel {
             let dto = InsertAssignmentDTO(
                 tenantId: nil,
                 courseId: courseId,
-                title: title,
+                title: sanitizedTitle,
                 description: nil,
-                instructions: instructions,
+                instructions: sanitizedInstructions,
                 type: nil,
                 createdBy: user.id,
                 dueDate: formatter.string(from: dueDate),
@@ -1433,11 +1652,19 @@ class AppViewModel {
             try await dataService.createAssignment(dto)
             let courseIds = courses.map(\.id)
             assignments = try await dataService.fetchAssignments(for: user.id, role: user.role, courseIds: courseIds)
+
+            // Audit: record assignment creation
+            await auditLog.log(
+                AuditAction.create,
+                entityType: AuditEntityType.assignment,
+                entityId: courseId.uuidString,
+                details: ["title": title, "course_id": courseId.uuidString, "points": "\(points)"]
+            )
         } else {
             let courseName = courses.first(where: { $0.id == courseId })?.title ?? "Unknown"
             let newAssignment = Assignment(
-                id: UUID(), title: title, courseId: courseId, courseName: courseName,
-                instructions: instructions, dueDate: dueDate, points: points,
+                id: UUID(), title: sanitizedTitle, courseId: courseId, courseName: courseName,
+                instructions: sanitizedInstructions, dueDate: dueDate, points: points,
                 isSubmitted: false, submission: nil, grade: nil, feedback: nil, xpReward: xpReward,
                 studentId: nil, studentName: nil
             )
@@ -1498,9 +1725,25 @@ class AppViewModel {
         assignments[index].isSubmitted = true
         assignments[index].submission = text
 
+        // Extract and store attachment URLs from the submission text
+        let urls = Assignment.extractAttachmentURLs(from: text)
+        if !urls.isEmpty {
+            assignments[index].attachmentURLs = urls
+        }
+
         if !isDemoMode, let user = currentUser {
             Task {
                 try? await dataService.submitAssignment(assignmentId: assignment.id, studentId: user.id, content: text)
+            }
+
+            // Audit: record assignment submission
+            Task {
+                await auditLog.log(
+                    AuditAction.create,
+                    entityType: AuditEntityType.assignment,
+                    entityId: assignment.id.uuidString,
+                    details: ["action": "submit", "student_id": user.id.uuidString, "course_id": assignment.courseId.uuidString]
+                )
             }
         }
 
@@ -1578,12 +1821,20 @@ class AppViewModel {
     }
 
     func sendMessage(in conversationId: UUID, text: String) {
+        // Input validation and sanitization
+        let messageResult = InputValidator.validateMessage(text)
+        guard messageResult.valid else {
+            dataError = messageResult.message
+            return
+        }
+        let sanitizedText = InputValidator.sanitizeHTML(InputValidator.sanitizeText(text))
+
         guard let index = conversations.firstIndex(where: { $0.id == conversationId }) else { return }
-        let message = ChatMessage(id: UUID(), senderName: currentUser?.fullName ?? "You", content: text, timestamp: Date(), isFromCurrentUser: true)
+        let message = ChatMessage(id: UUID(), senderName: currentUser?.fullName ?? "You", content: sanitizedText, timestamp: Date(), isFromCurrentUser: true)
         let previousLastMessage = conversations[index].lastMessage
         let previousLastMessageDate = conversations[index].lastMessageDate
         conversations[index].messages.append(message)
-        conversations[index].lastMessage = text
+        conversations[index].lastMessage = sanitizedText
         conversations[index].lastMessageDate = Date()
 
         if !isDemoMode, let user = currentUser {
@@ -1593,7 +1844,7 @@ class AppViewModel {
                         conversationId: conversationId,
                         senderId: user.id,
                         senderName: user.fullName,
-                        content: text
+                        content: sanitizedText
                     )
                 } catch {
                     // Rollback the optimistic message on failure
@@ -1647,10 +1898,30 @@ class AppViewModel {
         gradeError = nil
         defer { isLoading = false }
 
+        // Input validation: score must be non-negative
+        guard score >= 0 else {
+            gradeError = "Score cannot be negative."
+            throw ValidationError.invalidInput("Score cannot be negative.")
+        }
+
         guard let assignment = assignments.first(where: { $0.id == assignmentId && $0.studentId == studentId }) ??
               assignments.first(where: { $0.id == assignmentId }) else {
             gradeError = "Assignment not found"
             throw NSError(domain: "AppViewModel", code: 404, userInfo: [NSLocalizedDescriptionKey: "Assignment not found"])
+        }
+
+        // Validate that the score does not exceed the assignment's max points
+        let maxPossible = Double(assignment.points)
+        guard score <= maxPossible else {
+            gradeError = "Score cannot exceed the maximum points (\(assignment.points))."
+            throw ValidationError.invalidInput("Score cannot exceed the maximum points (\(assignment.points)).")
+        }
+
+        // Validate the resulting percentage is within grade range
+        let computedPercentage = maxPossible > 0 ? (score / maxPossible) * 100 : 0
+        guard InputValidator.validateGrade(computedPercentage) else {
+            gradeError = "Computed grade percentage is out of range (0-200)."
+            throw ValidationError.invalidInput("Computed grade percentage is out of range.")
         }
 
         // Use the studentId passed in, then fall back to the assignment's studentId, then currentUser as last resort
@@ -1679,6 +1950,20 @@ class AppViewModel {
                 feedback: feedback ?? ""
             )
             refreshData()
+
+            // Audit: record grade change (FERPA compliance — grade changes must be tracked)
+            await auditLog.log(
+                AuditAction.gradeChange,
+                entityType: AuditEntityType.grade,
+                entityId: assignmentId.uuidString,
+                details: [
+                    "student_id": resolvedStudentId.uuidString,
+                    "score": "\(score)",
+                    "max_score": "\(maxScore)",
+                    "letter_grade": letterGrade,
+                    "graded_by": currentUser?.id.uuidString ?? "unknown"
+                ]
+            )
         } catch {
             gradeError = "Failed to grade submission: \(error.localizedDescription)"
             throw error
@@ -2063,6 +2348,107 @@ class AppViewModel {
         }
     }
 
+    // MARK: - Parent Alerts & Notifications
+
+    /// Scans every linked child for low grades, absences today, and upcoming due
+    /// dates within 24 hours, then populates `parentAlerts` and fires local
+    /// notifications for each new alert.
+    func scheduleParentAlerts() {
+        guard currentUser?.role == .parent else { return }
+
+        var alerts: [ParentAlert] = []
+        let now = Date()
+        let calendar = Calendar.current
+
+        for child in children {
+            // 1. Low grades (< 70%)
+            for course in child.courses where course.numericGrade < 70 {
+                alerts.append(ParentAlert(
+                    type: .lowGrade,
+                    childId: child.id,
+                    childName: child.name,
+                    title: "Low Grade: \(course.courseName)",
+                    message: "\(child.name) has a \(String(format: "%.0f", course.numericGrade))% in \(course.courseName).",
+                    courseName: course.courseName
+                ))
+            }
+
+            // 2. Attendance alert -- flag children whose rate is at or below 90 %
+            if child.attendanceRate <= 0.90 {
+                alerts.append(ParentAlert(
+                    type: .absence,
+                    childId: child.id,
+                    childName: child.name,
+                    title: "Attendance Alert",
+                    message: "\(child.name)'s attendance rate is \(Int(child.attendanceRate * 100))%. Please contact the school if needed.",
+                    courseName: "General"
+                ))
+            }
+
+            // 3. Due dates within 24 hours
+            for assignment in child.recentAssignments {
+                guard !assignment.isSubmitted,
+                      assignment.dueDate > now,
+                      let dayAhead = calendar.date(byAdding: .hour, value: 24, to: now),
+                      assignment.dueDate <= dayAhead else { continue }
+
+                alerts.append(ParentAlert(
+                    type: .upcomingDueDate,
+                    childId: child.id,
+                    childName: child.name,
+                    title: "Due Soon: \(assignment.title)",
+                    message: "\(assignment.title) for \(assignment.courseName) is due \(assignment.dueDate.formatted(.relative(presentation: .named))).",
+                    courseName: assignment.courseName
+                ))
+            }
+        }
+
+        parentAlerts = alerts
+
+        // Schedule a local notification for each unread alert
+        Task.detached(priority: .utility) { @MainActor [weak self] in
+            guard let self else { return }
+            let center = UNUserNotificationCenter.current()
+            for alert in alerts where !alert.isRead {
+                let content = UNMutableNotificationContent()
+                content.title = alert.title
+                content.body = alert.message
+                content.sound = .default
+                content.categoryIdentifier = "PARENT_ALERT"
+                content.userInfo = [
+                    "type": alert.type.rawValue,
+                    "childId": alert.childId.uuidString,
+                    "alertId": alert.id.uuidString
+                ]
+
+                let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 2, repeats: false)
+                let identifier = "parent-alert-\(alert.id.uuidString)"
+                let request = UNNotificationRequest(identifier: identifier, content: content, trigger: trigger)
+
+                do {
+                    try await center.add(request)
+                } catch {
+                    #if DEBUG
+                    print("[AppViewModel] Failed to schedule parent alert notification: \(error)")
+                    #endif
+                }
+            }
+        }
+    }
+
+    /// Mark a single parent alert as read.
+    func markParentAlertRead(_ alertId: UUID) {
+        guard let index = parentAlerts.firstIndex(where: { $0.id == alertId }) else { return }
+        parentAlerts[index].isRead = true
+    }
+
+    /// Mark all parent alerts as read.
+    func markAllParentAlertsRead() {
+        for index in parentAlerts.indices {
+            parentAlerts[index].isRead = true
+        }
+    }
+
     // MARK: - Profile Editing
     func updateProfileDetails(firstName: String, lastName: String, avatar: String) async throws {
         guard let user = currentUser else { return }
@@ -2129,6 +2515,16 @@ class AppViewModel {
             return "Network error. Please check your connection"
         }
         return "Sign in failed. Please try again."
+    }
+}
+
+nonisolated enum ValidationError: LocalizedError, Sendable {
+    case invalidInput(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .invalidInput(let message): message
+        }
     }
 }
 

@@ -17,11 +17,37 @@ struct AddUserView: View {
 
     private enum Field { case firstName, lastName, email, password }
 
+    // MARK: - Field-Level Validation (InputValidator)
+
+    private var firstNameValidation: (valid: Bool, message: String) {
+        let trimmed = firstName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty { return (false, "") }
+        return InputValidator.validateName(trimmed, fieldName: "First name")
+    }
+
+    private var lastNameValidation: (valid: Bool, message: String) {
+        let trimmed = lastName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty { return (false, "") }
+        return InputValidator.validateName(trimmed, fieldName: "Last name")
+    }
+
+    private var emailValidation: (valid: Bool, message: String) {
+        let trimmed = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty { return (false, "") }
+        let isValid = InputValidator.validateEmail(trimmed)
+        return isValid ? (true, "") : (false, "Please enter a valid email address.")
+    }
+
+    private var passwordValidation: (valid: Bool, message: String) {
+        if password.isEmpty { return (false, "") }
+        return InputValidator.validatePassword(password)
+    }
+
     private var isFormValid: Bool {
-        !firstName.trimmingCharacters(in: .whitespaces).isEmpty &&
-        !lastName.trimmingCharacters(in: .whitespaces).isEmpty &&
-        email.range(of: #"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"#, options: .regularExpression) != nil &&
-        password.count >= 8
+        firstNameValidation.valid &&
+        lastNameValidation.valid &&
+        emailValidation.valid &&
+        passwordValidation.valid
     }
 
     var body: some View {
@@ -109,6 +135,11 @@ struct AddUserView: View {
                     .submitLabel(.next)
                     .onSubmit { focusedField = .lastName }
             }
+            if !firstNameValidation.valid && !firstNameValidation.message.isEmpty {
+                Text(firstNameValidation.message)
+                    .font(.caption2)
+                    .foregroundStyle(.red)
+            }
 
             HStack {
                 Image(systemName: "person.fill")
@@ -120,6 +151,11 @@ struct AddUserView: View {
                     .focused($focusedField, equals: .lastName)
                     .submitLabel(.next)
                     .onSubmit { focusedField = .email }
+            }
+            if !lastNameValidation.valid && !lastNameValidation.message.isEmpty {
+                Text(lastNameValidation.message)
+                    .font(.caption2)
+                    .foregroundStyle(.red)
             }
         }
     }
@@ -139,6 +175,11 @@ struct AddUserView: View {
                     .submitLabel(.next)
                     .onSubmit { focusedField = .password }
             }
+            if !emailValidation.valid && !emailValidation.message.isEmpty {
+                Text(emailValidation.message)
+                    .font(.caption2)
+                    .foregroundStyle(.red)
+            }
 
             HStack {
                 Image(systemName: "lock.fill")
@@ -149,6 +190,11 @@ struct AddUserView: View {
                     .focused($focusedField, equals: .password)
                     .submitLabel(.done)
                     .onSubmit { focusedField = nil }
+            }
+            if !passwordValidation.valid && !passwordValidation.message.isEmpty {
+                Text(passwordValidation.message)
+                    .font(.caption2)
+                    .foregroundStyle(.red)
             }
 
             if let error = errorMessage {

@@ -152,6 +152,7 @@ nonisolated struct LessonDTO: Codable, Sendable {
     let duration: Int?
     let type: String?
     let xpReward: Int?
+    let videoUrl: String?
 
     enum CodingKeys: String, CodingKey {
         case id, title, description, content, status, duration, type
@@ -164,6 +165,7 @@ nonisolated struct LessonDTO: Codable, Sendable {
         case updatedAt = "updated_at"
         case moduleId = "module_id"
         case xpReward = "xp_reward"
+        case videoUrl = "video_url"
     }
 }
 

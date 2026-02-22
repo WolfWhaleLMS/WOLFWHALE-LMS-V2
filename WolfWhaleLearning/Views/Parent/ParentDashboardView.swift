@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct ParentDashboardView: View {
-    let viewModel: AppViewModel
+    @Bindable var viewModel: AppViewModel
 
     var body: some View {
         NavigationStack {
@@ -12,7 +12,6 @@ struct ParentDashboardView: View {
                         .accessibilityLabel("Loading children data")
                 } else {
                     ScrollView {
-                        GlassEffectContainer {
                             LazyVStack(spacing: 16) {
                             if let dataError = viewModel.dataError {
                                 HStack(spacing: 10) {
@@ -40,6 +39,10 @@ struct ParentDashboardView: View {
                                 .accessibilityElement(children: .combine)
                                 .accessibilityLabel("Warning: \(dataError)")
                             }
+
+                            // Alerts section -- shown above child cards
+                            alertsSection
+
                             ForEach(viewModel.children) { child in
                                 NavigationLink {
                                     ChildDetailView(child: child, viewModel: viewModel)
@@ -49,7 +52,6 @@ struct ParentDashboardView: View {
                                 .buttonStyle(.plain)
                             }
                             announcementsSection
-                        }
                         }
                         .padding(.horizontal)
                         .padding(.bottom, 20)
@@ -63,11 +65,132 @@ struct ParentDashboardView: View {
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("My Children")
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    if viewModel.unreadParentAlertCount > 0 {
+                        Image(systemName: "bell.badge.fill")
+                            .foregroundStyle(.red)
+                            .accessibilityLabel("\(viewModel.unreadParentAlertCount) unread alerts")
+                    }
+                }
+            }
             .refreshable {
                 await viewModel.loadData()
             }
         }
     }
+
+    // MARK: - Alerts Section
+
+    private var alertsSection: some View {
+        Group {
+            if !viewModel.parentAlerts.isEmpty {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        Label("Recent Alerts", systemImage: "bell.fill")
+                            .font(.headline)
+                            .foregroundStyle(Color(.label))
+
+                        Spacer()
+
+                        if viewModel.unreadParentAlertCount > 0 {
+                            Text("\(viewModel.unreadParentAlertCount)")
+                                .font(.caption2.bold())
+                                .foregroundStyle(.white)
+                                .frame(minWidth: 22, minHeight: 22)
+                                .background(.red, in: Capsule())
+                        }
+
+                        if viewModel.parentAlerts.contains(where: { !$0.isRead }) {
+                            Button {
+                                viewModel.markAllParentAlertsRead()
+                            } label: {
+                                Text("Mark All Read")
+                                    .font(.caption.bold())
+                            }
+                            .buttonStyle(.borderless)
+                            .tint(.blue)
+                        }
+                    }
+
+                    ForEach(viewModel.parentAlerts.prefix(5)) { alert in
+                        alertRow(alert)
+                    }
+                }
+            }
+        }
+    }
+
+    private func alertRow(_ alert: ParentAlert) -> some View {
+        let alertColor: Color = {
+            switch alert.type {
+            case .lowGrade: return .red
+            case .absence: return .orange
+            case .upcomingDueDate: return .blue
+            }
+        }()
+
+        return HStack(spacing: 12) {
+            Image(systemName: alert.type.iconName)
+                .font(.title3)
+                .foregroundStyle(alertColor)
+                .frame(width: 32)
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 6) {
+                    Text(alert.title)
+                        .font(.subheadline.bold())
+                        .foregroundStyle(Color(.label))
+                        .lineLimit(1)
+                    if !alert.isRead {
+                        Circle()
+                            .fill(.red)
+                            .frame(width: 8, height: 8)
+                    }
+                }
+                Text(alert.message)
+                    .font(.caption)
+                    .foregroundStyle(Color(.secondaryLabel))
+                    .lineLimit(2)
+                HStack(spacing: 4) {
+                    Text(alert.childName)
+                        .font(.caption2.bold())
+                        .foregroundStyle(alertColor)
+                    Text(alert.date, style: .relative)
+                        .font(.caption2)
+                        .foregroundStyle(Color(.tertiaryLabel))
+                }
+            }
+
+            Spacer()
+
+            // Navigate to the child's detail
+            if let child = viewModel.children.first(where: { $0.id == alert.childId }) {
+                NavigationLink {
+                    ChildDetailView(child: child, viewModel: viewModel)
+                } label: {
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(Color(.tertiaryLabel))
+                }
+                .buttonStyle(.plain)
+            }
+        }
+        .padding(12)
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .strokeBorder(alertColor.opacity(0.25), lineWidth: 1)
+        )
+        .onTapGesture {
+            viewModel.markParentAlertRead(alert.id)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(alert.type.rawValue) alert for \(alert.childName): \(alert.message)")
+    }
+
+    // MARK: - Child Card
 
     private func childCard(_ child: ChildInfo) -> some View {
         VStack(spacing: 16) {
@@ -90,13 +213,20 @@ struct ParentDashboardView: View {
                         .foregroundStyle(Color(.secondaryLabel))
                 }
                 Spacer()
+
+                // Unread alert badge per child
+                let childAlertCount = viewModel.parentAlerts.filter { $0.childId == child.id && !$0.isRead }.count
+                if childAlertCount > 0 {
+                    Text("\(childAlertCount)")
+                        .font(.caption2.bold())
+                        .foregroundStyle(.white)
+                        .frame(minWidth: 20, minHeight: 20)
+                        .background(.red, in: Circle())
+                }
             }
 
             HStack(spacing: 12) {
                 parentStat(label: "GPA", value: String(format: "%.1f", child.gpa), color: Theme.gradeColor(child.gpa / 4.0 * 100))
-                // TODO: attendanceRate is computed from real attendance records via DataService.fetchChildren.
-                // If no attendance records exist for this child, the rate will be 0.0.
-                // In demo/mock mode, this value comes from MockDataService.sampleChildren() and may be hardcoded.
                 parentStat(label: "Attendance", value: "\(Int(child.attendanceRate * 100))%", color: child.attendanceRate > 0.9 ? .green : .orange)
                 parentStat(label: "Courses", value: "\(child.courses.count)", color: .blue)
             }
