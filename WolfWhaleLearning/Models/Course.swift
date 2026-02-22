@@ -12,6 +12,35 @@ nonisolated struct Course: Identifiable, Hashable, Sendable, Codable {
     var progress: Double
     var classCode: String
 
+    // MARK: - Prerequisites
+    /// IDs of courses that must be completed before enrolling in this course.
+    var prerequisiteIds: [UUID]
+    /// Human-readable description of prerequisites (e.g., "Algebra I required").
+    var prerequisitesDescription: String?
+
+    // MARK: - Section Management
+    /// Section number for multi-section courses (e.g., 1, 2, 3).
+    var sectionNumber: Int?
+    /// Human-readable section label (e.g., "Period 1", "Section A").
+    var sectionLabel: String?
+    /// Maximum number of students allowed in this course/section.
+    var maxCapacity: Int
+
+    /// Number of students currently enrolled (derived from enrolledStudentCount).
+    var currentEnrollment: Int {
+        enrolledStudentCount
+    }
+
+    /// Whether the course/section is at full capacity.
+    var isFull: Bool {
+        currentEnrollment >= maxCapacity
+    }
+
+    /// Remaining spots available.
+    var spotsRemaining: Int {
+        max(0, maxCapacity - currentEnrollment)
+    }
+
     var totalLessons: Int {
         modules.reduce(0) { $0 + $1.lessons.count }
     }
@@ -20,6 +49,73 @@ nonisolated struct Course: Identifiable, Hashable, Sendable, Codable {
         modules.reduce(0) { total, module in
             total + module.lessons.filter(\.isCompleted).count
         }
+    }
+
+    // MARK: - Coding Keys
+
+    enum CodingKeys: String, CodingKey {
+        case id, title, description, teacherName, iconSystemName, colorName
+        case modules, enrolledStudentCount, progress, classCode
+        case prerequisiteIds, prerequisitesDescription
+        case sectionNumber, sectionLabel, maxCapacity
+    }
+
+    // MARK: - Init
+
+    init(
+        id: UUID,
+        title: String,
+        description: String,
+        teacherName: String,
+        iconSystemName: String,
+        colorName: String,
+        modules: [Module],
+        enrolledStudentCount: Int,
+        progress: Double,
+        classCode: String,
+        prerequisiteIds: [UUID] = [],
+        prerequisitesDescription: String? = nil,
+        sectionNumber: Int? = nil,
+        sectionLabel: String? = nil,
+        maxCapacity: Int = 30
+    ) {
+        self.id = id
+        self.title = title
+        self.description = description
+        self.teacherName = teacherName
+        self.iconSystemName = iconSystemName
+        self.colorName = colorName
+        self.modules = modules
+        self.enrolledStudentCount = enrolledStudentCount
+        self.progress = progress
+        self.classCode = classCode
+        self.prerequisiteIds = prerequisiteIds
+        self.prerequisitesDescription = prerequisitesDescription
+        self.sectionNumber = sectionNumber
+        self.sectionLabel = sectionLabel
+        self.maxCapacity = maxCapacity
+    }
+
+    // MARK: - Decodable (backward-compatible with JSON missing new keys)
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        title = try container.decode(String.self, forKey: .title)
+        description = try container.decode(String.self, forKey: .description)
+        teacherName = try container.decode(String.self, forKey: .teacherName)
+        iconSystemName = try container.decode(String.self, forKey: .iconSystemName)
+        colorName = try container.decode(String.self, forKey: .colorName)
+        modules = try container.decode([Module].self, forKey: .modules)
+        enrolledStudentCount = try container.decode(Int.self, forKey: .enrolledStudentCount)
+        progress = try container.decode(Double.self, forKey: .progress)
+        classCode = try container.decode(String.self, forKey: .classCode)
+        // New fields: decode with defaults if missing
+        prerequisiteIds = try container.decodeIfPresent([UUID].self, forKey: .prerequisiteIds) ?? []
+        prerequisitesDescription = try container.decodeIfPresent(String.self, forKey: .prerequisitesDescription)
+        sectionNumber = try container.decodeIfPresent(Int.self, forKey: .sectionNumber)
+        sectionLabel = try container.decodeIfPresent(String.self, forKey: .sectionLabel)
+        maxCapacity = try container.decodeIfPresent(Int.self, forKey: .maxCapacity) ?? 30
     }
 }
 

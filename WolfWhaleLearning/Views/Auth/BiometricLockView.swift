@@ -13,6 +13,8 @@ struct BiometricLockView: View {
     @State private var passwordText = ""
     @State private var isVerifying = false
     @State private var passwordError: String?
+    @State private var passwordAttempts = 0
+    private let maxPasswordAttempts = 5
 
     private var biometricService: BiometricAuthService {
         viewModel.biometricService
@@ -164,17 +166,33 @@ struct BiometricLockView: View {
             return
         }
 
+        // Rate limit password attempts
+        guard passwordAttempts < maxPasswordAttempts else {
+            passwordError = "Too many attempts. Use biometrics or restart the app."
+            return
+        }
+
         isVerifying = true
         passwordError = nil
 
         do {
             _ = try await supabaseClient.auth.signIn(email: email, password: passwordText)
+            passwordAttempts = 0
             onPasswordFallback()
             viewModel.unlockApp()
+        } catch let error as URLError where error.code == .notConnectedToInternet || error.code == .timedOut {
+            passwordError = "No internet connection. Use biometrics to unlock."
         } catch {
-            passwordError = "Incorrect password. Please try again."
+            passwordAttempts += 1
+            let remaining = maxPasswordAttempts - passwordAttempts
+            if remaining > 0 {
+                passwordError = "Incorrect password. \(remaining) attempt\(remaining == 1 ? "" : "s") remaining."
+            } else {
+                passwordError = "Too many attempts. Use biometrics or restart the app."
+            }
         }
 
+        passwordText = ""
         isVerifying = false
     }
 

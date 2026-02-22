@@ -159,6 +159,55 @@ nonisolated struct QuizQuestion: Identifiable, Hashable, Sendable, Codable {
     }
 }
 
+// MARK: - Late Penalty Type
+
+/// Determines how late submission penalties are calculated for an assignment.
+nonisolated enum LatePenaltyType: String, Codable, CaseIterable, Sendable, Hashable {
+    case none            = "none"
+    case percentPerDay   = "percent_per_day"
+    case flatDeduction   = "flat_deduction"
+    case noCredit        = "no_credit"
+
+    var displayName: String {
+        switch self {
+        case .none:           "No Penalty"
+        case .percentPerDay:  "% Per Day Late"
+        case .flatDeduction:  "Flat Point Deduction"
+        case .noCredit:       "No Credit If Late"
+        }
+    }
+
+    var iconName: String {
+        switch self {
+        case .none:           "checkmark.shield.fill"
+        case .percentPerDay:  "percent"
+        case .flatDeduction:  "minus.circle.fill"
+        case .noCredit:       "xmark.octagon.fill"
+        }
+    }
+}
+
+// MARK: - Resubmission History Entry
+
+/// Records a previous submission attempt with its grade, for resubmission tracking.
+nonisolated struct ResubmissionHistoryEntry: Identifiable, Hashable, Sendable, Codable {
+    let id: UUID
+    var submissionText: String?
+    var grade: Double?
+    var feedback: String?
+    var submittedAt: Date
+    var gradedAt: Date?
+
+    init(id: UUID = UUID(), submissionText: String? = nil, grade: Double? = nil, feedback: String? = nil, submittedAt: Date = Date(), gradedAt: Date? = nil) {
+        self.id = id
+        self.submissionText = submissionText
+        self.grade = grade
+        self.feedback = feedback
+        self.submittedAt = submittedAt
+        self.gradedAt = gradedAt
+    }
+}
+
 /// View-facing Assignment model.
 /// DB table `assignments` has `max_points` (not `points`) and `created_by` (not `teacher_id`).
 /// The service layer bridges: `dto.maxPoints` -> `assignment.points`.
@@ -182,6 +231,25 @@ nonisolated struct Assignment: Identifiable, Hashable, Sendable, Codable {
     var rubricId: UUID? = nil        // optional rubric attached to this assignment
     var studentId: UUID? = nil      // from submissions, for teacher view
     var studentName: String? = nil  // resolved from student_id -> profiles
+
+    // MARK: - Learning Standards Alignment
+    var standardIds: [UUID] = []    // IDs of LearningStandard tagged to this assignment
+
+    // MARK: - Late Submission Penalty Fields
+    var latePenaltyType: LatePenaltyType = .none
+    var latePenaltyPerDay: Double = 0      // penalty amount per day (% or flat points depending on type)
+    var maxLateDays: Int = 7               // after this many days late, no submission accepted
+
+    // MARK: - Resubmission Fields
+    var allowResubmission: Bool = false
+    var maxResubmissions: Int = 1
+    var resubmissionCount: Int = 0
+    var resubmissionDeadline: Date? = nil
+    var resubmissionHistory: [ResubmissionHistoryEntry] = []
+
+    // MARK: - Peer Review Fields
+    var peerReviewEnabled: Bool = false
+    var peerReviewsPerSubmission: Int = 2
 
     /// Extracts attachment URLs from a submission text that uses the `[Attachments]` convention.
     static func extractAttachmentURLs(from text: String?) -> [String] {
@@ -217,14 +285,95 @@ nonisolated struct Assignment: Identifiable, Hashable, Sendable, Codable {
         !isSubmitted && dueDate < Date()
     }
 
+    // MARK: - Late Submission Computed Properties
+
+    /// Number of calendar days late based on the current date (or 0 if not overdue).
+    var daysLate: Int {
+        let now = Date()
+        guard now > dueDate else { return 0 }
+        let calendar = Calendar.current
+        let components = calendar.dateComponents([.day], from: dueDate, to: now)
+        return max(components.day ?? 0, 0)
+    }
+
+    /// Whether this assignment can still accept a late submission based on maxLateDays.
+    var canSubmitLate: Bool {
+        guard latePenaltyType != .none else { return true }
+        if latePenaltyType == .noCredit { return daysLate <= maxLateDays }
+        return daysLate <= maxLateDays
+    }
+
+    /// The calculated late penalty percentage (0-100) that should be deducted from the grade.
+    var latePenaltyPercent: Double {
+        guard daysLate > 0, latePenaltyType != .none else { return 0 }
+        switch latePenaltyType {
+        case .none:
+            return 0
+        case .percentPerDay:
+            return min(Double(daysLate) * latePenaltyPerDay, 100)
+        case .flatDeduction:
+            let maxPts = Double(points)
+            guard maxPts > 0 else { return 0 }
+            let deduction = Double(daysLate) * latePenaltyPerDay
+            return min((deduction / maxPts) * 100, 100)
+        case .noCredit:
+            return 100
+        }
+    }
+
+    /// Descriptive text for the late penalty badge (e.g., "2 days late, -20%").
+    var latePenaltyBadgeText: String? {
+        guard daysLate > 0, latePenaltyType != .none else { return nil }
+        let dayLabel = daysLate == 1 ? "day" : "days"
+        switch latePenaltyType {
+        case .none:
+            return nil
+        case .percentPerDay:
+            let penalty = Int(min(Double(daysLate) * latePenaltyPerDay, 100))
+            return "\(daysLate) \(dayLabel) late, -\(penalty)%"
+        case .flatDeduction:
+            let deduction = Int(Double(daysLate) * latePenaltyPerDay)
+            return "\(daysLate) \(dayLabel) late, -\(deduction) pts"
+        case .noCredit:
+            return "\(daysLate) \(dayLabel) late, no credit"
+        }
+    }
+
+    // MARK: - Resubmission Computed Properties
+
+    /// Whether a resubmission is currently allowed for this assignment.
+    var canResubmit: Bool {
+        guard allowResubmission else { return false }
+        guard isSubmitted, grade != nil else { return false }
+        guard resubmissionCount < maxResubmissions else { return false }
+        if let deadline = resubmissionDeadline {
+            return Date() <= deadline
+        }
+        return true
+    }
+
+    /// Remaining number of resubmissions available.
+    var remainingResubmissions: Int {
+        max(maxResubmissions - resubmissionCount, 0)
+    }
+
     var statusText: String {
         if isSubmitted {
             if let grade {
-                return "Graded: \(Int(grade))%"
+                let gradeText = "Graded: \(Int(grade))%"
+                if let lateBadge = latePenaltyBadgeText {
+                    return "\(gradeText) (\(lateBadge))"
+                }
+                return gradeText
             }
             return "Submitted"
         }
-        if isOverdue { return "Overdue" }
+        if isOverdue {
+            if let lateBadge = latePenaltyBadgeText {
+                return lateBadge
+            }
+            return "Overdue"
+        }
         return "Pending"
     }
 }

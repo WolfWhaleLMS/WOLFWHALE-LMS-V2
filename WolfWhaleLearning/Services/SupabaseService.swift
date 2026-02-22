@@ -37,20 +37,20 @@ struct DataService: Sendable {
     //
     // All three formatters are required. `parseDate` tries them in order, most-specific first.
 
-    nonisolated(unsafe) private let iso8601: ISO8601DateFormatter = {
+    private let iso8601: ISO8601DateFormatter = {
         let f = ISO8601DateFormatter()
         f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return f
     }()
 
-    nonisolated(unsafe) private let dateFormatter: DateFormatter = {
+    private let dateFormatter: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
         f.timeZone = TimeZone(identifier: "UTC")
         return f
     }()
 
-    nonisolated(unsafe) private let plainDateFormatter: DateFormatter = {
+    private let plainDateFormatter: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "yyyy-MM-dd"
         f.timeZone = TimeZone(identifier: "UTC")

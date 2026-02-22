@@ -27,7 +27,7 @@ nonisolated struct AuditLogEntry: Codable, Identifiable, Sendable {
 }
 
 /// DTO for inserting audit log entries into Supabase.
-nonisolated struct InsertAuditLogDTO: Encodable, Sendable {
+nonisolated struct InsertAuditLogDTO: Codable, Sendable {
     let userId: String?
     let action: String
     let entityType: String

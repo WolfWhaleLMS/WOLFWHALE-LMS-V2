@@ -55,7 +55,9 @@ struct ContentView: View {
                 }
                 viewModel.stopAutoRefresh()
             case .active:
-                viewModel.handleForegroundResume()
+                if !viewModel.isAppLocked {
+                    viewModel.handleForegroundResume()
+                }
             default:
                 break
             }
@@ -81,6 +83,12 @@ struct ContentView: View {
             }
         }
         .onOpenURL { url in
+            // Only process deep links when authenticated and not locked
+            guard viewModel.isAuthenticated, !viewModel.isAppLocked else {
+                // DeepLinkHandler stores as pending; will process after auth
+                DeepLinkHandler.handle(url: url, in: viewModel)
+                return
+            }
             DeepLinkHandler.handle(url: url, in: viewModel)
         }
         .onChange(of: viewModel.isAuthenticated) { _, isAuth in

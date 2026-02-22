@@ -42,6 +42,24 @@ class AppViewModel {
     var isDataLoading = false
     var loginError: String?
 
+    // MARK: - Login Rate Limiting
+    private var loginAttemptCount = 0
+    private var loginLockoutUntil: Date?
+    private let maxLoginAttempts = 5
+    var isLoginLockedOut: Bool {
+        guard let lockoutUntil = loginLockoutUntil else { return false }
+        if Date() >= lockoutUntil {
+            loginLockoutUntil = nil
+            loginAttemptCount = 0
+            return false
+        }
+        return true
+    }
+    var loginLockoutRemainingSeconds: Int {
+        guard let lockoutUntil = loginLockoutUntil else { return 0 }
+        return max(0, Int(lockoutUntil.timeIntervalSinceNow.rounded(.up)))
+    }
+
     var courses: [Course] = []
     var assignments: [Assignment] = []
     var quizzes: [Quiz] = []
@@ -132,10 +150,9 @@ class AppViewModel {
     /// Each result includes per-category breakdowns, letter grade, and GPA points
     /// computed using the teacher-configured weights (or defaults).
     var courseGradeResults: [CourseGradeResult] {
-        // Build a unique set of courseIds from grade entries
-        let uniqueCourseIds = Set(grades.map(\.courseId))
-        return uniqueCourseIds.compactMap { courseId -> CourseGradeResult? in
-            let courseGrades = grades.filter { $0.courseId == courseId }
+        // Group grades by courseId in a single pass (O(n) instead of O(n×m))
+        let grouped = Dictionary(grouping: grades, by: \.courseId)
+        return grouped.compactMap { courseId, courseGrades -> CourseGradeResult? in
             guard let first = courseGrades.first else { return nil }
             let weights = gradeService.getWeights(for: courseId)
             return gradeService.calculateCourseGrade(
@@ -375,6 +392,12 @@ class AppViewModel {
             return
         }
 
+        // Rate limiting: block login if locked out
+        if isLoginLockedOut {
+            loginError = "Too many failed attempts. Try again in \(loginLockoutRemainingSeconds)s."
+            return
+        }
+
         isLoading = true
         loginError = nil
 
@@ -395,11 +418,23 @@ class AppViewModel {
                 auditLog.setUser(session.user.id)
                 await auditLog.log(AuditAction.login, entityType: AuditEntityType.user, entityId: session.user.id.uuidString)
 
+                // Reset rate limiting on success
+                loginAttemptCount = 0
+                loginLockoutUntil = nil
+
                 // Clear password from memory after successful login
                 password = ""
             } catch {
                 loginError = mapAuthError(error)
                 password = ""
+
+                // Track failed attempts and apply exponential lockout
+                loginAttemptCount += 1
+                if loginAttemptCount >= maxLoginAttempts {
+                    let lockoutSeconds = min(30 * pow(2.0, Double(loginAttemptCount - maxLoginAttempts)), 300)
+                    loginLockoutUntil = Date().addingTimeInterval(lockoutSeconds)
+                    loginError = "Too many failed attempts. Try again in \(Int(lockoutSeconds))s."
+                }
             }
             isLoading = false
         }
@@ -1383,7 +1418,7 @@ class AppViewModel {
     /// Called when the app returns to the foreground. Refreshes data if the last
     /// fetch is stale and restarts the auto-refresh timer.
     func handleForegroundResume() {
-        guard isAuthenticated, !isDemoMode else { return }
+        guard isAuthenticated, !isDemoMode, !isAppLocked else { return }
         startAutoRefresh()
 
         // Sync the due-date reminder count from the notification center.
@@ -2908,6 +2943,8 @@ class AppViewModel {
     func unlockApp() {
         isAppLocked = false
         biometricService.isUnlocked = true
+        // Resume data refresh that was blocked while locked
+        handleForegroundResume()
     }
 
     func unlockWithBiometric() {

@@ -289,7 +289,7 @@ final class DrawingService {
     ///
     /// - Parameter scale: The rendering scale. Defaults to the main screen scale.
     /// - Returns: The rendered image, or `nil` on failure.
-    func exportAsImage(scale: CGFloat = UIScreen.main.scale) -> UIImage? {
+    @MainActor func exportAsImage(scale: CGFloat = UITraitCollection.current.displayScale) -> UIImage? {
         let bounds = currentDrawing.bounds
         guard !bounds.isEmpty else {
             error = "Nothing to export. The canvas is empty."

@@ -152,7 +152,7 @@ final class CallService: NSObject {
             try session.setCategory(
                 .playAndRecord,
                 mode: .voiceChat,
-                options: [.allowBluetooth, .defaultToSpeaker]
+                options: [.allowBluetoothHFP, .defaultToSpeaker]
             )
             try session.setActive(true, options: .notifyOthersOnDeactivation)
             configureSpeakerOutput()
@@ -232,7 +232,7 @@ final class CallService: NSObject {
         callTimer?.invalidate()
         callDuration = 0
         callTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            Task { @MainActor in
+            Task { @MainActor [weak self] in
                 self?.callDuration += 1
             }
         }

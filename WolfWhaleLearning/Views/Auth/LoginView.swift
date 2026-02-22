@@ -185,7 +185,7 @@ struct LoginView: View {
             .buttonStyle(.borderedProminent)
             .tint(.accentColor)
             .clipShape(.rect(cornerRadius: 12))
-            .disabled(viewModel.isLoading || viewModel.email.isEmpty || viewModel.password.isEmpty)
+            .disabled(viewModel.isLoading || viewModel.email.isEmpty || viewModel.password.isEmpty || viewModel.isLoginLockedOut)
             .sensoryFeedback(.impact(weight: .medium), trigger: viewModel.isAuthenticated)
             .accessibilityLabel(viewModel.isLoading ? "Signing in" : "Sign In")
             .accessibilityHint("Double tap to sign in with your email and password")

@@ -13,13 +13,13 @@ final class FileManagerService {
 
     // MARK: - Date Parsing
 
-    nonisolated(unsafe) private let iso8601: ISO8601DateFormatter = {
+    private let iso8601: ISO8601DateFormatter = {
         let f = ISO8601DateFormatter()
         f.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return f
     }()
 
-    nonisolated(unsafe) private let fallbackFormatter: DateFormatter = {
+    private let fallbackFormatter: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
         f.timeZone = TimeZone(identifier: "UTC")
