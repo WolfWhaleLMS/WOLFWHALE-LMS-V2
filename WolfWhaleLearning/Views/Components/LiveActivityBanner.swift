@@ -78,18 +78,19 @@ struct LiveActivityBanner: View {
                     .foregroundStyle(.purple)
                 Text("Start Live Session")
                     .font(.subheadline.bold())
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(Color(.label))
                 Spacer()
                 Image(systemName: "chevron.right")
                     .font(.caption)
-                    .foregroundStyle(.tertiary)
+                    .foregroundStyle(Color(.secondaryLabel))
             }
             .padding(14)
-            .background {
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .fill(.clear)
-                    .glassEffect(.regular.tint(.purple), in: RoundedRectangle(cornerRadius: 14))
-            }
+                    .strokeBorder(Color.purple.opacity(0.3), lineWidth: 1)
+            )
         }
         .buttonStyle(.plain)
         .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
