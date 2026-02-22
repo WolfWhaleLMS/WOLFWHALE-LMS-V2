@@ -417,7 +417,11 @@ struct ChildDetailView: View {
             return fullName == teacherName
         }
 
-        let teacherId = teacherProfile?.id ?? UUID()
+        guard let teacherId = teacherProfile?.id else {
+            isCreatingConversation = false
+            messageTeacherError = "Teacher information unavailable for \(grade.courseName). Please try again later."
+            return
+        }
 
         Task {
             let participants: [(userId: UUID, userName: String)] = [

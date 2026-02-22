@@ -10,6 +10,7 @@ struct TeacherDashboardView: View {
     @State private var showAttendanceReport = false
     @State private var showBulkGrading = false
     @State private var showGradeExport = false
+    @State private var showInsightsCoursePicker = false
     @State private var hapticTrigger = false
 
     var body: some View {
@@ -57,6 +58,9 @@ struct TeacherDashboardView: View {
                             }
                             overviewCards
                             enrollmentRequestsBanner
+                            conferencesBanner
+                            atRiskStudentsBanner
+                            studentInsightsLink
                             liveActivityBanner
                             quickActions
                             recentActivity
@@ -130,6 +134,228 @@ struct TeacherDashboardView: View {
             .buttonStyle(.plain)
             .accessibilityLabel("Enrollment Requests: \(viewModel.pendingEnrollmentCount) pending")
             .accessibilityHint("Double tap to review enrollment requests")
+        }
+    }
+
+    @ViewBuilder
+    private var conferencesBanner: some View {
+        let pendingConferences = viewModel.myConferences.filter { $0.status == .requested }
+        if !pendingConferences.isEmpty {
+            NavigationLink {
+                TeacherConferencesView(viewModel: viewModel)
+            } label: {
+                HStack(spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(LinearGradient(colors: [.teal, .green], startPoint: .topLeading, endPoint: .bottomTrailing))
+                            .frame(width: 40, height: 40)
+                        Image(systemName: "person.2.circle.fill")
+                            .font(.subheadline)
+                            .foregroundStyle(.white)
+                    }
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Conference Requests")
+                            .font(.subheadline.bold())
+                            .foregroundStyle(Color(.label))
+                        Text("\(pendingConferences.count) pending request\(pendingConferences.count == 1 ? "" : "s")")
+                            .font(.caption)
+                            .foregroundStyle(Color(.secondaryLabel))
+                    }
+
+                    Spacer()
+
+                    Text("\(pendingConferences.count)")
+                        .font(.caption.bold())
+                        .foregroundStyle(.white)
+                        .frame(minWidth: 24, minHeight: 24)
+                        .background(.orange, in: Circle())
+
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(Color(.tertiaryLabel))
+                }
+                .padding(14)
+                .background(Color(.secondarySystemGroupedBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .strokeBorder(.teal.opacity(0.3), lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Conference Requests: \(pendingConferences.count) pending")
+            .accessibilityHint("Double tap to review conference requests")
+        } else {
+            NavigationLink {
+                TeacherConferencesView(viewModel: viewModel)
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "person.2.circle.fill")
+                        .font(.title3)
+                        .foregroundStyle(.teal)
+                    Text("Manage Conferences")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(Color(.label))
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(Color(.tertiaryLabel))
+                }
+                .padding(14)
+                .background(Color(.secondarySystemGroupedBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Manage Conferences")
+            .accessibilityHint("Double tap to view and manage parent-teacher conferences")
+        }
+    }
+
+    @ViewBuilder
+    private var atRiskStudentsBanner: some View {
+        let atRiskStudents = viewModel.allAtRiskStudents()
+        if !atRiskStudents.isEmpty {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(spacing: 12) {
+                    ZStack {
+                        Circle()
+                            .fill(LinearGradient(colors: [.red, .orange], startPoint: .topLeading, endPoint: .bottomTrailing))
+                            .frame(width: 40, height: 40)
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.subheadline)
+                            .foregroundStyle(.white)
+                    }
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("At-Risk Students")
+                            .font(.subheadline.bold())
+                            .foregroundStyle(Color(.label))
+                        Text("\(atRiskStudents.count) student\(atRiskStudents.count == 1 ? " needs" : "s need") attention")
+                            .font(.caption)
+                            .foregroundStyle(Color(.secondaryLabel))
+                    }
+
+                    Spacer()
+
+                    Text("\(atRiskStudents.count)")
+                        .font(.caption.bold())
+                        .foregroundStyle(.white)
+                        .frame(minWidth: 24, minHeight: 24)
+                        .background(.red, in: Circle())
+                }
+
+                // Preview of top at-risk students (up to 3)
+                ForEach(atRiskStudents.prefix(3)) { student in
+                    HStack(spacing: 10) {
+                        Circle()
+                            .fill(Theme.gradeColor(student.currentGrade).gradient)
+                            .frame(width: 28, height: 28)
+                            .overlay {
+                                Text(String(student.studentName.prefix(1)).uppercased())
+                                    .font(.caption2.bold())
+                                    .foregroundStyle(.white)
+                            }
+
+                        Text(student.studentName)
+                            .font(.caption)
+                            .foregroundStyle(Color(.label))
+                            .lineLimit(1)
+
+                        Spacer()
+
+                        Text(String(format: "%.0f%%", student.currentGrade))
+                            .font(.caption.bold())
+                            .foregroundStyle(Theme.gradeColor(student.currentGrade))
+
+                        Text(student.riskLevel.rawValue)
+                            .font(.system(size: 9, weight: .bold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 2)
+                            .background(student.riskLevel == .high ? Color.red : (student.riskLevel == .medium ? Color.red.opacity(0.8) : Color.orange), in: Capsule())
+                    }
+                }
+
+                if atRiskStudents.count > 3 {
+                    Text("+ \(atRiskStudents.count - 3) more...")
+                        .font(.caption)
+                        .foregroundStyle(Color(.tertiaryLabel))
+                        .padding(.leading, 38)
+                }
+            }
+            .padding(14)
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .strokeBorder(Color.red.opacity(0.3), lineWidth: 1)
+            )
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("At-Risk Students: \(atRiskStudents.count) students need attention")
+        }
+    }
+
+    @ViewBuilder
+    private var studentInsightsLink: some View {
+        if !viewModel.courses.isEmpty {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Student Insights")
+                    .font(.caption.bold())
+                    .foregroundStyle(Color(.secondaryLabel))
+
+                ForEach(viewModel.courses.prefix(4)) { course in
+                    let atRiskCount = viewModel.atRiskStudents(for: course.id).count
+                    NavigationLink {
+                        StudentInsightsView(course: course, viewModel: viewModel)
+                    } label: {
+                        HStack(spacing: 12) {
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Theme.courseColor(course.colorName).gradient)
+                                .frame(width: 32, height: 32)
+                                .overlay {
+                                    Image(systemName: course.iconSystemName)
+                                        .font(.caption)
+                                        .foregroundStyle(.white)
+                                }
+
+                            Text(course.title)
+                                .font(.subheadline)
+                                .foregroundStyle(Color(.label))
+                                .lineLimit(1)
+
+                            Spacer()
+
+                            if atRiskCount > 0 {
+                                HStack(spacing: 3) {
+                                    Image(systemName: "exclamationmark.triangle.fill")
+                                        .font(.system(size: 9))
+                                    Text("\(atRiskCount)")
+                                        .font(.caption2.bold())
+                                }
+                                .foregroundStyle(.red)
+                            }
+
+                            Image(systemName: "chart.line.uptrend.xyaxis")
+                                .font(.caption)
+                                .foregroundStyle(Color(.tertiaryLabel))
+
+                            Image(systemName: "chevron.right")
+                                .font(.caption2)
+                                .foregroundStyle(Color(.tertiaryLabel))
+                        }
+                        .padding(10)
+                        .background(Color(.tertiarySystemGroupedBackground))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("\(course.title) insights\(atRiskCount > 0 ? ", \(atRiskCount) at-risk students" : "")")
+                    .accessibilityHint("Double tap to view student analytics")
+                }
+            }
+            .padding(14)
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
         }
     }
 

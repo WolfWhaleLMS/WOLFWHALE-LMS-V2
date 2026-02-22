@@ -350,14 +350,20 @@ struct BulkGradingView: View {
                 let count = try await viewModel.bulkGradeSubmissions(grades: gradesToSubmit)
                 isSubmitting = false
                 successCount = count
-                withAnimation(.snappy) {
-                    showSuccess = true
+
+                // Check for partial failures reported by the ViewModel
+                if let partialError = viewModel.gradeError {
+                    errorMessage = partialError
+                } else {
+                    withAnimation(.snappy) {
+                        showSuccess = true
+                    }
+                    try? await Task.sleep(for: .seconds(2.5))
+                    withAnimation { showSuccess = false }
+                    dismiss()
                 }
-                try? await Task.sleep(for: .seconds(2.5))
-                withAnimation { showSuccess = false }
-                dismiss()
             } catch {
-                errorMessage = "Failed to submit grades. Please try again."
+                errorMessage = viewModel.gradeError ?? "Failed to submit grades. Please try again."
                 isSubmitting = false
             }
         }

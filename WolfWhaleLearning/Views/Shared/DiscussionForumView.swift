@@ -6,6 +6,7 @@ struct DiscussionForumView: View {
     @State private var showNewThread = false
     @State private var newThreadTitle = ""
     @State private var newThreadContent = ""
+    @State private var moderationWarning: String?
     @State private var hapticTrigger = false
 
     private var threads: [DiscussionThread] {
@@ -190,6 +191,18 @@ struct DiscussionForumView: View {
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Post") {
+                        // COPPA content moderation check on title and content
+                        let titleCheck = ContentModerationService.shared.moderateContent(newThreadTitle)
+                        if !titleCheck.isClean {
+                            moderationWarning = titleCheck.flaggedReason
+                            return
+                        }
+                        let contentCheck = ContentModerationService.shared.moderateContent(newThreadContent)
+                        if !contentCheck.isClean {
+                            moderationWarning = contentCheck.flaggedReason
+                            return
+                        }
+
                         hapticTrigger.toggle()
                         viewModel.createThread(courseId: course.id, title: newThreadTitle, content: newThreadContent)
                         showNewThread = false
@@ -203,6 +216,11 @@ struct DiscussionForumView: View {
             }
         }
         .presentationDetents([.large])
+        .alert("Post Not Allowed", isPresented: .constant(moderationWarning != nil)) {
+            Button("OK") { moderationWarning = nil }
+        } message: {
+            Text(moderationWarning ?? "")
+        }
     }
 
     // MARK: - Helpers

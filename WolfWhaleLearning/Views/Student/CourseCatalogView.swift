@@ -283,6 +283,9 @@ struct CourseCatalogView: View {
                 }
             }
 
+            // Prerequisites info
+            prerequisiteInfoView(for: course)
+
             // Enrolled count + capacity bar
             HStack(spacing: 8) {
                 Image(systemName: "person.2.fill")
@@ -295,7 +298,7 @@ struct CourseCatalogView: View {
                 )
             }
 
-            // Action button
+            // Action button (locked if prerequisites not met)
             if isEnrolled {
                 Button(role: .destructive) {
                     dropConfirmCourse = course
@@ -307,6 +310,8 @@ struct CourseCatalogView: View {
                         .padding(.vertical, 8)
                 }
                 .buttonStyle(.plain)
+            } else if !isEnrolled && !viewModel.hasCompletedPrerequisites(for: course.id) {
+                lockedPrerequisiteButton(for: course)
             } else {
                 actionButton(for: course)
             }
@@ -414,6 +419,70 @@ struct CourseCatalogView: View {
                 .buttonStyle(.plain)
             }
         }
+    }
+
+    // MARK: - Prerequisite Views
+
+    /// Shows prerequisite info on a catalog card when the course has prerequisites.
+    @ViewBuilder
+    private func prerequisiteInfoView(for course: CourseCatalogEntry) -> some View {
+        let meetsPrereqs = viewModel.hasCompletedPrerequisites(for: course.id)
+        let missingNames = viewModel.missingPrerequisites(for: course.id)
+
+        if !missingNames.isEmpty {
+            HStack(spacing: 8) {
+                Image(systemName: meetsPrereqs ? "checkmark.seal.fill" : "lock.fill")
+                    .font(.caption)
+                    .foregroundStyle(meetsPrereqs ? .green : .orange)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(meetsPrereqs ? "Prerequisites Met" : "Prerequisites Required")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(meetsPrereqs ? .green : .orange)
+
+                    if !meetsPrereqs {
+                        Text("Complete: \(missingNames.joined(separator: ", "))")
+                            .font(.caption2)
+                            .foregroundStyle(Color(.secondaryLabel))
+                            .lineLimit(2)
+                    }
+                }
+
+                Spacer()
+            }
+            .padding(8)
+            .background(
+                (meetsPrereqs ? Color.green : Color.orange).opacity(0.08),
+                in: .rect(cornerRadius: 8)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .strokeBorder((meetsPrereqs ? Color.green : Color.orange).opacity(0.2), lineWidth: 1)
+            )
+            .accessibilityLabel(meetsPrereqs ? "Prerequisites met" : "Prerequisites required: \(missingNames.joined(separator: ", "))")
+        }
+    }
+
+    /// Locked button shown when prerequisites are not met.
+    private func lockedPrerequisiteButton(for course: CourseCatalogEntry) -> some View {
+        let missingNames = viewModel.missingPrerequisites(for: course.id)
+
+        return VStack(spacing: 4) {
+            Label("Prerequisites Required", systemImage: "lock.fill")
+                .font(.subheadline.weight(.semibold))
+                .foregroundStyle(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(.gray.gradient, in: .rect(cornerRadius: 10))
+
+            if !missingNames.isEmpty {
+                Text("Complete \(missingNames.joined(separator: " & ")) first")
+                    .font(.caption2)
+                    .foregroundStyle(Color(.secondaryLabel))
+                    .multilineTextAlignment(.center)
+            }
+        }
+        .accessibilityLabel("Course locked. Complete prerequisites: \(missingNames.joined(separator: ", "))")
     }
 
     // MARK: - Helpers

@@ -7,6 +7,7 @@ struct CalendarSyncView: View {
     @State private var syncEnabled: Bool = UserDefaults.standard.bool(forKey: UserDefaultsKeys.calendarSyncEnabled)
     @State private var isSyncing = false
     @State private var showRemoveConfirmation = false
+    @State private var showDisableConfirmation = false
     @State private var showCalendarPicker = false
     @State private var hapticTrigger = false
 
@@ -34,6 +35,20 @@ struct CalendarSyncView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This will remove all WolfWhale LMS events from your calendar. This cannot be undone.")
+        }
+        .confirmationDialog(
+            "Disable Calendar Sync?",
+            isPresented: $showDisableConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Disable and Remove Events", role: .destructive) {
+                syncEnabled = false
+                UserDefaults.standard.set(false, forKey: UserDefaultsKeys.calendarSyncEnabled)
+                calendarService.removeAllWolfWhaleEvents()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This will remove all WolfWhale events from your calendar. Continue?")
         }
     }
 
@@ -92,9 +107,12 @@ struct CalendarSyncView: View {
                     .labelsHidden()
                     .sensoryFeedback(.selection, trigger: syncEnabled)
                     .onChange(of: syncEnabled) { _, newValue in
-                        UserDefaults.standard.set(newValue, forKey: UserDefaultsKeys.calendarSyncEnabled)
                         if !newValue {
-                            calendarService.removeAllWolfWhaleEvents()
+                            // Revert toggle until user confirms
+                            syncEnabled = true
+                            showDisableConfirmation = true
+                        } else {
+                            UserDefaults.standard.set(true, forKey: UserDefaultsKeys.calendarSyncEnabled)
                         }
                     }
             }

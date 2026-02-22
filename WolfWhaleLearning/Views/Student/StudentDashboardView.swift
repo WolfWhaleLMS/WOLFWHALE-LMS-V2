@@ -94,6 +94,8 @@ struct StudentDashboardView: View {
                             FishTankView()
                             campusLifeSection
                             upcomingSection
+                            assignmentCalendarLink
+                            progressGoalsLink
                             browseCatalogCard
                             coursesSection
                         }
@@ -575,6 +577,85 @@ struct StudentDashboardView: View {
                 }
             }
         }
+    }
+
+    // MARK: - Assignment Calendar Link
+
+    private var assignmentCalendarLink: some View {
+        NavigationLink {
+            AssignmentCalendarView(viewModel: viewModel)
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "calendar.badge.clock")
+                    .font(.title3)
+                    .foregroundStyle(.orange)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Assignment Calendar")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.primary)
+                    Text("View all due dates across courses")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                if !viewModel.assignments.filter(\.isOverdue).isEmpty {
+                    Text("\(viewModel.assignments.filter(\.isOverdue).count)")
+                        .font(.caption2.bold())
+                        .foregroundStyle(.white)
+                        .frame(width: 20, height: 20)
+                        .background(.red, in: Circle())
+                }
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(14)
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .strokeBorder(.orange.opacity(0.25), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Assignment Calendar, view all due dates across courses")
+        .accessibilityHint("Double tap to open the assignment calendar")
+    }
+
+    // MARK: - Progress Goals Link
+
+    private var progressGoalsLink: some View {
+        NavigationLink {
+            ProgressGoalsView(viewModel: viewModel)
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: "target")
+                    .font(.title3)
+                    .foregroundStyle(.green)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Progress Goals")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.primary)
+                    Text("Set grade targets & track progress")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(14)
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .strokeBorder(.green.opacity(0.25), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Progress Goals, set grade targets and track progress")
+        .accessibilityHint("Double tap to view and set grade goals")
     }
 
     // MARK: - Browse Course Catalog

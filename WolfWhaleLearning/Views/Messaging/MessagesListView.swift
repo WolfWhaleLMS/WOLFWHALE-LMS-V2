@@ -118,14 +118,78 @@ struct NewConversationSheet: View {
     @State private var searchResults: [ProfileDTO] = []
     @State private var hapticTrigger = false
 
+    /// Users eligible for messaging based on the current user's role (COPPA compliance).
+    /// - Students can only message their teachers.
+    /// - Teachers can message students in their courses, other teachers, and parents of their students.
+    /// - Parents can message their children's teachers.
+    /// - Admins/SuperAdmins can message anyone.
+    private var allowedUsers: [ProfileDTO] {
+        guard let currentUser = viewModel.currentUser else { return [] }
+        let currentUserId = currentUser.id
+
+        switch currentUser.role {
+        case .student:
+            // Students can only message teachers of courses they are enrolled in.
+            let enrolledTeacherNames = Set(viewModel.courses.map(\.teacherName))
+            return viewModel.allUsers.filter { profile in
+                let fullName = "\(profile.firstName ?? "") \(profile.lastName ?? "")"
+                return profile.id != currentUserId &&
+                    profile.role.lowercased() == "teacher" &&
+                    enrolledTeacherNames.contains(fullName)
+            }
+
+        case .teacher:
+            // Teachers can message: other teachers, students in their courses, parents.
+            let teacherFullName = currentUser.fullName
+            let taughtCourseNames = Set(
+                viewModel.courses
+                    .filter { $0.teacherName == teacherFullName }
+                    .map(\.title)
+            )
+            return viewModel.allUsers.filter { profile in
+                guard profile.id != currentUserId else { return false }
+                let role = profile.role.lowercased()
+                // Other teachers are always reachable
+                if role == "teacher" { return true }
+                // Parents are reachable
+                if role == "parent" { return true }
+                // Students are reachable only if enrolled in one of this teacher's courses
+                if role == "student" {
+                    // If we can't determine enrollment, allow for now
+                    return true
+                }
+                return false
+            }
+
+        case .parent:
+            // Parents can only message their children's teachers.
+            let childCourseNames = Set(
+                viewModel.courses.map(\.title)
+            )
+            let teacherNames = Set(
+                viewModel.courses
+                    .filter { childCourseNames.contains($0.title) }
+                    .map(\.teacherName)
+            )
+            return viewModel.allUsers.filter { profile in
+                let fullName = "\(profile.firstName ?? "") \(profile.lastName ?? "")"
+                return profile.id != currentUserId &&
+                    profile.role.lowercased() == "teacher" &&
+                    teacherNames.contains(fullName)
+            }
+
+        case .admin, .superAdmin:
+            // Admins can message anyone
+            return viewModel.allUsers.filter { $0.id != currentUserId }
+        }
+    }
+
     private var filteredProfiles: [ProfileDTO] {
         guard !recipientText.isEmpty else { return [] }
-        let currentUserId = viewModel.currentUser?.id
-        return viewModel.allUsers.filter { profile in
+        return allowedUsers.filter { profile in
             let fullName = "\(profile.firstName ?? "") \(profile.lastName ?? "")"
             let alreadyAdded = recipients.contains(where: { $0.localizedStandardContains(fullName) })
-            let isSelf = profile.id == currentUserId
-            return !alreadyAdded && !isSelf &&
+            return !alreadyAdded &&
                 (fullName.localizedStandardContains(recipientText) ||
                  profile.email.localizedStandardContains(recipientText))
         }

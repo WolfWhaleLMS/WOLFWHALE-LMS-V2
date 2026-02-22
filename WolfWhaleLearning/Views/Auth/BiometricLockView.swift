@@ -1,4 +1,5 @@
 import SwiftUI
+import Supabase
 
 struct BiometricLockView: View {
     let viewModel: AppViewModel
@@ -8,6 +9,10 @@ struct BiometricLockView: View {
     @State private var authError: String?
     @State private var showError = false
     @State private var hapticTrigger = false
+    @State private var showPasswordField = false
+    @State private var passwordText = ""
+    @State private var isVerifying = false
+    @State private var passwordError: String?
 
     private var biometricService: BiometricAuthService {
         viewModel.biometricService
@@ -72,17 +77,55 @@ struct BiometricLockView: View {
                     .opacity(isAnimating ? 1.0 : 0.0)
 
                     // Fallback button
-                    Button {
-                        hapticTrigger.toggle()
-                        onPasswordFallback()
-                        viewModel.unlockApp()
-                    } label: {
-                        Text("Enter Password")
-                            .font(.subheadline.bold())
-                            .foregroundStyle(.secondary)
+                    if showPasswordField {
+                        VStack(spacing: 12) {
+                            SecureField("Enter your password", text: $passwordText)
+                                .textContentType(.password)
+                                .padding(14)
+                                .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
+
+                            if let passwordError {
+                                Text(passwordError)
+                                    .font(.caption)
+                                    .foregroundStyle(.red)
+                            }
+
+                            Button {
+                                hapticTrigger.toggle()
+                                Task { await verifyPasswordAndUnlock() }
+                            } label: {
+                                Group {
+                                    if isVerifying {
+                                        ProgressView()
+                                            .tint(.white)
+                                    } else {
+                                        Text("Submit")
+                                            .font(.headline)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 44)
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(.purple)
+                            .clipShape(.rect(cornerRadius: 12))
+                            .disabled(passwordText.isEmpty || isVerifying)
+                        }
+                        .opacity(isAnimating ? 1.0 : 0.0)
+                    } else {
+                        Button {
+                            hapticTrigger.toggle()
+                            withAnimation(.smooth) {
+                                showPasswordField = true
+                            }
+                        } label: {
+                            Text("Enter Password")
+                                .font(.subheadline.bold())
+                                .foregroundStyle(.secondary)
+                        }
+                        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                        .opacity(isAnimating ? 1.0 : 0.0)
                     }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
-                    .opacity(isAnimating ? 1.0 : 0.0)
                 }
                 .padding(24)
                 .background {
@@ -110,6 +153,29 @@ struct BiometricLockView: View {
                 await authenticateWithBiometric()
             }
         }
+    }
+
+    // MARK: - Password Verification
+
+    private func verifyPasswordAndUnlock() async {
+        guard !passwordText.isEmpty else { return }
+        guard let email = viewModel.currentUser?.email else {
+            passwordError = "Unable to determine your account email."
+            return
+        }
+
+        isVerifying = true
+        passwordError = nil
+
+        do {
+            _ = try await supabaseClient.auth.signIn(email: email, password: passwordText)
+            onPasswordFallback()
+            viewModel.unlockApp()
+        } catch {
+            passwordError = "Incorrect password. Please try again."
+        }
+
+        isVerifying = false
     }
 
     // MARK: - Biometric Authentication

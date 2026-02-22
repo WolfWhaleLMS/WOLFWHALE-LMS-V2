@@ -78,6 +78,7 @@ private struct SmallGradesView: View {
                     Text(String(format: "%.1f", summary.gpa))
                         .font(.system(.title, design: .rounded, weight: .bold))
                         .foregroundStyle(.primary)
+                        .privacySensitive(true)
                     Text("GPA")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
@@ -127,6 +128,7 @@ private struct MediumGradesView: View {
                     VStack(spacing: 0) {
                         Text(String(format: "%.1f", summary.gpa))
                             .font(.system(.title2, design: .rounded, weight: .bold))
+                            .privacySensitive(true)
                         Text("GPA")
                             .font(.caption2)
                             .foregroundStyle(.secondary)
@@ -148,10 +150,12 @@ private struct MediumGradesView: View {
                         Text(grade.courseName)
                             .font(.caption)
                             .lineLimit(1)
+                            .privacySensitive(true)
                         Spacer()
                         Text(grade.letterGrade)
                             .font(.caption.weight(.bold))
                             .foregroundStyle(gradeColor(grade.numericGrade))
+                            .privacySensitive(true)
                     }
                 }
 
@@ -189,6 +193,7 @@ private struct LargeGradesView: View {
                     Text("GPA: \(String(format: "%.2f", summary.gpa))")
                         .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.indigo)
+                        .privacySensitive(true)
                 }
 
                 Spacer()
@@ -210,6 +215,7 @@ private struct LargeGradesView: View {
 
                     Text(String(format: "%.1f", summary.gpa))
                         .font(.system(.caption, design: .rounded, weight: .bold))
+                        .privacySensitive(true)
                 }
                 .frame(width: 44, height: 44)
             }
@@ -224,10 +230,12 @@ private struct LargeGradesView: View {
                             Text(grade.courseName)
                                 .font(.caption.weight(.medium))
                                 .lineLimit(1)
+                                .privacySensitive(true)
                             Spacer()
                             Text("\(grade.letterGrade) (\(Int(grade.numericGrade))%)")
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(gradeColor(grade.numericGrade))
+                                .privacySensitive(true)
                         }
 
                         // Progress bar

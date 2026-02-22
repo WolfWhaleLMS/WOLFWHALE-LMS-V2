@@ -21,7 +21,7 @@ struct AgeVerificationView: View {
     }
 
     private var defaultDate: Date {
-        Calendar.current.date(byAdding: .year, value: -13, to: Date()) ?? Date()
+        Date()
     }
 
     private var calculatedAge: Int {
@@ -259,6 +259,20 @@ struct AgeVerificationView: View {
                     .font(.caption)
                     .foregroundStyle(.red)
                     .padding(.leading, 4)
+            }
+
+            if !parentEmail.isEmpty && isValidParentEmail {
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: "info.circle.fill")
+                        .foregroundStyle(.blue)
+                        .font(.caption)
+                    Text("A verification email will be sent to your parent/guardian. Your account will be activated after they consent.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineSpacing(2)
+                }
+                .padding(10)
+                .background(Color.blue.opacity(0.06), in: .rect(cornerRadius: 10))
             }
 
             Toggle(isOn: $parentalConsentChecked) {

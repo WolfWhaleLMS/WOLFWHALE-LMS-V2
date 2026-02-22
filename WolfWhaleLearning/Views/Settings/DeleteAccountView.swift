@@ -1,4 +1,5 @@
 import SwiftUI
+import Supabase
 
 struct DeleteAccountView: View {
     let viewModel: AppViewModel
@@ -6,13 +7,16 @@ struct DeleteAccountView: View {
 
     @State private var authService = AuthService()
     @State private var confirmationText = ""
+    @State private var reAuthPassword = ""
+    @State private var reAuthError: String?
     @State private var hapticTrigger = false
     @State private var errorHapticTrigger = false
     @State private var successHapticTrigger = false
     @FocusState private var isConfirmFocused: Bool
+    @FocusState private var isPasswordFocused: Bool
 
     private var canDelete: Bool {
-        confirmationText == "DELETE" && !authService.isLoading
+        confirmationText == "DELETE" && !reAuthPassword.isEmpty && !authService.isLoading
     }
 
     var body: some View {
@@ -182,6 +186,48 @@ struct DeleteAccountView: View {
                 )
             }
 
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Enter your password to confirm")
+                    .font(.subheadline.bold())
+                    .foregroundStyle(.secondary)
+
+                HStack(spacing: 12) {
+                    Image(systemName: "lock.fill")
+                        .foregroundStyle(.tertiary)
+                        .frame(width: 20)
+                        .accessibilityHidden(true)
+
+                    SecureField("Current password", text: $reAuthPassword)
+                        .textContentType(.password)
+                        .focused($isPasswordFocused)
+                        .submitLabel(.done)
+                        .onSubmit { isPasswordFocused = false }
+                        .accessibilityLabel("Current password")
+                        .accessibilityHint("Enter your current password to verify your identity")
+                }
+                .padding(14)
+                .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(
+                            isPasswordFocused ? Color.red.opacity(0.5) : Color.gray.opacity(0.3),
+                            lineWidth: 1
+                        )
+                )
+            }
+
+            if let reAuthError {
+                HStack(spacing: 6) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.caption)
+                    Text(reAuthError)
+                        .font(.caption)
+                }
+                .foregroundStyle(.red)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+
             // Error message
             if let error = authService.error {
                 HStack(spacing: 6) {
@@ -268,12 +314,25 @@ struct DeleteAccountView: View {
             authService.error = "Unable to determine your account. Please try again."
             return
         }
+        guard let email = viewModel.currentUser?.email else {
+            authService.error = "Unable to determine your email. Please try again."
+            return
+        }
 
         Task {
+            // Re-authenticate before deletion
+            reAuthError = nil
+            do {
+                _ = try await supabaseClient.auth.signIn(email: email, password: reAuthPassword)
+            } catch {
+                reAuthError = "Incorrect password. Please try again."
+                errorHapticTrigger.toggle()
+                return
+            }
+
             let success = await authService.deleteAccount(userId: userId)
             if success {
                 successHapticTrigger.toggle()
-                // Sign out and navigate to login screen
                 viewModel.logout()
             } else {
                 errorHapticTrigger.toggle()

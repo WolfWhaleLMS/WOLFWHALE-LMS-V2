@@ -4,6 +4,10 @@ struct AttendanceAnalyticsView: View {
     let viewModel: AppViewModel
     let isAdmin: Bool
 
+    private var verifiedIsAdmin: Bool {
+        viewModel.currentUser?.role == .admin || viewModel.currentUser?.role == .superAdmin
+    }
+
     @State private var selectedCourseId: String? = nil
     @State private var startDate: Date = Calendar.current.date(byAdding: .day, value: -30, to: Date()) ?? Date()
     @State private var endDate: Date = Date()
@@ -46,7 +50,7 @@ struct AttendanceAnalyticsView: View {
                 .font(.headline)
                 .foregroundStyle(Color(.label))
 
-            if !isAdmin {
+            if !verifiedIsAdmin {
                 // Teacher: course picker
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Course")
@@ -427,7 +431,7 @@ struct AttendanceAnalyticsView: View {
     // MARK: - Helpers
 
     private func generateReport() {
-        let courseIdArg: String? = isAdmin ? nil : selectedCourseId
+        let courseIdArg: String? = verifiedIsAdmin ? nil : selectedCourseId
         report = viewModel.generateAttendanceReport(
             courseId: courseIdArg,
             startDate: startDate,

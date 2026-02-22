@@ -35,7 +35,10 @@ struct HumanCellARView: View {
             .padding()
         }
         .onDisappear {
-            arView?.session.pause()
+            if let arView {
+                arView.scene.anchors.removeAll()
+                arView.session.pause()
+            }
         }
     }
 

@@ -8,7 +8,11 @@ nonisolated struct CheckAssignmentsIntent: AppIntent {
     static var openAppWhenRun: Bool = false
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        let defaults = UserDefaults.standard
+        // FERPA: Require authentication before speaking assignment data aloud
+        let defaults = UserDefaults(suiteName: UserDefaultsKeys.widgetAppGroup) ?? .standard
+        guard defaults.bool(forKey: "wolfwhale_is_authenticated") else {
+            return .result(dialog: "Please open WolfWhale LMS and sign in first.")
+        }
 
         guard let data = defaults.data(forKey: UserDefaultsKeys.upcomingAssignments),
               let assignments = try? JSONDecoder().decode([CachedAssignment].self, from: data),

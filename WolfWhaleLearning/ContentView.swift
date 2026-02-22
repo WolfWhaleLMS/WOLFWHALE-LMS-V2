@@ -80,6 +80,14 @@ struct ContentView: View {
                 viewModel.pushService.deepLinkGradeId = nil
             }
         }
+        .onOpenURL { url in
+            DeepLinkHandler.handle(url: url, in: viewModel)
+        }
+        .onChange(of: viewModel.isAuthenticated) { _, isAuth in
+            if isAuth {
+                DeepLinkHandler.processPendingDeepLink(in: viewModel)
+            }
+        }
     }
 
     private var splashView: some View {

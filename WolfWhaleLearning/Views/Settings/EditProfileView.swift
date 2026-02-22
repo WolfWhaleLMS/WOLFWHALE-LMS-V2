@@ -491,7 +491,10 @@ struct EditProfileView: View {
 
         Task {
             do {
-                guard let userId = viewModel.currentUser?.id else { return }
+                guard let userId = viewModel.currentUser?.id else {
+                    isLoading = false
+                    return
+                }
 
                 let dto = UpdateProfileDetailsDTO(
                     firstName: trimmedFirst,

@@ -69,6 +69,7 @@ struct BulkImportView: View {
                 handleFileImport(result)
             }
         }
+        .requireRole(.admin, .superAdmin, currentRole: viewModel.currentUser?.role)
     }
 
     // MARK: - Upload Section

@@ -7,6 +7,8 @@ struct EnhancedConversationView: View {
     @State private var realtimeService = RealtimeService()
     @State private var messageText = ""
     @State private var isTyping = false
+    @State private var isSubscribed = false
+    @State private var moderationWarning: String?
     @FocusState private var isTextFieldFocused: Bool
 
     // MARK: - Derived State
@@ -40,10 +42,18 @@ struct EnhancedConversationView: View {
             }
         }
         .onAppear {
+            guard !isSubscribed else { return }
             subscribeToRealtime()
+            isSubscribed = true
         }
         .onDisappear {
             realtimeService.unsubscribe()
+            isSubscribed = false
+        }
+        .alert("Message Not Sent", isPresented: .constant(moderationWarning != nil)) {
+            Button("OK") { moderationWarning = nil }
+        } message: {
+            Text(moderationWarning ?? "")
         }
     }
 
@@ -218,6 +228,13 @@ struct EnhancedConversationView: View {
     private func sendMessage() {
         let trimmed = messageText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
+
+        // COPPA content moderation check
+        let moderation = ContentModerationService.shared.moderateContent(trimmed)
+        if !moderation.isClean {
+            moderationWarning = moderation.flaggedReason
+            return
+        }
 
         viewModel.sendMessage(in: conversation.id, text: trimmed)
         messageText = ""

@@ -4,6 +4,10 @@ struct StudentSubmissionsView: View {
     @Bindable var viewModel: AppViewModel
     let course: Course
 
+    @State private var selectedStudentForNotes: (id: UUID, name: String)?
+    @State private var showStudentNotes = false
+    @State private var hapticTrigger = false
+
     private var courseAssignments: [Assignment] {
         viewModel.assignments.filter { $0.courseId == course.id }
     }
@@ -42,6 +46,19 @@ struct StudentSubmissionsView: View {
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Student Submissions")
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(isPresented: $showStudentNotes) {
+            if let student = selectedStudentForNotes {
+                NavigationStack {
+                    StudentNotesView(
+                        viewModel: viewModel,
+                        studentId: student.id,
+                        studentName: student.name,
+                        courseId: course.id,
+                        courseName: course.title
+                    )
+                }
+            }
+        }
     }
 
     // MARK: - Header Section
@@ -146,6 +163,32 @@ struct StudentSubmissionsView: View {
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
+
+                // Notes button
+                if let studentId = assignments.first?.studentId {
+                    let noteCount = viewModel.noteCount(forStudent: studentId, inCourse: course.id)
+                    Button {
+                        hapticTrigger.toggle()
+                        selectedStudentForNotes = (id: studentId, name: name)
+                        showStudentNotes = true
+                    } label: {
+                        HStack(spacing: 3) {
+                            Image(systemName: "note.text")
+                                .font(.caption2)
+                            if noteCount > 0 {
+                                Text("\(noteCount)")
+                                    .font(.caption2.bold())
+                            }
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(.blue.opacity(0.12), in: Capsule())
+                        .foregroundStyle(.blue)
+                    }
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .accessibilityLabel("\(noteCount) note\(noteCount == 1 ? "" : "s") for \(name)")
+                    .accessibilityHint("Double tap to view and add notes")
+                }
 
                 // Average grade badge
                 let gradedAssignments = assignments.filter { $0.grade != nil }

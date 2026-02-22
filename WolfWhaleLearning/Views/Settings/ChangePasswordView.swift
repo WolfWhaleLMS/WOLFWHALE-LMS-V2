@@ -358,6 +358,31 @@ struct ChangePasswordView: View {
 
         Task {
             do {
+                // Verify current password by signing in
+                let session = try await supabaseClient.auth.session
+                guard let email = session.user.email else {
+                    await MainActor.run {
+                        isLoading = false
+                        withAnimation(.smooth) {
+                            errorMessage = "Unable to determine your email address."
+                        }
+                    }
+                    return
+                }
+
+                do {
+                    _ = try await supabaseClient.auth.signIn(email: email, password: currentPassword)
+                } catch {
+                    await MainActor.run {
+                        isLoading = false
+                        withAnimation(.smooth) {
+                            errorMessage = "Current password is incorrect."
+                        }
+                    }
+                    return
+                }
+
+                // Current password verified, now update
                 try await supabaseClient.auth.update(user: .init(password: newPassword))
                 await MainActor.run {
                     isLoading = false

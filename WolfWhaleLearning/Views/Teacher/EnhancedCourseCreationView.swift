@@ -25,6 +25,10 @@ struct EnhancedCourseCreationView: View {
     @State private var allowLateSubmissions = true
     @State private var lateGracePeriodDays: Int = 3
 
+    // MARK: - Prerequisites
+    @State private var selectedPrerequisiteIds: Set<UUID> = []
+    @State private var prerequisitesDescription = ""
+
     // MARK: - State
     @State private var isCreating = false
     @State private var errorMessage: String?
@@ -67,6 +71,7 @@ struct EnhancedCourseCreationView: View {
                     visualSection
                     scheduleSection
                     settingsSection
+                    prerequisitesSection
                     createButton
                 }
                 .padding(.horizontal)
@@ -307,6 +312,126 @@ struct EnhancedCourseCreationView: View {
                         .font(.subheadline)
                         .accessibilityLabel("Late submission grace period: \(lateGracePeriodDays) days")
                         .accessibilityHint("Adjustable, from 1 to 30 days")
+                }
+            }
+        }
+        .padding(14)
+        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+    }
+
+    // MARK: - Prerequisites Section
+
+    private var prerequisitesSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Prerequisites", systemImage: "arrow.triangle.branch")
+                .font(.headline)
+
+            VStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Required Courses")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    if viewModel.courses.isEmpty && viewModel.allAvailableCourses.isEmpty {
+                        HStack(spacing: 8) {
+                            Image(systemName: "info.circle")
+                                .foregroundStyle(.secondary)
+                            Text("No existing courses to select as prerequisites")
+                                .font(.caption)
+                                .foregroundStyle(Color(.secondaryLabel))
+                        }
+                        .padding(10)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color(.tertiarySystemFill), in: .rect(cornerRadius: 8))
+                    } else {
+                        let allCourses = Array(Set(viewModel.courses + viewModel.allAvailableCourses))
+                            .sorted { $0.title < $1.title }
+
+                        ForEach(allCourses) { course in
+                            Button {
+                                hapticTrigger.toggle()
+                                withAnimation(.smooth) {
+                                    if selectedPrerequisiteIds.contains(course.id) {
+                                        selectedPrerequisiteIds.remove(course.id)
+                                    } else {
+                                        selectedPrerequisiteIds.insert(course.id)
+                                    }
+                                }
+                            } label: {
+                                HStack(spacing: 10) {
+                                    Image(systemName: selectedPrerequisiteIds.contains(course.id)
+                                        ? "checkmark.circle.fill"
+                                        : "circle")
+                                        .font(.title3)
+                                        .foregroundStyle(
+                                            selectedPrerequisiteIds.contains(course.id)
+                                                ? resolvedAccentColor
+                                                : Color(.tertiaryLabel)
+                                        )
+
+                                    VStack(alignment: .leading, spacing: 2) {
+                                        Text(course.title)
+                                            .font(.subheadline)
+                                            .foregroundStyle(Color(.label))
+                                            .lineLimit(1)
+                                        Text(course.teacherName)
+                                            .font(.caption2)
+                                            .foregroundStyle(Color(.secondaryLabel))
+                                    }
+
+                                    Spacer()
+
+                                    Image(systemName: course.iconSystemName)
+                                        .font(.caption)
+                                        .foregroundStyle(Theme.courseColor(course.colorName))
+                                }
+                                .padding(10)
+                                .background(
+                                    selectedPrerequisiteIds.contains(course.id)
+                                        ? resolvedAccentColor.opacity(0.08)
+                                        : Color(.tertiarySystemFill),
+                                    in: .rect(cornerRadius: 10)
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .strokeBorder(
+                                            selectedPrerequisiteIds.contains(course.id)
+                                                ? resolvedAccentColor.opacity(0.3)
+                                                : Color.clear,
+                                            lineWidth: 1
+                                        )
+                                )
+                            }
+                            .buttonStyle(.plain)
+                            .sensoryFeedback(.selection, trigger: hapticTrigger)
+                            .accessibilityLabel("\(course.title), \(selectedPrerequisiteIds.contains(course.id) ? "selected" : "not selected")")
+                            .accessibilityHint("Double tap to toggle as prerequisite")
+                        }
+                    }
+                }
+
+                if !selectedPrerequisiteIds.isEmpty {
+                    Divider()
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Description (optional)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+
+                        TextField("e.g. Algebra I required", text: $prerequisitesDescription)
+                            .textFieldStyle(.roundedBorder)
+                            .accessibilityLabel("Prerequisites description")
+                            .accessibilityHint("Optional text shown to students explaining prerequisites")
+                    }
+
+                    HStack(spacing: 6) {
+                        Image(systemName: "info.circle")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                        Text("\(selectedPrerequisiteIds.count) prerequisite\(selectedPrerequisiteIds.count == 1 ? "" : "s") selected")
+                            .font(.caption2)
+                            .foregroundStyle(Color(.secondaryLabel))
+                    }
                 }
             }
         }

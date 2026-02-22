@@ -61,6 +61,14 @@ struct QuizView: View {
                 if timeRemaining <= 0 { submitQuiz() }
             }
         }
+        .alert("Quiz Submission Failed", isPresented: Binding(
+            get: { viewModel.submissionError != nil },
+            set: { if !$0 { viewModel.submissionError = nil } }
+        )) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(viewModel.submissionError ?? "Your quiz answers were not saved to the server. Please contact your teacher.")
+        }
     }
 
     private var timerBadge: some View {

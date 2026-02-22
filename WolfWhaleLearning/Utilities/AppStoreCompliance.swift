@@ -1,4 +1,5 @@
 import Foundation
+import Supabase
 
 /// Centralized App Store compliance utilities for COPPA, terms acceptance,
 /// export compliance, and version information.
@@ -6,9 +7,16 @@ nonisolated enum AppStoreCompliance {
 
     // MARK: - COPPA Age Verification
 
+    /// A calendar configured with the user's current timezone for accurate age calculations.
+    private static var localCalendar: Calendar {
+        var cal = Calendar.current
+        cal.timeZone = TimeZone.current
+        return cal
+    }
+
     /// Returns `true` if the user is under 13 years old based on their date of birth.
     static func isUnder13(dateOfBirth: Date) -> Bool {
-        let age = Calendar.current.dateComponents([.year], from: dateOfBirth, to: Date()).year ?? 0
+        let age = localCalendar.dateComponents([.year], from: dateOfBirth, to: Date()).year ?? 0
         return age < 13
     }
 
@@ -19,7 +27,7 @@ nonisolated enum AppStoreCompliance {
 
     /// Returns the calculated age in years from a date of birth.
     static func age(from dateOfBirth: Date) -> Int {
-        Calendar.current.dateComponents([.year], from: dateOfBirth, to: Date()).year ?? 0
+        localCalendar.dateComponents([.year], from: dateOfBirth, to: Date()).year ?? 0
     }
 
     /// Minimum allowed age for the platform (school LMS).
@@ -28,6 +36,50 @@ nonisolated enum AppStoreCompliance {
     /// Returns `true` if the user meets the minimum age requirement.
     static func meetsMinimumAge(dateOfBirth: Date) -> Bool {
         age(from: dateOfBirth) >= minimumAge
+    }
+
+    // MARK: - Server-Synced Consent
+
+    /// Syncs the COPPA consent status to the server (Supabase) so that
+    /// server-side data is the source of truth, not local UserDefaults.
+    static func syncConsentToServer(
+        userId: UUID,
+        hasParentalConsent: Bool,
+        parentEmail: String? = nil,
+        dateOfBirth: Date? = nil
+    ) async {
+        var params: [String: String] = [
+            "user_id": userId.uuidString,
+            "has_parental_consent": hasParentalConsent ? "true" : "false"
+        ]
+        if let parentEmail {
+            params["parent_email"] = parentEmail
+        }
+        if let dateOfBirth {
+            let formatter = ISO8601DateFormatter()
+            params["date_of_birth"] = formatter.string(from: dateOfBirth)
+        }
+        params["consent_recorded_at"] = ISO8601DateFormatter().string(from: Date())
+
+        // Update server -- this is the source of truth
+        try? await supabaseClient
+            .from("profiles")
+            .update([
+                "coppa_consent": hasParentalConsent ? "granted" : "pending",
+                "coppa_parent_email": parentEmail ?? "",
+                "coppa_consent_date": ISO8601DateFormatter().string(from: Date())
+            ])
+            .eq("id", value: userId.uuidString)
+            .execute()
+
+        // Cache locally for offline access
+        UserDefaults.standard.set(hasParentalConsent, forKey: "wolfwhale_coppa_consent_\(userId.uuidString)")
+    }
+
+    /// Reads the locally cached COPPA consent status. This is a cache only --
+    /// the server value is the source of truth.
+    static func cachedConsentStatus(for userId: UUID) -> Bool {
+        UserDefaults.standard.bool(forKey: "wolfwhale_coppa_consent_\(userId.uuidString)")
     }
 
     // MARK: - Terms Acceptance

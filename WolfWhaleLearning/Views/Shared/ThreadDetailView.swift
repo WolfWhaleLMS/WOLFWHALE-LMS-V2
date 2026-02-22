@@ -5,6 +5,7 @@ struct ThreadDetailView: View {
     let course: Course
     let viewModel: AppViewModel
     @State private var replyText = ""
+    @State private var moderationWarning: String?
     @State private var hapticTrigger = false
     @FocusState private var isReplyFocused: Bool
 
@@ -61,6 +62,11 @@ struct ThreadDetailView: View {
         }
         .onAppear {
             viewModel.loadReplies(threadId: thread.id)
+        }
+        .alert("Reply Not Sent", isPresented: .constant(moderationWarning != nil)) {
+            Button("OK") { moderationWarning = nil }
+        } message: {
+            Text(moderationWarning ?? "")
         }
     }
 
@@ -168,6 +174,13 @@ struct ThreadDetailView: View {
                 .focused($isReplyFocused)
 
             Button {
+                // COPPA content moderation check
+                let moderation = ContentModerationService.shared.moderateContent(replyText)
+                if !moderation.isClean {
+                    moderationWarning = moderation.flaggedReason
+                    return
+                }
+
                 hapticTrigger.toggle()
                 viewModel.replyToThread(threadId: thread.id, content: replyText)
                 replyText = ""

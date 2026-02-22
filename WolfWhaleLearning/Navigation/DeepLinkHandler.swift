@@ -7,6 +7,12 @@ import CoreSpotlight
 @MainActor
 struct DeepLinkHandler {
 
+    // MARK: - Pending Deep Link (stored when user is not authenticated)
+
+    /// Stores a deep-link URL that arrived before the user was authenticated.
+    /// Call ``processPendingDeepLink(in:)`` after login to replay it.
+    private(set) static var pendingDeepLink: URL?
+
     // MARK: - URL Deep Links (Widgets / Universal Links)
 
     /// Parses a `wolfwhale://` URL into a ``DeepLinkDestination``.
@@ -134,20 +140,42 @@ struct DeepLinkHandler {
     // MARK: - Convenience: Handle URL end-to-end
 
     /// Parses the URL and, if valid, navigates the view model to the destination.
-    /// Returns `true` when the URL was handled.
+    /// If the user is not authenticated the URL is stored in ``pendingDeepLink``
+    /// and will be replayed when ``processPendingDeepLink(in:)`` is called.
+    /// Returns `true` when the URL was handled (or deferred).
     @discardableResult
     static func handle(url: URL, in viewModel: AppViewModel) -> Bool {
         guard let dest = destination(from: url) else { return false }
+        guard viewModel.isAuthenticated else {
+            pendingDeepLink = url
+            return true
+        }
         navigate(to: dest, in: viewModel)
         return true
     }
 
     /// Parses the user activity and, if valid, navigates the view model to the destination.
-    /// Returns `true` when the activity was handled.
+    /// If the user is not authenticated the underlying URL (if any) is stored
+    /// in ``pendingDeepLink``.
+    /// Returns `true` when the activity was handled (or deferred).
     @discardableResult
     static func handle(activity: NSUserActivity, in viewModel: AppViewModel) -> Bool {
         guard let dest = destination(from: activity) else { return false }
+        guard viewModel.isAuthenticated else {
+            // No URL equivalent for Spotlight activities; store the destination
+            // by round-tripping through a synthetic URL is impractical.
+            // Instead, just drop — Spotlight can be re-triggered.
+            return false
+        }
         navigate(to: dest, in: viewModel)
         return true
+    }
+
+    /// Replays a deep link that was deferred because the user was not yet
+    /// authenticated. Call this after a successful login.
+    static func processPendingDeepLink(in viewModel: AppViewModel) {
+        guard let url = pendingDeepLink else { return }
+        pendingDeepLink = nil
+        handle(url: url, in: viewModel)
     }
 }

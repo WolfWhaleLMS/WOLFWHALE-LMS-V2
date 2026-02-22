@@ -5,6 +5,7 @@ struct ConversationView: View {
     @Bindable var viewModel: AppViewModel
     @State private var realtimeService = RealtimeService()
     @State private var messageText = ""
+    @State private var moderationWarning: String?
     @FocusState private var isTextFieldFocused: Bool
 
     private var messages: [ChatMessage] {
@@ -53,6 +54,11 @@ struct ConversationView: View {
         }
         .onDisappear {
             realtimeService.unsubscribe()
+        }
+        .alert("Message Not Sent", isPresented: .constant(moderationWarning != nil)) {
+            Button("OK") { moderationWarning = nil }
+        } message: {
+            Text(moderationWarning ?? "")
         }
     }
 
@@ -108,8 +114,17 @@ struct ConversationView: View {
                 .accessibilityHint("Type a message to send")
 
             Button {
-                guard !messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
-                viewModel.sendMessage(in: conversation.id, text: messageText)
+                let trimmed = messageText.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !trimmed.isEmpty else { return }
+
+                // COPPA content moderation check
+                let moderation = ContentModerationService.shared.moderateContent(trimmed)
+                if !moderation.isClean {
+                    moderationWarning = moderation.flaggedReason
+                    return
+                }
+
+                viewModel.sendMessage(in: conversation.id, text: trimmed)
                 messageText = ""
             } label: {
                 Image(systemName: "arrow.up.circle.fill")

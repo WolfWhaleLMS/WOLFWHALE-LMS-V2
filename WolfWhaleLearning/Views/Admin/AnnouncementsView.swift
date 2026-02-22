@@ -59,5 +59,6 @@ struct AnnouncementsView: View {
                 viewModel.refreshData()
             }
         }
+        .requireRole(.admin, .superAdmin, .teacher, currentRole: viewModel.currentUser?.role)
     }
 }

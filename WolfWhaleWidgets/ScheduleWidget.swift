@@ -73,6 +73,7 @@ private struct SmallScheduleView: View {
                         .font(.caption.weight(.semibold))
                         .lineLimit(2)
                         .multilineTextAlignment(.center)
+                        .privacySensitive(true)
 
                     if let time = next.time {
                         Text(time)
@@ -146,6 +147,7 @@ private struct MediumScheduleView: View {
                                 Text(entry.courseName)
                                     .font(.caption.weight(.medium))
                                     .lineLimit(1)
+                                    .privacySensitive(true)
                                 if let time = entry.time {
                                     Text(time)
                                         .font(.caption2)
@@ -254,6 +256,7 @@ private struct LargeScheduleView: View {
                             Text(entry.courseName)
                                 .font(.subheadline.weight(.medium))
                                 .lineLimit(1)
+                                .privacySensitive(true)
 
                             Spacer()
                         }

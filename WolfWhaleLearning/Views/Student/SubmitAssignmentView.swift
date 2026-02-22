@@ -63,6 +63,14 @@ struct SubmitAssignmentView: View {
             } message: {
                 Text("Your assignment has been submitted successfully.")
             }
+            .alert("Submission Failed", isPresented: Binding(
+                get: { viewModel.submissionError != nil },
+                set: { if !$0 { viewModel.submissionError = nil } }
+            )) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(viewModel.submissionError ?? "Your assignment was not saved to the server. Please try submitting again.")
+            }
         }
     }
 
@@ -114,14 +122,52 @@ struct SubmitAssignmentView: View {
                 )
             }
 
-            // Overdue warning
+            // Late policy info
+            if assignment.latePenaltyType != .none {
+                latePolicyInfoSection
+            }
+
+            // Overdue warning with late penalty details
             if assignment.isOverdue {
-                HStack(spacing: 8) {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.red)
-                    Text("This assignment is past due")
-                        .font(.caption.bold())
-                        .foregroundStyle(.red)
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.red)
+                        Text("This assignment is past due")
+                            .font(.caption.bold())
+                            .foregroundStyle(.red)
+                    }
+
+                    if let lateBadge = assignment.latePenaltyBadgeText {
+                        HStack(spacing: 8) {
+                            Image(systemName: "clock.badge.exclamationmark")
+                                .foregroundStyle(.orange)
+                            Text(lateBadge)
+                                .font(.caption.bold())
+                                .foregroundStyle(.orange)
+                        }
+                    }
+
+                    if assignment.canSubmitLate {
+                        let remaining = assignment.maxLateDays - assignment.daysLate
+                        if remaining > 0 {
+                            HStack(spacing: 8) {
+                                Image(systemName: "info.circle.fill")
+                                    .foregroundStyle(.blue)
+                                Text("You have \(remaining) day\(remaining == 1 ? "" : "s") left to submit with a late penalty.")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    } else if assignment.latePenaltyType != .none {
+                        HStack(spacing: 8) {
+                            Image(systemName: "xmark.octagon.fill")
+                                .foregroundStyle(.red)
+                            Text("The late submission window has closed. No further submissions accepted.")
+                                .font(.caption)
+                                .foregroundStyle(.red)
+                        }
+                    }
                 }
                 .padding(10)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -215,7 +261,43 @@ struct SubmitAssignmentView: View {
     // MARK: - Helpers
 
     private var isSubmitDisabled: Bool {
-        (responseText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && attachments.isEmpty) || isSubmitting || assignment.isSubmitted
+        let noContent = responseText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && attachments.isEmpty
+        let lateWindowClosed = assignment.isOverdue && !assignment.canSubmitLate
+        return noContent || isSubmitting || assignment.isSubmitted || lateWindowClosed
+    }
+
+    // MARK: - Late Policy Info Section
+
+    private var latePolicyInfoSection: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 6) {
+                Image(systemName: assignment.latePenaltyType.iconName)
+                    .foregroundStyle(.orange)
+                Text("Late Policy: \(assignment.latePenaltyType.displayName)")
+                    .font(.caption.bold())
+                    .foregroundStyle(.orange)
+            }
+
+            switch assignment.latePenaltyType {
+            case .percentPerDay:
+                Text("\(Int(assignment.latePenaltyPerDay))% deducted per day late, up to \(assignment.maxLateDays) days.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            case .flatDeduction:
+                Text("\(Int(assignment.latePenaltyPerDay)) points deducted per day late, up to \(assignment.maxLateDays) days.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            case .noCredit:
+                Text("No credit awarded for late submissions.")
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            case .none:
+                EmptyView()
+            }
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.orange.opacity(0.08), in: .rect(cornerRadius: 8))
     }
 
     private func infoLabel(icon: String, text: String, color: Color) -> some View {

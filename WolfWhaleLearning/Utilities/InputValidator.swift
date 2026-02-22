@@ -117,22 +117,39 @@ nonisolated enum InputValidator {
 
     /// Strips all HTML tags from the input to prevent XSS attacks.
     /// This is a defence-in-depth measure for content that may be rendered in web views.
+    ///
+    /// Decodes HTML entities first, then strips tags, and repeats in a loop
+    /// (up to 3 iterations) to catch multi-layer encoded payloads such as
+    /// `&lt;script&gt;` which would become `<script>` after a single decode.
     static func sanitizeHTML(_ input: String) -> String {
-        // Remove anything between < and > (HTML/XML tags)
-        let pattern = "<[^>]+>"
-        guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) else {
-            return input
+        var result = input
+
+        for _ in 0..<3 {
+            // 1. Decode common HTML entities so encoded tags become visible
+            let decoded = result
+                .replacingOccurrences(of: "&#39;", with: "'")
+                .replacingOccurrences(of: "&quot;", with: "\"")
+                .replacingOccurrences(of: "&lt;", with: "<")
+                .replacingOccurrences(of: "&gt;", with: ">")
+                .replacingOccurrences(of: "&nbsp;", with: " ")
+                .replacingOccurrences(of: "&amp;", with: "&")
+
+            // 2. Strip HTML/XML tags
+            let pattern = "<[^>]+>"
+            guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) else {
+                return decoded
+            }
+            let range = NSRange(decoded.startIndex..., in: decoded)
+            let stripped = regex.stringByReplacingMatches(in: decoded, options: [], range: range, withTemplate: "")
+
+            // If nothing changed this iteration, we are done
+            if stripped == result {
+                return stripped
+            }
+            result = stripped
         }
-        let range = NSRange(input.startIndex..., in: input)
-        let cleaned = regex.stringByReplacingMatches(in: input, options: [], range: range, withTemplate: "")
-        // Also decode common HTML entities to prevent encoded XSS
-        return cleaned
-            .replacingOccurrences(of: "&lt;", with: "<")
-            .replacingOccurrences(of: "&gt;", with: ">")
-            .replacingOccurrences(of: "&amp;", with: "&")
-            .replacingOccurrences(of: "&quot;", with: "\"")
-            .replacingOccurrences(of: "&#39;", with: "'")
-            .replacingOccurrences(of: "&nbsp;", with: " ")
+
+        return result
     }
 
     // MARK: - File Size Validation

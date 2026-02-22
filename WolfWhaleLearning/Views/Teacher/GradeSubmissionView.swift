@@ -16,6 +16,7 @@ struct GradeSubmissionView: View {
     @State private var previewData: Data?
     @State private var showFilePreview = false
     @State private var isLoadingFile = false
+    @State private var applyLatePenalty = true
 
     // MARK: - Rubric Grading State
     /// Maps criterion ID -> selected level points. Updated when teacher taps a rubric level.
@@ -71,6 +72,12 @@ struct GradeSubmissionView: View {
         ScrollView {
             VStack(spacing: 16) {
                 assignmentHeader
+                if assignment.latePenaltyType != .none && assignment.daysLate > 0 {
+                    latePenaltyGradingSection
+                }
+                if assignment.allowResubmission && assignment.resubmissionCount > 0 {
+                    resubmissionInfoSection
+                }
                 submissionSection
                 if !attachmentURLs.isEmpty {
                     attachedFilesSection
@@ -403,6 +410,147 @@ struct GradeSubmissionView: View {
         .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
     }
 
+    // MARK: - Late Penalty Grading Section (Teacher)
+
+    private var latePenaltyGradingSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: "clock.badge.exclamationmark")
+                    .font(.title3)
+                    .foregroundStyle(.orange)
+                Text("Late Submission")
+                    .font(.headline)
+                    .foregroundStyle(.orange)
+            }
+
+            // Late details
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text("Days Late:")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Text("\(assignment.daysLate)")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.red)
+                }
+
+                HStack {
+                    Text("Penalty Type:")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Text(assignment.latePenaltyType.displayName)
+                        .font(.subheadline.bold())
+                }
+
+                if let badgeText = assignment.latePenaltyBadgeText {
+                    HStack {
+                        Text("Calculated Penalty:")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Text(badgeText)
+                            .font(.subheadline.bold())
+                            .foregroundStyle(.red)
+                    }
+                }
+
+                if let summary = viewModel.latePenaltySummary(for: assignment) {
+                    Text(summary)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(8)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color(.tertiarySystemFill), in: .rect(cornerRadius: 8))
+                }
+            }
+
+            // Toggle to apply or skip late penalty
+            Toggle(isOn: $applyLatePenalty) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Apply Late Penalty")
+                        .font(.subheadline.bold())
+                    Text("Automatically deduct points based on late policy")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .tint(.orange)
+        }
+        .padding(14)
+        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .strokeBorder(.orange.opacity(0.3), lineWidth: 1)
+        )
+    }
+
+    // MARK: - Resubmission Info Section (Teacher)
+
+    private var resubmissionInfoSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 8) {
+                Image(systemName: "arrow.counterclockwise.circle.fill")
+                    .font(.title3)
+                    .foregroundStyle(.indigo)
+                Text("Resubmission #\(assignment.resubmissionCount)")
+                    .font(.headline)
+                    .foregroundStyle(.indigo)
+            }
+
+            if !assignment.resubmissionHistory.isEmpty {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Previous Grades")
+                        .font(.caption.bold())
+                        .foregroundStyle(.secondary)
+
+                    ForEach(assignment.resubmissionHistory) { entry in
+                        HStack {
+                            Text("Attempt \(assignment.resubmissionHistory.firstIndex(where: { $0.id == entry.id }).map { $0 + 1 } ?? 0)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            if let grade = entry.grade {
+                                Text("\(Int(grade))%")
+                                    .font(.caption.bold())
+                                    .foregroundStyle(Theme.gradeColor(grade))
+                            } else {
+                                Text("--")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            if let feedback = entry.feedback, !feedback.isEmpty {
+                                Image(systemName: "text.bubble.fill")
+                                    .font(.caption2)
+                                    .foregroundStyle(.blue)
+                            }
+                        }
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Color(.tertiarySystemFill), in: .rect(cornerRadius: 6))
+                    }
+                }
+            }
+
+            HStack(spacing: 8) {
+                Image(systemName: "info.circle.fill")
+                    .foregroundStyle(.blue)
+                Text("This is resubmission \(assignment.resubmissionCount) of \(assignment.maxResubmissions). The student's previous grades have been preserved.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(8)
+            .background(.blue.opacity(0.08), in: .rect(cornerRadius: 8))
+        }
+        .padding(14)
+        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .strokeBorder(.indigo.opacity(0.3), lineWidth: 1)
+        )
+    }
+
     // MARK: - Grading Section
 
     private var gradingSection: some View {
@@ -572,13 +720,26 @@ struct GradeSubmissionView: View {
 
         Task {
             do {
-                try await viewModel.gradeSubmission(
-                    assignmentId: assignment.id,
-                    studentId: assignment.studentId,
-                    score: score,
-                    letterGrade: finalLetterGrade,
-                    feedback: trimmedFeedback.isEmpty ? nil : trimmedFeedback
-                )
+                if applyLatePenalty && assignment.latePenaltyType != .none && assignment.daysLate > 0 {
+                    // Use the late penalty grading flow
+                    try await viewModel.gradeWithLatePenalty(
+                        assignmentId: assignment.id,
+                        studentId: assignment.studentId,
+                        rawScore: score,
+                        letterGrade: finalLetterGrade,
+                        feedback: trimmedFeedback.isEmpty ? nil : trimmedFeedback,
+                        applyLatePenalty: true
+                    )
+                } else {
+                    // Standard grading without late penalty
+                    try await viewModel.gradeSubmission(
+                        assignmentId: assignment.id,
+                        studentId: assignment.studentId,
+                        score: score,
+                        letterGrade: finalLetterGrade,
+                        feedback: trimmedFeedback.isEmpty ? nil : trimmedFeedback
+                    )
+                }
                 isLoading = false
                 withAnimation(.snappy) {
                     showSuccess = true

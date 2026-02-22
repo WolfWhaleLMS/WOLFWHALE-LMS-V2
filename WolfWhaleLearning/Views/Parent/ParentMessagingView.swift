@@ -22,24 +22,21 @@ struct ParentMessagingView: View {
             profile.role.lowercased() == teacherRole
         }
 
-        // If we have courses, try to match teachers who teach those courses.
+        // Match teachers who teach the child's enrolled courses.
         // Since ProfileDTO does not carry course info directly, we check
         // if any viewModel.courses with matching names has a teacherName
         // that matches the profile name.
         if !courseNames.isEmpty {
-            let matchedTeachers = teachers.filter { profile in
+            return teachers.filter { profile in
                 let fullName = "\(profile.firstName ?? "") \(profile.lastName ?? "")"
                 return viewModel.courses.contains { course in
                     courseNames.contains(course.title) && course.teacherName == fullName
                 }
             }
-            if !matchedTeachers.isEmpty {
-                return matchedTeachers
-            }
         }
 
-        // Fallback: return all teachers
-        return teachers
+        // No courses enrolled — return empty list instead of all teachers
+        return []
     }
 
     private var parentConversations: [Conversation] {
@@ -128,12 +125,14 @@ struct ParentMessagingView: View {
             }
 
             if teacherProfiles.isEmpty {
-                HStack {
+                VStack(spacing: 8) {
                     Image(systemName: "person.slash")
+                        .font(.title3)
                         .foregroundStyle(.secondary)
-                    Text("No teacher contacts available")
+                    Text("No teachers found for your children's courses")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 20)

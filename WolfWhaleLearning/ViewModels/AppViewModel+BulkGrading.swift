@@ -9,12 +9,15 @@ extension AppViewModel {
     /// Grades multiple submissions at once. Each entry contains the assignment id, student id,
     /// raw score (points earned, NOT percentage), and optional feedback text.
     /// Returns the number of successfully graded submissions.
+    /// Throws if ALL submissions fail; partial failures are reported via gradeError.
     func bulkGradeSubmissions(grades: [(assignmentId: UUID, studentId: UUID?, score: Double, feedback: String)]) async throws -> Int {
         isLoading = true
         gradeError = nil
         defer { isLoading = false }
 
         var successCount = 0
+        var failedCount = 0
+        var failedStudentNames: [String] = []
         let service = DataService.shared
         let audit = AuditLogService()
 
@@ -68,6 +71,8 @@ extension AppViewModel {
                     ]
                 )
             } catch {
+                failedCount += 1
+                failedStudentNames.append(assignment.studentName ?? "Unknown Student")
                 #if DEBUG
                 print("[AppViewModel] Bulk grade failed for assignment \(entry.assignmentId): \(error)")
                 #endif
@@ -76,6 +81,16 @@ extension AppViewModel {
 
         if successCount > 0 {
             refreshData()
+        }
+
+        // Surface partial failures so the teacher knows which grades were NOT saved
+        if failedCount > 0 {
+            let names = failedStudentNames.prefix(3).joined(separator: ", ")
+            let extra = failedCount > 3 ? " and \(failedCount - 3) more" : ""
+            gradeError = "\(failedCount) grade(s) failed to save (e.g. \(names)\(extra)). \(successCount) succeeded."
+            if successCount == 0 {
+                throw NSError(domain: "AppViewModel", code: 500, userInfo: [NSLocalizedDescriptionKey: "All bulk grade submissions failed."])
+            }
         }
 
         return successCount

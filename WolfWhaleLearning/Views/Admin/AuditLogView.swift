@@ -65,6 +65,7 @@ struct AuditLogView: View {
                 await loadLogs(reset: true)
             }
         }
+        .requireRole(.admin, .superAdmin, currentRole: viewModel.currentUser?.role)
     }
 
     // MARK: - Log List

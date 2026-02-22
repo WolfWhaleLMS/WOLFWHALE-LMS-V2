@@ -95,6 +95,7 @@ struct AddUserView: View {
                 Text("Account for \(firstName) \(lastName) has been created. Share their email and password with them so they can sign in.")
             }
         }
+        .requireRole(.admin, .superAdmin, currentRole: viewModel.currentUser?.role)
     }
 
     private var slotsSection: some View {
@@ -109,10 +110,25 @@ struct AddUserView: View {
         }
     }
 
+    /// Roles the current user is allowed to assign when creating a new account.
+    /// - Admins can create: student, teacher, parent
+    /// - SuperAdmins can create: student, teacher, parent, admin
+    /// - No one can create superAdmin through this UI.
+    private var creatableRoles: [UserRole] {
+        switch viewModel.currentUser?.role {
+        case .superAdmin:
+            return [.student, .teacher, .parent, .admin]
+        case .admin:
+            return [.student, .teacher, .parent]
+        default:
+            return [.student, .teacher, .parent]
+        }
+    }
+
     private var roleSection: some View {
         Section("Role") {
             Picker("Role", selection: $selectedRole) {
-                ForEach(UserRole.allCases) { role in
+                ForEach(creatableRoles) { role in
                     Label(role.rawValue, systemImage: role.iconName)
                         .tag(role)
                 }

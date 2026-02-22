@@ -65,6 +65,13 @@ class AppViewModel {
     var enrollmentRequests: [EnrollmentRequest] = []
     var allAvailableCourses: [Course] = []
 
+    // MARK: - Conference Scheduling
+    var conferences: [Conference] = []
+    var teacherAvailableSlots: [TeacherAvailableSlot] = []
+
+    // MARK: - Absence Alert Toggle
+    var absenceAlertEnabled: Bool = true
+
     // MARK: - XP & Gamification
     var currentXP: Int = 0
     var currentLevel: Int = 1
@@ -528,12 +535,20 @@ class AppViewModel {
         offlineStorage.clearAllData()
         offlineStorage.clearCurrentUser()
 
-        // 4. Clear Siri / App Intents cached data from UserDefaults
+        // 4. Clear Siri / App Intents cached data from both standard and App Group UserDefaults
         //    so the next user doesn't see stale grades, assignments, or schedule
         let defaults = UserDefaults.standard
         defaults.removeObject(forKey: UserDefaultsKeys.upcomingAssignments)
         defaults.removeObject(forKey: UserDefaultsKeys.gradesSummary)
         defaults.removeObject(forKey: UserDefaultsKeys.scheduleToday)
+
+        // FERPA: Also clear from App Group suite and revoke auth flag
+        if let sharedDefaults = UserDefaults(suiteName: UserDefaultsKeys.widgetAppGroup) {
+            sharedDefaults.set(false, forKey: "wolfwhale_is_authenticated")
+            sharedDefaults.removeObject(forKey: UserDefaultsKeys.upcomingAssignments)
+            sharedDefaults.removeObject(forKey: UserDefaultsKeys.gradesSummary)
+            sharedDefaults.removeObject(forKey: UserDefaultsKeys.scheduleToday)
+        }
 
         // 5. Remove all pending local notification reminders for the previous user
         //    and clear any deep-link state so they don't carry over
@@ -611,12 +626,15 @@ class AppViewModel {
         announcements = []
         children = []
         parentAlerts = []
+        conferences = []
+        teacherAvailableSlots = []
         schoolMetrics = nil
         allUsers = []
         discussionThreads = []
         discussionReplies = []
         dataError = nil
         gradeError = nil
+        submissionError = nil
         enrollmentError = nil
         enrollmentRequests = []
         loginError = nil
@@ -1120,6 +1138,9 @@ class AppViewModel {
         // Populate course schedules for demo mode
         courseSchedules = generateMockSchedules(for: courses)
 
+        // Populate conference scheduling demo data
+        loadDemoConferenceData()
+
         // Populate XP & gamification for demo mode
         currentXP = 475
         currentLevel = XPLevelSystem.level(forXP: currentXP)
@@ -1379,9 +1400,13 @@ class AppViewModel {
     /// Writes lightweight JSON summaries to UserDefaults so App Intents can read
     /// them without needing a live Supabase session.
     func cacheDataForSiri() {
-        let defaults = UserDefaults.standard
+        // Write to the App Group suite so Siri intents can read the data
+        let defaults = UserDefaults(suiteName: UserDefaultsKeys.widgetAppGroup) ?? .standard
         let isoFormatter = ISO8601DateFormatter()
         isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
+        // FERPA: Set auth flag so intents can verify user is signed in
+        defaults.set(isAuthenticated, forKey: "wolfwhale_is_authenticated")
 
         // 1. Upcoming assignments
         let upcomingItems = upcomingAssignments.prefix(10).map { assignment in
@@ -1421,9 +1446,12 @@ class AppViewModel {
     /// Writes the same cached data to the shared App Group UserDefaults so
     /// WidgetKit widgets can display grades, assignments, and schedule.
     func cacheDataForWidgets() {
-        guard let sharedDefaults = UserDefaults(suiteName: "group.com.wolfwhale.lms") else { return }
+        guard let sharedDefaults = UserDefaults(suiteName: UserDefaultsKeys.widgetAppGroup) else { return }
         let isoFormatter = ISO8601DateFormatter()
         isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
+        // FERPA: Set auth flag so widgets/intents can verify user is signed in
+        sharedDefaults.set(isAuthenticated, forKey: "wolfwhale_is_authenticated")
 
         // 1. Upcoming assignments
         let upcomingItems = upcomingAssignments.prefix(10).map { assignment in
@@ -1785,8 +1813,18 @@ class AppViewModel {
 
                 if !isDemoMode, let user = currentUser {
                     let tenantUUID = user.schoolId.flatMap { UUID(uuidString: $0) } ?? UUID(uuidString: "00000000-0000-0000-0000-000000000000")!
+                    let ci = courseIndex, mi = moduleIndex, li = lessonIndex
                     Task {
-                        try? await dataService.completeLesson(studentId: user.id, lessonId: lesson.id, courseId: course.id, tenantId: tenantUUID)
+                        do {
+                            try await dataService.completeLesson(studentId: user.id, lessonId: lesson.id, courseId: course.id, tenantId: tenantUUID)
+                        } catch {
+                            // Revert optimistic update — lesson completion was not persisted
+                            courses[ci].modules[mi].lessons[li].isCompleted = false
+                            dataError = "Failed to save lesson completion: \(error.localizedDescription)"
+                            #if DEBUG
+                            print("[AppViewModel] completeLesson failed: \(error)")
+                            #endif
+                        }
                     }
                 }
                 syncProfile()
@@ -1795,10 +1833,19 @@ class AppViewModel {
         }
     }
 
+    /// Error surfaced to the student when a submission fails to persist.
+    var submissionError: String?
+
     func submitAssignment(_ assignment: Assignment, text: String) {
         guard let index = assignments.firstIndex(where: { $0.id == assignment.id }) else { return }
         // Prevent double-submission: if already submitted locally, bail out
         guard !assignments[index].isSubmitted else { return }
+
+        // Save previous state for rollback
+        let previousIsSubmitted = assignments[index].isSubmitted
+        let previousSubmission = assignments[index].submission
+        let previousAttachmentURLs = assignments[index].attachmentURLs
+
         assignments[index].isSubmitted = true
         assignments[index].submission = text
 
@@ -1809,18 +1856,30 @@ class AppViewModel {
         }
 
         if !isDemoMode, let user = currentUser {
+            let assignmentId = assignment.id
             Task {
-                try? await dataService.submitAssignment(assignmentId: assignment.id, studentId: user.id, content: text)
-            }
+                do {
+                    try await dataService.submitAssignment(assignmentId: assignmentId, studentId: user.id, content: text)
 
-            // Audit: record assignment submission
-            Task {
-                await auditLog.log(
-                    AuditAction.create,
-                    entityType: AuditEntityType.assignment,
-                    entityId: assignment.id.uuidString,
-                    details: ["action": "submit", "student_id": user.id.uuidString, "course_id": assignment.courseId.uuidString]
-                )
+                    // Audit: record assignment submission (only on success)
+                    await auditLog.log(
+                        AuditAction.create,
+                        entityType: AuditEntityType.assignment,
+                        entityId: assignmentId.uuidString,
+                        details: ["action": "submit", "student_id": user.id.uuidString, "course_id": assignment.courseId.uuidString]
+                    )
+                } catch {
+                    // Revert optimistic update — student's submission was NOT saved
+                    if let idx = assignments.firstIndex(where: { $0.id == assignmentId }) {
+                        assignments[idx].isSubmitted = previousIsSubmitted
+                        assignments[idx].submission = previousSubmission
+                        assignments[idx].attachmentURLs = previousAttachmentURLs
+                    }
+                    submissionError = "Failed to submit assignment: \(error.localizedDescription)"
+                    #if DEBUG
+                    print("[AppViewModel] submitAssignment failed: \(error)")
+                    #endif
+                }
             }
         }
 
@@ -1846,8 +1905,21 @@ class AppViewModel {
         quizzes[index].score = score
 
         if !isDemoMode, let user = currentUser {
+            let quizId = quiz.id
             Task {
-                try? await dataService.submitQuizAttempt(quizId: quiz.id, studentId: user.id, score: score)
+                do {
+                    try await dataService.submitQuizAttempt(quizId: quizId, studentId: user.id, score: score)
+                } catch {
+                    // Revert optimistic update — quiz attempt was not persisted
+                    if let idx = quizzes.firstIndex(where: { $0.id == quizId }) {
+                        quizzes[idx].isCompleted = false
+                        quizzes[idx].score = nil
+                    }
+                    submissionError = "Failed to save quiz submission: \(error.localizedDescription)"
+                    #if DEBUG
+                    print("[AppViewModel] submitQuiz failed: \(error)")
+                    #endif
+                }
             }
         }
         syncProfile()
@@ -1917,8 +1989,21 @@ class AppViewModel {
         quizzes[index].score = score
 
         if !isDemoMode, let user = currentUser {
+            let quizId = quiz.id
             Task {
-                try? await dataService.submitQuizAttempt(quizId: quiz.id, studentId: user.id, score: score)
+                do {
+                    try await dataService.submitQuizAttempt(quizId: quizId, studentId: user.id, score: score)
+                } catch {
+                    // Revert optimistic update — quiz attempt was not persisted
+                    if let idx = quizzes.firstIndex(where: { $0.id == quizId }) {
+                        quizzes[idx].isCompleted = false
+                        quizzes[idx].score = nil
+                    }
+                    submissionError = "Failed to save quiz submission: \(error.localizedDescription)"
+                    #if DEBUG
+                    print("[AppViewModel] submitAdvancedQuiz failed: \(error)")
+                    #endif
+                }
             }
         }
         syncProfile()

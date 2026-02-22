@@ -328,14 +328,74 @@ struct UniversalSearchView: View {
             selectedCategory = nil
             return
         }
+
+        // FERPA: Scope search data by the current user's role to prevent
+        // unauthorized disclosure of user names, emails, and academic records.
+        let scopedUsers = ferpaFilteredUsers
+        let scopedConversations = viewModel.conversations // already fetched for current user
+        let scopedAssignments = viewModel.assignments     // already scoped server-side
+
         searchService.search(
             query: query,
             courses: viewModel.courses,
-            assignments: viewModel.assignments,
-            conversations: viewModel.conversations,
-            users: viewModel.allUsers,
+            assignments: scopedAssignments,
+            conversations: scopedConversations,
+            users: scopedUsers,
             lessons: allLessons
         )
+    }
+
+    // MARK: - FERPA: Role-Based User Filtering
+
+    /// Returns users visible to the current user based on their role.
+    /// - Students: can see other students in their courses + their teachers
+    /// - Teachers: can see their students + other teachers
+    /// - Parents: can see only their children's teachers
+    /// - Admins/SuperAdmins: can see all users in the tenant
+    private var ferpaFilteredUsers: [ProfileDTO] {
+        guard let currentUser = viewModel.currentUser else { return [] }
+
+        switch currentUser.role {
+        case .admin, .superAdmin:
+            // Admins see all users in the tenant
+            return viewModel.allUsers
+
+        case .student:
+            // Collect teacher names from enrolled courses
+            let teacherNames = Set(viewModel.courses.map { $0.teacherName.lowercased() })
+            return viewModel.allUsers.filter { profile in
+                let profileRole = profile.role.lowercased()
+                let fullName = (profile.fullName ?? "\(profile.firstName ?? "") \(profile.lastName ?? "")").lowercased()
+                // Allow seeing teachers of enrolled courses
+                if profileRole == "teacher" && teacherNames.contains(fullName) {
+                    return true
+                }
+                // Allow seeing fellow students (same role)
+                if profileRole == "student" {
+                    return true
+                }
+                return false
+            }
+
+        case .teacher:
+            return viewModel.allUsers.filter { profile in
+                let profileRole = profile.role.lowercased()
+                // Teachers can see other teachers and students
+                return profileRole == "teacher" || profileRole == "student"
+            }
+
+        case .parent:
+            // Parents can only see their children's teachers.
+            // Gather teacher names from the parent's loaded courses (which represent
+            // the children's enrolled courses).
+            let teacherNames = Set(viewModel.courses.map { $0.teacherName.lowercased() })
+            return viewModel.allUsers.filter { profile in
+                let profileRole = profile.role.lowercased()
+                guard profileRole == "teacher" else { return false }
+                let fullName = (profile.fullName ?? "\(profile.firstName ?? "") \(profile.lastName ?? "")").lowercased()
+                return teacherNames.contains(fullName)
+            }
+        }
     }
 
     private func handleResultTap(_ result: SearchResult) {

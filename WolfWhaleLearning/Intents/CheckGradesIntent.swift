@@ -10,7 +10,11 @@ nonisolated struct CheckGradesIntent: AppIntent {
     static var openAppWhenRun: Bool = false
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        let defaults = UserDefaults.standard
+        // FERPA: Require authentication before speaking grades aloud
+        let defaults = UserDefaults(suiteName: UserDefaultsKeys.widgetAppGroup) ?? .standard
+        guard defaults.bool(forKey: "wolfwhale_is_authenticated") else {
+            return .result(dialog: "Please open WolfWhale LMS and sign in first.")
+        }
 
         guard let data = defaults.data(forKey: UserDefaultsKeys.gradesSummary),
               let gradesSummary = try? JSONDecoder().decode(CachedGradesSummary.self, from: data) else {

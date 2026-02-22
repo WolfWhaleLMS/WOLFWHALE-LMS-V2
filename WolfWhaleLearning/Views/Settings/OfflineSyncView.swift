@@ -259,12 +259,28 @@ struct OfflineSyncView: View {
 
     // MARK: - Helpers
 
+    /// Creates a sanitized copy of the user with PII stripped out.
+    /// Only UI preferences, theme settings, notification preferences, and bookmarks are kept.
+    /// Grades, submissions, student names, email addresses, and role data are removed
+    /// to comply with FERPA requirements.
+    private func sanitizedUserForCloudSync(_ user: User) -> User {
+        var safe = user
+        safe.firstName = ""
+        safe.lastName = ""
+        safe.email = ""
+        safe.role = .student  // Neutral default; role data should not be synced
+        safe.schoolId = nil
+        return safe
+    }
+
     private func performSync() {
         isSyncingNow = true
         Task {
             await viewModel.loadData()
             if let user = viewModel.currentUser, cloudSync.isSyncEnabled {
-                await cloudSync.syncToCloud(user: user)
+                // Only sync non-PII preferences to iCloud (FERPA compliance)
+                let safeUser = sanitizedUserForCloudSync(user)
+                await cloudSync.syncToCloud(user: safeUser)
             }
             isSyncingNow = false
         }

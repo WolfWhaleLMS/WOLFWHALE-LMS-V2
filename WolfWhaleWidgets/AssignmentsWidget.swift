@@ -73,11 +73,13 @@ private struct SmallAssignmentsView: View {
                         .font(.caption.weight(.semibold))
                         .lineLimit(2)
                         .multilineTextAlignment(.center)
+                        .privacySensitive(true)
 
                     Text(assignment.courseName)
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
+                        .privacySensitive(true)
 
                     // Countdown
                     Text(countdownText(for: assignment))
@@ -153,12 +155,14 @@ private struct MediumAssignmentsView: View {
                                 Text(assignment.title)
                                     .font(.caption.weight(.medium))
                                     .lineLimit(1)
+                                    .privacySensitive(true)
 
                                 HStack(spacing: 4) {
                                     Text(assignment.courseName)
                                         .font(.caption2)
                                         .foregroundStyle(.secondary)
                                         .lineLimit(1)
+                                        .privacySensitive(true)
 
                                     Text("--")
                                         .font(.caption2)
@@ -250,10 +254,12 @@ private struct LargeAssignmentsView: View {
                                 Text(assignment.title)
                                     .font(.subheadline.weight(.medium))
                                     .lineLimit(1)
+                                    .privacySensitive(true)
                                 Text(assignment.courseName)
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
                                     .lineLimit(1)
+                                    .privacySensitive(true)
                             }
 
                             Spacer()

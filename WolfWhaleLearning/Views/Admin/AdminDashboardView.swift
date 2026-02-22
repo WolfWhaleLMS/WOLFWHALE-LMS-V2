@@ -7,6 +7,9 @@ struct AdminDashboardView: View {
     @State private var showSchoolConfig = false
     @State private var showAuditLog = false
     @State private var showAttendanceReport = false
+    @State private var showClassSections = false
+    @State private var showAcademicCalendar = false
+    @State private var showReportCards = false
     @State private var hapticTrigger = false
 
     private var metrics: SchoolMetrics {
@@ -94,7 +97,26 @@ struct AdminDashboardView: View {
                         }
                 }
             }
+            .sheet(isPresented: $showClassSections) {
+                NavigationStack {
+                    ClassSectionView(viewModel: viewModel)
+                        .toolbar {
+                            ToolbarItem(placement: .cancellationAction) {
+                                Button("Done") {
+                                    showClassSections = false
+                                }
+                            }
+                        }
+                }
+            }
+            .sheet(isPresented: $showAcademicCalendar) {
+                AcademicCalendarView(viewModel: viewModel)
+            }
+            .sheet(isPresented: $showReportCards) {
+                AdminReportCardView(viewModel: viewModel)
+            }
         }
+        .requireRole(.admin, .superAdmin, currentRole: viewModel.currentUser?.role)
     }
 
     private var metricsGrid: some View {
@@ -256,6 +278,114 @@ struct AdminDashboardView: View {
                 .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 .accessibilityLabel("Attendance Report")
                 .accessibilityHint("Opens school-wide attendance report with charts and export")
+            }
+
+            HStack(spacing: 12) {
+                Button {
+                    hapticTrigger.toggle()
+                    showClassSections = true
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "rectangle.on.rectangle.angled")
+                            .font(.title3)
+                            .foregroundStyle(.cyan)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Class Sections")
+                                .font(.subheadline.bold())
+                                .foregroundStyle(Color(.label))
+                            Text("Manage sections, capacity & transfers")
+                                .font(.caption2)
+                                .foregroundStyle(Color(.secondaryLabel))
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(Color(.tertiaryLabel))
+                    }
+                    .padding(14)
+                    .background(Color(.secondarySystemGroupedBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .strokeBorder(Color.cyan.opacity(0.2), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .accessibilityLabel("Class Sections")
+                .accessibilityHint("Opens class section management for viewing sections, enrollment, and student transfers")
+            }
+
+            HStack(spacing: 12) {
+                Button {
+                    hapticTrigger.toggle()
+                    showAcademicCalendar = true
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "calendar.badge.clock")
+                            .font(.title3)
+                            .foregroundStyle(.teal)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Academic Calendar")
+                                .font(.subheadline.bold())
+                                .foregroundStyle(Color(.label))
+                            Text("Terms, events, grading periods")
+                                .font(.caption2)
+                                .foregroundStyle(Color(.secondaryLabel))
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(Color(.tertiaryLabel))
+                    }
+                    .padding(14)
+                    .background(Color(.secondarySystemGroupedBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .strokeBorder(Color.teal.opacity(0.2), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .accessibilityLabel("Academic Calendar")
+                .accessibilityHint("Opens the academic calendar with terms, events, and grading periods")
+            }
+
+            HStack(spacing: 12) {
+                Button {
+                    hapticTrigger.toggle()
+                    showReportCards = true
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "doc.richtext.fill")
+                            .font(.title3)
+                            .foregroundStyle(.orange)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Report Cards")
+                                .font(.subheadline.bold())
+                                .foregroundStyle(Color(.label))
+                            Text("Generate & export student reports")
+                                .font(.caption2)
+                                .foregroundStyle(Color(.secondaryLabel))
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(Color(.tertiaryLabel))
+                    }
+                    .padding(14)
+                    .background(Color(.secondarySystemGroupedBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .strokeBorder(Color.orange.opacity(0.2), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .accessibilityLabel("Report Cards")
+                .accessibilityHint("Opens report card generation with PDF export for all students")
             }
         }
     }

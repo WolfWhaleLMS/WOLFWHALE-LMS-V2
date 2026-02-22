@@ -16,6 +16,25 @@ struct GradebookView: View {
     @State private var showEditCourse = false
     @State private var hapticTrigger = false
 
+    // Student Notes
+    @State private var selectedStudentForNotes: (id: UUID, name: String)?
+    @State private var showStudentNotes = false
+
+    // Standards
+    @State private var newStandardIds: [UUID] = []
+    @State private var showStandardsPicker = false
+
+    // Late Policy state
+    @State private var newLatePenaltyType: LatePenaltyType = .none
+    @State private var newLatePenaltyPerDay: Double = 10
+    @State private var newMaxLateDays: Int = 7
+
+    // Resubmission state
+    @State private var newAllowResubmission = false
+    @State private var newMaxResubmissions: Int = 1
+    @State private var newResubmissionDeadline: Date = Date().addingTimeInterval(14 * 86400)
+    @State private var newHasResubmissionDeadline = false
+
     private var courseAssignments: [Assignment] {
         viewModel.assignments.filter { $0.courseName == course.title || $0.courseId == course.id }
     }
@@ -34,8 +53,10 @@ struct GradebookView: View {
                 courseHeader
                 statsSection
                 studentSubmissionsSection
+                standardsMasteryLink
                 contentActionsSection
                 teacherDiscussionLink
+                templatesAndPeerReviewSection
                 courseContentSection
                 enrolledStudentsSection
                 assignmentsSection
@@ -83,6 +104,22 @@ struct GradebookView: View {
             NavigationStack {
                 EditCourseView(course: course, viewModel: viewModel)
             }
+        }
+        .sheet(isPresented: $showStudentNotes) {
+            if let student = selectedStudentForNotes {
+                NavigationStack {
+                    StudentNotesView(
+                        viewModel: viewModel,
+                        studentId: student.id,
+                        studentName: student.name,
+                        courseId: course.id,
+                        courseName: course.title
+                    )
+                }
+            }
+        }
+        .sheet(isPresented: $showStandardsPicker) {
+            StandardsPickerView(viewModel: viewModel, selectedStandardIds: $newStandardIds)
         }
     }
 
@@ -173,6 +210,51 @@ struct GradebookView: View {
             .padding(14)
             .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
         }
+    }
+
+    // MARK: - Standards Mastery Link
+
+    private var standardsMasteryLink: some View {
+        NavigationLink {
+            StandardsMasteryView(viewModel: viewModel, course: course)
+        } label: {
+            HStack(spacing: 12) {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(.green.gradient)
+                    .frame(width: 40, height: 40)
+                    .overlay {
+                        Image(systemName: "checkmark.seal.fill")
+                            .font(.callout)
+                            .foregroundStyle(.white)
+                    }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Standards Mastery")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(Color(.label))
+                    Text("Track student progress by learning standard")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                let standardCount = viewModel.standardsUsedInCourse(course.id).count
+                if standardCount > 0 {
+                    Text("\(standardCount)")
+                        .font(.caption2.bold())
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(.green.opacity(0.15), in: .capsule)
+                        .foregroundStyle(.green)
+                }
+                Image(systemName: "chevron.right")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(14)
+            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Standards Mastery")
+        .accessibilityHint("Double tap to view standards alignment and mastery data")
     }
 
     // MARK: - Content Actions
@@ -290,6 +372,74 @@ struct GradebookView: View {
         .buttonStyle(.plain)
         .accessibilityLabel("Discussion Forum")
         .accessibilityHint("Double tap to open course discussions")
+    }
+
+    // MARK: - Templates & Peer Review Links
+
+    private var templatesAndPeerReviewSection: some View {
+        HStack(spacing: 10) {
+            NavigationLink {
+                AssignmentTemplatesView(viewModel: viewModel, courseId: course.id)
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "doc.on.doc.fill")
+                        .font(.title3)
+                        .foregroundStyle(.purple)
+                        .frame(width: 32, height: 32)
+                        .background(.purple.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Templates")
+                            .font(.caption.bold())
+                            .foregroundStyle(Color(.label))
+                        Text("Reuse assignments")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
+                .padding(12)
+                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Assignment Templates")
+            .accessibilityHint("View and use saved assignment templates")
+
+            if let firstAssignment = courseAssignments.first {
+                NavigationLink {
+                    PeerReviewSetupView(viewModel: viewModel, course: course, assignment: firstAssignment)
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "person.2.circle.fill")
+                            .font(.title3)
+                            .foregroundStyle(.pink)
+                            .frame(width: 32, height: 32)
+                            .background(.pink.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Peer Review")
+                                .font(.caption.bold())
+                                .foregroundStyle(Color(.label))
+                            Text("Setup reviews")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
+                    }
+                    .padding(12)
+                    .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Peer Review Setup")
+                .accessibilityHint("Configure peer review for assignments")
+            }
+        }
     }
 
     // MARK: - Course Content (Modules & Lessons)
@@ -427,7 +577,9 @@ struct GradebookView: View {
     }
 
     private func assignmentRow(_ assignment: Assignment) -> some View {
-        VStack(spacing: 0) {
+        let assignmentStandards = viewModel.standards(forAssignment: assignment)
+
+        return VStack(spacing: 0) {
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(assignment.title)
@@ -440,6 +592,32 @@ struct GradebookView: View {
                             Text(studentName)
                                 .font(.caption)
                                 .foregroundStyle(.pink)
+
+                            // Notes badge button
+                            if let studentId = assignment.studentId {
+                                let count = viewModel.noteCount(forStudent: studentId, inCourse: course.id)
+                                Button {
+                                    hapticTrigger.toggle()
+                                    selectedStudentForNotes = (id: studentId, name: studentName)
+                                    showStudentNotes = true
+                                } label: {
+                                    HStack(spacing: 3) {
+                                        Image(systemName: "note.text")
+                                            .font(.caption2)
+                                        if count > 0 {
+                                            Text("\(count)")
+                                                .font(.caption2.bold())
+                                        }
+                                    }
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(.blue.opacity(0.12), in: Capsule())
+                                    .foregroundStyle(.blue)
+                                }
+                                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                                .accessibilityLabel("\(count) note\(count == 1 ? "" : "s") for \(studentName)")
+                                .accessibilityHint("Double tap to view and add notes")
+                            }
                         }
                     }
                     Text("Due: \(assignment.dueDate.formatted(.dateTime.month(.abbreviated).day()))")
@@ -465,6 +643,27 @@ struct GradebookView: View {
                 }
             }
 
+            // Standards tags
+            if !assignmentStandards.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 4) {
+                        Image(systemName: "checkmark.seal")
+                            .font(.caption2)
+                            .foregroundStyle(.green)
+                        ForEach(assignmentStandards) { std in
+                            Text(std.code)
+                                .font(.caption2)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 2)
+                                .background(.green.opacity(0.1), in: Capsule())
+                                .foregroundStyle(.green)
+                        }
+                    }
+                }
+                .padding(.top, 6)
+                .accessibilityLabel("Standards: \(assignmentStandards.map(\.code).joined(separator: ", "))")
+            }
+
             // Grade button for submitted but ungraded assignments
             if assignment.isSubmitted && assignment.grade == nil {
                 Divider()
@@ -480,6 +679,38 @@ struct GradebookView: View {
                         .padding(.vertical, 8)
                         .background(.orange.opacity(0.1), in: .rect(cornerRadius: 8))
                 }
+            }
+
+            // Quick action row: Edit, Duplicate, Peer Review
+            Divider()
+                .padding(.vertical, 4)
+
+            HStack(spacing: 8) {
+                NavigationLink {
+                    EditAssignmentView(assignment: assignment, viewModel: viewModel)
+                } label: {
+                    Label("Edit", systemImage: "pencil")
+                        .font(.caption2.bold())
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(Color(.tertiarySystemFill), in: Capsule())
+                        .foregroundStyle(Color(.label))
+                }
+                .accessibilityLabel("Edit \(assignment.title)")
+
+                NavigationLink {
+                    PeerReviewSetupView(viewModel: viewModel, course: course, assignment: assignment)
+                } label: {
+                    Label("Peer Review", systemImage: "person.2.fill")
+                        .font(.caption2.bold())
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(.pink.opacity(0.1), in: Capsule())
+                        .foregroundStyle(.pink)
+                }
+                .accessibilityLabel("Set up peer review for \(assignment.title)")
+
+                Spacer()
             }
         }
         .padding(12)
@@ -497,6 +728,120 @@ struct GradebookView: View {
                         .lineLimit(3...)
                     DatePicker("Due Date", selection: $newDueDate, displayedComponents: .date)
                     Stepper("Points: \(newPoints)", value: $newPoints, in: 10...500, step: 10)
+                }
+
+                // MARK: - Late Policy Section
+                Section {
+                    Picker("Penalty Type", selection: $newLatePenaltyType) {
+                        ForEach(LatePenaltyType.allCases, id: \.self) { type in
+                            Label(type.displayName, systemImage: type.iconName)
+                                .tag(type)
+                        }
+                    }
+
+                    if newLatePenaltyType != .none && newLatePenaltyType != .noCredit {
+                        HStack {
+                            Text("Penalty per day")
+                                .font(.subheadline)
+                            Spacer()
+                            TextField("10", value: $newLatePenaltyPerDay, format: .number)
+                                .keyboardType(.decimalPad)
+                                .textFieldStyle(.roundedBorder)
+                                .frame(width: 70)
+                            Text(newLatePenaltyType == .percentPerDay ? "%" : "pts")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
+                    if newLatePenaltyType != .none {
+                        Stepper("Max late days: \(newMaxLateDays)", value: $newMaxLateDays, in: 1...30)
+                            .font(.subheadline)
+                    }
+
+                    // Preview of penalty
+                    if newLatePenaltyType != .none {
+                        latePolicyPreview
+                    }
+                } header: {
+                    Label("Late Policy", systemImage: "clock.badge.exclamationmark")
+                } footer: {
+                    Text("Set how late submissions are penalized. Students see the policy before submitting.")
+                }
+
+                // MARK: - Resubmission Section
+                Section {
+                    Toggle("Allow Resubmission", isOn: $newAllowResubmission)
+
+                    if newAllowResubmission {
+                        Stepper("Max resubmissions: \(newMaxResubmissions)", value: $newMaxResubmissions, in: 1...5)
+                            .font(.subheadline)
+
+                        Toggle("Set resubmission deadline", isOn: $newHasResubmissionDeadline)
+
+                        if newHasResubmissionDeadline {
+                            DatePicker("Deadline", selection: $newResubmissionDeadline, displayedComponents: [.date, .hourAndMinute])
+                        }
+                    }
+                } header: {
+                    Label("Resubmission", systemImage: "arrow.counterclockwise.circle")
+                } footer: {
+                    if newAllowResubmission {
+                        Text("Students can resubmit up to \(newMaxResubmissions) time\(newMaxResubmissions == 1 ? "" : "s") after being graded. Previous grades are preserved in history.")
+                    }
+                }
+
+                // MARK: - Learning Standards Section
+                Section {
+                    Button {
+                        hapticTrigger.toggle()
+                        showStandardsPicker = true
+                    } label: {
+                        HStack {
+                            Label("Select Standards", systemImage: "checkmark.seal")
+                                .foregroundStyle(Color(.label))
+                            Spacer()
+                            Text("\(newStandardIds.count) selected")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Image(systemName: "chevron.right")
+                                .font(.caption2)
+                                .foregroundStyle(.tertiary)
+                        }
+                    }
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .accessibilityLabel("Select learning standards")
+                    .accessibilityValue("\(newStandardIds.count) standards selected")
+
+                    if !newStandardIds.isEmpty {
+                        let allStandards = viewModel.storedLearningStandards
+                        let selected = allStandards.filter { newStandardIds.contains($0.id) }
+                        ForEach(selected) { std in
+                            HStack(spacing: 8) {
+                                Text(std.code)
+                                    .font(.caption.bold())
+                                    .foregroundStyle(.accentColor)
+                                Text(std.title)
+                                    .font(.caption)
+                                    .foregroundStyle(Color(.label))
+                                Spacer()
+                                Button {
+                                    hapticTrigger.toggle()
+                                    newStandardIds.removeAll { $0 == std.id }
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                                .accessibilityLabel("Remove \(std.code)")
+                            }
+                        }
+                    }
+                } header: {
+                    Label("Learning Standards", systemImage: "checkmark.seal.fill")
+                } footer: {
+                    Text("Tag Common Core or other standards to track mastery across assignments.")
                 }
             }
             .navigationTitle("New Assignment")
@@ -541,18 +886,85 @@ struct GradebookView: View {
         }
     }
 
+    /// Preview of late penalty impact at various days late.
+    private var latePolicyPreview: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Penalty Preview")
+                .font(.caption.bold())
+                .foregroundStyle(.secondary)
+
+            let previewDays = [1, 3, 5, newMaxLateDays]
+            ForEach(Array(Set(previewDays)).sorted(), id: \.self) { day in
+                if day <= newMaxLateDays {
+                    HStack {
+                        Text("\(day) day\(day == 1 ? "" : "s") late:")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        switch newLatePenaltyType {
+                        case .percentPerDay:
+                            Text("-\(Int(min(Double(day) * newLatePenaltyPerDay, 100)))%")
+                                .font(.caption.bold())
+                                .foregroundStyle(.red)
+                        case .flatDeduction:
+                            Text("-\(Int(Double(day) * newLatePenaltyPerDay)) pts")
+                                .font(.caption.bold())
+                                .foregroundStyle(.red)
+                        case .noCredit:
+                            Text("No Credit")
+                                .font(.caption.bold())
+                                .foregroundStyle(.red)
+                        case .none:
+                            EmptyView()
+                        }
+                    }
+                }
+            }
+
+            if newMaxLateDays < 30 {
+                HStack {
+                    Text("After \(newMaxLateDays) days:")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Text("Not Accepted")
+                        .font(.caption.bold())
+                        .foregroundStyle(.red)
+                }
+            }
+        }
+        .padding(10)
+        .background(Color(.tertiarySystemFill), in: .rect(cornerRadius: 8))
+    }
+
     private func createAssignment() {
         isCreating = true
         createError = nil
+        let standardIdsToTag = newStandardIds
+        let trimmedTitle = newTitle.trimmingCharacters(in: .whitespaces)
         Task {
             do {
-                try await viewModel.createAssignment(
+                try await viewModel.createAssignmentWithPolicy(
                     courseId: course.id,
-                    title: newTitle.trimmingCharacters(in: .whitespaces),
+                    title: trimmedTitle,
                     instructions: newInstructions.trimmingCharacters(in: .whitespaces),
                     dueDate: newDueDate,
-                    points: newPoints
+                    points: newPoints,
+                    latePenaltyType: newLatePenaltyType,
+                    latePenaltyPerDay: newLatePenaltyPerDay,
+                    maxLateDays: newMaxLateDays,
+                    allowResubmission: newAllowResubmission,
+                    maxResubmissions: newMaxResubmissions,
+                    resubmissionDeadline: newHasResubmissionDeadline ? newResubmissionDeadline : nil
                 )
+                // Tag standards on the newly created assignment
+                if !standardIdsToTag.isEmpty {
+                    if let created = viewModel.assignments.first(where: {
+                        $0.courseId == course.id && $0.title == trimmedTitle
+                    }) {
+                        viewModel.updateAssignmentStandards(assignmentId: created.id, standardIds: standardIdsToTag)
+                    }
+                }
                 resetAssignmentForm()
                 showAddAssignment = false
             } catch {
@@ -567,5 +979,13 @@ struct GradebookView: View {
         newInstructions = ""
         newDueDate = Date().addingTimeInterval(7 * 86400)
         newPoints = 100
+        newLatePenaltyType = .none
+        newLatePenaltyPerDay = 10
+        newMaxLateDays = 7
+        newAllowResubmission = false
+        newMaxResubmissions = 1
+        newHasResubmissionDeadline = false
+        newResubmissionDeadline = Date().addingTimeInterval(14 * 86400)
+        newStandardIds = []
     }
 }

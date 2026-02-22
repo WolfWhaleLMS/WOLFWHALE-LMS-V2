@@ -21,9 +21,27 @@ struct SignUpView: View {
     @State private var hasAcknowledgedAge = false
     @State private var hapticTrigger = false
     @State private var roleHapticTrigger = false
+    @State private var dateOfBirth = Date()
+    @State private var parentGuardianEmail = ""
+    @State private var parentConsentPending = false
     @FocusState private var focusedField: Field?
 
-    private enum Field { case fullName, email, password, confirmPassword, schoolCode }
+    private enum Field { case fullName, email, password, confirmPassword, schoolCode, parentEmail }
+
+    /// Whether the entered DOB indicates the user is under 13.
+    private var isUnder13: Bool {
+        AppStoreCompliance.isUnder13(dateOfBirth: dateOfBirth)
+    }
+
+    private var parentEmailError: String? {
+        guard isUnder13 && selectedRole == .student else { return nil }
+        guard hasAttemptedSubmit || !parentGuardianEmail.isEmpty else { return nil }
+        let pattern = #"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"#
+        if parentGuardianEmail.range(of: pattern, options: .regularExpression) == nil {
+            return "Enter a valid parent/guardian email"
+        }
+        return nil
+    }
 
     // MARK: - Inline Validation
 
@@ -77,22 +95,96 @@ struct SignUpView: View {
     private let selectableRoles: [UserRole] = [.student, .teacher, .parent]
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                Spacer().frame(height: 56)
+        Group {
+            if parentConsentPending {
+                parentConsentPendingView
+            } else {
+                ScrollView {
+                    VStack(spacing: 0) {
+                        Spacer().frame(height: 56)
 
-                headerSection
+                        headerSection
 
-                Spacer().frame(height: 40)
+                        Spacer().frame(height: 40)
 
-                formSection
+                        formSection
 
-                Spacer().frame(height: 40)
+                        Spacer().frame(height: 40)
+                    }
+                    .padding(.horizontal, 24)
+                }
+                .scrollDismissesKeyboard(.interactively)
             }
-            .padding(.horizontal, 24)
         }
-        .scrollDismissesKeyboard(.interactively)
         .background(Color(.systemGroupedBackground).ignoresSafeArea())
+        .onDisappear {
+            password = ""
+            confirmPassword = ""
+        }
+    }
+
+    // MARK: - Parental Consent Pending
+
+    private var parentConsentPendingView: some View {
+        VStack(spacing: 24) {
+            Spacer()
+
+            ZStack {
+                Circle()
+                    .fill(
+                        LinearGradient(
+                            colors: [Color.orange.opacity(0.15), Color.yellow.opacity(0.15)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .frame(width: 100, height: 100)
+
+                Image(systemName: "envelope.badge.shield.half.filled")
+                    .font(.system(size: 40))
+                    .foregroundStyle(.orange)
+            }
+
+            Text("Waiting for Parental Consent")
+                .font(.system(size: 24, weight: .black, design: .serif))
+                .tracking(1)
+                .multilineTextAlignment(.center)
+
+            Text("A verification email has been sent to your parent/guardian at \(parentGuardianEmail). Your account will be activated after they provide consent.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 32)
+
+            VStack(spacing: 8) {
+                Image(systemName: "info.circle")
+                    .foregroundStyle(.blue)
+                Text("Please ask your parent or guardian to check their email and approve your account.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(16)
+            .background(Color.blue.opacity(0.06), in: .rect(cornerRadius: 12))
+            .padding(.horizontal, 32)
+
+            Spacer()
+
+            Button {
+                hapticTrigger.toggle()
+                dismiss()
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "arrow.left")
+                        .font(.subheadline)
+                    Text("Back to Login")
+                        .font(.subheadline.weight(.medium))
+                }
+                .foregroundStyle(.purple)
+            }
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .padding(.bottom, 40)
+        }
     }
 
     // MARK: - Header
@@ -450,17 +542,95 @@ struct SignUpView: View {
     private var consentSection: some View {
         switch selectedRole {
         case .student:
-            Toggle(isOn: $hasAcknowledgedAge) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Age Confirmation")
-                        .font(.subheadline.bold())
-                    Text("I confirm I am 13 or older, or my parent/guardian has approved this account for educational use.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Date of Birth")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.secondary)
+
+                DatePicker(
+                    "Date of Birth",
+                    selection: $dateOfBirth,
+                    in: ...Date(),
+                    displayedComponents: .date
+                )
+                .datePickerStyle(.compact)
+                .labelsHidden()
+                .padding(14)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(.systemBackground), in: .rect(cornerRadius: 12))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(Color.gray.opacity(0.3), lineWidth: 1)
+                )
+                .accessibilityLabel("Select your date of birth")
+
+                if isUnder13 {
+                    // Parent/guardian email required for under-13
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "figure.and.child.holdinghands")
+                                .foregroundStyle(.orange)
+                            Text("Parental consent required (COPPA)")
+                                .font(.caption.bold())
+                                .foregroundStyle(.orange)
+                        }
+
+                        HStack(spacing: 12) {
+                            Image(systemName: "envelope.fill")
+                                .foregroundStyle(.tertiary)
+                                .frame(width: 20)
+                                .accessibilityHidden(true)
+                            TextField("Parent/Guardian Email", text: $parentGuardianEmail)
+                                .textContentType(.emailAddress)
+                                .keyboardType(.emailAddress)
+                                .autocorrectionDisabled()
+                                .textInputAutocapitalization(.never)
+                                .focused($focusedField, equals: .parentEmail)
+                                .accessibilityLabel("Parent or guardian email address")
+                                .accessibilityHint("Required for users under 13")
+                        }
+                        .padding(14)
+                        .background(Color(.systemBackground), in: .rect(cornerRadius: 12))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .strokeBorder(
+                                    parentEmailError != nil ? Color.red.opacity(0.5)
+                                    : Color.gray.opacity(0.3),
+                                    lineWidth: 1
+                                )
+                        )
+
+                        if let parentEmailError {
+                            Text(parentEmailError)
+                                .font(.caption)
+                                .foregroundStyle(.red)
+                                .padding(.leading, 4)
+                                .transition(.opacity.combined(with: .move(edge: .top)))
+                        }
+
+                        Text("A verification email will be sent to your parent/guardian. Your account will be activated after they consent.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .padding(.leading, 4)
+                    }
+                    .padding(12)
+                    .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
                 }
+
+                Toggle(isOn: $hasAcknowledgedAge) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Age Confirmation")
+                            .font(.subheadline.bold())
+                        Text(isUnder13
+                             ? "I confirm my parent/guardian has approved this account for educational use."
+                             : "I confirm I am 13 or older.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .tint(.blue)
+                .sensoryFeedback(.selection, trigger: hasAcknowledgedAge)
             }
-            .tint(.blue)
-            .sensoryFeedback(.selection, trigger: hasAcknowledgedAge)
 
         case .parent:
             Toggle(isOn: $hasAcknowledgedAge) {
@@ -493,12 +663,17 @@ struct SignUpView: View {
     // MARK: - Validation
 
     private var isFormValid: Bool {
-        !fullName.trimmingCharacters(in: .whitespaces).isEmpty
-        && emailError == nil && !email.isEmpty
-        && passwordError == nil && !password.isEmpty
-        && confirmPasswordError == nil && !confirmPassword.isEmpty
-        && schoolCodeError == nil && !schoolCode.trimmingCharacters(in: .whitespaces).isEmpty
-        && hasAcknowledgedAge
+        let baseValid = !fullName.trimmingCharacters(in: .whitespaces).isEmpty
+            && emailError == nil && !email.isEmpty
+            && passwordError == nil && !password.isEmpty
+            && confirmPasswordError == nil && !confirmPassword.isEmpty
+            && schoolCodeError == nil && !schoolCode.trimmingCharacters(in: .whitespaces).isEmpty
+            && hasAcknowledgedAge
+
+        if selectedRole == .student && isUnder13 {
+            return baseValid && parentEmailError == nil && !parentGuardianEmail.isEmpty
+        }
+        return baseValid
     }
 
     private func validate() -> String? {
@@ -610,9 +785,26 @@ struct SignUpView: View {
                     .insert(membership)
                     .execute()
 
-                withAnimation(.smooth) {
-                    successMessage = "Account created! Please check your email to verify."
-                    errorMessage = nil
+                // If under 13, send parental consent email and show pending screen
+                if selectedRole == .student && isUnder13 {
+                    // Call RPC to send parent consent verification email
+                    try? await supabaseClient.rpc(
+                        "send_parent_consent_email",
+                        params: [
+                            "child_user_id": result.user.id.uuidString,
+                            "parent_email": parentGuardianEmail.trimmingCharacters(in: .whitespaces).lowercased()
+                        ]
+                    ).execute()
+
+                    withAnimation(.smooth) {
+                        parentConsentPending = true
+                        errorMessage = nil
+                    }
+                } else {
+                    withAnimation(.smooth) {
+                        successMessage = "Account created! Please check your email to verify."
+                        errorMessage = nil
+                    }
                 }
             } catch {
                 withAnimation(.smooth) {

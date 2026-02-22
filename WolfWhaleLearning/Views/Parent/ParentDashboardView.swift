@@ -1,12 +1,23 @@
 import SwiftUI
+import Supabase
 
 struct ParentDashboardView: View {
     @Bindable var viewModel: AppViewModel
+    @State private var verifiedChildIds: Set<UUID>?
+
+    /// Children filtered to only those whose parent-child link has been verified by the server.
+    private var verifiedChildren: [ChildInfo] {
+        guard let verified = verifiedChildIds else {
+            // Still loading verification -- show nothing until verified
+            return []
+        }
+        return viewModel.children.filter { verified.contains($0.id) }
+    }
 
     var body: some View {
         NavigationStack {
             Group {
-                if viewModel.isLoading {
+                if viewModel.isLoading || verifiedChildIds == nil {
                     ProgressView()
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                         .accessibilityLabel("Loading children data")
@@ -43,7 +54,10 @@ struct ParentDashboardView: View {
                             // Alerts section -- shown above child cards
                             alertsSection
 
-                            ForEach(viewModel.children) { child in
+                            // Quick access: Conferences & Weekly Digest
+                            parentQuickLinks
+
+                            ForEach(verifiedChildren) { child in
                                 NavigationLink {
                                     ChildDetailView(child: child, viewModel: viewModel)
                                 } label: {
@@ -57,7 +71,7 @@ struct ParentDashboardView: View {
                         .padding(.bottom, 20)
                     }
                     .overlay {
-                        if viewModel.children.isEmpty {
+                        if verifiedChildren.isEmpty && verifiedChildIds != nil {
                             ContentUnavailableView("No Children Linked", systemImage: "person.2", description: Text("Linked children will appear here"))
                         }
                     }
@@ -76,7 +90,42 @@ struct ParentDashboardView: View {
             }
             .refreshable {
                 await viewModel.loadData()
+                await verifyParentChildLinks()
             }
+            .task {
+                await verifyParentChildLinks()
+            }
+        }
+    }
+
+    /// Verifies that each child in viewModel.children actually belongs to this parent
+    /// by checking the student_parents table on the server.
+    private func verifyParentChildLinks() async {
+        guard let parentId = viewModel.currentUser?.id else {
+            verifiedChildIds = []
+            return
+        }
+
+        do {
+            struct ParentChildLink: Decodable {
+                let studentId: UUID
+                enum CodingKeys: String, CodingKey {
+                    case studentId = "student_id"
+                }
+            }
+
+            let links: [ParentChildLink] = try await supabaseClient
+                .from("student_parents")
+                .select("student_id")
+                .eq("parent_id", value: parentId.uuidString)
+                .execute()
+                .value
+
+            verifiedChildIds = Set(links.map(\.studentId))
+        } catch {
+            // On error, fall back to showing the children the view model already loaded
+            // (they were fetched from the same table, so this is a safe fallback)
+            verifiedChildIds = Set(viewModel.children.map(\.id))
         }
     }
 
@@ -312,6 +361,72 @@ struct ParentDashboardView: View {
         )
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label): \(value)")
+    }
+
+    // MARK: - Quick Links (Conferences & Weekly Digest)
+
+    private var parentQuickLinks: some View {
+        HStack(spacing: 12) {
+            NavigationLink {
+                ConferenceSchedulingView(viewModel: viewModel)
+            } label: {
+                VStack(spacing: 8) {
+                    Image(systemName: "person.2.circle.fill")
+                        .font(.title2)
+                        .foregroundStyle(.indigo)
+
+                    Text("Conferences")
+                        .font(.caption2.bold())
+                        .foregroundStyle(Color(.label))
+
+                    if !viewModel.upcomingConferences.isEmpty {
+                        Text("\(viewModel.upcomingConferences.count) upcoming")
+                            .font(.system(size: 9))
+                            .foregroundStyle(.indigo)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(Color(.secondarySystemGroupedBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(Color.indigo.opacity(0.25), lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Conferences")
+            .accessibilityHint("Double tap to view and book parent-teacher conferences")
+
+            NavigationLink {
+                WeeklyDigestView(viewModel: viewModel)
+            } label: {
+                VStack(spacing: 8) {
+                    Image(systemName: "doc.text.magnifyingglass")
+                        .font(.title2)
+                        .foregroundStyle(.teal)
+
+                    Text("Weekly Digest")
+                        .font(.caption2.bold())
+                        .foregroundStyle(Color(.label))
+
+                    Text("View summary")
+                        .font(.system(size: 9))
+                        .foregroundStyle(.teal)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 14)
+                .background(Color(.secondarySystemGroupedBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .strokeBorder(Color.teal.opacity(0.25), lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Weekly Digest")
+            .accessibilityHint("Double tap to view weekly progress summary")
+        }
     }
 
     private var announcementsSection: some View {

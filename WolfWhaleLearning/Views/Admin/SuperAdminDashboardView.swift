@@ -9,6 +9,8 @@ struct SuperAdminDashboardView: View {
     @State private var editingTenant: TenantInfo?
     @State private var newUserLimit: String = ""
     @State private var hapticTrigger = false
+    @State private var updateLimitError: String?
+    @State private var showUpdateLimitError = false
 
     struct TenantInfo: Identifiable {
         let id: UUID
@@ -66,7 +68,15 @@ struct SuperAdminDashboardView: View {
             .sheet(item: $editingTenant) { tenant in
                 editUserLimitSheet(for: tenant)
             }
+            .alert("Update Failed", isPresented: $showUpdateLimitError) {
+                Button("OK") {
+                    updateLimitError = nil
+                }
+            } message: {
+                Text(updateLimitError ?? "An unknown error occurred.")
+            }
         }
+        .requireRole(.superAdmin, currentRole: viewModel.currentUser?.role)
     }
 
     // MARK: - Header Section
@@ -514,6 +524,20 @@ struct SuperAdminDashboardView: View {
                 Button {
                     hapticTrigger.toggle()
                     if let limit = Int(newUserLimit), limit > 0 {
+                        // Store previous value for rollback
+                        let previousLimit = tenant.userLimit
+                        // Optimistic update
+                        if let index = tenants.firstIndex(where: { $0.id == tenant.id }) {
+                            tenants[index] = TenantInfo(
+                                id: tenant.id,
+                                name: tenant.name,
+                                inviteCode: tenant.inviteCode,
+                                userCount: tenant.userCount,
+                                userLimit: limit,
+                                createdAt: tenant.createdAt
+                            )
+                        }
+                        editingTenant = nil
                         Task {
                             do {
                                 try await supabaseClient
@@ -521,23 +545,25 @@ struct SuperAdminDashboardView: View {
                                     .update(["user_limit": limit])
                                     .eq("id", value: tenant.id.uuidString)
                                     .execute()
+                            } catch {
+                                // Rollback optimistic update
                                 if let index = tenants.firstIndex(where: { $0.id == tenant.id }) {
                                     tenants[index] = TenantInfo(
                                         id: tenant.id,
                                         name: tenant.name,
                                         inviteCode: tenant.inviteCode,
                                         userCount: tenant.userCount,
-                                        userLimit: limit,
+                                        userLimit: previousLimit,
                                         createdAt: tenant.createdAt
                                     )
                                 }
-                            } catch {
+                                updateLimitError = "Failed to update user limit: \(error.localizedDescription)"
+                                showUpdateLimitError = true
                                 #if DEBUG
                                 print("[SuperAdminDashboard] Failed to update user limit: \(error)")
                                 #endif
                             }
                         }
-                        editingTenant = nil
                     }
                 } label: {
                     Text("Update Limit")

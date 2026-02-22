@@ -293,6 +293,19 @@ struct TakeAttendanceView: View {
         Task {
             await viewModel.takeAttendance(records: records)
 
+            // Trigger real-time absence alerts for parents
+            let absentStudents = enrolledStudents.compactMap { student -> (studentId: UUID, studentName: String)? in
+                guard studentStatuses[student.id] == .absent else { return nil }
+                return (studentId: student.id, studentName: student.name)
+            }
+            if !absentStudents.isEmpty {
+                viewModel.triggerAbsenceAlerts(
+                    absentStudentNames: absentStudents,
+                    courseName: course.title,
+                    date: attendanceDate
+                )
+            }
+
             isLoading = false
             withAnimation(.snappy) {
                 showSuccess = true

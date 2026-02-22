@@ -116,6 +116,7 @@ struct UserManagementView: View {
                 viewModel.refreshData()
             }
         }
+        .requireRole(.admin, .superAdmin, currentRole: viewModel.currentUser?.role)
     }
 
     private var slotBannerSection: some View {

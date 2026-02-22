@@ -1,4 +1,5 @@
 import SwiftUI
+import Supabase
 
 struct SchoolConfigView: View {
     let viewModel: AppViewModel
@@ -32,6 +33,8 @@ struct SchoolConfigView: View {
 
     @State private var hapticTrigger = false
     @State private var showSavedConfirmation = false
+    @State private var isSyncingToServer = false
+    @State private var syncError: String?
 
     private var totalWeight: Double {
         defaultAssignmentWeight + defaultQuizWeight + defaultParticipationWeight + defaultMidtermWeight + defaultFinalWeight
@@ -98,13 +101,14 @@ struct SchoolConfigView: View {
                     .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
-            .onAppear { loadFromDefaults() }
+            .task { await loadConfig() }
             .alert("Settings Saved", isPresented: $showSavedConfirmation) {
                 Button("OK") { dismiss() }
             } message: {
                 Text("School configuration has been saved successfully.")
             }
         }
+        .requireRole(.admin, .superAdmin, currentRole: viewModel.currentUser?.role)
     }
 
     // MARK: - School Info Section
@@ -388,13 +392,49 @@ struct SchoolConfigView: View {
             }
             .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
-            Label("Settings are stored locally on this device. Supabase sync coming soon.", systemImage: "info.circle")
-                .font(.caption)
-                .foregroundStyle(Color(.tertiaryLabel))
+            if let syncError {
+                Label(syncError, systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            } else {
+                Label("Settings are saved locally and synced to the server.", systemImage: "info.circle")
+                    .font(.caption)
+                    .foregroundStyle(Color(.tertiaryLabel))
+            }
         }
     }
 
     // MARK: - Persistence
+
+    private struct SchoolConfigDTO: Codable {
+        let schoolName: String
+        let gradeAMin: Double
+        let gradeBMin: Double
+        let gradeCMin: Double
+        let gradeDMin: Double
+        let semesterStart: Double
+        let semesterEnd: Double
+        let defaultAssignmentWeight: Double
+        let defaultQuizWeight: Double
+        let defaultParticipationWeight: Double
+        let defaultMidtermWeight: Double
+        let defaultFinalWeight: Double
+
+        enum CodingKeys: String, CodingKey {
+            case schoolName = "school_name"
+            case gradeAMin = "grade_a_min"
+            case gradeBMin = "grade_b_min"
+            case gradeCMin = "grade_c_min"
+            case gradeDMin = "grade_d_min"
+            case semesterStart = "semester_start"
+            case semesterEnd = "semester_end"
+            case defaultAssignmentWeight = "default_assignment_weight"
+            case defaultQuizWeight = "default_quiz_weight"
+            case defaultParticipationWeight = "default_participation_weight"
+            case defaultMidtermWeight = "default_midterm_weight"
+            case defaultFinalWeight = "default_final_weight"
+        }
+    }
 
     private func saveToDefaults() {
         let defaults = UserDefaults.standard
@@ -410,6 +450,76 @@ struct SchoolConfigView: View {
         defaults.set(defaultParticipationWeight, forKey: Keys.defaultParticipationWeight)
         defaults.set(defaultMidtermWeight, forKey: Keys.defaultMidtermWeight)
         defaults.set(defaultFinalWeight, forKey: Keys.defaultFinalWeight)
+
+        // Sync to server
+        Task {
+            await syncConfigToServer()
+        }
+    }
+
+    private func syncConfigToServer() async {
+        let dto = SchoolConfigDTO(
+            schoolName: schoolName,
+            gradeAMin: gradeAMin,
+            gradeBMin: gradeBMin,
+            gradeCMin: gradeCMin,
+            gradeDMin: gradeDMin,
+            semesterStart: semesterStart.timeIntervalSince1970,
+            semesterEnd: semesterEnd.timeIntervalSince1970,
+            defaultAssignmentWeight: defaultAssignmentWeight,
+            defaultQuizWeight: defaultQuizWeight,
+            defaultParticipationWeight: defaultParticipationWeight,
+            defaultMidtermWeight: defaultMidtermWeight,
+            defaultFinalWeight: defaultFinalWeight
+        )
+        do {
+            try await supabaseClient
+                .from("school_config")
+                .upsert(dto)
+                .execute()
+            syncError = nil
+        } catch {
+            // Local cache is still valid, log the sync failure
+            syncError = "Failed to sync to server. Changes saved locally."
+            #if DEBUG
+            print("[SchoolConfigView] Failed to sync school config: \(error)")
+            #endif
+        }
+    }
+
+    private func loadConfig() async {
+        // Try to fetch from Supabase first
+        do {
+            let dtos: [SchoolConfigDTO] = try await supabaseClient
+                .from("school_config")
+                .select()
+                .limit(1)
+                .execute()
+                .value
+
+            if let dto = dtos.first {
+                schoolName = dto.schoolName
+                gradeAMin = dto.gradeAMin
+                gradeBMin = dto.gradeBMin
+                gradeCMin = dto.gradeCMin
+                gradeDMin = dto.gradeDMin
+                semesterStart = Date(timeIntervalSince1970: dto.semesterStart)
+                semesterEnd = Date(timeIntervalSince1970: dto.semesterEnd)
+                defaultAssignmentWeight = dto.defaultAssignmentWeight
+                defaultQuizWeight = dto.defaultQuizWeight
+                defaultParticipationWeight = dto.defaultParticipationWeight
+                defaultMidtermWeight = dto.defaultMidtermWeight
+                defaultFinalWeight = dto.defaultFinalWeight
+                return
+            }
+        } catch {
+            #if DEBUG
+            print("[SchoolConfigView] Failed to fetch config from server, falling back to UserDefaults: \(error)")
+            #endif
+        }
+
+        // Fall back to UserDefaults cache
+        loadFromDefaults()
     }
 
     private func loadFromDefaults() {

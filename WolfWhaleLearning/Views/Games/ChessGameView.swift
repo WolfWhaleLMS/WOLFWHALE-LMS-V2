@@ -190,10 +190,9 @@ class ChessGame {
     func triggerBotMoveIfNeeded() {
         if isBotEnabled && currentTurn == botColor && !isCheckmate && !isStalemate {
             isBotThinking = true
-            Task { @MainActor in
+            Task {
                 try? await Task.sleep(for: .seconds(0.5))
                 await botMove()
-                isBotThinking = false
             }
         }
     }
@@ -847,45 +846,54 @@ class ChessGame {
 
     @MainActor
     func botMove() async {
-        guard !gameOver else { return }
+        guard !gameOver else { isBotThinking = false; return }
 
         let depth = botDifficulty.searchDepth
         let isMax = botColor == .white
+        let difficulty = botDifficulty
 
         let moves = allLegalMoves(for: botColor)
-        guard !moves.isEmpty else { return }
+        guard !moves.isEmpty else { isBotThinking = false; return }
 
-        var bestMove = moves[0]
-        var bestEval = isMax ? Int.min : Int.max
+        // Run CPU-intensive minimax on a background thread
+        let bestMove: (from: ChessPosition, to: ChessPosition) = await withCheckedContinuation { continuation in
+            DispatchQueue.global(qos: .userInitiated).async { [self] in
+                var candidateMove = moves[0]
+                var candidateEval = isMax ? Int.min : Int.max
 
-        for move in moves {
-            let undoInfo = makeMove(from: move.from, to: move.to, simulated: true)
-            let eval = minimax(depth: depth - 1, alpha: Int.min, beta: Int.max, isMaximizing: !isMax)
-            undoMove(undoInfo)
+                for move in moves {
+                    let undoInfo = self.makeMove(from: move.from, to: move.to, simulated: true)
+                    let eval = self.minimax(depth: depth - 1, alpha: Int.min, beta: Int.max, isMaximizing: !isMax)
+                    self.undoMove(undoInfo)
 
-            if isMax {
-                if eval > bestEval {
-                    bestEval = eval
-                    bestMove = move
+                    if isMax {
+                        if eval > candidateEval {
+                            candidateEval = eval
+                            candidateMove = move
+                        }
+                    } else {
+                        if eval < candidateEval {
+                            candidateEval = eval
+                            candidateMove = move
+                        }
+                    }
                 }
-            } else {
-                if eval < bestEval {
-                    bestEval = eval
-                    bestMove = move
-                }
-            }
-        }
 
-        // Add slight randomness for easy mode to avoid always picking the "best"
-        if botDifficulty == .easy {
-            // 30% chance to pick a random move instead
-            if Int.random(in: 0..<10) < 3, let randomMove = moves.randomElement() {
-                movePiece(from: randomMove.from, to: randomMove.to)
-                return
+                // Add slight randomness for easy mode to avoid always picking the "best"
+                if difficulty == .easy {
+                    // 30% chance to pick a random move instead
+                    if Int.random(in: 0..<10) < 3, let randomMove = moves.randomElement() {
+                        continuation.resume(returning: randomMove)
+                        return
+                    }
+                }
+
+                continuation.resume(returning: candidateMove)
             }
         }
 
         movePiece(from: bestMove.from, to: bestMove.to)
+        isBotThinking = false
     }
 
     // MARK: - Utilities

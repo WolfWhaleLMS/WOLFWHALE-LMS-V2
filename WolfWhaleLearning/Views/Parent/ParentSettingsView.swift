@@ -33,6 +33,28 @@ struct ParentSettingsView: View {
                     Label("Help & Support", systemImage: "questionmark.circle.fill")
                 }
 
+                Section {
+                    HStack {
+                        Label {
+                            Text("Absence Alerts")
+                        } icon: {
+                            Image(systemName: "exclamationmark.circle.fill")
+                                .foregroundStyle(.orange)
+                        }
+                        Spacer()
+                        Toggle(
+                            "Absence Alerts",
+                            isOn: $viewModel.absenceAlertEnabled
+                        )
+                        .labelsHidden()
+                        .sensoryFeedback(.selection, trigger: viewModel.absenceAlertEnabled)
+                    }
+                } header: {
+                    Text("Alert Preferences")
+                } footer: {
+                    Text("When enabled, you will receive an immediate notification when your child is marked absent.")
+                }
+
                 if viewModel.biometricService.isBiometricAvailable {
                     Section {
                         HStack {

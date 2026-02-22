@@ -15,6 +15,24 @@ struct EditAssignmentView: View {
     @State private var errorMessage: String?
     @State private var hapticTrigger = false
 
+    // Duplicate / Template state
+    @State private var isDuplicating = false
+    @State private var showDuplicateSuccess = false
+    @State private var showSaveTemplateSheet = false
+    @State private var templateName: String = ""
+    @State private var showTemplateSaved = false
+
+    // Late Policy state
+    @State private var latePenaltyType: LatePenaltyType
+    @State private var latePenaltyPerDay: Double
+    @State private var maxLateDays: Int
+
+    // Resubmission state
+    @State private var allowResubmission: Bool
+    @State private var maxResubmissions: Int
+    @State private var resubmissionDeadline: Date
+    @State private var hasResubmissionDeadline: Bool
+
     @Environment(\.dismiss) private var dismiss
 
     init(assignment: Assignment, viewModel: AppViewModel) {
@@ -24,6 +42,13 @@ struct EditAssignmentView: View {
         _instructions = State(initialValue: assignment.instructions)
         _dueDate = State(initialValue: assignment.dueDate)
         _points = State(initialValue: assignment.points)
+        _latePenaltyType = State(initialValue: assignment.latePenaltyType)
+        _latePenaltyPerDay = State(initialValue: assignment.latePenaltyPerDay)
+        _maxLateDays = State(initialValue: assignment.maxLateDays)
+        _allowResubmission = State(initialValue: assignment.allowResubmission)
+        _maxResubmissions = State(initialValue: assignment.maxResubmissions)
+        _resubmissionDeadline = State(initialValue: assignment.resubmissionDeadline ?? Date().addingTimeInterval(14 * 86400))
+        _hasResubmissionDeadline = State(initialValue: assignment.resubmissionDeadline != nil)
     }
 
     private var isValid: Bool {
@@ -34,7 +59,13 @@ struct EditAssignmentView: View {
         title != assignment.title ||
         instructions != assignment.instructions ||
         dueDate != assignment.dueDate ||
-        points != assignment.points
+        points != assignment.points ||
+        latePenaltyType != assignment.latePenaltyType ||
+        latePenaltyPerDay != assignment.latePenaltyPerDay ||
+        maxLateDays != assignment.maxLateDays ||
+        allowResubmission != assignment.allowResubmission ||
+        maxResubmissions != assignment.maxResubmissions ||
+        hasResubmissionDeadline != (assignment.resubmissionDeadline != nil)
     }
 
     var body: some View {
@@ -44,6 +75,9 @@ struct EditAssignmentView: View {
                 detailsSection
                 dueDateSection
                 pointsSection
+                latePolicySection
+                resubmissionSection
+                quickActionsSection
                 saveButton
                 deleteSection
             }
@@ -76,6 +110,17 @@ struct EditAssignmentView: View {
             }
         }
         .allowsHitTesting(!isDeleting)
+        .sheet(isPresented: $showSaveTemplateSheet) {
+            saveTemplateSheet
+        }
+        .overlay {
+            if showDuplicateSuccess {
+                duplicateSuccessOverlay
+            }
+            if showTemplateSaved {
+                templateSavedOverlay
+            }
+        }
     }
 
     // MARK: - Assignment Header
@@ -186,6 +231,335 @@ struct EditAssignmentView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 10)
         .background(color.opacity(0.1), in: .rect(cornerRadius: 8))
+    }
+
+    // MARK: - Late Policy Section
+
+    private var latePolicySection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Late Policy", systemImage: "clock.badge.exclamationmark")
+                .font(.headline)
+
+            // Penalty type picker
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Penalty Type")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Picker("Penalty Type", selection: $latePenaltyType) {
+                    ForEach(LatePenaltyType.allCases, id: \.self) { type in
+                        Label(type.displayName, systemImage: type.iconName)
+                            .tag(type)
+                    }
+                }
+                .pickerStyle(.menu)
+            }
+
+            if latePenaltyType != .none && latePenaltyType != .noCredit {
+                HStack {
+                    Text("Penalty per day")
+                        .font(.subheadline)
+                    Spacer()
+                    TextField("10", value: $latePenaltyPerDay, format: .number)
+                        .keyboardType(.decimalPad)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: 70)
+                    Text(latePenaltyType == .percentPerDay ? "%" : "pts")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            if latePenaltyType != .none {
+                Stepper("Max late days: \(maxLateDays)", value: $maxLateDays, in: 1...30)
+                    .font(.subheadline)
+            }
+
+            // Current late status for this assignment
+            if latePenaltyType != .none {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Policy Summary")
+                        .font(.caption.bold())
+                        .foregroundStyle(.secondary)
+                    switch latePenaltyType {
+                    case .none:
+                        EmptyView()
+                    case .percentPerDay:
+                        Text("Students lose \(Int(latePenaltyPerDay))% per day late, up to \(maxLateDays) days.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    case .flatDeduction:
+                        Text("Students lose \(Int(latePenaltyPerDay)) points per day late, up to \(maxLateDays) days.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    case .noCredit:
+                        Text("Late submissions receive zero credit.")
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
+                }
+                .padding(10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color(.tertiarySystemFill), in: .rect(cornerRadius: 8))
+            }
+        }
+        .padding(14)
+        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+    }
+
+    // MARK: - Resubmission Section
+
+    private var resubmissionSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Resubmission", systemImage: "arrow.counterclockwise.circle")
+                .font(.headline)
+
+            Toggle("Allow Resubmission", isOn: $allowResubmission)
+                .font(.subheadline)
+
+            if allowResubmission {
+                Stepper("Max resubmissions: \(maxResubmissions)", value: $maxResubmissions, in: 1...5)
+                    .font(.subheadline)
+
+                Toggle("Set resubmission deadline", isOn: $hasResubmissionDeadline)
+                    .font(.subheadline)
+
+                if hasResubmissionDeadline {
+                    DatePicker("Deadline", selection: $resubmissionDeadline, displayedComponents: [.date, .hourAndMinute])
+                        .font(.subheadline)
+                }
+
+                // Info text
+                HStack(spacing: 8) {
+                    Image(systemName: "info.circle.fill")
+                        .foregroundStyle(.blue)
+                    Text("Students can resubmit \(maxResubmissions) time\(maxResubmissions == 1 ? "" : "s") after being graded. Previous grades are kept in history.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(10)
+                .background(.blue.opacity(0.08), in: .rect(cornerRadius: 8))
+            }
+        }
+        .padding(14)
+        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+    }
+
+    // MARK: - Quick Actions (Duplicate, Template, Peer Review)
+
+    private var quickActionsSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Quick Actions", systemImage: "bolt.fill")
+                .font(.headline)
+
+            HStack(spacing: 10) {
+                // Duplicate Assignment
+                Button {
+                    hapticTrigger.toggle()
+                    duplicateAssignment()
+                } label: {
+                    VStack(spacing: 8) {
+                        if isDuplicating {
+                            ProgressView()
+                                .frame(height: 28)
+                        } else {
+                            Image(systemName: "doc.on.doc.fill")
+                                .font(.title2)
+                                .foregroundStyle(.blue)
+                        }
+                        Text("Duplicate")
+                            .font(.caption2.bold())
+                            .foregroundStyle(Color(.label))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
+                }
+                .disabled(isDuplicating)
+                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .accessibilityLabel("Duplicate assignment")
+                .accessibilityHint("Creates a copy of this assignment with a new due date")
+
+                // Save as Template
+                Button {
+                    hapticTrigger.toggle()
+                    templateName = assignment.title
+                    showSaveTemplateSheet = true
+                } label: {
+                    VStack(spacing: 8) {
+                        Image(systemName: "square.and.arrow.down.fill")
+                            .font(.title2)
+                            .foregroundStyle(.purple)
+                        Text("Save Template")
+                            .font(.caption2.bold())
+                            .foregroundStyle(Color(.label))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
+                }
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .accessibilityLabel("Save as template")
+                .accessibilityHint("Saves this assignment as a reusable template")
+            }
+        }
+        .padding(14)
+        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+    }
+
+    // MARK: - Save Template Sheet
+
+    private var saveTemplateSheet: some View {
+        NavigationStack {
+            VStack(spacing: 20) {
+                VStack(alignment: .leading, spacing: 10) {
+                    Label("Template Name", systemImage: "text.badge.checkmark")
+                        .font(.headline)
+                        .foregroundStyle(Color(.label))
+
+                    TextField("e.g. Weekly Essay", text: $templateName)
+                        .textFieldStyle(.roundedBorder)
+
+                    Text("This template will save the title, instructions, and point value so you can reuse it for future assignments.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Label("Preview", systemImage: "eye.fill")
+                        .font(.headline)
+                        .foregroundStyle(Color(.label))
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(assignment.title)
+                            .font(.subheadline.bold())
+                            .foregroundStyle(Color(.label))
+                        Text("\(assignment.points) points")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        if !assignment.instructions.isEmpty {
+                            Text(assignment.instructions)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(3)
+                        }
+                    }
+                    .padding(12)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
+                }
+                .padding(.horizontal)
+
+                Spacer()
+            }
+            .padding(.top, 16)
+            .background(Color(.systemGroupedBackground))
+            .navigationTitle("Save as Template")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        showSaveTemplateSheet = false
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        hapticTrigger.toggle()
+                        saveAsTemplate()
+                    }
+                    .fontWeight(.semibold)
+                    .disabled(templateName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                }
+            }
+        }
+    }
+
+    // MARK: - Duplicate Success Overlay
+
+    private var duplicateSuccessOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.3)
+                .ignoresSafeArea()
+
+            VStack(spacing: 16) {
+                Image(systemName: "doc.on.doc.fill")
+                    .font(.system(size: 48))
+                    .foregroundStyle(.blue)
+                Text("Assignment Duplicated")
+                    .font(.title3.bold())
+                    .foregroundStyle(Color(.label))
+                Text("A copy has been created with a due date one week from now.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(32)
+            .background(.regularMaterial, in: .rect(cornerRadius: 20))
+        }
+        .transition(.opacity)
+        .onTapGesture {
+            withAnimation { showDuplicateSuccess = false }
+        }
+    }
+
+    // MARK: - Template Saved Overlay
+
+    private var templateSavedOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.3)
+                .ignoresSafeArea()
+
+            VStack(spacing: 16) {
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 48))
+                    .foregroundStyle(.green)
+                Text("Template Saved")
+                    .font(.title3.bold())
+                    .foregroundStyle(Color(.label))
+                Text("\(templateName)")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(32)
+            .background(.regularMaterial, in: .rect(cornerRadius: 20))
+        }
+        .transition(.opacity)
+        .onTapGesture {
+            withAnimation { showTemplateSaved = false }
+        }
+    }
+
+    // MARK: - Quick Action Methods
+
+    private func duplicateAssignment() {
+        isDuplicating = true
+        Task {
+            do {
+                try await viewModel.duplicateAssignment(assignmentId: assignment.id)
+                isDuplicating = false
+                withAnimation(.snappy) { showDuplicateSuccess = true }
+                try? await Task.sleep(for: .seconds(2.5))
+                withAnimation { showDuplicateSuccess = false }
+            } catch {
+                errorMessage = "Failed to duplicate assignment."
+                isDuplicating = false
+            }
+        }
+    }
+
+    private func saveAsTemplate() {
+        viewModel.saveAssignmentAsTemplate(
+            assignmentId: assignment.id,
+            templateName: templateName
+        )
+        showSaveTemplateSheet = false
+        withAnimation(.snappy) { showTemplateSaved = true }
+        Task {
+            try? await Task.sleep(for: .seconds(2))
+            withAnimation { showTemplateSaved = false }
+        }
     }
 
     // MARK: - Save Button
@@ -313,7 +687,7 @@ struct EditAssignmentView: View {
                     )
                 }
 
-                // Update local state
+                // Update local state (core fields + late policy + resubmission)
                 for index in viewModel.assignments.indices {
                     if viewModel.assignments[index].id == assignment.id &&
                        viewModel.assignments[index].studentId == assignment.studentId {
@@ -323,6 +697,17 @@ struct EditAssignmentView: View {
                         viewModel.assignments[index].points = points
                     }
                 }
+
+                // Update late policy and resubmission settings via the extension
+                viewModel.updateAssignmentPolicy(
+                    assignmentId: assignment.id,
+                    latePenaltyType: latePenaltyType,
+                    latePenaltyPerDay: latePenaltyPerDay,
+                    maxLateDays: maxLateDays,
+                    allowResubmission: allowResubmission,
+                    maxResubmissions: maxResubmissions,
+                    resubmissionDeadline: hasResubmissionDeadline ? resubmissionDeadline : nil
+                )
 
                 isLoading = false
                 withAnimation(.snappy) {

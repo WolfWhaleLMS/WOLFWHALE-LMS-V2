@@ -8,6 +8,7 @@ struct RealtimeConversationView: View {
     @State private var messageText = ""
     @State private var sendTrigger = false
     @State private var retryMessageId: UUID?
+    @State private var moderationWarning: String?
     @FocusState private var isTextFieldFocused: Bool
 
     // MARK: - Derived State
@@ -57,6 +58,11 @@ struct RealtimeConversationView: View {
             Task {
                 await chatService.unsubscribeFromConversation(conversation.id)
             }
+        }
+        .alert("Message Not Sent", isPresented: .constant(moderationWarning != nil)) {
+            Button("OK") { moderationWarning = nil }
+        } message: {
+            Text(moderationWarning ?? "")
         }
     }
 
@@ -314,6 +320,13 @@ struct RealtimeConversationView: View {
     private func sendMessage() {
         let trimmed = messageText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
+
+        // COPPA content moderation check
+        let moderation = ContentModerationService.shared.moderateContent(trimmed)
+        if !moderation.isClean {
+            moderationWarning = moderation.flaggedReason
+            return
+        }
 
         let content = trimmed
         messageText = ""
