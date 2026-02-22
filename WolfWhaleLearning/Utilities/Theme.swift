@@ -40,19 +40,6 @@ struct Theme {
     }
 }
 
-struct GlassCard<Content: View>: View {
-    let content: Content
-
-    init(@ViewBuilder content: () -> Content) {
-        self.content = content()
-    }
-
-    var body: some View {
-        content
-            .glassEffect(.regular, in: .rect(cornerRadius: 16))
-    }
-}
-
 struct StatRing: View {
     let progress: Double
     let color: Color
