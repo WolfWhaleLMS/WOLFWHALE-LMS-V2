@@ -7,25 +7,31 @@ struct MessagesListView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                ForEach(viewModel.conversations) { conversation in
-                    NavigationLink(value: conversation.id) {
-                        conversationRow(conversation)
-                    }
-                    .onAppear {
-                        if conversation.id == viewModel.conversations.last?.id {
-                            Task { await viewModel.loadMoreConversations() }
+            ScrollView {
+                LazyVStack(spacing: 10) {
+                    ForEach(viewModel.conversations) { conversation in
+                        NavigationLink(value: conversation.id) {
+                            conversationRow(conversation)
+                        }
+                        .buttonStyle(.plain)
+                        .onAppear {
+                            if conversation.id == viewModel.conversations.last?.id {
+                                Task { await viewModel.loadMoreConversations() }
+                            }
                         }
                     }
-                }
-                if viewModel.conversationPagination.isLoadingMore {
-                    HStack {
-                        Spacer()
-                        ProgressView()
-                        Spacer()
+                    if viewModel.conversationPagination.isLoadingMore {
+                        HStack {
+                            Spacer()
+                            ProgressView()
+                            Spacer()
+                        }
+                        .padding()
                     }
-                    .padding()
                 }
+                .padding(.horizontal)
+                .padding(.top, 8)
+                .padding(.bottom, 20)
             }
             .navigationTitle("Messages")
             .task { await viewModel.loadConversationsIfNeeded() }
@@ -57,6 +63,14 @@ struct MessagesListView: View {
             }
             .sheet(isPresented: $showNewConversation) {
                 NewConversationSheet(viewModel: viewModel)
+            }
+            .background {
+                LinearGradient(
+                    colors: [.blue.opacity(0.2), .purple.opacity(0.12), Color(.systemBackground)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                .ignoresSafeArea()
             }
         }
     }
@@ -97,7 +111,8 @@ struct MessagesListView: View {
                 }
             }
         }
-        .padding(.vertical, 2)
+        .padding(14)
+        .glassEffect(in: .rect(cornerRadius: 16))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(conversation.title), last message: \(conversation.lastMessage)\(conversation.unreadCount > 0 ? ", \(conversation.unreadCount) unread" : "")")
         .accessibilityHint("Double tap to open conversation")

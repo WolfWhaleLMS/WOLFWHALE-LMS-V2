@@ -37,7 +37,26 @@ struct LoginView: View {
             .padding(.horizontal, 24)
         }
         .scrollDismissesKeyboard(.interactively)
-        .background(Color(.systemGroupedBackground).ignoresSafeArea())
+        .background {
+            ZStack {
+                LinearGradient(
+                    colors: [.indigo.opacity(0.4), .green.opacity(0.25), .purple.opacity(0.2)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+                Circle()
+                    .fill(.green.opacity(0.2))
+                    .frame(width: 380)
+                    .blur(radius: 90)
+                    .offset(x: -80, y: -320)
+                Circle()
+                    .fill(.indigo.opacity(0.25))
+                    .frame(width: 300)
+                    .blur(radius: 80)
+                    .offset(x: 120, y: 280)
+            }
+            .ignoresSafeArea()
+        }
         .sheet(isPresented: $showForgotPassword) {
             ForgotPasswordView()
         }
@@ -202,6 +221,8 @@ struct LoginView: View {
             .accessibilityHint("Double tap to reset your password")
 
         }
+        .padding(20)
+        .glassEffect(in: .rect(cornerRadius: 24))
     }
 
     private var dividerSection: some View {

@@ -475,8 +475,7 @@ struct StudentDashboardView: View {
                             .foregroundStyle(.tertiary)
                     }
                     .padding(14)
-                    .background(Color(.secondarySystemGroupedBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 16))
+                    .glassEffect(in: .rect(cornerRadius: 16))
                 }
                 .buttonStyle(.plain)
                 .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
