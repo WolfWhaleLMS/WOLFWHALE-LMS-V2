@@ -79,7 +79,12 @@ struct StudentDashboardView: View {
                                     .buttonStyle(.plain)
                                 }
                                 .padding(12)
-                                .glassEffect(.regular.tint(.orange), in: .rect(cornerRadius: 12))
+                                .background(Color.orange.opacity(0.12))
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .strokeBorder(Color.orange.opacity(0.3), lineWidth: 1)
+                                )
                                 .accessibilityElement(children: .combine)
                                 .accessibilityLabel("Warning: \(dataError)")
                             }
@@ -153,7 +158,8 @@ struct StudentDashboardView: View {
             }
             .padding(20)
         }
-        .glassEffect(.regular, in: .rect(cornerRadius: 20))
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 20))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Activity rings: \(completedLessons) of \(totalLessons) lessons done, \(submittedAssignments) of \(totalAssignments) assignments done")
     }
@@ -180,7 +186,8 @@ struct StudentDashboardView: View {
                         .foregroundStyle(.tertiary)
                 }
                 .padding(14)
-                .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 16))
+                .background(Color(.secondarySystemGroupedBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
             }
             .accessibilityHint("Double tap to view attendance history")
         }
@@ -199,7 +206,12 @@ struct StudentDashboardView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
-        .glassEffect(.regular.tint(color), in: .rect(cornerRadius: 16))
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .strokeBorder(color.opacity(0.3), lineWidth: 1)
+        )
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label): \(value)")
     }
@@ -233,7 +245,8 @@ struct StudentDashboardView: View {
                         .foregroundStyle(.tertiary)
                 }
                 .padding(14)
-                .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 16))
+                .background(Color(.secondarySystemGroupedBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
             }
             .buttonStyle(.plain)
 
@@ -259,7 +272,8 @@ struct StudentDashboardView: View {
                         .foregroundStyle(.tertiary)
                 }
                 .padding(14)
-                .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 16))
+                .background(Color(.secondarySystemGroupedBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Campus Map")
@@ -287,7 +301,8 @@ struct StudentDashboardView: View {
                         .foregroundStyle(.tertiary)
                 }
                 .padding(14)
-                .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 16))
+                .background(Color(.secondarySystemGroupedBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Classroom Finder")
@@ -315,7 +330,8 @@ struct StudentDashboardView: View {
                         .foregroundStyle(.tertiary)
                 }
                 .padding(14)
-                .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 16))
+                .background(Color(.secondarySystemGroupedBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Study Groups")
@@ -345,7 +361,8 @@ struct StudentDashboardView: View {
                             .foregroundStyle(.tertiary)
                     }
                     .padding(14)
-                    .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 16))
+                    .background(Color(.secondarySystemGroupedBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
                 }
                 .buttonStyle(.plain)
                 .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
@@ -376,7 +393,8 @@ struct StudentDashboardView: View {
                         .foregroundStyle(.tertiary)
                 }
                 .padding(14)
-                .glassEffect(.regular.interactive(), in: .rect(cornerRadius: 16))
+                .background(Color(.secondarySystemGroupedBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
             }
             .buttonStyle(.plain)
             .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
@@ -405,7 +423,8 @@ struct StudentDashboardView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 24)
-                .glassEffect(.regular, in: .rect(cornerRadius: 12))
+                .background(Color(.secondarySystemGroupedBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
             } else {
                 ForEach(viewModel.upcomingAssignments.prefix(3)) { assignment in
                     HStack(spacing: 12) {
@@ -420,10 +439,11 @@ struct StudentDashboardView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(assignment.title)
                                 .font(.subheadline.bold())
+                                .foregroundStyle(Color(.label))
                                 .lineLimit(1)
                             Text(assignment.courseName)
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color(.secondaryLabel))
                         }
                         Spacer()
                         VStack(alignment: .trailing, spacing: 2) {
@@ -432,11 +452,12 @@ struct StudentDashboardView: View {
                                 .foregroundStyle(.orange)
                             Text("\(assignment.points) pts")
                                 .font(.caption2)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color(.secondaryLabel))
                         }
                     }
                     .padding(12)
-                    .glassEffect(.regular, in: .rect(cornerRadius: 12))
+                    .background(Color(.secondarySystemGroupedBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                     .accessibilityElement(children: .combine)
                     .accessibilityLabel("\(assignment.title) for \(assignment.courseName), due \(assignment.dueDate.formatted(.dateTime.month(.abbreviated).day())), \(assignment.points) points")
                 }
@@ -463,7 +484,8 @@ struct StudentDashboardView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 24)
-                .glassEffect(.regular, in: .rect(cornerRadius: 16))
+                .background(Color(.secondarySystemGroupedBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
             } else {
                 ScrollView(.horizontal) {
                     LazyHStack(spacing: 12) {
@@ -514,7 +536,12 @@ struct StudentDashboardView: View {
         }
         .frame(width: 160)
         .padding(14)
-        .glassEffect(.regular.tint(Theme.courseColor(course.colorName)), in: RoundedRectangle(cornerRadius: 16))
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .strokeBorder(Theme.courseColor(course.colorName).opacity(0.3), lineWidth: 1)
+        )
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(course.title), taught by \(course.teacherName), \(Int(course.progress * 100)) percent complete")
         .accessibilityHint("Double tap to open course")

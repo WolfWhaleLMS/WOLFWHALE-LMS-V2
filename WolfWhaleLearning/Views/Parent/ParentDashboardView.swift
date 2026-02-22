@@ -31,7 +31,12 @@ struct ParentDashboardView: View {
                                     .buttonStyle(.plain)
                                 }
                                 .padding(12)
-                                .glassEffect(.regular.tint(.orange), in: .rect(cornerRadius: 12))
+                                .background(Color.orange.opacity(0.12))
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .strokeBorder(Color.orange.opacity(0.3), lineWidth: 1)
+                                )
                                 .accessibilityElement(children: .combine)
                                 .accessibilityLabel("Warning: \(dataError)")
                             }
@@ -79,9 +84,10 @@ struct ParentDashboardView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(child.name)
                         .font(.headline)
+                        .foregroundStyle(Color(.label))
                     Text(child.grade)
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color(.secondaryLabel))
                 }
                 Spacer()
             }
@@ -98,6 +104,7 @@ struct ParentDashboardView: View {
             VStack(alignment: .leading, spacing: 10) {
                 Text("Course Grades")
                     .font(.subheadline.bold())
+                    .foregroundStyle(Color(.label))
 
                 ForEach(child.courses) { grade in
                     HStack(spacing: 12) {
@@ -106,13 +113,14 @@ struct ParentDashboardView: View {
                             .frame(width: 24)
                         Text(grade.courseName)
                             .font(.subheadline)
+                            .foregroundStyle(Color(.label))
                         Spacer()
                         Text(grade.letterGrade)
                             .font(.subheadline.bold())
                             .foregroundStyle(Theme.gradeColor(grade.numericGrade))
                         Text(String(format: "%.0f%%", grade.numericGrade))
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color(.secondaryLabel))
                     }
                 }
             }
@@ -121,16 +129,18 @@ struct ParentDashboardView: View {
                 VStack(alignment: .leading, spacing: 10) {
                     Text("Upcoming Work")
                         .font(.subheadline.bold())
+                        .foregroundStyle(Color(.label))
 
                     ForEach(child.recentAssignments) { assignment in
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(assignment.title)
                                     .font(.subheadline)
+                                    .foregroundStyle(Color(.label))
                                     .lineLimit(1)
                                 Text(assignment.courseName)
                                     .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(Color(.secondaryLabel))
                             }
                             Spacer()
                             Text(assignment.dueDate, style: .relative)
@@ -142,7 +152,12 @@ struct ParentDashboardView: View {
             }
         }
         .padding(16)
-        .glassEffect(.regular.tint(.green), in: RoundedRectangle(cornerRadius: 20))
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .overlay(
+            RoundedRectangle(cornerRadius: 20)
+                .strokeBorder(Color.green.opacity(0.25), lineWidth: 1)
+        )
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(child.name), \(child.grade), GPA \(String(format: "%.1f", child.gpa)), attendance \(Int(child.attendanceRate * 100)) percent, \(child.courses.count) courses")
         .accessibilityHint("Double tap to view details")
@@ -155,11 +170,16 @@ struct ParentDashboardView: View {
                 .foregroundStyle(color)
             Text(label)
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color(.secondaryLabel))
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
-        .glassEffect(.regular.tint(color), in: RoundedRectangle(cornerRadius: 10))
+        .background(Color(.tertiarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .strokeBorder(color.opacity(0.25), lineWidth: 1)
+        )
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label): \(value)")
     }
@@ -178,7 +198,8 @@ struct ParentDashboardView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 20)
-                .glassEffect(.regular, in: .rect(cornerRadius: 12))
+                .background(Color(.secondarySystemGroupedBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
             }
 
             ForEach(viewModel.announcements) { announcement in
@@ -191,18 +212,20 @@ struct ParentDashboardView: View {
                         }
                         Text(announcement.title)
                             .font(.subheadline.bold())
+                            .foregroundStyle(Color(.label))
                         Spacer()
                         Text(announcement.date, style: .relative)
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color(.secondaryLabel))
                     }
                     Text(announcement.content)
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(Color(.secondaryLabel))
                         .lineLimit(2)
                 }
                 .padding(12)
-                .glassEffect(.regular, in: .rect(cornerRadius: 12))
+                .background(Color(.secondarySystemGroupedBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
             }
         }
     }

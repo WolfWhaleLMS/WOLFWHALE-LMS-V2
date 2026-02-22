@@ -43,7 +43,12 @@ struct TeacherDashboardView: View {
                                     .buttonStyle(.plain)
                                 }
                                 .padding(12)
-                                .glassEffect(.regular.tint(.orange), in: .rect(cornerRadius: 12))
+                                .background(Color.orange.opacity(0.12))
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .strokeBorder(Color.orange.opacity(0.3), lineWidth: 1)
+                                )
                                 .accessibilityElement(children: .combine)
                                 .accessibilityLabel("Warning: \(dataError)")
                             }
@@ -99,13 +104,19 @@ struct TeacherDashboardView: View {
                 .foregroundStyle(color)
             Text(value)
                 .font(.title2.bold())
+                .foregroundStyle(Color(.label))
             Text(label)
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color(.secondaryLabel))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
-        .glassEffect(.regular.tint(color), in: RoundedRectangle(cornerRadius: 16))
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .strokeBorder(color.opacity(0.3), lineWidth: 1)
+        )
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label): \(value)")
     }
@@ -149,11 +160,16 @@ struct TeacherDashboardView: View {
                     .foregroundStyle(color)
                 Text(label)
                     .font(.caption2.bold())
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(Color(.label))
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
-            .glassEffect(.regular.tint(color).interactive(), in: RoundedRectangle(cornerRadius: 12))
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .strokeBorder(color.opacity(0.25), lineWidth: 1)
+            )
         }
         .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         .accessibilityLabel("\(label)")
@@ -174,7 +190,8 @@ struct TeacherDashboardView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 20)
-                .glassEffect(.regular, in: .rect(cornerRadius: 12))
+                .background(Color(.secondarySystemGroupedBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
             } else {
                 ForEach(viewModel.assignments.filter(\.isSubmitted).prefix(3)) { assignment in
                     HStack(spacing: 12) {
@@ -189,10 +206,11 @@ struct TeacherDashboardView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(assignment.title)
                                 .font(.subheadline.bold())
+                                .foregroundStyle(Color(.label))
                                 .lineLimit(1)
                             Text(assignment.courseName)
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color(.secondaryLabel))
                         }
                         Spacer()
                         if assignment.grade != nil {
@@ -201,14 +219,16 @@ struct TeacherDashboardView: View {
                         } else {
                             Text("Grade")
                                 .font(.caption.bold())
+                                .foregroundStyle(.white)
                                 .padding(.horizontal, 10)
                                 .padding(.vertical, 4)
-                                .glassEffect(.regular.tint(.orange), in: .capsule)
-                                .foregroundStyle(.orange)
+                                .background(Color.orange)
+                                .clipShape(Capsule())
                         }
                     }
                     .padding(12)
-                    .glassEffect(.regular, in: .rect(cornerRadius: 12))
+                    .background(Color(.secondarySystemGroupedBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                     .accessibilityElement(children: .combine)
                     .accessibilityLabel("\(assignment.title) for \(assignment.courseName), \(assignment.grade != nil ? "graded" : "needs grading")")
                 }
@@ -230,7 +250,8 @@ struct TeacherDashboardView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 20)
-                .glassEffect(.regular, in: .rect(cornerRadius: 12))
+                .background(Color(.secondarySystemGroupedBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
             } else {
                 ForEach(viewModel.announcements.prefix(2)) { announcement in
                     VStack(alignment: .leading, spacing: 6) {
@@ -242,18 +263,20 @@ struct TeacherDashboardView: View {
                             }
                             Text(announcement.title)
                                 .font(.subheadline.bold())
+                                .foregroundStyle(Color(.label))
                             Spacer()
                             Text(announcement.date, style: .relative)
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color(.secondaryLabel))
                         }
                         Text(announcement.content)
                             .font(.caption)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(Color(.secondaryLabel))
                             .lineLimit(2)
                     }
                     .padding(12)
-                    .glassEffect(.regular, in: .rect(cornerRadius: 12))
+                    .background(Color(.secondarySystemGroupedBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
             }
         }

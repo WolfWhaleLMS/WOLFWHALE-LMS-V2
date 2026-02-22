@@ -42,7 +42,12 @@ struct AdminDashboardView: View {
                                     .buttonStyle(.plain)
                                 }
                                 .padding(12)
-                                .glassEffect(.regular.tint(.orange), in: .rect(cornerRadius: 12))
+                                .background(Color.orange.opacity(0.12))
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .strokeBorder(Color.orange.opacity(0.3), lineWidth: 1)
+                                )
                                 .accessibilityElement(children: .combine)
                                 .accessibilityLabel("Warning: \(dataError)")
                             }
@@ -84,13 +89,19 @@ struct AdminDashboardView: View {
                 .foregroundStyle(color)
             Text(value)
                 .font(.headline)
+                .foregroundStyle(Color(.label))
             Text(label)
                 .font(.caption2)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color(.secondaryLabel))
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 14)
-        .glassEffect(.regular.tint(color), in: RoundedRectangle(cornerRadius: 14))
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .strokeBorder(color.opacity(0.3), lineWidth: 1)
+        )
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label): \(value)")
     }
@@ -174,7 +185,8 @@ struct AdminDashboardView: View {
             }
         }
         .padding(16)
-        .glassEffect(.regular, in: .rect(cornerRadius: 16))
+        .background(Color(.secondarySystemGroupedBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
         .accessibilityElement(children: .combine)
         .accessibilityLabel({
             let rates = weeklyAttendanceRates
@@ -201,7 +213,8 @@ struct AdminDashboardView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 20)
-                .glassEffect(.regular, in: .rect(cornerRadius: 12))
+                .background(Color(.secondarySystemGroupedBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
             } else {
                 ForEach(viewModel.announcements) { announcement in
                     HStack(spacing: 12) {
@@ -211,14 +224,16 @@ struct AdminDashboardView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(announcement.title)
                                 .font(.subheadline.bold())
+                                .foregroundStyle(Color(.label))
                             Text(announcement.date, style: .relative)
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(Color(.secondaryLabel))
                         }
                         Spacer()
                     }
                     .padding(12)
-                    .glassEffect(.regular, in: .rect(cornerRadius: 12))
+                    .background(Color(.secondarySystemGroupedBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
             }
 
