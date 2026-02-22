@@ -11,7 +11,8 @@ nonisolated enum LocalizedDateFormatter {
 
     /// A Foundation `Locale` derived from the app's chosen language.
     private static var currentLocale: Locale {
-        Locale(identifier: L10n.currentLanguage)
+        let code = UserDefaults.standard.string(forKey: "wolfwhale_app_language") ?? "en"
+        return Locale(identifier: code)
     }
 
     /// Reusable date formatter factory. A new instance is created on

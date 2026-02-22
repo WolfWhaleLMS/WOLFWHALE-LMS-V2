@@ -173,29 +173,31 @@ struct PeerReviewSetupView: View {
     // MARK: - Assign Button
 
     private var assignButton: some View {
-        Button {
-            hapticTrigger.toggle()
-            showAssignConfirmation = true
-        } label: {
-            Label("Assign Reviewers", systemImage: "person.badge.plus")
-                .fontWeight(.semibold)
-                .frame(maxWidth: .infinity)
-                .frame(height: 50)
-        }
-        .buttonStyle(.borderedProminent)
-        .tint(.pink)
-        .disabled(submittedStudentCount < 2)
-        .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
-        .accessibilityLabel("Assign reviewers")
-        .accessibilityHint(submittedStudentCount < 2
-            ? "Needs at least 2 submissions"
-            : "Randomly assigns \(reviewsPerSubmission) reviewers per submission")
+        VStack(spacing: 8) {
+            Button {
+                hapticTrigger.toggle()
+                showAssignConfirmation = true
+            } label: {
+                Label("Assign Reviewers", systemImage: "person.badge.plus")
+                    .fontWeight(.semibold)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 50)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.pink)
+            .disabled(submittedStudentCount < 2)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .accessibilityLabel("Assign reviewers")
+            .accessibilityHint(submittedStudentCount < 2
+                ? "Needs at least 2 submissions"
+                : "Randomly assigns \(reviewsPerSubmission) reviewers per submission")
 
-        if submittedStudentCount < 2 {
-            Text("At least 2 student submissions are required to assign peer reviews.")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
+            if submittedStudentCount < 2 {
+                Text("At least 2 student submissions are required to assign peer reviews.")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
         }
     }
 

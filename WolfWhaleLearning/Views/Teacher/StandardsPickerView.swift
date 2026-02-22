@@ -204,7 +204,7 @@ struct StandardsPickerView: View {
                             .padding(.horizontal, 8)
                             .padding(.vertical, 4)
                             .background(Color.accentColor.opacity(0.15), in: Capsule())
-                            .foregroundStyle(.accentColor)
+                            .foregroundStyle(Color.accentColor)
                     }
                 }
             }
@@ -236,10 +236,10 @@ struct StandardsPickerView: View {
                     HStack(spacing: 6) {
                         Text(standard.code)
                             .font(.caption.bold())
-                            .foregroundStyle(.accentColor)
+                            .foregroundStyle(Color.accentColor)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
-                            .background(.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 4))
+                            .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 4))
                         Text(standard.gradeLevel)
                             .font(.caption2)
                             .foregroundStyle(.secondary)

@@ -535,34 +535,36 @@ struct PeerReviewDetailView: View {
     // MARK: - Submit
 
     private var submitButton: some View {
-        Button {
-            hapticTrigger.toggle()
-            submitReview()
-        } label: {
-            Group {
-                if isSubmitting {
-                    ProgressView()
-                        .tint(.white)
-                } else {
-                    Label("Submit Review", systemImage: "paperplane.fill")
-                        .fontWeight(.semibold)
+        VStack(spacing: 8) {
+            Button {
+                hapticTrigger.toggle()
+                submitReview()
+            } label: {
+                Group {
+                    if isSubmitting {
+                        ProgressView()
+                            .tint(.white)
+                    } else {
+                        Label("Submit Review", systemImage: "paperplane.fill")
+                            .fontWeight(.semibold)
+                    }
                 }
-            }
-            .frame(maxWidth: .infinity)
-            .frame(height: 50)
-        }
-        .buttonStyle(.borderedProminent)
-        .tint(.indigo)
-        .disabled(!isValid || isSubmitting || review.status == .completed)
-        .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
-        .accessibilityLabel("Submit peer review")
-        .accessibilityHint(isValid ? "Submits your score and feedback" : "Please provide feedback first")
-
-        if review.status == .completed {
-            Text("You have already submitted this review.")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity)
+                .frame(height: 50)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.indigo)
+            .disabled(!isValid || isSubmitting || review.status == .completed)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .accessibilityLabel("Submit peer review")
+            .accessibilityHint(isValid ? "Submits your score and feedback" : "Please provide feedback first")
+
+            if review.status == .completed {
+                Text("You have already submitted this review.")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity)
+            }
         }
     }
 

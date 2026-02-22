@@ -109,7 +109,7 @@ struct TimetableView: View {
                     .foregroundStyle(isToday ? .white : .secondary)
                 Text(dayDate(for: day))
                     .font(.system(size: 10))
-                    .foregroundStyle(isToday ? .white.opacity(0.8) : .tertiary)
+                    .foregroundStyle(isToday ? Color.white.opacity(0.8) : Color(UIColor.tertiaryLabel))
             }
             .frame(maxWidth: .infinity)
             .frame(height: headerHeight)

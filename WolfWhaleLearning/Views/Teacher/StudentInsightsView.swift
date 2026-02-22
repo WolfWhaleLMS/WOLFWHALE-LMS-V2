@@ -276,7 +276,7 @@ struct StudentInsightsView: View {
                         HStack(spacing: 3) {
                             Image(systemName: insight.gradeTrend.iconName)
                                 .font(.caption2)
-                            Text(insight.gradeTrend.rawValue)
+                            Text(insight.gradeTrend.displayName)
                                 .font(.caption2)
                         }
                         .foregroundStyle(trendColor(insight.gradeTrend))
@@ -304,7 +304,7 @@ struct StudentInsightsView: View {
             if insight.gradeHistory.count >= 2 {
                 SparklineView(values: insight.gradeHistory, color: Theme.gradeColor(insight.currentGrade))
                     .frame(height: 32)
-                    .accessibilityLabel("Grade trajectory: \(insight.gradeTrend.rawValue)")
+                    .accessibilityLabel("Grade trajectory: \(insight.gradeTrend.displayName)")
             }
 
             // Stats row
@@ -362,7 +362,7 @@ struct StudentInsightsView: View {
                 )
         )
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(insight.studentName), grade \(Int(insight.currentGrade)) percent, trend \(insight.gradeTrend.rawValue), attendance \(Int(insight.attendanceRate * 100)) percent\(insight.isAtRisk ? ", at risk" : "")")
+        .accessibilityLabel("\(insight.studentName), grade \(Int(insight.currentGrade)) percent, trend \(insight.gradeTrend.displayName), attendance \(Int(insight.attendanceRate * 100)) percent\(insight.isAtRisk ? ", at risk" : "")")
         .accessibilityHint("Double tap to view detailed performance")
     }
 
@@ -560,7 +560,7 @@ struct StudentDetailInsightView: View {
                 HStack(spacing: 4) {
                     Image(systemName: student.gradeTrend.iconName)
                         .font(.caption)
-                    Text(student.gradeTrend.rawValue)
+                    Text(student.gradeTrend.displayName)
                         .font(.caption.bold())
                 }
                 .foregroundStyle(trendColor(student.gradeTrend))
@@ -571,7 +571,7 @@ struct StudentDetailInsightView: View {
         .background(Color(.secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(student.studentName), current grade \(Int(student.currentGrade)) percent, \(student.gradeTrend.rawValue) trend")
+        .accessibilityLabel("\(student.studentName), current grade \(Int(student.currentGrade)) percent, \(student.gradeTrend.displayName) trend")
     }
 
     private var gradeTrajectorySection: some View {
@@ -582,7 +582,7 @@ struct StudentDetailInsightView: View {
 
             SparklineView(values: student.gradeHistory, color: Theme.gradeColor(student.currentGrade))
                 .frame(height: 80)
-                .accessibilityLabel("Grade chart showing \(student.gradeTrend.rawValue) trajectory")
+                .accessibilityLabel("Grade chart showing \(student.gradeTrend.displayName) trajectory")
 
             // Grade history labels
             HStack {

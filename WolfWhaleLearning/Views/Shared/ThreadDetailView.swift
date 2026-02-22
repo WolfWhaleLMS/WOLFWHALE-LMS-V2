@@ -188,7 +188,7 @@ struct ThreadDetailView: View {
             } label: {
                 Image(systemName: "arrow.up.circle.fill")
                     .font(.title2)
-                    .foregroundStyle(replyText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .gray : .accent)
+                    .foregroundStyle(replyText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.gray : Color.accentColor)
             }
             .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             .disabled(replyText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)

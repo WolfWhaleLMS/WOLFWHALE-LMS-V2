@@ -116,4 +116,12 @@ nonisolated enum GradeTrend: Sendable {
         case .stable: return "gray"
         }
     }
+
+    var displayName: String {
+        switch self {
+        case .improving: return "Improving"
+        case .declining: return "Declining"
+        case .stable: return "Stable"
+        }
+    }
 }

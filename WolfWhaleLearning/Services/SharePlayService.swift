@@ -29,8 +29,8 @@ final class SharePlayService {
     private var groupSession: GroupSession<StudySessionActivity>?
     private var messenger: GroupSessionMessenger?
     private var subscriptions = Set<AnyCancellable>()
-    private var messageTask: Task<Void, Never>?
-    private var sessionTask: Task<Void, Never>?
+    nonisolated(unsafe) private var messageTask: Task<Void, Never>?
+    nonisolated(unsafe) private var sessionTask: Task<Void, Never>?
 
     // MARK: - Lifecycle
 

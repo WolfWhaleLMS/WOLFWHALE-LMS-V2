@@ -419,7 +419,7 @@ struct QuizView: View {
                 if minWords > 0 {
                     Text("/ \(minWords) minimum")
                         .font(.caption)
-                        .foregroundStyle(meetsMin ? .secondary : .orange)
+                        .foregroundStyle(meetsMin ? Color(UIColor.secondaryLabel) : Color.orange)
                 }
 
                 Spacer()

@@ -137,7 +137,7 @@ struct StandardsMasteryView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
                 Image(systemName: subject == "Math" ? "function" : "text.book.closed.fill")
-                    .foregroundStyle(.accentColor)
+                    .foregroundStyle(Color.accentColor)
                 Text(subject)
                     .font(.headline)
                     .foregroundStyle(Color(.label))
@@ -174,7 +174,7 @@ struct StandardsMasteryView: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(standard.code)
                             .font(.caption.bold())
-                            .foregroundStyle(.accentColor)
+                            .foregroundStyle(Color.accentColor)
                         Text(standard.title)
                             .font(.subheadline.bold())
                             .foregroundStyle(Color(.label))

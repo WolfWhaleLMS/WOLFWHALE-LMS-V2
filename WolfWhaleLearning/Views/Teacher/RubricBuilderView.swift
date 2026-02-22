@@ -298,36 +298,38 @@ struct RubricBuilderView: View {
     // MARK: - Save Button
 
     private var saveButton: some View {
-        Button {
-            hapticTrigger.toggle()
-            saveRubric()
-        } label: {
-            Group {
-                if isLoading {
-                    ProgressView()
-                        .tint(.white)
-                } else {
-                    Label(existingRubric != nil ? "Update Rubric" : "Create Rubric",
-                          systemImage: "checkmark.circle.fill")
-                        .fontWeight(.semibold)
+        VStack(spacing: 8) {
+            Button {
+                hapticTrigger.toggle()
+                saveRubric()
+            } label: {
+                Group {
+                    if isLoading {
+                        ProgressView()
+                            .tint(.white)
+                    } else {
+                        Label(existingRubric != nil ? "Update Rubric" : "Create Rubric",
+                              systemImage: "checkmark.circle.fill")
+                            .fontWeight(.semibold)
+                    }
                 }
-            }
-            .frame(maxWidth: .infinity)
-            .frame(height: 50)
-        }
-        .buttonStyle(.borderedProminent)
-        .tint(.pink)
-        .disabled(isLoading || !isValid)
-        .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
-        .padding(.top, 4)
-
-        if let errorMessage {
-            Text(errorMessage)
-                .font(.caption)
-                .foregroundStyle(.red)
-                .padding(8)
                 .frame(maxWidth: .infinity)
-                .background(.red.opacity(0.1), in: .rect(cornerRadius: 8))
+                .frame(height: 50)
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(.pink)
+            .disabled(isLoading || !isValid)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .padding(.top, 4)
+
+            if let errorMessage {
+                Text(errorMessage)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .padding(8)
+                    .frame(maxWidth: .infinity)
+                    .background(.red.opacity(0.1), in: .rect(cornerRadius: 8))
+            }
         }
     }
 

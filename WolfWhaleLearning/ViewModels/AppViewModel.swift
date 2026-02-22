@@ -133,7 +133,7 @@ class AppViewModel {
 
     var isDemoMode = false
     private let mockService = MockDataService.shared
-    private let dataService = DataService.shared
+    let dataService = DataService.shared
     private var refreshTask: Task<Void, Never>?
     private var autoRefreshTask: Task<Void, Never>?
     /// Auto-refresh interval in seconds (5 minutes).

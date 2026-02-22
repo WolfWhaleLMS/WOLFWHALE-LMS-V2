@@ -337,9 +337,9 @@ struct GradebookView: View {
             HStack(spacing: 12) {
                 Image(systemName: "bubble.left.and.bubble.right.fill")
                     .font(.title3)
-                    .foregroundStyle(.accent)
+                    .foregroundStyle(Color.accentColor)
                     .frame(width: 36, height: 36)
-                    .background(.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+                    .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Discussion Forum")
@@ -358,8 +358,8 @@ struct GradebookView: View {
                         .font(.caption2.bold())
                         .padding(.horizontal, 8)
                         .padding(.vertical, 4)
-                        .background(.accent.opacity(0.15), in: .capsule)
-                        .foregroundStyle(.accent)
+                        .background(Color.accentColor.opacity(0.15), in: .capsule)
+                        .foregroundStyle(Color.accentColor)
                 }
 
                 Image(systemName: "chevron.right")
@@ -719,130 +719,128 @@ struct GradebookView: View {
 
     // MARK: - Add Assignment Sheet
 
+    private var addAssignmentDetailsSection: some View {
+        Section("Assignment Details") {
+            TextField("Title", text: $newTitle)
+            TextField("Instructions", text: $newInstructions, axis: .vertical)
+                .lineLimit(3...)
+            DatePicker("Due Date", selection: $newDueDate, displayedComponents: .date)
+            Stepper("Points: \(newPoints)", value: $newPoints, in: 10...500, step: 10)
+        }
+    }
+
+    private var addAssignmentLatePolicySection: some View {
+        Section {
+            Picker("Penalty Type", selection: $newLatePenaltyType) {
+                ForEach(LatePenaltyType.allCases, id: \.self) { type in
+                    Label(type.displayName, systemImage: type.iconName)
+                        .tag(type)
+                }
+            }
+            if newLatePenaltyType != .none && newLatePenaltyType != .noCredit {
+                HStack {
+                    Text("Penalty per day").font(.subheadline)
+                    Spacer()
+                    TextField("10", value: $newLatePenaltyPerDay, format: .number)
+                        .keyboardType(.decimalPad)
+                        .textFieldStyle(.roundedBorder)
+                        .frame(width: 70)
+                    Text(newLatePenaltyType == .percentPerDay ? "%" : "pts")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            if newLatePenaltyType != .none {
+                Stepper("Max late days: \(newMaxLateDays)", value: $newMaxLateDays, in: 1...30)
+                    .font(.subheadline)
+            }
+            if newLatePenaltyType != .none {
+                latePolicyPreview
+            }
+        } header: {
+            Label("Late Policy", systemImage: "clock.badge.exclamationmark")
+        } footer: {
+            Text("Set how late submissions are penalized. Students see the policy before submitting.")
+        }
+    }
+
+    private var addAssignmentResubmissionSection: some View {
+        Section {
+            Toggle("Allow Resubmission", isOn: $newAllowResubmission)
+            if newAllowResubmission {
+                Stepper("Max resubmissions: \(newMaxResubmissions)", value: $newMaxResubmissions, in: 1...5)
+                    .font(.subheadline)
+                Toggle("Set resubmission deadline", isOn: $newHasResubmissionDeadline)
+                if newHasResubmissionDeadline {
+                    DatePicker("Deadline", selection: $newResubmissionDeadline, displayedComponents: [.date, .hourAndMinute])
+                }
+            }
+        } header: {
+            Label("Resubmission", systemImage: "arrow.counterclockwise.circle")
+        } footer: {
+            if newAllowResubmission {
+                Text("Students can resubmit up to \(newMaxResubmissions) time\(newMaxResubmissions == 1 ? "" : "s") after being graded. Previous grades are preserved in history.")
+            }
+        }
+    }
+
+    private var addAssignmentStandardsSection: some View {
+        Section {
+            Button {
+                hapticTrigger.toggle()
+                showStandardsPicker = true
+            } label: {
+                HStack {
+                    Label("Select Standards", systemImage: "checkmark.seal")
+                        .foregroundStyle(Color(.label))
+                    Spacer()
+                    Text("\(newStandardIds.count) selected")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Image(systemName: "chevron.right")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
+            }
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .accessibilityLabel("Select learning standards")
+            .accessibilityValue("\(newStandardIds.count) standards selected")
+            let selected = viewModel.storedLearningStandards.filter { newStandardIds.contains($0.id) }
+            ForEach(selected) { std in
+                HStack(spacing: 8) {
+                    Text(std.code)
+                        .font(.caption.bold())
+                        .foregroundStyle(Color.accentColor)
+                    Text(std.title)
+                        .font(.caption)
+                        .foregroundStyle(Color(.label))
+                    Spacer()
+                    Button {
+                        hapticTrigger.toggle()
+                        newStandardIds.removeAll { $0 == std.id }
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .accessibilityLabel("Remove \(std.code)")
+                }
+            }
+        } header: {
+            Label("Learning Standards", systemImage: "checkmark.seal.fill")
+        } footer: {
+            Text("Tag Common Core or other standards to track mastery across assignments.")
+        }
+    }
+
     private var addAssignmentSheet: some View {
         NavigationStack {
             Form {
-                Section("Assignment Details") {
-                    TextField("Title", text: $newTitle)
-                    TextField("Instructions", text: $newInstructions, axis: .vertical)
-                        .lineLimit(3...)
-                    DatePicker("Due Date", selection: $newDueDate, displayedComponents: .date)
-                    Stepper("Points: \(newPoints)", value: $newPoints, in: 10...500, step: 10)
-                }
-
-                // MARK: - Late Policy Section
-                Section {
-                    Picker("Penalty Type", selection: $newLatePenaltyType) {
-                        ForEach(LatePenaltyType.allCases, id: \.self) { type in
-                            Label(type.displayName, systemImage: type.iconName)
-                                .tag(type)
-                        }
-                    }
-
-                    if newLatePenaltyType != .none && newLatePenaltyType != .noCredit {
-                        HStack {
-                            Text("Penalty per day")
-                                .font(.subheadline)
-                            Spacer()
-                            TextField("10", value: $newLatePenaltyPerDay, format: .number)
-                                .keyboardType(.decimalPad)
-                                .textFieldStyle(.roundedBorder)
-                                .frame(width: 70)
-                            Text(newLatePenaltyType == .percentPerDay ? "%" : "pts")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
-
-                    if newLatePenaltyType != .none {
-                        Stepper("Max late days: \(newMaxLateDays)", value: $newMaxLateDays, in: 1...30)
-                            .font(.subheadline)
-                    }
-
-                    // Preview of penalty
-                    if newLatePenaltyType != .none {
-                        latePolicyPreview
-                    }
-                } header: {
-                    Label("Late Policy", systemImage: "clock.badge.exclamationmark")
-                } footer: {
-                    Text("Set how late submissions are penalized. Students see the policy before submitting.")
-                }
-
-                // MARK: - Resubmission Section
-                Section {
-                    Toggle("Allow Resubmission", isOn: $newAllowResubmission)
-
-                    if newAllowResubmission {
-                        Stepper("Max resubmissions: \(newMaxResubmissions)", value: $newMaxResubmissions, in: 1...5)
-                            .font(.subheadline)
-
-                        Toggle("Set resubmission deadline", isOn: $newHasResubmissionDeadline)
-
-                        if newHasResubmissionDeadline {
-                            DatePicker("Deadline", selection: $newResubmissionDeadline, displayedComponents: [.date, .hourAndMinute])
-                        }
-                    }
-                } header: {
-                    Label("Resubmission", systemImage: "arrow.counterclockwise.circle")
-                } footer: {
-                    if newAllowResubmission {
-                        Text("Students can resubmit up to \(newMaxResubmissions) time\(newMaxResubmissions == 1 ? "" : "s") after being graded. Previous grades are preserved in history.")
-                    }
-                }
-
-                // MARK: - Learning Standards Section
-                Section {
-                    Button {
-                        hapticTrigger.toggle()
-                        showStandardsPicker = true
-                    } label: {
-                        HStack {
-                            Label("Select Standards", systemImage: "checkmark.seal")
-                                .foregroundStyle(Color(.label))
-                            Spacer()
-                            Text("\(newStandardIds.count) selected")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Image(systemName: "chevron.right")
-                                .font(.caption2)
-                                .foregroundStyle(.tertiary)
-                        }
-                    }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
-                    .accessibilityLabel("Select learning standards")
-                    .accessibilityValue("\(newStandardIds.count) standards selected")
-
-                    if !newStandardIds.isEmpty {
-                        let allStandards = viewModel.storedLearningStandards
-                        let selected = allStandards.filter { newStandardIds.contains($0.id) }
-                        ForEach(selected) { std in
-                            HStack(spacing: 8) {
-                                Text(std.code)
-                                    .font(.caption.bold())
-                                    .foregroundStyle(.accentColor)
-                                Text(std.title)
-                                    .font(.caption)
-                                    .foregroundStyle(Color(.label))
-                                Spacer()
-                                Button {
-                                    hapticTrigger.toggle()
-                                    newStandardIds.removeAll { $0 == std.id }
-                                } label: {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
-                                .accessibilityLabel("Remove \(std.code)")
-                            }
-                        }
-                    }
-                } header: {
-                    Label("Learning Standards", systemImage: "checkmark.seal.fill")
-                } footer: {
-                    Text("Tag Common Core or other standards to track mastery across assignments.")
-                }
+                addAssignmentDetailsSection
+                addAssignmentLatePolicySection
+                addAssignmentResubmissionSection
+                addAssignmentStandardsSection
             }
             .navigationTitle("New Assignment")
             .navigationBarTitleDisplayMode(.inline)

@@ -54,7 +54,7 @@ struct DiscussionForumView: View {
                     .font(.title2.bold())
                     .foregroundStyle(.white)
                     .frame(width: 56, height: 56)
-                    .background(.accent, in: Circle())
+                    .background(Color.accentColor, in: Circle())
                     .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
             }
             .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)

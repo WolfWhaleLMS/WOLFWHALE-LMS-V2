@@ -81,9 +81,9 @@ struct CourseDetailView: View {
             HStack(spacing: 12) {
                 Image(systemName: "bubble.left.and.bubble.right.fill")
                     .font(.title3)
-                    .foregroundStyle(.accent)
+                    .foregroundStyle(Color.accentColor)
                     .frame(width: 36, height: 36)
-                    .background(.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+                    .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Discussion Forum")
