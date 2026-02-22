@@ -160,7 +160,7 @@ struct EnhancedCourseCreationView: View {
                     .clipShape(.rect(cornerRadius: 8))
                     .overlay {
                         RoundedRectangle(cornerRadius: 8)
-                            .stroke(Color(.separator), lineWidth: 0.5)
+                            .stroke(Color.gray.opacity(0.3), lineWidth: 0.5)
                     }
                     .accessibilityLabel("Course description")
             }
