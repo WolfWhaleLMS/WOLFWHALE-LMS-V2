@@ -12,7 +12,6 @@ struct ParentDashboardView: View {
                         .accessibilityLabel("Loading children data")
                 } else {
                     ScrollView {
-                        GlassEffectContainer {
                             LazyVStack(spacing: 16) {
                             if let dataError = viewModel.dataError {
                                 HStack(spacing: 10) {
@@ -49,7 +48,6 @@ struct ParentDashboardView: View {
                                 .buttonStyle(.plain)
                             }
                             announcementsSection
-                        }
                         }
                         .padding(.horizontal)
                         .padding(.bottom, 20)

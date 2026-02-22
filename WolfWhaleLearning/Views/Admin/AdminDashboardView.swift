@@ -23,7 +23,6 @@ struct AdminDashboardView: View {
                     .padding(.horizontal)
                     .padding(.top, 40)
                 } else {
-                    GlassEffectContainer {
                         LazyVStack(spacing: 16) {
                             if let dataError = viewModel.dataError {
                                 HStack(spacing: 10) {
@@ -55,7 +54,6 @@ struct AdminDashboardView: View {
                             attendanceCard
                             recentSection
                         }
-                    }
                     .padding(.horizontal)
                     .padding(.bottom, 20)
                 }
