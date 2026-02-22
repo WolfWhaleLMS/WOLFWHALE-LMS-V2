@@ -59,7 +59,7 @@ struct ParentDashboardView: View {
             .background(Color(.systemGroupedBackground))
             .navigationTitle("My Children")
             .refreshable {
-                viewModel.refreshData()
+                await viewModel.loadData()
             }
         }
     }

@@ -34,6 +34,7 @@ struct Theme {
         case "cyan": .cyan
         case "yellow": .yellow
         case "brown": .brown
+        case "gray": .gray
         default: .blue
         }
     }

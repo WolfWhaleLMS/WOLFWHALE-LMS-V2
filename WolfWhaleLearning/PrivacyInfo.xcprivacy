@@ -7,9 +7,89 @@
     <key>NSPrivacyTrackingDomains</key>
     <array/>
     <key>NSPrivacyCollectedDataTypes</key>
-    <array/>
+    <array>
+        <!-- Contact Info: Name -->
+        <dict>
+            <key>NSPrivacyCollectedDataType</key>
+            <string>NSPrivacyCollectedDataTypeName</string>
+            <key>NSPrivacyCollectedDataTypeLinked</key>
+            <true/>
+            <key>NSPrivacyCollectedDataTypeTracking</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypePurposes</key>
+            <array>
+                <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+            </array>
+        </dict>
+        <!-- Contact Info: Email Address -->
+        <dict>
+            <key>NSPrivacyCollectedDataType</key>
+            <string>NSPrivacyCollectedDataTypeEmailAddress</string>
+            <key>NSPrivacyCollectedDataTypeLinked</key>
+            <true/>
+            <key>NSPrivacyCollectedDataTypeTracking</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypePurposes</key>
+            <array>
+                <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+            </array>
+        </dict>
+        <!-- Identifiers: User ID -->
+        <dict>
+            <key>NSPrivacyCollectedDataType</key>
+            <string>NSPrivacyCollectedDataTypeUserID</string>
+            <key>NSPrivacyCollectedDataTypeLinked</key>
+            <true/>
+            <key>NSPrivacyCollectedDataTypeTracking</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypePurposes</key>
+            <array>
+                <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+            </array>
+        </dict>
+        <!-- Usage Data: Product Interaction -->
+        <dict>
+            <key>NSPrivacyCollectedDataType</key>
+            <string>NSPrivacyCollectedDataTypeProductInteraction</string>
+            <key>NSPrivacyCollectedDataTypeLinked</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypeTracking</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypePurposes</key>
+            <array>
+                <string>NSPrivacyCollectedDataTypePurposeAnalytics</string>
+            </array>
+        </dict>
+        <!-- Health & Fitness (optional, HealthKit) -->
+        <dict>
+            <key>NSPrivacyCollectedDataType</key>
+            <string>NSPrivacyCollectedDataTypeHealth</string>
+            <key>NSPrivacyCollectedDataTypeLinked</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypeTracking</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypePurposes</key>
+            <array>
+                <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+            </array>
+        </dict>
+        <!-- Location: Coarse Location (campus geofencing) -->
+        <dict>
+            <key>NSPrivacyCollectedDataType</key>
+            <string>NSPrivacyCollectedDataTypeCoarseLocation</string>
+            <key>NSPrivacyCollectedDataTypeLinked</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypeTracking</key>
+            <false/>
+            <key>NSPrivacyCollectedDataTypePurposes</key>
+            <array>
+                <string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+            </array>
+        </dict>
+    </array>
     <key>NSPrivacyAccessedAPITypes</key>
     <array>
+        <!-- UserDefaults: used for app settings, terms acceptance, preferences -->
         <dict>
             <key>NSPrivacyAccessedAPIType</key>
             <string>NSPrivacyAccessedAPICategoryUserDefaults</string>
@@ -18,20 +98,13 @@
                 <string>CA92.1</string>
             </array>
         </dict>
+        <!-- File Timestamp: used for file management (offline sync, document handling) -->
         <dict>
             <key>NSPrivacyAccessedAPIType</key>
             <string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
             <key>NSPrivacyAccessedAPITypeReasons</key>
             <array>
                 <string>C617.1</string>
-            </array>
-        </dict>
-        <dict>
-            <key>NSPrivacyAccessedAPIType</key>
-            <string>NSPrivacyAccessedAPICategoryDiskSpace</string>
-            <key>NSPrivacyAccessedAPITypeReasons</key>
-            <array>
-                <string>E174.1</string>
             </array>
         </dict>
     </array>

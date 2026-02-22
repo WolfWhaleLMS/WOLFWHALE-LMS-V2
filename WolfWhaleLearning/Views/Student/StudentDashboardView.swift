@@ -96,7 +96,7 @@ struct StudentDashboardView: View {
                 }
             }
             .refreshable {
-                viewModel.refreshData()
+                await viewModel.loadData()
             }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("\(greeting), \(viewModel.currentUser?.firstName ?? "Student")")

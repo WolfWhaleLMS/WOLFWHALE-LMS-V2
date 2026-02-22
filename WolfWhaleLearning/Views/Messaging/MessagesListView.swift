@@ -40,7 +40,7 @@ struct MessagesListView: View {
                 }
             }
             .refreshable {
-                viewModel.refreshData()
+                await viewModel.refreshConversations()
             }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {

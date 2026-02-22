@@ -66,7 +66,7 @@ struct TeacherDashboardView: View {
                 }
             }
             .refreshable {
-                viewModel.refreshData()
+                await viewModel.loadData()
             }
         }
     }

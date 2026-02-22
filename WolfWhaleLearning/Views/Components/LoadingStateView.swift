@@ -75,47 +75,4 @@ struct ShimmerLoadingView: View {
     }
 }
 
-struct ErrorStateView: View {
-    let message: String
-    let retryAction: (() -> Void)?
-    @State private var hapticTrigger = false
-
-    init(message: String, retryAction: (() -> Void)? = nil) {
-        self.message = message
-        self.retryAction = retryAction
-    }
-
-    var body: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .font(.system(size: 40))
-                .foregroundStyle(.orange)
-            Text("Something went wrong")
-                .font(.headline)
-            Text(message)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-            if let retryAction {
-                Button {
-                    hapticTrigger.toggle()
-                    retryAction()
-                } label: {
-                    Text("Try Again")
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(.pink)
-                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
-            }
-        }
-        .padding(32)
-        .frame(maxWidth: .infinity)
-        .background {
-            RoundedRectangle(cornerRadius: 16)
-                .fill(.clear)
-                .glassEffect(.regular.tint(.orange), in: RoundedRectangle(cornerRadius: 16))
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Error: \(message)")
-    }
-}
+// ErrorStateView has been moved to ErrorStateView.swift with async retry support.

@@ -55,6 +55,9 @@ struct CoursesListView: View {
                             ContentUnavailableView("No Courses", systemImage: "book.closed", description: Text("Enroll in a course to get started"))
                         }
                     }
+                    .refreshable {
+                        await viewModel.refreshCourses()
+                    }
                 }
             }
             .background(Color(.systemGroupedBackground))

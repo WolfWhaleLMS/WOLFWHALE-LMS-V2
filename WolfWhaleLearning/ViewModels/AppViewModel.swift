@@ -87,6 +87,9 @@ class AppViewModel {
     // MARK: - Notifications
     var notificationService = NotificationService()
 
+    // MARK: - Due Date Reminders (Integration Layer)
+    var dueDateReminderService = DueDateReminderService()
+
     // MARK: - Push Notifications (Remote)
     // Lazy: APNs registration can crash without proper provisioning/entitlements
     // Internal so ContentView can wire the AppDelegate's shared instance.
@@ -97,6 +100,14 @@ class AppViewModel {
         _pushService = service
         return service
     }
+
+    // MARK: - Deep Link Navigation
+    var deepLinkCourseId: UUID?
+    var deepLinkQuizId: UUID?
+    var deepLinkShowTools: Bool = false
+    var deepLinkShowWellness: Bool = false
+    var deepLinkShowSharePlay: Bool = false
+    var deepLinkShowRecommendations: Bool = false
 
     // MARK: - Biometric Auth
     var biometricService = BiometricAuthService()
@@ -432,8 +443,17 @@ class AppViewModel {
         notificationService.cancelAllNotifications()
         notificationService.clearDeepLinks()
 
-        // 6. Reset biometric lock state so the next login starts unlocked
+        // 5a. Cancel all due-date reminders managed by the integration service
+        Task { await dueDateReminderService.cancelAllReminders() }
+
+        // 6. Reset biometric lock state and deep-link navigation so the next login starts clean
         isAppLocked = false
+        deepLinkCourseId = nil
+        deepLinkQuizId = nil
+        deepLinkShowTools = false
+        deepLinkShowWellness = false
+        deepLinkShowSharePlay = false
+        deepLinkShowRecommendations = false
 
         // 7. Clear lazy services so they are re-created fresh for the next user
         _pushService = nil
@@ -657,6 +677,11 @@ class AppViewModel {
                 self?.cacheDataForWidgets()
                 self?.saveDataToOfflineStorage()
                 self?.notificationService.scheduleAllAssignmentReminders(assignments: assignmentsForReminders)
+
+                // Refresh due-date reminders via the integration service
+                if let self {
+                    await self.dueDateReminderService.refreshReminders(assignments: assignmentsForReminders)
+                }
 
                 // Index content for Spotlight search
                 if let self {
@@ -970,6 +995,122 @@ class AppViewModel {
         }
     }
 
+    // MARK: - Targeted Refresh Methods (Pull-to-Refresh)
+
+    /// Re-fetches only courses from the data service. Used by pull-to-refresh on course list views.
+    func refreshCourses() async {
+        guard let user = currentUser, !isDemoMode, networkMonitor.isConnected else { return }
+        isDataLoading = true
+        dataError = nil
+        defer { isDataLoading = false }
+        do {
+            coursePagination.reset()
+            let newCourses = try await dataService.fetchCourses(
+                for: user.id,
+                role: user.role,
+                schoolId: user.schoolId,
+                offset: coursePagination.offset,
+                limit: coursePagination.pageSize
+            )
+            courses = newCourses
+            coursePagination.offset = newCourses.count
+            coursePagination.hasMore = newCourses.count >= coursePagination.pageSize
+        } catch {
+            dataError = "Could not refresh courses."
+            #if DEBUG
+            print("[AppViewModel] refreshCourses failed: \(error)")
+            #endif
+        }
+    }
+
+    /// Re-fetches only assignments from the data service. Used by pull-to-refresh on assignment views.
+    func refreshAssignments() async {
+        guard let user = currentUser, !isDemoMode, networkMonitor.isConnected else { return }
+        isDataLoading = true
+        dataError = nil
+        defer { isDataLoading = false }
+        do {
+            let courseIds = courses.map(\.id)
+            assignmentPagination.reset()
+            let newAssignments = try await dataService.fetchAssignments(
+                for: user.id,
+                role: user.role,
+                courseIds: courseIds,
+                offset: assignmentPagination.offset,
+                limit: assignmentPagination.pageSize
+            )
+            assignments = newAssignments
+            assignmentPagination.offset = newAssignments.count
+            assignmentPagination.hasMore = newAssignments.count >= assignmentPagination.pageSize
+            assignmentsLoaded = true
+        } catch {
+            dataError = "Could not refresh assignments."
+            #if DEBUG
+            print("[AppViewModel] refreshAssignments failed: \(error)")
+            #endif
+        }
+    }
+
+    /// Re-fetches only grades from the data service. Used by pull-to-refresh on the grades view.
+    func refreshGrades() async {
+        guard let user = currentUser, !isDemoMode, networkMonitor.isConnected else { return }
+        isDataLoading = true
+        dataError = nil
+        defer { isDataLoading = false }
+        do {
+            let courseIds = courses.map(\.id)
+            grades = try await dataService.fetchGrades(for: user.id, courseIds: courseIds)
+            gradesLoaded = true
+        } catch {
+            dataError = "Could not refresh grades."
+            #if DEBUG
+            print("[AppViewModel] refreshGrades failed: \(error)")
+            #endif
+        }
+    }
+
+    /// Re-fetches only conversations from the data service. Used by pull-to-refresh on the messages view.
+    func refreshConversations() async {
+        guard let user = currentUser, !isDemoMode, networkMonitor.isConnected else { return }
+        isDataLoading = true
+        dataError = nil
+        defer { isDataLoading = false }
+        do {
+            conversationPagination.reset()
+            let newConversations = try await dataService.fetchConversations(
+                for: user.id,
+                offset: conversationPagination.offset,
+                limit: conversationPagination.pageSize
+            )
+            conversations = newConversations
+            conversationPagination.offset = newConversations.count
+            conversationPagination.hasMore = newConversations.count >= conversationPagination.pageSize
+            conversationsLoaded = true
+        } catch {
+            dataError = "Could not refresh conversations."
+            #if DEBUG
+            print("[AppViewModel] refreshConversations failed: \(error)")
+            #endif
+        }
+    }
+
+    /// Re-fetches only attendance records from the data service. Used by pull-to-refresh on the attendance view.
+    func refreshAttendance() async {
+        guard let user = currentUser, !isDemoMode, networkMonitor.isConnected else { return }
+        isDataLoading = true
+        dataError = nil
+        defer { isDataLoading = false }
+        do {
+            attendance = try await dataService.fetchAttendance(for: user.id)
+            attendanceLoaded = true
+        } catch {
+            dataError = "Could not refresh attendance."
+            #if DEBUG
+            print("[AppViewModel] refreshAttendance failed: \(error)")
+            #endif
+        }
+    }
+
     // MARK: - Auto-Refresh
 
     /// Starts a repeating auto-refresh timer. Call when the app enters the foreground
@@ -996,6 +1137,12 @@ class AppViewModel {
     func handleForegroundResume() {
         guard isAuthenticated, !isDemoMode else { return }
         startAutoRefresh()
+
+        // Sync the due-date reminder count from the notification center.
+        // This is lightweight (local query only) and keeps the badge accurate
+        // even when offline.
+        Task { await dueDateReminderService.syncScheduledCount() }
+
         // Only refresh if we have a network connection
         guard networkMonitor.isConnected else { return }
         refreshData()
@@ -1356,6 +1503,12 @@ class AppViewModel {
                 try? await dataService.submitAssignment(assignmentId: assignment.id, studentId: user.id, content: text)
             }
         }
+
+        // Cancel reminders for the now-submitted assignment and refresh count
+        Task {
+            await dueDateReminderService.cancelReminders(for: assignment.id)
+        }
+
         syncProfile()
     }
 

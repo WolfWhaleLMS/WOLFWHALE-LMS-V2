@@ -59,7 +59,7 @@ struct AdminDashboardView: View {
             .navigationTitle("School Overview")
             .refreshable {
                 refreshHapticTrigger.toggle()
-                viewModel.refreshData()
+                await viewModel.loadData()
             }
             .sensoryFeedback(.impact(weight: .medium), trigger: refreshHapticTrigger)
         }

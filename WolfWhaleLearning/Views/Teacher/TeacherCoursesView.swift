@@ -19,6 +19,9 @@ struct TeacherCoursesView: View {
                 .padding(.horizontal)
                 .padding(.top, 8)
             }
+            .refreshable {
+                await viewModel.refreshCourses()
+            }
             .background(Color(.systemGroupedBackground))
             .navigationTitle("My Courses")
             .toolbar {

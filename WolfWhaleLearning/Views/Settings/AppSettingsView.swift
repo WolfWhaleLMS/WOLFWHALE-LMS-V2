@@ -10,6 +10,7 @@ struct AppSettingsView: View {
 
     @State private var showTerms = false
     @State private var showPrivacy = false
+    @State private var showDataPrivacyInfo = false
     @State private var showSignOutConfirmation = false
     @State private var showDeleteConfirmation = false
     @State private var showFinalDeleteConfirmation = false
@@ -48,6 +49,9 @@ struct AppSettingsView: View {
         }
         .sheet(isPresented: $showPrivacy) {
             PrivacyPolicyView()
+        }
+        .sheet(isPresented: $showDataPrivacyInfo) {
+            DataPrivacyInfoView()
         }
         .confirmationDialog(
             "Sign Out",
@@ -354,6 +358,25 @@ struct AppSettingsView: View {
                 } icon: {
                     Image(systemName: "hand.raised.fill")
                         .foregroundStyle(.teal)
+                }
+            }
+
+            Button {
+                hapticTrigger.toggle()
+                showDataPrivacyInfo = true
+            } label: {
+                Label {
+                    HStack {
+                        Text("Your Data & Privacy")
+                            .foregroundStyle(.primary)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
+                } icon: {
+                    Image(systemName: "hand.raised.fingers.spread.fill")
+                        .foregroundStyle(.indigo)
                 }
             }
         } header: {

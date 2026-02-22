@@ -34,6 +34,9 @@ struct GradesView: View {
                         ContentUnavailableView("No Grades Yet", systemImage: "chart.bar", description: Text("Grades will appear here once assignments are graded"))
                     }
                 }
+                .refreshable {
+                    await viewModel.refreshGrades()
+                }
             }
         }
         .navigationTitle("Grades")

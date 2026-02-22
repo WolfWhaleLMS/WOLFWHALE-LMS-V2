@@ -158,6 +158,9 @@ struct AttendanceHistoryView: View {
                         .padding(.horizontal)
                         .padding(.bottom, 20)
                     }
+                    .refreshable {
+                        await viewModel.refreshAttendance()
+                    }
                 }
             }
             .background(Color(.systemGroupedBackground))
