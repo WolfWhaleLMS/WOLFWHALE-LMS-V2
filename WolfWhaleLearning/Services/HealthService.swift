@@ -330,8 +330,8 @@ final class HealthService {
                         activityType: Self.workoutActivityName(workout.workoutActivityType),
                         startDate: workout.startDate,
                         endDate: workout.endDate,
-                        caloriesBurned: workout.totalEnergyBurned?.doubleValue(for: .kilocalorie()) ?? 0,
-                        distance: workout.totalDistance?.doubleValue(for: .meter()),
+                        caloriesBurned: workout.statistics(for: HKQuantityType(.activeEnergyBurned))?.sumQuantity()?.doubleValue(for: .kilocalorie()) ?? 0,
+                        distance: workout.statistics(for: HKQuantityType(.distanceWalkingRunning))?.sumQuantity()?.doubleValue(for: .meter()),
                         averageHeartRate: nil
                     )
                 }
