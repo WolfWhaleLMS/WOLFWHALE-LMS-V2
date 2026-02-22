@@ -2862,7 +2862,7 @@ class AppViewModel {
 
         // Schedule a local notification for each unread alert
         Task.detached(priority: .utility) { @MainActor [weak self] in
-            guard let self else { return }
+            guard self != nil else { return }
             let center = UNUserNotificationCenter.current()
             for alert in alerts where !alert.isRead {
                 let content = UNMutableNotificationContent()

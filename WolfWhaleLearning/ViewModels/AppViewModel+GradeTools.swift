@@ -283,7 +283,8 @@ nonisolated struct GradeStatistics: Sendable {
             return
         }
 
-        self.mean = sorted.reduce(0, +) / Double(sorted.count)
+        let calculatedMean = sorted.reduce(0, +) / Double(sorted.count)
+        self.mean = calculatedMean
         self.min = sorted.first ?? 0
         self.max = sorted.last ?? 0
 
@@ -296,7 +297,7 @@ nonisolated struct GradeStatistics: Sendable {
         }
 
         // Standard deviation
-        let variance = sorted.reduce(0.0) { $0 + pow($1 - self.mean, 2) } / Double(sorted.count)
+        let variance = sorted.reduce(0.0) { $0 + pow($1 - calculatedMean, 2) } / Double(sorted.count)
         self.standardDeviation = sqrt(variance)
 
         // Distribution buckets: 0-9, 10-19, ..., 90-100

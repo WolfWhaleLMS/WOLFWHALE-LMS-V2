@@ -62,7 +62,7 @@ nonisolated enum AppStoreCompliance {
         params["consent_recorded_at"] = ISO8601DateFormatter().string(from: Date())
 
         // Update server -- this is the source of truth
-        try? await supabaseClient
+        _ = try? await supabaseClient
             .from("profiles")
             .update([
                 "coppa_consent": hasParentalConsent ? "granted" : "pending",

@@ -6,7 +6,7 @@ import Foundation
 /// Usage:
 ///   Text(L10n.login)          // "Log In" or "Se connecter"
 ///   L10n.setLanguage("fr")    // switch to French
-nonisolated enum L10n {
+@MainActor enum L10n {
 
     // MARK: - Current Language
 
