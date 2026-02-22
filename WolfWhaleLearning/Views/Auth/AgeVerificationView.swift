@@ -138,14 +138,7 @@ struct AgeVerificationView: View {
             .labelsHidden()
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(
-                #if canImport(UIKit)
-                Color(UIColor.systemBackground)
-                #else
-                Color.white
-                #endif
-                , in: .rect(cornerRadius: 12)
-            )
+            .background(Color(UIColor.systemBackground), in: .rect(cornerRadius: 12))
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .strokeBorder(Color.purple.opacity(0.4), lineWidth: 1)
@@ -250,14 +243,7 @@ struct AgeVerificationView: View {
                     .accessibilityHint("Enter the email address of a parent or guardian for consent")
             }
             .padding(14)
-            .background(
-                #if canImport(UIKit)
-                Color(UIColor.systemBackground)
-                #else
-                Color.white
-                #endif
-                , in: .rect(cornerRadius: 12)
-            )
+            .background(Color(UIColor.systemBackground), in: .rect(cornerRadius: 12))
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .strokeBorder(

@@ -18,13 +18,7 @@ struct DataPrivacyInfoView: View {
                 .padding(.horizontal)
                 .padding(.bottom, 40)
             }
-            .background(
-                #if canImport(UIKit)
-                Color(UIColor.systemGroupedBackground)
-                #else
-                Color.gray.opacity(0.1)
-                #endif
-            )
+            .background(Color(UIColor.systemGroupedBackground))
             .navigationTitle("Your Data & Privacy")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

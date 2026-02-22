@@ -75,8 +75,8 @@ final class DueDateReminderService {
 
     // MARK: - Init
 
-    init(scheduler: ReminderSchedulingService = ReminderSchedulingService()) {
-        self.scheduler = scheduler
+    init(scheduler: ReminderSchedulingService? = nil) {
+        self.scheduler = scheduler ?? ReminderSchedulingService()
     }
 
     // MARK: - Refresh Reminders

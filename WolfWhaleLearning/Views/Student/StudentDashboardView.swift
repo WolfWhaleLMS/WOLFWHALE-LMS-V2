@@ -60,6 +60,7 @@ struct StudentDashboardView: View {
                     .padding(.horizontal)
                     .padding(.top, 40)
                 } else {
+                    GlassEffectContainer {
                         LazyVStack(spacing: 20) {
                             if let dataError = viewModel.dataError {
                                 HStack(spacing: 10) {
@@ -94,6 +95,7 @@ struct StudentDashboardView: View {
                             upcomingSection
                             coursesSection
                         }
+                    }
                     .padding(.horizontal)
                     .padding(.bottom, 20)
                 }

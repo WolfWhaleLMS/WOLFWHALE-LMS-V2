@@ -62,7 +62,7 @@ struct GradeWeightsConfigView: View {
                 VStack(spacing: 2) {
                     Text(String(format: "%.0f%%", totalWeight * 100))
                         .font(.title2.bold())
-                        .foregroundStyle(isValid ? .primary : .red)
+                        .foregroundStyle(isValid ? Color.primary : Color.red)
                     Text("Total")
                         .font(.caption)
                         .foregroundStyle(.secondary)

@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// A sheet that previews any file type with appropriate viewer.
 /// PDFs use PDFViewerView, images support pinch-to-zoom, text files display
