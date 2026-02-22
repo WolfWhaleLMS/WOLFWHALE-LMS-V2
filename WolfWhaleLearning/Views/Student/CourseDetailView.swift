@@ -27,7 +27,7 @@ struct CourseDetailView: View {
                 modulesSection
             }
         }
-        .background(Color(.systemGroupedBackground))
+        .background { HolographicBackground() }
         .navigationTitle(course.title)
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -67,8 +67,7 @@ struct CourseDetailView: View {
                 StatRing(progress: course.progress, color: Theme.courseColor(course.colorName), lineWidth: 5, size: 44)
             }
             .padding(16)
-            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
-            .shadow(color: .black.opacity(0.06), radius: 4, y: 2)
+            .glassCard(cornerRadius: 14)
             .padding(.horizontal)
         }
         .padding(.vertical)
@@ -101,7 +100,7 @@ struct CourseDetailView: View {
                     .foregroundStyle(.tertiary)
             }
             .padding(14)
-            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+            .glassCard(cornerRadius: 14)
         }
         .buttonStyle(.plain)
         .padding(.horizontal)
@@ -131,8 +130,7 @@ struct CourseDetailView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 24)
-                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
-                .shadow(color: .black.opacity(0.06), radius: 4, y: 2)
+                .glassCard(cornerRadius: 16)
                 .padding(.horizontal)
             }
 
@@ -150,8 +148,7 @@ struct CourseDetailView: View {
                     }
                 }
                 .padding(14)
-                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
-                .shadow(color: .black.opacity(0.06), radius: 4, y: 2)
+                .glassCard(cornerRadius: 16)
                 .padding(.horizontal)
             }
         }

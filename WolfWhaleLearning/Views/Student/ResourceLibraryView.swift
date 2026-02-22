@@ -21,7 +21,7 @@ struct ResourceLibraryView: View {
                 .padding(.top, 8)
                 .padding(.bottom, 32)
             }
-            .background(Color(.systemGroupedBackground))
+            .background { HolographicBackground() }
             .navigationTitle("Resource Library")
         }
     }
@@ -479,8 +479,7 @@ struct ResourceLibraryView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 18)
         .padding(.horizontal, 12)
-        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
-        .shadow(color: .black.opacity(0.06), radius: 4, y: 2)
+        .glassCard(cornerRadius: 16)
     }
 
     private func arCard(title: String, description: String, icon: String, color: Color) -> some View {
@@ -522,8 +521,7 @@ struct ResourceLibraryView: View {
         }
         .frame(width: 170)
         .padding(10)
-        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
-        .shadow(color: .black.opacity(0.06), radius: 4, y: 2)
+        .glassCard(cornerRadius: 16)
     }
 
     private func sectionHeader(title: String, icon: String, color: Color) -> some View {

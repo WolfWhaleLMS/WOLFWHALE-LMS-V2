@@ -23,7 +23,7 @@ struct StudentProfileView: View {
                 .padding(.horizontal)
                 .padding(.bottom, 20)
             }
-            .background(Color(.systemGroupedBackground))
+            .background { HolographicBackground() }
             .navigationTitle("Profile")
             .task {
                 if walletService == nil {
@@ -70,7 +70,7 @@ struct StudentProfileView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 20)
-        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 20))
+        .glassCard(cornerRadius: 20)
     }
 
     private var statsGrid: some View {
@@ -94,7 +94,7 @@ struct StudentProfileView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
-        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 14))
+        .glassCard(cornerRadius: 14)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label): \(value)")
     }
@@ -140,7 +140,7 @@ struct StudentProfileView: View {
             .scrollIndicators(.hidden)
         }
         .padding(16)
-        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
+        .glassCard(cornerRadius: 16)
     }
 
     private var streakSection: some View {
@@ -175,7 +175,7 @@ struct StudentProfileView: View {
             }
         }
         .padding(16)
-        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
+        .glassCard(cornerRadius: 16)
     }
 
     private var schoolIDLink: some View {
@@ -213,7 +213,7 @@ struct StudentProfileView: View {
                             .foregroundStyle(.tertiary)
                     }
                     .padding(14)
-                    .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
+                    .glassCard(cornerRadius: 16)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("School ID")
@@ -242,7 +242,7 @@ struct StudentProfileView: View {
             .accessibilityHint("Select system, light, or dark mode")
         }
         .padding(14)
-        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
+        .glassCard(cornerRadius: 16)
     }
 
     private var aboutSection: some View {
@@ -295,7 +295,7 @@ struct StudentProfileView: View {
             .padding(.bottom, 4)
         }
         .padding(16)
-        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
+        .glassCard(cornerRadius: 16)
     }
 
     private var logoutButton: some View {

@@ -60,7 +60,7 @@ struct CoursesListView: View {
                     }
                 }
             }
-            .background(Color(.systemGroupedBackground))
+            .background { HolographicBackground() }
             .navigationTitle("My Courses")
             .searchable(text: $searchText, prompt: "Search courses")
             .navigationDestination(for: Course.self) { course in
@@ -226,8 +226,7 @@ struct CoursesListView: View {
                 .foregroundStyle(.tertiary)
         }
         .padding(14)
-        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
-        .shadow(color: .black.opacity(0.06), radius: 4, y: 2)
+        .glassCard(cornerRadius: 16)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(course.title), taught by \(course.teacherName), \(Int(course.progress * 100)) percent complete")
         .accessibilityHint("Double tap to open course")
