@@ -64,14 +64,7 @@ struct MessagesListView: View {
             .sheet(isPresented: $showNewConversation) {
                 NewConversationSheet(viewModel: viewModel)
             }
-            .background {
-                LinearGradient(
-                    colors: [.blue.opacity(0.2), .purple.opacity(0.12), Color(.systemBackground)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
-            }
+            .background { HolographicBackground() }
         }
     }
 

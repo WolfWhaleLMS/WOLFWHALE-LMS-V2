@@ -107,7 +107,7 @@ struct StudentDashboardView: View {
             .refreshable {
                 await viewModel.loadData()
             }
-            .background(Color(.systemGroupedBackground))
+            .background { HolographicBackground() }
             .navigationTitle("\(greeting), \(viewModel.currentUser?.firstName ?? "Student")")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
