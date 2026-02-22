@@ -163,7 +163,7 @@ struct EditProfileView: View {
             }
         }
         .padding(16)
-        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
     }
 
     // MARK: - Name Fields
@@ -209,7 +209,7 @@ struct EditProfileView: View {
             }
         }
         .padding(16)
-        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
     }
 
     // MARK: - Display-Only Info
@@ -237,7 +237,7 @@ struct EditProfileView: View {
             }
         }
         .padding(16)
-        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
     }
 
     private func infoRow(label: String, value: String, icon: String) -> some View {
@@ -296,7 +296,7 @@ struct EditProfileView: View {
             }
         }
         .padding(16)
-        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
     }
 
     private func statCard(icon: String, label: String, value: String, color: Color) -> some View {

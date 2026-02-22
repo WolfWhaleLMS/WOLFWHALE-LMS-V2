@@ -67,8 +67,8 @@ struct CourseDetailView: View {
                 StatRing(progress: course.progress, color: Theme.courseColor(course.colorName), lineWidth: 5, size: 44)
             }
             .padding(16)
-            .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 14))
+            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
+            .shadow(color: .black.opacity(0.06), radius: 4, y: 2)
             .padding(.horizontal)
         }
         .padding(.vertical)
@@ -131,8 +131,8 @@ struct CourseDetailView: View {
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 24)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
+                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
+                .shadow(color: .black.opacity(0.06), radius: 4, y: 2)
                 .padding(.horizontal)
             }
 
@@ -150,8 +150,8 @@ struct CourseDetailView: View {
                     }
                 }
                 .padding(14)
-                .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
+                .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
+                .shadow(color: .black.opacity(0.06), radius: 4, y: 2)
                 .padding(.horizontal)
             }
         }

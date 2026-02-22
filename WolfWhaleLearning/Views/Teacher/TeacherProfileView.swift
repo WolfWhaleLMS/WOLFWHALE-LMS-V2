@@ -52,7 +52,7 @@ struct TeacherProfileView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 20)
-        .background(.ultraThinMaterial, in: .rect(cornerRadius: 20))
+        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 20))
     }
 
     private var statsSection: some View {
@@ -66,7 +66,7 @@ struct TeacherProfileView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
-            .background(.ultraThinMaterial, in: .rect(cornerRadius: 14))
+            .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 14))
             .accessibilityElement(children: .combine)
             .accessibilityLabel("Courses: \(viewModel.courses.count)")
 
@@ -79,7 +79,7 @@ struct TeacherProfileView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
-            .background(.ultraThinMaterial, in: .rect(cornerRadius: 14))
+            .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 14))
             .accessibilityElement(children: .combine)
             .accessibilityLabel("Students: \(viewModel.courses.reduce(0) { $0 + $1.enrolledStudentCount })")
         }
@@ -118,7 +118,7 @@ struct TeacherProfileView: View {
             Divider().padding(.leading, 48)
             settingRow(icon: "questionmark.circle.fill", title: "Help & Support", color: .green)
         }
-        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
     }
 
     private func settingRow(icon: String, title: String, color: Color) -> some View {
@@ -186,7 +186,7 @@ struct TeacherProfileView: View {
             .padding(.bottom, 4)
         }
         .padding(16)
-        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
     }
 
     private var logoutButton: some View {

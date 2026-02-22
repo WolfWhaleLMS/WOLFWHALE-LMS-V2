@@ -226,7 +226,8 @@ struct CoursesListView: View {
                 .foregroundStyle(.tertiary)
         }
         .padding(14)
-        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
+        .shadow(color: .black.opacity(0.06), radius: 4, y: 2)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(course.title), taught by \(course.teacherName), \(Int(course.progress * 100)) percent complete")
         .accessibilityHint("Double tap to open course")

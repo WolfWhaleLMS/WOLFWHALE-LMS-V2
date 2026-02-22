@@ -41,8 +41,9 @@ struct CourseProgressCard: View {
         }
         .padding(16)
         .frame(width: 280)
-        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
-        .glassEffect(.regular.tint(courseColor.opacity(0.15)), in: RoundedRectangle(cornerRadius: 20))
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20))
+        .overlay(RoundedRectangle(cornerRadius: 20).fill(courseColor.opacity(0.06)))
+        .shadow(color: .black.opacity(0.08), radius: 6, y: 3)
         .onAppear {
             withAnimation(.spring(duration: 1.0, bounce: 0.2).delay(0.1)) {
                 animatedProgress = min(progress.overallPercentage, 1.0)
