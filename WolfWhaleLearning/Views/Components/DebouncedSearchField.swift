@@ -37,8 +37,9 @@ struct DebouncedSearchField: View {
                 .textFieldStyle(.plain)
                 .font(.subheadline)
                 .onChange(of: text) { _, newValue in
-                    debouncer.debounce {
-                        onSearch?(newValue)
+                    let callback = onSearch
+                    debouncer.debounce { @MainActor in
+                        callback?(newValue)
                     }
                 }
                 .accessibilityLabel(placeholder)

@@ -31,29 +31,7 @@ nonisolated struct AtRiskStudent: Identifiable, Sendable {
     }
 }
 
-// MARK: - Grade Trend
-
-nonisolated enum GradeTrend: String, Sendable {
-    case improving = "Improving"
-    case stable = "Stable"
-    case declining = "Declining"
-
-    var iconName: String {
-        switch self {
-        case .improving: "arrow.up.right"
-        case .stable: "arrow.right"
-        case .declining: "arrow.down.right"
-        }
-    }
-
-    var colorName: String {
-        switch self {
-        case .improving: "green"
-        case .stable: "blue"
-        case .declining: "red"
-        }
-    }
-}
+// NOTE: GradeTrend enum is defined in GradeModels.swift
 
 // MARK: - Student Insight (per-student analytics)
 
