@@ -144,6 +144,17 @@ struct CreateLessonView: View {
             TextField("Write the lesson content here...", text: $content, axis: .vertical)
                 .lineLimit(8...)
                 .textFieldStyle(.roundedBorder)
+
+            HStack(spacing: 6) {
+                Image(systemName: "rectangle.split.3x1.fill")
+                    .font(.caption2)
+                    .foregroundStyle(.indigo)
+                Text("Use **---** on a new line to create slide breaks. Students will click through each slide.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            .padding(10)
+            .background(.indigo.opacity(0.08), in: .rect(cornerRadius: 10))
         }
         .padding(14)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))

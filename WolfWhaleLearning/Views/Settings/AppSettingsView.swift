@@ -457,17 +457,19 @@ struct AppSettingsView: View {
             }
             .sensoryFeedback(.impact(weight: .heavy), trigger: signOutHapticTrigger)
 
-            Button(role: .destructive) {
-                deleteHapticTrigger.toggle()
-                showDeleteConfirmation = true
-            } label: {
-                Label {
-                    Text("Delete Account")
-                } icon: {
-                    Image(systemName: "trash")
+            if viewModel.currentUser?.role != .admin && viewModel.currentUser?.role != .superAdmin {
+                Button(role: .destructive) {
+                    deleteHapticTrigger.toggle()
+                    showDeleteConfirmation = true
+                } label: {
+                    Label {
+                        Text("Delete Account")
+                    } icon: {
+                        Image(systemName: "trash")
+                    }
                 }
+                .sensoryFeedback(.impact(weight: .heavy), trigger: deleteHapticTrigger)
             }
-            .sensoryFeedback(.impact(weight: .heavy), trigger: deleteHapticTrigger)
         } header: {
             sectionHeader(title: "Danger Zone", icon: "exclamationmark.triangle.fill")
         } footer: {

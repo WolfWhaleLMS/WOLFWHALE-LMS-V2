@@ -37,26 +37,7 @@ struct LoginView: View {
             .padding(.horizontal, 24)
         }
         .scrollDismissesKeyboard(.interactively)
-        .background {
-            ZStack {
-                LinearGradient(
-                    colors: [.indigo.opacity(0.4), .green.opacity(0.25), .purple.opacity(0.2)],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                Circle()
-                    .fill(.green.opacity(0.2))
-                    .frame(width: 380)
-                    .blur(radius: 90)
-                    .offset(x: -80, y: -320)
-                Circle()
-                    .fill(.indigo.opacity(0.25))
-                    .frame(width: 300)
-                    .blur(radius: 80)
-                    .offset(x: 120, y: 280)
-            }
-            .ignoresSafeArea()
-        }
+        .background { UnderwaterBackground() }
         .sheet(isPresented: $showForgotPassword) {
             ForgotPasswordView()
         }
@@ -71,23 +52,33 @@ struct LoginView: View {
     private var logoSection: some View {
         VStack(spacing: 14) {
             ZStack {
-                // Outer glow layers (stacked for intensity)
+                // Sun ray glow emanating from behind the logo
                 Circle()
-                    .fill(Color.green.opacity(0.08))
-                    .frame(width: 160, height: 160)
-                    .blur(radius: 30)
-                    .scaleEffect(glowPulse ? 1.15 : 0.95)
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                Color(red: 0.3, green: 0.8, blue: 1.0).opacity(0.2),
+                                Color(red: 0.1, green: 0.5, blue: 0.8).opacity(0.08),
+                                .clear
+                            ],
+                            center: .center,
+                            startRadius: 40,
+                            endRadius: 120
+                        )
+                    )
+                    .frame(width: 240, height: 240)
+                    .scaleEffect(glowPulse ? 1.15 : 0.9)
 
                 Circle()
-                    .fill(Color.green.opacity(0.15))
-                    .frame(width: 130, height: 130)
-                    .blur(radius: 20)
-                    .scaleEffect(glowPulse ? 1.1 : 0.9)
+                    .fill(Color.cyan.opacity(0.15))
+                    .frame(width: 150, height: 150)
+                    .blur(radius: 25)
+                    .scaleEffect(glowPulse ? 1.1 : 0.85)
 
                 Circle()
-                    .fill(Color.green.opacity(0.25))
-                    .frame(width: 115, height: 115)
-                    .blur(radius: 12)
+                    .fill(Color.white.opacity(0.12))
+                    .frame(width: 120, height: 120)
+                    .blur(radius: 15)
                     .scaleEffect(glowPulse ? 1.05 : 0.95)
 
                 // Logo
@@ -96,8 +87,8 @@ struct LoginView: View {
                     .aspectRatio(contentMode: .fill)
                     .frame(width: 100, height: 100)
                     .clipShape(Circle())
-                    .shadow(color: .green.opacity(0.6), radius: 16, y: 0)
-                    .shadow(color: .green.opacity(0.3), radius: 30, y: 0)
+                    .shadow(color: .cyan.opacity(0.6), radius: 20, y: 0)
+                    .shadow(color: .white.opacity(0.2), radius: 40, y: 0)
             }
             .accessibilityHidden(true)
             .onAppear {
@@ -109,11 +100,12 @@ struct LoginView: View {
             Text("WOLF WHALE")
                 .font(.system(size: 36, weight: .black, design: .serif))
                 .tracking(2)
-                .foregroundStyle(.primary)
+                .foregroundStyle(.white)
+                .shadow(color: .cyan.opacity(0.5), radius: 10)
 
             Text("LEARNING MANAGEMENT SYSTEM")
                 .font(.system(size: 10, weight: .medium, design: .serif))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.white.opacity(0.7))
                 .tracking(3)
         }
     }
@@ -122,6 +114,7 @@ struct LoginView: View {
         VStack(spacing: 16) {
             Text("Sign In")
                 .font(.title3.bold())
+                .foregroundStyle(.white)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             VStack(spacing: 12) {

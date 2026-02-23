@@ -66,7 +66,7 @@ class AppViewModel {
     var grades: [GradeEntry] = []
     var attendance: [AttendanceRecord] = []
     var achievements: [Achievement] = []
-    var leaderboard: [LeaderboardEntry] = []
+    // leaderboard removed (XP system disabled)
     var conversations: [Conversation] = []
     var announcements: [Announcement] = []
     var children: [ChildInfo] = []
@@ -90,28 +90,8 @@ class AppViewModel {
     // MARK: - Absence Alert Toggle
     var absenceAlertEnabled: Bool = true
 
-    // MARK: - XP & Gamification
-    var currentXP: Int = 0
-    var currentLevel: Int = 1
-    var currentStreak: Int = 0
-    var currentCoins: Int = 0
+    // MARK: - Badges (XP system removed)
     var badges: [Badge] = []
-    /// Temporarily set when XP is gained; views animate this value then clear it.
-    var xpGainAmount: Int = 0
-    var showXPGain: Bool = false
-    private var xpLoaded = false
-
-    var xpProgressInLevel: Double {
-        XPLevelSystem.progressInLevel(xp: currentXP)
-    }
-
-    var xpToNextLevel: Int {
-        XPLevelSystem.xpToNextLevel(xp: currentXP)
-    }
-
-    var levelTierName: String {
-        XPLevelSystem.tierName(forLevel: currentLevel)
-    }
 
     // MARK: - Pagination State
     var coursePagination = PaginationState(pageSize: 50)
@@ -123,7 +103,7 @@ class AppViewModel {
     private var assignmentsLoaded = false
     private var conversationsLoaded = false
     private var gradesLoaded = false
-    private var leaderboardLoaded = false
+    // leaderboard removed (XP system)
     private var quizzesLoaded = false
     private var attendanceLoaded = false
     private var achievementsLoaded = false
@@ -705,20 +685,7 @@ class AppViewModel {
         // Derive schoolId from tenant_memberships.tenant_id
         let tenantId = memberships.first?.tenantId?.uuidString
 
-        // Fetch streak from student_xp (only relevant for students, but safe to query)
-        var streak = 0
-        let xpEntries: [StudentXpDTO] = try await supabaseClient
-            .from("student_xp")
-            .select()
-            .eq("student_id", value: userId.uuidString)
-            .limit(1)
-            .execute()
-            .value
-        if let xpEntry = xpEntries.first {
-            streak = xpEntry.streakDays ?? 0
-        }
-
-        var user = profile.toUser(email: userEmail, role: role, streak: streak)
+        var user = profile.toUser(email: userEmail, role: role, streak: 0)
         user.schoolId = tenantId
         currentUser = user
     }
@@ -917,12 +884,7 @@ class AppViewModel {
         gradesLoaded = true
     }
 
-    /// Called when user opens the Leaderboard. Loads leaderboard only if not already loaded.
-    func loadLeaderboardIfNeeded() async {
-        guard !leaderboardLoaded, !isDemoMode else { return }
-        await loadLeaderboard()
-        leaderboardLoaded = true
-    }
+    // loadLeaderboardIfNeeded removed — XP system disabled
 
     /// Called when user opens the Quizzes section. Loads quizzes only if not already loaded.
     func loadQuizzesIfNeeded() async {
@@ -947,60 +909,7 @@ class AppViewModel {
     }
 
 
-    /// Called when user opens XPProfileView. Loads XP, level, streak, and badges from Supabase.
-    func loadXPIfNeeded() async {
-        guard !xpLoaded, !isDemoMode, let user = currentUser else { return }
-
-        do {
-            let entries: [StudentXpDTO] = try await supabaseClient
-                .from("student_xp")
-                .select()
-                .eq("student_id", value: user.id.uuidString)
-                .execute()
-                .value
-
-            if let entry = entries.first {
-                currentXP = entry.totalXp ?? 0
-                currentLevel = XPLevelSystem.level(forXP: currentXP)
-                currentStreak = entry.streakDays ?? 0
-                currentCoins = entry.coins ?? 0
-            }
-        } catch {
-            #if DEBUG
-            print("[AppViewModel] Failed to load XP data: \(error)")
-            #endif
-        }
-
-        refreshBadges()
-        xpLoaded = true
-    }
-
-    /// Recomputes badge earned/progress state from current data.
-    func refreshBadges() {
-        let submittedCount = assignments.filter(\.isSubmitted).count
-        let completedQuizCount = quizzes.filter(\.isCompleted).count
-        let hasPerfectScore = grades.contains { $0.numericGrade >= 100.0 }
-        let completedLessonCount = courses.reduce(0) { $0 + $1.completedLessons }
-        let hasCourseComplete = courses.contains { $0.totalLessons > 0 && $0.completedLessons == $0.totalLessons }
-        let messageCount = conversations.reduce(0) { $0 + $1.messages.count }
-
-        var result: [Badge] = []
-
-        result.append(Badge(badgeType: .firstAssignment, isEarned: submittedCount >= 1, progress: min(Double(submittedCount), 1.0)))
-        result.append(Badge(badgeType: .quizMaster, isEarned: completedQuizCount >= 5, progress: min(Double(completedQuizCount) / 5.0, 1.0)))
-        result.append(Badge(badgeType: .perfectScore, isEarned: hasPerfectScore, progress: hasPerfectScore ? 1.0 : 0.0))
-        result.append(Badge(badgeType: .sevenDayStreak, isEarned: currentStreak >= 7, progress: min(Double(currentStreak) / 7.0, 1.0)))
-        result.append(Badge(badgeType: .courseComplete, isEarned: hasCourseComplete, progress: hasCourseComplete ? 1.0 : 0.0))
-
-        let earlyCount = assignments.filter { $0.isSubmitted && ($0.submission != nil) }.count
-        result.append(Badge(badgeType: .earlyBird, isEarned: earlyCount >= 3, progress: min(Double(earlyCount) / 3.0, 1.0)))
-        result.append(Badge(badgeType: .socialLearner, isEarned: messageCount >= 10, progress: min(Double(messageCount) / 10.0, 1.0)))
-        result.append(Badge(badgeType: .firstSteps, isEarned: completedLessonCount >= 1, progress: min(Double(completedLessonCount), 1.0)))
-        result.append(Badge(badgeType: .tenLessons, isEarned: completedLessonCount >= 10, progress: min(Double(completedLessonCount) / 10.0, 1.0)))
-        result.append(Badge(badgeType: .thirtyDayStreak, isEarned: currentStreak >= 30, progress: min(Double(currentStreak) / 30.0, 1.0)))
-
-        badges = result
-    }
+    // XP loading removed — system disabled
 
     // MARK: - Load More (Pagination)
 
@@ -1141,21 +1050,7 @@ class AppViewModel {
         return "\(userId.uuidString)-\(base)"
     }
 
-    func loadLeaderboard() async {
-        let key = userCacheKey("leaderboard")
-        if let cached: [LeaderboardEntry] = await CacheService.shared.get(key) {
-            leaderboard = cached
-            return
-        }
-        do {
-            leaderboard = try await dataService.fetchLeaderboard()
-            await CacheService.shared.set(key, value: leaderboard, ttl: 60)
-        } catch {
-            #if DEBUG
-            print("[AppViewModel] Failed to load leaderboard: \(error)")
-            #endif
-        }
-    }
+    // Leaderboard removed — XP system disabled
 
     private func loadMockData() {
         courses = mockService.sampleCourses()
@@ -1164,7 +1059,7 @@ class AppViewModel {
         grades = mockService.sampleGrades()
         attendance = mockService.sampleAttendance()
         achievements = mockService.sampleAchievements()
-        leaderboard = mockService.sampleLeaderboard()
+        // leaderboard removed (XP system disabled)
         conversations = mockService.sampleConversations()
         announcements = mockService.sampleAnnouncements()
         children = mockService.sampleChildren()

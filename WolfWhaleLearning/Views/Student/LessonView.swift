@@ -7,11 +7,12 @@ struct LessonView: View {
     let viewModel: AppViewModel
     @State private var isCompleted: Bool
     @State private var showConfetti = false
-    @State private var reachedEnd = false
+    @State private var currentSlide = 0
     @State private var arViewModel = ARLibraryViewModel()
     @State private var progressService = VideoProgressService()
     @State private var videoProgress: Double = 0
     @State private var videoCompletionTriggered = false
+    @State private var hapticTrigger = false
     @Environment(\.dismiss) private var dismiss
 
     init(lesson: Lesson, course: Course, viewModel: AppViewModel) {
@@ -19,6 +20,51 @@ struct LessonView: View {
         self.course = course
         self.viewModel = viewModel
         _isCompleted = State(initialValue: lesson.isCompleted)
+    }
+
+    /// Splits lesson content into slides using `---` as a separator.
+    /// If no separators exist, splits by paragraphs (double newlines) grouping 2-3 per slide.
+    private var slides: [String] {
+        let raw = lesson.content.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !raw.isEmpty else { return ["No content available."] }
+
+        // First try splitting by --- (markdown horizontal rule)
+        let bySeparator = raw.components(separatedBy: "\n---\n")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+
+        if bySeparator.count > 1 {
+            return bySeparator
+        }
+
+        // Also try --- on its own line (without surrounding newlines on both sides)
+        let byLooseSeparator = raw.components(separatedBy: "---")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+
+        if byLooseSeparator.count > 1 {
+            return byLooseSeparator
+        }
+
+        // Fall back to splitting by paragraphs, grouping ~2 per slide
+        let paragraphs = raw.components(separatedBy: "\n\n")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+
+        if paragraphs.count <= 1 {
+            return [raw]
+        }
+
+        // Group 2 paragraphs per slide
+        var result: [String] = []
+        var i = 0
+        while i < paragraphs.count {
+            let end = min(i + 2, paragraphs.count)
+            let group = paragraphs[i..<end].joined(separator: "\n\n")
+            result.append(group)
+            i = end
+        }
+        return result
     }
 
     /// Whether this lesson should display as a video lesson.
@@ -37,52 +83,14 @@ struct LessonView: View {
     }
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                headerCard
-
-                if isVideoLesson {
-                    videoSection
-                    videoProgressCard
-                } else {
-                    contentSection
-                }
-
-                // Show text content below video when available as supplementary notes
-                if isVideoLesson && !lesson.content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    supplementaryContentSection
-                }
-
-                relatedARSection
-
-                if isCompleted {
-                    lessonCompleteBanner
-                }
-
-                // Invisible marker at the very end of content (non-video completion trigger)
-                if !isVideoLesson {
-                    Color.clear
-                        .frame(height: 1)
-                        .onAppear {
-                            guard !isCompleted && !reachedEnd else { return }
-                            reachedEnd = true
-                            Task {
-                                try? await Task.sleep(for: .seconds(1))
-                                guard !isCompleted else { return }
-                                withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
-                                    isCompleted = true
-                                    showConfetti = true
-                                }
-                                viewModel.completeLesson(lesson, in: course)
-                                try? await Task.sleep(for: .seconds(2))
-                                showConfetti = false
-                            }
-                        }
-                }
+        VStack(spacing: 0) {
+            if isVideoLesson {
+                videoLessonBody
+            } else {
+                slideLessonBody
             }
-            .padding()
         }
-        .background(Color(.systemGroupedBackground))
+        .background { HolographicBackground() }
         .navigationTitle(lesson.title)
         .navigationBarTitleDisplayMode(.inline)
         .overlay {
@@ -91,7 +99,6 @@ struct LessonView: View {
             }
         }
         .onAppear {
-            // Restore saved video progress on appear
             if isVideoLesson {
                 videoProgress = progressService.getCompletionPercentage(lessonId: lesson.id)
             }
@@ -104,15 +111,206 @@ struct LessonView: View {
             withAnimation(.easeInOut(duration: 0.3)) {
                 videoProgress = updatedProgress
             }
-            // Auto-complete when video is >90% watched
             if updatedProgress >= 0.9, !videoCompletionTriggered {
                 videoCompletionTriggered = true
-                triggerVideoCompletion()
+                triggerCompletion()
             }
         }
         #if canImport(UIKit)
         .sensoryFeedback(.success, trigger: isCompleted)
         #endif
+    }
+
+    // MARK: - Slide-Based Lesson Body
+
+    private var slideLessonBody: some View {
+        let totalSlides = slides.count
+
+        return VStack(spacing: 0) {
+            // Progress bar at top
+            slideProgressBar(current: currentSlide, total: totalSlides)
+
+            // Slide content
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    headerCard
+
+                    // Slide indicator
+                    HStack {
+                        Text("Slide \(currentSlide + 1) of \(totalSlides)")
+                            .font(.caption.bold())
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        if isCompleted {
+                            Label("Completed", systemImage: "checkmark.circle.fill")
+                                .font(.caption.bold())
+                                .foregroundStyle(.green)
+                        }
+                    }
+                    .padding(.horizontal, 4)
+
+                    // Current slide content
+                    slideContentCard(text: slides[currentSlide])
+                        .id(currentSlide) // force re-render for transition
+
+                    // Related AR section
+                    relatedARSection
+
+                    if isCompleted {
+                        lessonCompleteBanner
+                    }
+                }
+                .padding()
+            }
+
+            // Navigation buttons
+            slideNavigationBar(current: currentSlide, total: totalSlides)
+        }
+    }
+
+    // MARK: - Slide Progress Bar
+
+    private func slideProgressBar(current: Int, total: Int) -> some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .leading) {
+                Rectangle()
+                    .fill(Color(.systemGray5))
+
+                Rectangle()
+                    .fill(
+                        LinearGradient(
+                            colors: [Theme.courseColor(course.colorName), Theme.courseColor(course.colorName).opacity(0.7)],
+                            startPoint: .leading,
+                            endPoint: .trailing
+                        )
+                    )
+                    .frame(width: geometry.size.width * (Double(current + 1) / Double(total)))
+                    .animation(.spring(response: 0.4, dampingFraction: 0.8), value: current)
+            }
+        }
+        .frame(height: 4)
+    }
+
+    // MARK: - Slide Content Card
+
+    private func slideContentCard(text: String) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(text)
+                .font(.body)
+                .foregroundStyle(Color(.label))
+                .lineSpacing(6)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(20)
+        .glassCard(cornerRadius: 16)
+        .transition(.asymmetric(
+            insertion: .move(edge: .trailing).combined(with: .opacity),
+            removal: .move(edge: .leading).combined(with: .opacity)
+        ))
+    }
+
+    // MARK: - Slide Navigation Bar
+
+    private func slideNavigationBar(current: Int, total: Int) -> some View {
+        let isFirst = current == 0
+        let isLast = current == total - 1
+        let onlyOneSlide = total == 1
+
+        return HStack(spacing: 12) {
+            // Back button
+            Button {
+                hapticTrigger.toggle()
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                    currentSlide = max(0, currentSlide - 1)
+                }
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "chevron.left")
+                    Text("Back")
+                }
+                .font(.subheadline.bold())
+                .frame(maxWidth: .infinity)
+                .frame(height: 48)
+            }
+            .buttonStyle(.bordered)
+            .disabled(isFirst)
+            .opacity(isFirst ? 0.4 : 1)
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+
+            // Next / Complete button
+            if isLast || onlyOneSlide {
+                Button {
+                    hapticTrigger.toggle()
+                    if !isCompleted {
+                        triggerCompletion()
+                    } else {
+                        dismiss()
+                    }
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: isCompleted ? "checkmark.circle.fill" : "flag.checkered")
+                        Text(isCompleted ? "Done" : "Complete")
+                    }
+                    .font(.subheadline.bold())
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(isCompleted ? .green : Theme.courseColor(course.colorName))
+                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            } else {
+                Button {
+                    hapticTrigger.toggle()
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                        currentSlide = min(total - 1, currentSlide + 1)
+                    }
+                } label: {
+                    HStack(spacing: 6) {
+                        Text("Next")
+                        Image(systemName: "chevron.right")
+                    }
+                    .font(.subheadline.bold())
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 48)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Theme.courseColor(course.colorName))
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            }
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 12)
+        .background(.ultraThinMaterial)
+    }
+
+    // MARK: - Video Lesson Body
+
+    private var videoLessonBody: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                headerCard
+
+                if let url = resolvedVideoURL {
+                    VideoPlayerView(url: url, title: lesson.title, lessonId: lesson.id)
+                        .aspectRatio(16 / 9, contentMode: .fit)
+                        .clipShape(.rect(cornerRadius: 16))
+                }
+
+                videoProgressCard
+
+                // Show text content below video as supplementary notes
+                if !lesson.content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    supplementaryContentSection
+                }
+
+                relatedARSection
+
+                if isCompleted {
+                    lessonCompleteBanner
+                }
+            }
+            .padding()
+        }
     }
 
     // MARK: - Header Card
@@ -142,19 +340,7 @@ struct LessonView: View {
             .foregroundStyle(.secondary)
         }
         .padding(16)
-        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
-    }
-
-    // MARK: - Video Section
-
-    private var videoSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            if let url = resolvedVideoURL {
-                VideoPlayerView(url: url, title: lesson.title, lessonId: lesson.id)
-                    .aspectRatio(16 / 9, contentMode: .fit)
-                    .clipShape(.rect(cornerRadius: 16))
-            }
-        }
+        .glassCard(cornerRadius: 16)
     }
 
     // MARK: - Video Progress Card
@@ -173,7 +359,6 @@ struct LessonView: View {
                     .foregroundStyle(videoProgress >= 0.9 ? .green : Theme.courseColor(course.colorName))
             }
 
-            // Progress bar
             GeometryReader { geometry in
                 ZStack(alignment: .leading) {
                     Capsule()
@@ -208,20 +393,7 @@ struct LessonView: View {
             }
         }
         .padding(16)
-        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
-    }
-
-    // MARK: - Text Content Section (primary, for non-video lessons)
-
-    private var contentSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(lesson.content)
-                .font(.body)
-                .foregroundStyle(Color(.label))
-                .lineSpacing(4)
-        }
-        .padding(16)
-        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+        .glassCard(cornerRadius: 16)
     }
 
     // MARK: - Supplementary Content (text notes below video)
@@ -237,7 +409,7 @@ struct LessonView: View {
                 .lineSpacing(4)
         }
         .padding(16)
-        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
+        .glassCard(cornerRadius: 16)
     }
 
     // MARK: - Lesson Complete Banner
@@ -309,7 +481,7 @@ struct LessonView: View {
                     }
                 }
                 .padding(16)
-                .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+                .glassCard(cornerRadius: 16)
             }
         }
     }
@@ -330,16 +502,18 @@ struct LessonView: View {
         .transition(.opacity)
     }
 
-    // MARK: - Video Completion
+    // MARK: - Completion
 
-    private func triggerVideoCompletion() {
+    private func triggerCompletion() {
         guard !isCompleted else { return }
         withAnimation(.spring(response: 0.4, dampingFraction: 0.6)) {
             isCompleted = true
             showConfetti = true
         }
         viewModel.completeLesson(lesson, in: course)
-        progressService.markAsWatched(lessonId: lesson.id)
+        if isVideoLesson {
+            progressService.markAsWatched(lessonId: lesson.id)
+        }
         Task {
             try? await Task.sleep(for: .seconds(2))
             withAnimation {
