@@ -286,7 +286,7 @@ struct CanadianHistoryTimelineView: View {
                 .frame(width: 16, height: 16)
 
             Circle()
-                .fill(.white)
+                .fill(Color(.systemBackground))
                 .frame(width: 6, height: 6)
         }
     }

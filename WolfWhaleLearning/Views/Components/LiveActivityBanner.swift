@@ -78,14 +78,14 @@ struct LiveActivityBanner: View {
                     .foregroundStyle(.purple)
                 Text("Start Live Session")
                     .font(.subheadline.bold())
-                    .foregroundStyle(.black)
+                    .foregroundStyle(.primary)
                 Spacer()
                 Image(systemName: "chevron.right")
                     .font(.caption)
-                    .foregroundStyle(.black.opacity(0.4))
+                    .foregroundStyle(.secondary)
             }
             .padding(14)
-            .background(.white)
+            .background(Color(.secondarySystemGroupedBackground))
             .clipShape(RoundedRectangle(cornerRadius: 14))
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
