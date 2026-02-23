@@ -611,7 +611,6 @@ class AppViewModel {
         assignmentsLoaded = false
         conversationsLoaded = false
         gradesLoaded = false
-        leaderboardLoaded = false
         quizzesLoaded = false
         attendanceLoaded = false
         achievementsLoaded = false
@@ -636,7 +635,6 @@ class AppViewModel {
         grades = []
         attendance = []
         achievements = []
-        leaderboard = []
         conversations = []
         announcements = []
         children = []
@@ -733,7 +731,6 @@ class AppViewModel {
         assignmentsLoaded = false
         conversationsLoaded = false
         gradesLoaded = false
-        leaderboardLoaded = false
         quizzesLoaded = false
         attendanceLoaded = false
         achievementsLoaded = false
@@ -1071,12 +1068,6 @@ class AppViewModel {
         // Populate conference scheduling demo data
         loadDemoConferenceData()
 
-        // Populate XP & gamification for demo mode
-        currentXP = 475
-        currentLevel = XPLevelSystem.level(forXP: currentXP)
-        currentStreak = currentUser?.streak ?? 5
-        currentCoins = 120
-        refreshBadges()
 
         cacheDataForSiri()
     }

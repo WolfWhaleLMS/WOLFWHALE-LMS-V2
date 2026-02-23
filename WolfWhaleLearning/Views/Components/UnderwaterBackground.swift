@@ -161,72 +161,64 @@ private struct FishSwimmingView: View {
 
     private struct Fish: Identifiable {
         let id: Int
-        let yPosition: Double  // 0-1 vertical band
-        let speed: Double      // swim speed
+        let yPosition: Double
+        let speed: Double
         let size: CGFloat
-        let color1: Color
-        let color2: Color
-        let goesRight: Bool    // direction
+        let colorIndex: Int
+        let goesRight: Bool
         let verticalWobble: Double
-        let icon: String
     }
 
-    private let fish: [Fish] = {
-        let colors: [(Color, Color)] = [
-            (.orange, .yellow),
-            (.cyan, .blue),
-            (.pink, .red),
-            (.yellow, .orange),
-            (.mint, .teal),
-            (.purple, .indigo),
-            (Color(red: 1, green: 0.6, blue: 0), Color(red: 1, green: 0.3, blue: 0)),
-            (.blue, .cyan),
-        ]
-        let icons = ["fish.fill", "fish.fill", "fish.fill", "fish.fill", "fish.fill", "fish.fill", "fish.fill", "fish.fill"]
+    private static let fishData: [Fish] = (0..<8).map { i in
+        let seed = Double(i) * 3.1
+        return Fish(
+            id: i,
+            yPosition: 0.25 + (sin(seed * 1.3) + 1) / 2 * 0.55,
+            speed: 0.015 + (sin(seed * 0.7) + 1) / 2 * 0.025,
+            size: CGFloat(16 + (sin(seed * 2.5) + 1) / 2 * 16),
+            colorIndex: i % 8,
+            goesRight: i % 2 == 0,
+            verticalWobble: seed
+        )
+    }
 
-        return (0..<8).map { i in
-            let seed = Double(i) * 3.1
-            let colorPair = colors[i % colors.count]
-            return Fish(
-                id: i,
-                yPosition: 0.25 + (sin(seed * 1.3) + 1) / 2 * 0.55,
-                speed: 0.015 + (sin(seed * 0.7) + 1) / 2 * 0.025,
-                size: CGFloat(16 + (sin(seed * 2.5) + 1) / 2 * 16),
-                color1: colorPair.0,
-                color2: colorPair.1,
-                goesRight: i % 2 == 0,
-                verticalWobble: seed,
-                icon: icons[i % icons.count]
-            )
+    private func fishColor(index: Int) -> (Color, Color) {
+        switch index {
+        case 0: return (.orange, .yellow)
+        case 1: return (.cyan, .blue)
+        case 2: return (.pink, .red)
+        case 3: return (.yellow, .orange)
+        case 4: return (.mint, .teal)
+        case 5: return (.purple, .indigo)
+        case 6: return (Color(red: 1, green: 0.6, blue: 0), Color(red: 1, green: 0.3, blue: 0))
+        default: return (.blue, .cyan)
         }
-    }()
+    }
 
     var body: some View {
         GeometryReader { geometry in
-            ForEach(fish) { fish in
-                let cycleTime = time * fish.speed
-                let xProgress: Double
-                if fish.goesRight {
-                    xProgress = cycleTime.truncatingRemainder(dividingBy: 1.0)
-                } else {
-                    xProgress = 1.0 - cycleTime.truncatingRemainder(dividingBy: 1.0)
-                }
-                let yWobble = sin(time * 0.8 + fish.verticalWobble) * 15
+            ForEach(Self.fishData) { f in
+                let cycleTime = time * f.speed
+                let xProgress: Double = f.goesRight
+                    ? cycleTime.truncatingRemainder(dividingBy: 1.0)
+                    : 1.0 - cycleTime.truncatingRemainder(dividingBy: 1.0)
+                let yWobble = sin(time * 0.8 + f.verticalWobble) * 15
+                let colors = fishColor(index: f.colorIndex)
 
-                Image(systemName: fish.icon)
-                    .font(.system(size: fish.size))
+                Image(systemName: "fish.fill")
+                    .font(.system(size: f.size))
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [fish.color1, fish.color2],
+                            colors: [colors.0, colors.1],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
                     )
-                    .scaleEffect(x: fish.goesRight ? 1 : -1, y: 1)
-                    .shadow(color: fish.color1.opacity(0.4), radius: 6)
+                    .scaleEffect(x: f.goesRight ? 1 : -1, y: 1)
+                    .shadow(color: colors.0.opacity(0.4), radius: 6)
                     .position(
                         x: -30 + (geometry.size.width + 60) * xProgress,
-                        y: geometry.size.height * fish.yPosition + yWobble
+                        y: geometry.size.height * f.yPosition + yWobble
                     )
                     .opacity(0.85)
             }

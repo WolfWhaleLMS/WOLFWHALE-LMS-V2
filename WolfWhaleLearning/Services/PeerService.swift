@@ -151,7 +151,7 @@ class PeerService: NSObject {
         receivedMessages.append(message)
     }
 
-    private static let tempSubdirectory = "PeerShared"
+    private nonisolated static let tempSubdirectory = "PeerShared"
 
     private nonisolated func saveTemporaryFile(data: Data, name: String) -> URL {
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent(Self.tempSubdirectory, isDirectory: true)
