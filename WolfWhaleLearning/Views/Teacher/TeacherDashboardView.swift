@@ -72,7 +72,7 @@ struct TeacherDashboardView: View {
                     .padding(.bottom, 20)
                 }
             }
-            .background(Color(.systemGroupedBackground))
+            .background { HolographicBackground() }
             .navigationTitle("Dashboard")
             .task {
                 if liveActivityService == nil {

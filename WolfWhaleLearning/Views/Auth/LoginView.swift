@@ -37,7 +37,7 @@ struct LoginView: View {
             .padding(.horizontal, 24)
         }
         .scrollDismissesKeyboard(.interactively)
-        .background { UnderwaterBackground() }
+        .background { HolographicBackground() }
         .sheet(isPresented: $showForgotPassword) {
             ForgotPasswordView()
         }

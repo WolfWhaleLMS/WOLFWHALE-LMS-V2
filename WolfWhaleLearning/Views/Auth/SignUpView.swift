@@ -116,7 +116,7 @@ struct SignUpView: View {
                 .scrollDismissesKeyboard(.interactively)
             }
         }
-        .background(Color(.systemGroupedBackground).ignoresSafeArea())
+        .background { HolographicBackground() }
         .onDisappear {
             password = ""
             confirmPassword = ""

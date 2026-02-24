@@ -43,7 +43,7 @@ struct SuperAdminDashboardView: View {
                 .padding(.horizontal)
                 .padding(.bottom, 20)
             }
-            .background(Color(.systemGroupedBackground))
+            .background { HolographicBackground() }
             .navigationTitle("Super Admin Console")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {

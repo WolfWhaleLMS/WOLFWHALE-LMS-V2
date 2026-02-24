@@ -78,7 +78,7 @@ struct ParentDashboardView: View {
                     }
                 }
             }
-            .background(Color(.systemGroupedBackground))
+            .background { HolographicBackground() }
             .navigationTitle("My Children")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {

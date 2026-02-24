@@ -70,7 +70,7 @@ struct AdminDashboardView: View {
                     .padding(.bottom, 20)
                 }
             }
-            .background(Color(.systemGroupedBackground))
+            .background { HolographicBackground() }
             .navigationTitle("School Overview")
             .refreshable {
                 refreshHapticTrigger.toggle()

@@ -22,7 +22,7 @@ struct TeacherCoursesView: View {
             .refreshable {
                 await viewModel.refreshCourses()
             }
-            .background(Color(.systemGroupedBackground))
+            .background { HolographicBackground() }
             .navigationTitle("My Courses")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
