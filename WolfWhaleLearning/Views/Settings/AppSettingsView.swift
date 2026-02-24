@@ -461,10 +461,11 @@ struct AppSettingsView: View {
             HStack {
                 Spacer()
                 VStack(spacing: 6) {
-                    Image(systemName: "w.circle.fill")
-                        .font(.system(size: 32))
-                        .foregroundStyle(Theme.brandGradient)
-                        .symbolEffect(.rotate, options: .repeat(.periodic(delay: 6)))
+                    Image("Logo")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 32, height: 32)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                     Text("WolfWhale LMS")
                         .font(.caption.bold())
                     Text("\u{00A9} 2025 WolfWhale. All rights reserved.")

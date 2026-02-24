@@ -40,19 +40,26 @@ struct StudentDashboardView: View {
     // MARK: - Content
 
     private var content: some View {
-        LazyVStack(spacing: 20) {
+        VStack(spacing: 20) {
             if let dataError = viewModel.dataError {
                 errorBanner(dataError)
+                    .padding(.horizontal)
             }
 
             snapshotCard
-            coursesSection
-            dueSoonSection
-            gradesCard
-            exploreGrid
+                .padding(.horizontal)
+
+            coursesCarousel
+
+            dueSoonCarousel
+
+            quickLinksGrid
+                .padding(.horizontal)
         }
-        .padding(.horizontal)
         .padding(.bottom, 24)
+        .navigationDestination(for: Course.self) { course in
+            CourseDetailView(course: course, viewModel: viewModel)
+        }
     }
 
     // MARK: - Today Snapshot
@@ -103,11 +110,12 @@ struct StudentDashboardView: View {
         .frame(maxWidth: .infinity)
     }
 
-    // MARK: - My Courses
+    // MARK: - Courses Carousel
 
-    private var coursesSection: some View {
+    private var coursesCarousel: some View {
         VStack(alignment: .leading, spacing: 12) {
             sectionHeader("My Courses", icon: "graduationcap.fill", effect: .wiggle)
+                .padding(.horizontal)
 
             if viewModel.courses.isEmpty {
                 NavigationLink {
@@ -136,58 +144,77 @@ struct StudentDashboardView: View {
                     .glassCard(cornerRadius: 14)
                 }
                 .buttonStyle(.plain)
+                .padding(.horizontal)
             } else {
-                ForEach(viewModel.courses) { course in
-                    NavigationLink(value: course) {
-                        HStack(spacing: 14) {
-                            // Course icon with color
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 10)
-                                    .fill(Theme.courseColor(course.colorName).opacity(0.15))
-                                    .frame(width: 42, height: 42)
-                                Image(systemName: course.iconSystemName)
-                                    .font(.system(size: 18, weight: .semibold))
-                                    .foregroundStyle(Theme.courseColor(course.colorName))
-                                    .symbolRenderingMode(.hierarchical)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 14) {
+                        ForEach(viewModel.courses) { course in
+                            NavigationLink(value: course) {
+                                courseCard(course)
                             }
-
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text(course.title)
-                                    .font(.subheadline.bold())
-                                    .foregroundStyle(Color(.label))
-                                    .lineLimit(1)
-                                Text(course.teacherName)
-                                    .font(.caption)
-                                    .foregroundStyle(Color(.secondaryLabel))
-                            }
-
-                            Spacer()
-
-                            // Progress pill
-                            Text("\(Int(course.progress * 100))%")
-                                .font(.caption.bold())
-                                .foregroundStyle(Theme.courseColor(course.colorName))
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 4)
-                                .background(Theme.courseColor(course.colorName).opacity(0.12), in: Capsule())
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("\(course.title), \(course.teacherName), \(Int(course.progress * 100)) percent complete")
+                            .accessibilityHint("Double tap to open course")
                         }
-                        .padding(14)
-                        .glassCard(cornerRadius: 14)
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("\(course.title), \(course.teacherName), \(Int(course.progress * 100)) percent complete")
-                    .accessibilityHint("Double tap to open course")
+                    .padding(.horizontal)
                 }
             }
         }
-        .navigationDestination(for: Course.self) { course in
-            CourseDetailView(course: course, viewModel: viewModel)
-        }
     }
 
-    // MARK: - Due Soon
+    private func courseCard(_ course: Course) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            // Icon with color background
+            ZStack {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Theme.courseColor(course.colorName).opacity(0.15))
+                    .frame(width: 40, height: 40)
+                Image(systemName: course.iconSystemName)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(Theme.courseColor(course.colorName))
+                    .symbolRenderingMode(.hierarchical)
+            }
 
-    private var dueSoonSection: some View {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(course.title)
+                    .font(.subheadline.bold())
+                    .foregroundStyle(Color(.label))
+                    .lineLimit(2)
+                    .multilineTextAlignment(.leading)
+                Text(course.teacherName)
+                    .font(.caption)
+                    .foregroundStyle(Color(.secondaryLabel))
+                    .lineLimit(1)
+            }
+
+            Spacer()
+
+            // Progress bar
+            VStack(alignment: .leading, spacing: 4) {
+                Text("\(Int(course.progress * 100))%")
+                    .font(.caption2.bold())
+                    .foregroundStyle(Theme.courseColor(course.colorName))
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        Capsule()
+                            .fill(Theme.courseColor(course.colorName).opacity(0.15))
+                        Capsule()
+                            .fill(Theme.courseColor(course.colorName))
+                            .frame(width: geo.size.width * min(course.progress, 1.0))
+                    }
+                }
+                .frame(height: 4)
+            }
+        }
+        .padding(14)
+        .frame(width: 160, height: 170)
+        .glassCard(cornerRadius: 16)
+    }
+
+    // MARK: - Due Soon Carousel
+
+    private var dueSoonCarousel: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 sectionHeader("Due Soon", icon: "clock.badge.exclamationmark.fill", effect: .breathe)
@@ -201,6 +228,7 @@ struct StudentDashboardView: View {
                 }
                 .accessibilityHint("Double tap to view all assignments")
             }
+            .padding(.horizontal)
 
             if viewModel.upcomingAssignments.isEmpty {
                 HStack(spacing: 10) {
@@ -216,104 +244,74 @@ struct StudentDashboardView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(16)
                 .glassCard(cornerRadius: 14)
+                .padding(.horizontal)
             } else {
-                ForEach(viewModel.upcomingAssignments.prefix(3)) { assignment in
-                    NavigationLink {
-                        AssignmentsView(viewModel: viewModel)
-                    } label: {
-                        HStack(spacing: 12) {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 10)
-                                    .fill(.orange.opacity(0.15))
-                                    .frame(width: 42, height: 42)
-                                Image(systemName: "doc.text.fill")
-                                    .font(.system(size: 16))
-                                    .foregroundStyle(.orange)
-                                    .symbolRenderingMode(.hierarchical)
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 12) {
+                        ForEach(viewModel.upcomingAssignments.prefix(5)) { assignment in
+                            NavigationLink {
+                                AssignmentsView(viewModel: viewModel)
+                            } label: {
+                                assignmentCard(assignment)
                             }
-
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text(assignment.title)
-                                    .font(.subheadline.bold())
-                                    .foregroundStyle(Color(.label))
-                                    .lineLimit(1)
-                                Text(assignment.courseName)
-                                    .font(.caption)
-                                    .foregroundStyle(Color(.secondaryLabel))
-                            }
-
-                            Spacer()
-
-                            VStack(alignment: .trailing, spacing: 2) {
-                                Text(assignment.dueDate, style: .relative)
-                                    .font(.caption.bold())
-                                    .foregroundStyle(.orange)
-                                Text("\(assignment.points) pts")
-                                    .font(.caption2)
-                                    .foregroundStyle(Color(.tertiaryLabel))
-                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("\(assignment.title), \(assignment.courseName), \(assignment.points) points")
                         }
-                        .padding(14)
-                        .glassCard(cornerRadius: 14)
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("\(assignment.title), \(assignment.courseName), \(assignment.points) points")
+                    .padding(.horizontal)
                 }
             }
         }
     }
 
-    // MARK: - Grades
+    private func assignmentCard(_ assignment: Assignment) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Image(systemName: "doc.text.fill")
+                .font(.title3)
+                .foregroundStyle(.orange)
+                .symbolRenderingMode(.hierarchical)
 
-    private var gradesCard: some View {
-        NavigationLink {
-            GradesView(viewModel: viewModel)
-        } label: {
-            HStack(spacing: 14) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 10)
-                        .fill(.green.opacity(0.15))
-                        .frame(width: 42, height: 42)
-                    Image(systemName: "chart.bar.doc.horizontal.fill")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(.green)
-                        .symbolRenderingMode(.hierarchical)
-                }
+            Text(assignment.title)
+                .font(.subheadline.bold())
+                .foregroundStyle(Color(.label))
+                .lineLimit(2)
+                .multilineTextAlignment(.leading)
 
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("My Grades")
-                        .font(.subheadline.bold())
-                        .foregroundStyle(Color(.label))
-                    Text("GPA \(String(format: "%.1f", viewModel.gpa)) · \(viewModel.overallLetterGrade)")
-                        .font(.caption)
-                        .foregroundStyle(Color(.secondaryLabel))
-                }
+            Text(assignment.courseName)
+                .font(.caption)
+                .foregroundStyle(Color(.secondaryLabel))
+                .lineLimit(1)
 
+            Spacer()
+
+            HStack {
+                Text(assignment.dueDate, style: .relative)
+                    .font(.caption2.bold())
+                    .foregroundStyle(.orange)
                 Spacer()
-
-                Image(systemName: "chevron.right")
-                    .font(.caption.bold())
-                    .foregroundStyle(.tertiary)
+                Text("\(assignment.points) pts")
+                    .font(.caption2)
+                    .foregroundStyle(Color(.tertiaryLabel))
             }
-            .padding(16)
-            .glassCard(cornerRadius: 14)
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel("My Grades, GPA \(String(format: "%.1f", viewModel.gpa)), \(viewModel.overallLetterGrade)")
-        .accessibilityHint("Double tap to view all grades")
+        .padding(14)
+        .frame(width: 150, height: 155)
+        .glassCard(cornerRadius: 14)
     }
 
-    // MARK: - Explore Grid
+    // MARK: - Quick Links Grid
 
-    private var exploreGrid: some View {
+    private var quickLinksGrid: some View {
         VStack(alignment: .leading, spacing: 12) {
-            sectionHeader("Explore", icon: "sparkles", effect: .variableColor)
+            sectionHeader("Quick Links", icon: "sparkles", effect: .variableColor)
 
             LazyVGrid(columns: [
                 GridItem(.flexible(), spacing: 12),
-                GridItem(.flexible(), spacing: 12),
                 GridItem(.flexible(), spacing: 12)
             ], spacing: 12) {
+                exploreLink(icon: "chart.bar.doc.horizontal.fill", title: "Grades", color: .green) {
+                    GradesView(viewModel: viewModel)
+                }
                 exploreLink(icon: "calendar", title: "Calendar", color: .orange) {
                     AssignmentCalendarView(viewModel: viewModel)
                 }
@@ -322,9 +320,6 @@ struct StudentDashboardView: View {
                 }
                 exploreLink(icon: "person.badge.clock.fill", title: "Attendance", color: .teal) {
                     AttendanceHistoryView(viewModel: viewModel)
-                }
-                exploreLink(icon: "scope", title: "Goals", color: .green) {
-                    ProgressGoalsView(viewModel: viewModel)
                 }
                 exploreLink(icon: "books.vertical.fill", title: "Catalog", color: .purple) {
                     CourseCatalogView(viewModel: viewModel)

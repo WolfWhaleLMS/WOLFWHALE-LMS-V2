@@ -334,10 +334,11 @@ struct StudentProfileView: View {
             }
 
             VStack(spacing: 12) {
-                Image(systemName: "w.circle.fill")
-                    .font(.system(size: 40))
-                    .foregroundStyle(Theme.brandGradient)
-                    .symbolEffect(.rotate, options: .repeat(.periodic(delay: 6)))
+                Image("Logo")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 40, height: 40)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
 
                 Text("WolfWhale LMS")
                     .font(.headline)
