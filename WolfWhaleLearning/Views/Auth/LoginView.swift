@@ -82,11 +82,14 @@ struct LoginView: View {
                     .blur(radius: 15)
                     .scaleEffect(glowPulse ? 1.05 : 0.95)
 
-                // Logo
+                // Logo with black circle background
                 Image("Logo")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
+                    .padding(16)
                     .frame(width: 120, height: 120)
+                    .background(Circle().fill(Color.black))
+                    .clipShape(Circle())
                     .shadow(color: Theme.brandBlue.opacity(0.6), radius: 20, y: 0)
                     .shadow(color: .white.opacity(0.2), radius: 40, y: 0)
             }
