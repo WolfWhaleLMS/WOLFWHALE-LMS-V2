@@ -9,15 +9,32 @@ struct HolographicBackground: View {
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        ZStack {
-            Image("AppBackground")
-                .resizable()
-                .aspectRatio(contentMode: .fill)
+        GeometryReader { geometry in
+            ZStack {
+                // Seamless gradient that extends the image's sky and grass
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.18, green: 0.55, blue: 0.88),
+                        Color(red: 0.30, green: 0.65, blue: 0.95),
+                        Color(red: 0.35, green: 0.75, blue: 0.35),
+                        Color(red: 0.28, green: 0.62, blue: 0.22)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
 
-            // Dark mode overlay for readability
-            if colorScheme == .dark {
-                Color.black.opacity(0.45)
+                // Image fitted to show the full scene
+                Image("AppBackground")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: geometry.size.width)
+
+                // Dark mode overlay for readability
+                if colorScheme == .dark {
+                    Color.black.opacity(0.45)
+                }
             }
+            .frame(width: geometry.size.width, height: geometry.size.height)
         }
         .ignoresSafeArea()
     }
@@ -29,14 +46,29 @@ struct HolographicBackgroundStatic: View {
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
-        ZStack {
-            Image("AppBackground")
-                .resizable()
-                .aspectRatio(contentMode: .fill)
+        GeometryReader { geometry in
+            ZStack {
+                LinearGradient(
+                    colors: [
+                        Color(red: 0.18, green: 0.55, blue: 0.88),
+                        Color(red: 0.30, green: 0.65, blue: 0.95),
+                        Color(red: 0.35, green: 0.75, blue: 0.35),
+                        Color(red: 0.28, green: 0.62, blue: 0.22)
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
 
-            if colorScheme == .dark {
-                Color.black.opacity(0.45)
+                Image("AppBackground")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: geometry.size.width)
+
+                if colorScheme == .dark {
+                    Color.black.opacity(0.45)
+                }
             }
+            .frame(width: geometry.size.width, height: geometry.size.height)
         }
         .ignoresSafeArea()
     }
