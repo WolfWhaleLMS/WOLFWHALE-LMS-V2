@@ -14,25 +14,25 @@ struct LoginView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
-                Spacer().frame(height: 56)
+                Spacer().frame(height: 20)
 
                 logoSection
 
-                Spacer().frame(height: 40)
+                Spacer().frame(height: 16)
 
                 loginSection
 
-                Spacer().frame(height: 32)
+                Spacer().frame(height: 24)
 
                 #if DEBUG
                 dividerSection
 
-                Spacer().frame(height: 28)
+                Spacer().frame(height: 20)
 
                 demoSection
                 #endif
 
-                Spacer().frame(height: 40)
+                Spacer().frame(height: 32)
             }
             .padding(.horizontal, 24)
         }
@@ -53,37 +53,26 @@ struct LoginView: View {
     private var logoSection: some View {
         VStack(spacing: 6) {
             ZStack {
-                // Purple glow emanating from behind the logo
-                RoundedRectangle(cornerRadius: 36)
-                    .fill(
-                        RadialGradient(
-                            colors: [
-                                Theme.brandPurple.opacity(0.375),
-                                Theme.brandPurple.opacity(0.12),
-                                .clear
-                            ],
-                            center: .center,
-                            startRadius: 75,
-                            endRadius: 210
-                        )
-                    )
-                    .frame(width: 300, height: 300)
-                    .scaleEffect(glowPulse ? 1.15 : 0.9)
+                // Soft glow behind the logo — uses Circle + blur so no hard edges
+                Circle()
+                    .fill(Theme.brandPurple.opacity(glowPulse ? 0.40 : 0.15))
+                    .frame(width: 180, height: 180)
+                    .blur(radius: 50)
 
-                RoundedRectangle(cornerRadius: 28)
-                    .fill(Theme.brandPurple.opacity(0.225))
-                    .frame(width: 195, height: 195)
-                    .blur(radius: 45)
-                    .scaleEffect(glowPulse ? 1.1 : 0.85)
+                Circle()
+                    .fill(Theme.brandPurple.opacity(glowPulse ? 0.25 : 0.10))
+                    .frame(width: 130, height: 130)
+                    .blur(radius: 35)
 
                 // Logo
                 Image("Logo")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .frame(width: 140, height: 140)
-                    .clipShape(RoundedRectangle(cornerRadius: 28))
-                    .shadow(color: Theme.brandPurple.opacity(1.0), radius: 36, y: 0)
+                    .frame(width: 120, height: 120)
+                    .clipShape(RoundedRectangle(cornerRadius: 24))
+                    .shadow(color: Theme.brandPurple.opacity(glowPulse ? 1.0 : 0.5), radius: 30, y: 0)
             }
+            .frame(width: 200, height: 200)
             .accessibilityHidden(true)
             .onAppear {
                 withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) {
@@ -92,14 +81,14 @@ struct LoginView: View {
             }
 
             Text("WOLFWHALE")
-                .font(.system(size: 36, weight: .thin, design: .serif))
+                .font(.system(size: 32, weight: .thin, design: .serif))
                 .tracking(4)
                 .foregroundStyle(.primary)
 
             Text("LEARNING MANAGEMENT SYSTEM")
-                .font(.system(size: 14, weight: .medium, design: .serif))
+                .font(.system(size: 12, weight: .medium, design: .serif))
                 .foregroundStyle(.secondary)
-                .tracking(4)
+                .tracking(3)
         }
     }
 
