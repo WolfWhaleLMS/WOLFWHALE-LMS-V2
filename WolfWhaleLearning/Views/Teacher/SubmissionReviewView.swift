@@ -122,7 +122,7 @@ struct SubmissionReviewView: View {
                 }
             }
         }
-        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
     }
 
     // MARK: - Header Section

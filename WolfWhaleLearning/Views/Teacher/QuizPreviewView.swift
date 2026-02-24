@@ -96,7 +96,7 @@ struct QuizPreviewView: View {
                     hapticTrigger.toggle()
                     dismiss()
                 }
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
         }
         .task {
@@ -276,7 +276,7 @@ struct QuizPreviewView: View {
                     )
                 }
                 .buttonStyle(.plain)
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
         }
     }
@@ -318,7 +318,7 @@ struct QuizPreviewView: View {
                     )
                 }
                 .buttonStyle(.plain)
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
         }
     }
@@ -524,7 +524,7 @@ struct QuizPreviewView: View {
             .buttonStyle(.bordered)
             .tint(.indigo)
             .disabled(currentQuestionIndex == 0)
-            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
             if currentQuestionIndex < totalQuestions - 1 {
                 // Next
@@ -541,7 +541,7 @@ struct QuizPreviewView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.indigo)
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
             } else {
                 // Submit
                 Button {
@@ -558,7 +558,7 @@ struct QuizPreviewView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.purple)
-                .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
             }
         }
         .padding(.top, 8)
@@ -657,7 +657,7 @@ struct QuizPreviewView: View {
                 }
                 .buttonStyle(.bordered)
                 .tint(.indigo)
-                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             }
             .padding(.horizontal)
             .padding(.bottom, 30)

@@ -263,7 +263,7 @@ struct AttendanceHistoryView: View {
                     Image(systemName: "chevron.left")
                         .font(.subheadline.bold())
                 }
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
                 Spacer()
 
@@ -281,7 +281,7 @@ struct AttendanceHistoryView: View {
                     Image(systemName: "chevron.right")
                         .font(.subheadline.bold())
                 }
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
 
             // Weekday Headers

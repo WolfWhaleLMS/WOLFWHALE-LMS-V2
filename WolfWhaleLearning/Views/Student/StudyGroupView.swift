@@ -70,7 +70,7 @@ struct StudyGroupView: View {
                         .padding(.vertical, 10)
                         .background(.red.opacity(0.12), in: Capsule())
                 }
-                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             } else {
                 Text("Study Together Nearby")
                     .font(.headline)
@@ -93,7 +93,7 @@ struct StudyGroupView: View {
                             .background(.teal.gradient, in: Capsule())
                             .foregroundStyle(.white)
                     }
-                    .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
                     Button {
                         hapticTrigger.toggle()
@@ -108,7 +108,7 @@ struct StudyGroupView: View {
                             .background(.ultraThinMaterial, in: Capsule())
                             .foregroundStyle(.teal)
                     }
-                    .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                 }
             }
         }
@@ -174,7 +174,7 @@ struct StudyGroupView: View {
                                 .background(.teal.gradient, in: Capsule())
                                 .foregroundStyle(.white)
                         }
-                        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     }
                     .padding(12)
                     .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
@@ -252,7 +252,7 @@ struct StudyGroupView: View {
                         .background(.ultraThinMaterial, in: Capsule())
                         .foregroundStyle(.teal)
                 }
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
 
             VStack(spacing: 8) {
@@ -290,7 +290,7 @@ struct StudyGroupView: View {
                             .font(.title2)
                             .foregroundStyle(.teal)
                     }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .disabled(messageText.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }

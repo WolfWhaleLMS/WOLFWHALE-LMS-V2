@@ -81,7 +81,7 @@ struct LanguagePickerView: View {
                     .contentShape(Rectangle())
                     .padding(.vertical, 2)
                 }
-                .sensoryFeedback(.selection, trigger: hapticTrigger)
+                .hapticFeedback(.selection, trigger: hapticTrigger)
                 .accessibilityLabel(lang.name)
                 .accessibilityAddTraits(selectedCode == lang.code ? .isSelected : [])
             }

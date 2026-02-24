@@ -124,7 +124,7 @@ struct OfflineSyncView: View {
                     set: { cloudSync.isSyncEnabled = $0 }
                 ))
                 .labelsHidden()
-                .sensoryFeedback(.selection, trigger: cloudSync.isSyncEnabled)
+                .hapticFeedback(.selection, trigger: cloudSync.isSyncEnabled)
             }
             .disabled(!cloudSync.iCloudAvailable)
 
@@ -226,7 +226,7 @@ struct OfflineSyncView: View {
                 }
             }
             .disabled(isSyncingNow || cloudSync.isSyncing)
-            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         } header: {
             sectionHeader(title: "Actions", icon: "bolt.fill")
         } footer: {
@@ -249,7 +249,7 @@ struct OfflineSyncView: View {
                 }
             }
             .disabled(!offlineStorage.hasOfflineData)
-            .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
         } header: {
             sectionHeader(title: "Danger Zone", icon: "exclamationmark.triangle.fill")
         } footer: {

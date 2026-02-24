@@ -35,7 +35,7 @@ struct FilePreviewSheet: View {
                         hapticTrigger.toggle()
                         onDismiss()
                     }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
 
                 ToolbarItem(placement: .primaryAction) {

@@ -179,7 +179,7 @@ struct TypingTutorView: View {
             .onAppear {
                 pickNewPrompt()
             }
-            .sensoryFeedback(.impact(flexibility: .soft), trigger: hapticTrigger)
+            .hapticFeedback(.impact(flexibility: .soft), trigger: hapticTrigger)
         }
     }
 

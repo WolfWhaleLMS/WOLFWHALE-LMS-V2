@@ -167,7 +167,7 @@ struct ManageModulesView: View {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundStyle(.green)
                     }
-                    .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
                     Button {
                         hapticTrigger.toggle()
@@ -176,7 +176,7 @@ struct ManageModulesView: View {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundStyle(.secondary)
                     }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 } else {
                     Text(module.title)
                         .font(.subheadline.bold())
@@ -198,7 +198,7 @@ struct ManageModulesView: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
                     // Edit button
                     Button {
@@ -210,7 +210,7 @@ struct ManageModulesView: View {
                             .font(.caption)
                             .foregroundStyle(.pink)
                     }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
                     // Delete button
                     Button {
@@ -221,7 +221,7 @@ struct ManageModulesView: View {
                             .font(.caption)
                             .foregroundStyle(.red)
                     }
-                    .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
                 }
             }
             .padding(.horizontal, 12)
@@ -282,7 +282,7 @@ struct ManageModulesView: View {
                         .font(.caption)
                         .foregroundStyle(.green)
                 }
-                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
                 Button {
                     hapticTrigger.toggle()
@@ -292,7 +292,7 @@ struct ManageModulesView: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
             } else {
                 Text(lesson.title)
                     .font(.caption)
@@ -313,7 +313,7 @@ struct ManageModulesView: View {
                         .font(.caption2)
                         .foregroundStyle(.pink)
                 }
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
                 Button {
                     hapticTrigger.toggle()
@@ -323,7 +323,7 @@ struct ManageModulesView: View {
                         .font(.caption2)
                         .foregroundStyle(.red)
                 }
-                .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
             }
         }
         .padding(.horizontal, 12)
@@ -362,7 +362,7 @@ struct ManageModulesView: View {
                         .buttonStyle(.borderedProminent)
                         .tint(.pink)
                         .disabled(isLoading || newModuleTitle.trimmingCharacters(in: .whitespaces).isEmpty)
-                        .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                        .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
                         Button {
                             hapticTrigger.toggle()
@@ -377,7 +377,7 @@ struct ManageModulesView: View {
                                 .padding(.horizontal, 16)
                         }
                         .buttonStyle(.bordered)
-                        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     }
                 }
                 .padding(14)
@@ -396,7 +396,7 @@ struct ManageModulesView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.pink)
-                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             }
 
             if let errorMessage {

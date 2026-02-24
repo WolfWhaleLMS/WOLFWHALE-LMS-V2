@@ -190,7 +190,7 @@ struct WorldMapQuizView: View {
             .background(Color(.systemGroupedBackground))
             .navigationTitle("World Geography")
             .navigationBarTitleDisplayMode(.large)
-            .sensoryFeedback(.selection, trigger: selectedTab)
+            .hapticFeedback(.selection, trigger: selectedTab)
         }
     }
 
@@ -322,7 +322,7 @@ private struct ExploreCountriesSection: View {
             .foregroundStyle(isSelected ? color : .secondary)
         }
         .buttonStyle(.plain)
-        .sensoryFeedback(.selection, trigger: isSelected)
+        .hapticFeedback(.selection, trigger: isSelected)
     }
 
     private var statsBar: some View {
@@ -696,7 +696,7 @@ private struct GeographyQuizSection: View {
                     )
                 }
                 .buttonStyle(.plain)
-                .sensoryFeedback(.selection, trigger: selectedAnswer)
+                .hapticFeedback(.selection, trigger: selectedAnswer)
             }
 
             if showResult {
@@ -725,7 +725,7 @@ private struct GeographyQuizSection: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.indigo)
-                .sensoryFeedback(isCorrect ? .success : .error, trigger: showResult)
+                .hapticFeedback(isCorrect ? .success : .error, trigger: showResult)
             }
         }
     }
@@ -853,7 +853,7 @@ private struct GeographyQuizSection: View {
                     .buttonStyle(.borderedProminent)
                     .tint(.indigo)
                 }
-                .sensoryFeedback(.success, trigger: continentSortChecked)
+                .hapticFeedback(.success, trigger: continentSortChecked)
             }
         }
     }
@@ -920,7 +920,7 @@ private struct GeographyQuizSection: View {
         }
         .padding(24)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 20))
-        .sensoryFeedback(.success, trigger: currentQuestionIndex)
+        .hapticFeedback(.success, trigger: currentQuestionIndex)
     }
 
     // MARK: - Quiz Generation

@@ -5,6 +5,7 @@ struct AppSettingsView: View {
     @Bindable var viewModel: AppViewModel
 
     @AppStorage("colorSchemePreference") private var colorSchemePreference: String = "system"
+    @AppStorage("wolfwhale_haptics_enabled") private var hapticsEnabled: Bool = true
     @AppStorage("pushNotificationsEnabled") private var pushNotifications: Bool = true
     @AppStorage("emailNotificationsEnabled") private var emailNotifications: Bool = true
 
@@ -173,7 +174,7 @@ struct AppSettingsView: View {
                         )
                     )
                     .labelsHidden()
-                    .sensoryFeedback(.selection, trigger: viewModel.biometricEnabled)
+                    .hapticFeedback(.selection, trigger: viewModel.biometricEnabled)
                     .accessibilityLabel("Use \(viewModel.biometricService.biometricName)")
                     .accessibilityHint("Double tap to toggle biometric authentication")
                 }
@@ -237,9 +238,25 @@ struct AppSettingsView: View {
                 }
                 .pickerStyle(.segmented)
                 .frame(maxWidth: 220)
-                .sensoryFeedback(.selection, trigger: colorSchemePreference)
+                .hapticFeedback(.selection, trigger: colorSchemePreference)
                 .accessibilityLabel("Appearance mode")
                 .accessibilityHint("Select system, light, or dark mode")
+            }
+
+            HStack {
+                Label {
+                    Text("Haptic Feedback")
+                } icon: {
+                    Image(systemName: "hand.point.up.braille.fill")
+                        .foregroundStyle(.cyan)
+                        .symbolRenderingMode(.hierarchical)
+                }
+                Spacer()
+                Toggle("Haptic Feedback", isOn: $hapticsEnabled)
+                    .labelsHidden()
+                    .hapticFeedback(.selection, trigger: hapticsEnabled)
+                    .accessibilityLabel("Haptic Feedback")
+                    .accessibilityHint("Double tap to toggle haptic feedback for all interactions")
             }
         } header: {
             sectionHeader(title: "Appearance", icon: "paintbrush.fill")
@@ -261,7 +278,7 @@ struct AppSettingsView: View {
                 Spacer()
                 Toggle("Push Notifications", isOn: $pushNotifications)
                     .labelsHidden()
-                    .sensoryFeedback(.selection, trigger: pushNotifications)
+                    .hapticFeedback(.selection, trigger: pushNotifications)
                     .accessibilityLabel("Push Notifications")
                     .accessibilityHint("Double tap to toggle push notifications")
             }
@@ -277,7 +294,7 @@ struct AppSettingsView: View {
                 Spacer()
                 Toggle("Email Notifications", isOn: $emailNotifications)
                     .labelsHidden()
-                    .sensoryFeedback(.selection, trigger: emailNotifications)
+                    .hapticFeedback(.selection, trigger: emailNotifications)
                     .accessibilityLabel("Email Notifications")
                     .accessibilityHint("Double tap to toggle email notifications")
             }
@@ -326,7 +343,7 @@ struct AppSettingsView: View {
                     }
                 ))
                 .labelsHidden()
-                .sensoryFeedback(.selection, trigger: viewModel.offlineModeEnabled)
+                .hapticFeedback(.selection, trigger: viewModel.offlineModeEnabled)
             }
 
             NavigationLink {
@@ -423,7 +440,7 @@ struct AppSettingsView: View {
         } header: {
             sectionHeader(title: "Legal", icon: "scale.3d")
         }
-        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
     }
 
     // MARK: - About Section
@@ -495,7 +512,7 @@ struct AppSettingsView: View {
                 }
                 .foregroundStyle(.red)
             }
-            .sensoryFeedback(.impact(weight: .heavy), trigger: signOutHapticTrigger)
+            .hapticFeedback(.impact(weight: .heavy), trigger: signOutHapticTrigger)
 
             if viewModel.currentUser?.role != .admin && viewModel.currentUser?.role != .superAdmin {
                 Button(role: .destructive) {
@@ -508,7 +525,7 @@ struct AppSettingsView: View {
                         Image(systemName: "trash")
                     }
                 }
-                .sensoryFeedback(.impact(weight: .heavy), trigger: deleteHapticTrigger)
+                .hapticFeedback(.impact(weight: .heavy), trigger: deleteHapticTrigger)
             }
         } header: {
             sectionHeader(title: "Danger Zone", icon: "exclamationmark.triangle.fill")

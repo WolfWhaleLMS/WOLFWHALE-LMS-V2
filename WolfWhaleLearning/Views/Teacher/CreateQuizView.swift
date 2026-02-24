@@ -114,7 +114,7 @@ struct CreateQuizView: View {
                             .font(.caption)
                             .foregroundStyle(.red)
                     }
-                    .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
                 }
             }
 
@@ -183,7 +183,7 @@ struct CreateQuizView: View {
                             .font(.title3)
                     }
                     .buttonStyle(.plain)
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
                     TextField("Option \(optionIndex + 1)", text: $questions[index].options[optionIndex])
                         .textFieldStyle(.roundedBorder)
@@ -226,7 +226,7 @@ struct CreateQuizView: View {
                     )
                 }
                 .buttonStyle(.plain)
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
         }
     }
@@ -371,7 +371,7 @@ struct CreateQuizView: View {
         }
         .buttonStyle(.bordered)
         .tint(.pink)
-        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
     }
 
     // MARK: - Create Button
@@ -406,7 +406,7 @@ struct CreateQuizView: View {
             .buttonStyle(.borderedProminent)
             .tint(.pink)
             .disabled(isLoading || !isValid)
-            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         }
         .padding(.top, 4)
     }

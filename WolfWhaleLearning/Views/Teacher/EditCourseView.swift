@@ -69,7 +69,7 @@ struct EditCourseView: View {
                     hapticTrigger.toggle()
                     dismiss()
                 }
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
         }
         .alert("Delete Course", isPresented: $showDeleteConfirmation) {
@@ -187,7 +187,7 @@ struct EditCourseView: View {
                             }
                     }
                     .buttonStyle(.plain)
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
         }
@@ -226,7 +226,7 @@ struct EditCourseView: View {
                             }
                     }
                     .buttonStyle(.plain)
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
         }
@@ -266,7 +266,7 @@ struct EditCourseView: View {
             .buttonStyle(.borderedProminent)
             .tint(.pink)
             .disabled(isLoading || !isValid || !hasChanges)
-            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         }
         .padding(.top, 4)
     }
@@ -297,7 +297,7 @@ struct EditCourseView: View {
             .buttonStyle(.borderedProminent)
             .tint(.red)
             .disabled(isDeleting)
-            .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
 
             Text("This will permanently delete the course and all its content.")
                 .font(.caption2)

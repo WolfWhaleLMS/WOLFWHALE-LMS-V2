@@ -337,7 +337,7 @@ struct GradeSubmissionView: View {
                 }
                 .buttonStyle(.bordered)
                 .tint(.pink)
-                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             }
             .padding(14)
             .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
@@ -407,7 +407,7 @@ struct GradeSubmissionView: View {
             .foregroundStyle(isSelected ? .pink : Color(.label))
         }
         .buttonStyle(.plain)
-        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
     }
 
     // MARK: - Late Penalty Grading Section (Teacher)
@@ -670,7 +670,7 @@ struct GradeSubmissionView: View {
         .buttonStyle(.borderedProminent)
         .tint(.pink)
         .disabled(isLoading || !isValid)
-        .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+        .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         .padding(.top, 4)
     }
 

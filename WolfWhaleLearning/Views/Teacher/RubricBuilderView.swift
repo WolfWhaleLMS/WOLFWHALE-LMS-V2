@@ -158,7 +158,7 @@ struct RubricBuilderView: View {
                             .font(.caption)
                             .foregroundStyle(.red)
                     }
-                    .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
                 }
             }
 
@@ -198,7 +198,7 @@ struct RubricBuilderView: View {
                             .font(.caption)
                             .foregroundStyle(.pink)
                     }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
 
                 ForEach(criteria[index].levels.indices, id: \.self) { levelIdx in
@@ -253,7 +253,7 @@ struct RubricBuilderView: View {
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
         }
         .padding(8)
@@ -276,7 +276,7 @@ struct RubricBuilderView: View {
         }
         .buttonStyle(.bordered)
         .tint(.pink)
-        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
     }
 
     // MARK: - Total Points Card
@@ -319,7 +319,7 @@ struct RubricBuilderView: View {
             .buttonStyle(.borderedProminent)
             .tint(.pink)
             .disabled(isLoading || !isValid)
-            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             .padding(.top, 4)
 
             if let errorMessage {

@@ -103,7 +103,7 @@ struct AttendanceAnalyticsView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 12))
             }
             .buttonStyle(.plain)
-            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             .accessibilityLabel("Generate attendance report")
         }
         .padding(16)

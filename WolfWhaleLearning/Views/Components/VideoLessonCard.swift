@@ -33,7 +33,7 @@ struct VideoLessonCard: View {
         }
         .buttonStyle(.plain)
         #if canImport(UIKit)
-        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
         #endif
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityText)

@@ -490,7 +490,7 @@ struct TeacherDashboardView: View {
                     .strokeBorder(color.opacity(0.25), lineWidth: 1)
             )
         }
-        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
         .accessibilityLabel("\(label)")
         .accessibilityHint("Double tap to \(label.lowercased())")
     }
@@ -641,7 +641,7 @@ struct CreateCourseSheet: View {
                         hapticTrigger.toggle()
                         dismiss()
                     }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Create") {
@@ -661,7 +661,7 @@ struct CreateCourseSheet: View {
                     }
                     .fontWeight(.semibold)
                     .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty || isCreating)
-                    .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                 }
             }
             .alert("Error", isPresented: Binding(
@@ -702,7 +702,7 @@ struct CreateAnnouncementSheet: View {
                         hapticTrigger.toggle()
                         dismiss()
                     }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Post") {
@@ -722,7 +722,7 @@ struct CreateAnnouncementSheet: View {
                     }
                     .fontWeight(.semibold)
                     .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty || isCreating)
-                    .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                 }
             }
             .alert("Error", isPresented: Binding(
@@ -780,7 +780,7 @@ struct AttendanceCoursePickerSheet: View {
                         hapticTrigger.toggle()
                         dismiss()
                     }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
             .navigationDestination(for: Course.self) { course in

@@ -411,7 +411,7 @@ struct IndigenousPeoplesView: View {
                                 }
                             }
                     }
-                    .sensoryFeedback(.selection, trigger: selectedSection)
+                    .hapticFeedback(.selection, trigger: selectedSection)
                 }
             }
             .padding(4)
@@ -532,7 +532,7 @@ struct IndigenousPeoplesView: View {
                 }
                 .padding(14)
             }
-            .sensoryFeedback(.impact(flexibility: .soft), trigger: expandedGroup)
+            .hapticFeedback(.impact(flexibility: .soft), trigger: expandedGroup)
 
             if expandedGroup == group.id {
                 VStack(alignment: .leading, spacing: 14) {
@@ -714,7 +714,7 @@ struct IndigenousPeoplesView: View {
                         .stroke(event.significance.color.opacity(0.3), lineWidth: 1)
                 )
             }
-            .sensoryFeedback(.impact(flexibility: .soft), trigger: expandedEvent)
+            .hapticFeedback(.impact(flexibility: .soft), trigger: expandedEvent)
         }
         .padding(.bottom, 4)
     }
@@ -908,7 +908,7 @@ struct IndigenousPeoplesView: View {
                         in: RoundedRectangle(cornerRadius: 14)
                     )
             }
-            .sensoryFeedback(.impact(flexibility: .soft), trigger: showQuiz)
+            .hapticFeedback(.impact(flexibility: .soft), trigger: showQuiz)
         }
     }
 
@@ -977,7 +977,7 @@ struct IndigenousPeoplesView: View {
                                 .stroke(quizOptionBorder(option, correct: q.correctAnswer), lineWidth: 2)
                         )
                     }
-                    .sensoryFeedback(.impact(flexibility: .rigid), trigger: isAnswerRevealed)
+                    .hapticFeedback(.impact(flexibility: .rigid), trigger: isAnswerRevealed)
                 }
 
                 // Explanation

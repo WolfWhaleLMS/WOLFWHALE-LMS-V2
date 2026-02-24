@@ -42,8 +42,8 @@ struct EmailVerificationView: View {
                 verifiedOverlay
             }
         }
-        .sensoryFeedback(.success, trigger: successHapticTrigger)
-        .sensoryFeedback(.error, trigger: errorHapticTrigger)
+        .hapticFeedback(.success, trigger: successHapticTrigger)
+        .hapticFeedback(.error, trigger: errorHapticTrigger)
         .onAppear {
             startAutoCheck()
         }
@@ -152,7 +152,7 @@ struct EmailVerificationView: View {
             .tint(.indigo)
             .clipShape(.rect(cornerRadius: 12))
             .disabled(isCheckingStatus)
-            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             .accessibilityLabel(isCheckingStatus ? "Checking verification" : "Check Verification Status")
 
             // Resend Email button
@@ -182,7 +182,7 @@ struct EmailVerificationView: View {
             .tint(.indigo)
             .clipShape(.rect(cornerRadius: 12))
             .disabled(!canResend)
-            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
             .accessibilityLabel(canResend ? "Resend verification email" : "Resend in \(resendCooldown) seconds")
 
             // Auto-check info
@@ -209,7 +209,7 @@ struct EmailVerificationView: View {
                 }
                 .foregroundStyle(.indigo)
             }
-            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
             .padding(.top, 8)
             .accessibilityHint("Double tap to go back to signup and use a different email")
         }
@@ -248,7 +248,7 @@ struct EmailVerificationView: View {
                 .buttonStyle(.borderedProminent)
                 .tint(.indigo)
                 .clipShape(.rect(cornerRadius: 12))
-                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                 .padding(.top, 8)
             }
             .padding(32)

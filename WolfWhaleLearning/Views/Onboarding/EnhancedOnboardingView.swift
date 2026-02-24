@@ -51,7 +51,7 @@ struct EnhancedOnboardingView: View {
                                         .fill(.white.opacity(0.12))
                                 }
                         }
-                        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                         .accessibilityLabel("Skip onboarding")
                         .accessibilityHint("Double tap to skip to login")
                     }
@@ -307,7 +307,7 @@ struct EnhancedOnboardingView: View {
                     .clipShape(.rect(cornerRadius: 16))
                     .padding(.horizontal, 32)
                     .shadow(color: .indigo.opacity(0.4), radius: 16, y: 8)
-                    .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
                     Button {
                         hapticTrigger.toggle()
@@ -320,7 +320,7 @@ struct EnhancedOnboardingView: View {
                             .font(.subheadline.weight(.medium))
                             .foregroundStyle(.white.opacity(0.6))
                     }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
 
@@ -402,7 +402,7 @@ struct EnhancedOnboardingView: View {
                     .clipShape(.rect(cornerRadius: 16))
                     .padding(.horizontal, 32)
                     .shadow(color: .purple.opacity(0.4), radius: 16, y: 8)
-                    .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
                     Button {
                         hapticTrigger.toggle()
@@ -412,7 +412,7 @@ struct EnhancedOnboardingView: View {
                             .font(.subheadline.weight(.medium))
                             .foregroundStyle(.white.opacity(0.6))
                     }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 } else {
                     // Biometric not available on device
                     VStack(spacing: 8) {
@@ -518,7 +518,7 @@ struct EnhancedOnboardingView: View {
             .clipShape(.rect(cornerRadius: 16))
             .padding(.horizontal, 32)
             .shadow(color: .indigo.opacity(0.4), radius: 16, y: 8)
-            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
             Spacer()
                 .frame(height: 20)
@@ -574,7 +574,7 @@ struct EnhancedOnboardingView: View {
         .clipShape(.rect(cornerRadius: 16))
         .padding(.horizontal, 32)
         .shadow(color: .indigo.opacity(0.4), radius: 16, y: 8)
-        .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+        .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
     }
 
     // MARK: - Confetti Helpers

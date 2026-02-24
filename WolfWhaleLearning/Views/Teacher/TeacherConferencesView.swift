@@ -27,7 +27,7 @@ struct TeacherConferencesView: View {
                     Image(systemName: "calendar.badge.plus")
                         .font(.title3)
                 }
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 .accessibilityLabel("Add available time slot")
             }
         }
@@ -128,7 +128,7 @@ struct TeacherConferencesView: View {
                 .buttonStyle(.borderedProminent)
                 .tint(.green)
                 .controlSize(.small)
-                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
                 Button(role: .destructive) {
                     hapticTrigger.toggle()
@@ -141,7 +141,7 @@ struct TeacherConferencesView: View {
                 .buttonStyle(.bordered)
                 .tint(.red)
                 .controlSize(.small)
-                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             }
         }
         .padding(14)
@@ -299,7 +299,7 @@ struct TeacherConferencesView: View {
                             }
                             .buttonStyle(.plain)
                             .foregroundStyle(.red)
-                            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                             .accessibilityLabel("Remove time slot")
                         }
                     }
@@ -355,7 +355,7 @@ struct AddTimeSlotSheet: View {
                         hapticTrigger.toggle()
                         dismiss()
                     }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Add") {
@@ -364,7 +364,7 @@ struct AddTimeSlotSheet: View {
                         dismiss()
                     }
                     .fontWeight(.semibold)
-                    .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                 }
             }
         }

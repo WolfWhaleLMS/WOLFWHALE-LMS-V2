@@ -92,7 +92,7 @@ struct AttendanceReportView: View {
                 } label: {
                     Image(systemName: "square.and.arrow.up")
                 }
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 .accessibilityLabel("Export Report")
                 .accessibilityHint("Double tap to export attendance data")
             }
@@ -318,7 +318,7 @@ struct AttendanceReportView: View {
                         hapticTrigger.toggle()
                         showExportSheet = false
                     }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
         }

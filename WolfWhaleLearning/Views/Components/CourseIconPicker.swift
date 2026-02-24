@@ -42,7 +42,7 @@ struct CourseIconPicker: View {
                             }
                     }
                     .buttonStyle(.plain)
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .accessibilityLabel(iconName.replacingOccurrences(of: ".", with: " ").replacingOccurrences(of: "fill", with: ""))
                     .accessibilityAddTraits(isSelected ? .isSelected : [])
                 }

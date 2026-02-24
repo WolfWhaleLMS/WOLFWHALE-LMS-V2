@@ -71,7 +71,7 @@ struct BiometricLockView: View {
                         .foregroundStyle(.white)
                         .clipShape(.rect(cornerRadius: 14))
                     }
-                    .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                     .opacity(isAnimating ? 1.0 : 0.0)
 
                     // Fallback button
@@ -121,7 +121,7 @@ struct BiometricLockView: View {
                                 .font(.subheadline.bold())
                                 .foregroundStyle(.secondary)
                         }
-                        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                         .opacity(isAnimating ? 1.0 : 0.0)
                     }
                 }

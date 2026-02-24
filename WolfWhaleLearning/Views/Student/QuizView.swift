@@ -219,7 +219,7 @@ struct QuizView: View {
                     )
                 }
                 .buttonStyle(.plain)
-                .sensoryFeedback(.selection, trigger: selectedAnswers[currentQuestion])
+                .hapticFeedback(.selection, trigger: selectedAnswers[currentQuestion])
                 .accessibilityLabel("Option \(index + 1): \(option)")
                 .accessibilityAddTraits(selectedAnswers[currentQuestion] == index ? .isSelected : [])
             }
@@ -263,7 +263,7 @@ struct QuizView: View {
             )
         }
         .buttonStyle(.plain)
-        .sensoryFeedback(.selection, trigger: selectedAnswers[currentQuestion])
+        .hapticFeedback(.selection, trigger: selectedAnswers[currentQuestion])
         .accessibilityLabel(label)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
@@ -546,7 +546,7 @@ struct QuizView: View {
             }
             .padding()
         }
-        .sensoryFeedback(.success, trigger: isSubmitted)
+        .hapticFeedback(.success, trigger: isSubmitted)
     }
 
     private func resultStat(label: String, value: String, color: Color) -> some View {

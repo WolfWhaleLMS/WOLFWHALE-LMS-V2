@@ -24,7 +24,7 @@ struct ParentTabView: View {
             .accessibilityLabel("Settings")
             .accessibilityHint("Double tap to view settings")
         }
-        .sensoryFeedback(.impact(weight: .light), trigger: selectedTab)
+        .hapticFeedback(.impact(weight: .light), trigger: selectedTab)
         .tint(.accentColor)
         .overlay(alignment: .top) {
             OfflineBannerView(isConnected: viewModel.networkMonitor.isConnected)

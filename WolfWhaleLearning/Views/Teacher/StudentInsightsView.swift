@@ -66,7 +66,7 @@ struct StudentInsightsView: View {
                             studentInsightCard(insight)
                         }
                         .buttonStyle(.plain)
-                        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     }
                 }
             }
@@ -182,7 +182,7 @@ struct StudentInsightsView: View {
                 .padding(.vertical, 8)
                 .background(showAtRiskOnly ? Color.red : Color.red.opacity(0.12), in: Capsule())
             }
-            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
             .accessibilityLabel(showAtRiskOnly ? "Showing at-risk students only" : "Show all students")
             .accessibilityHint("Double tap to toggle at-risk filter")
 
@@ -514,7 +514,7 @@ struct StudentDetailInsightView: View {
                     hapticTrigger.toggle()
                     dismiss()
                 }
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
         }
     }

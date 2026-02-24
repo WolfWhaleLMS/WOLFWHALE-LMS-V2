@@ -151,7 +151,7 @@ struct CourseCatalogView: View {
             } message: {
                 Text("This course is full. You will be added to the waitlist and notified when a spot opens.")
             }
-            .sensoryFeedback(.success, trigger: hapticTrigger)
+            .hapticFeedback(.success, trigger: hapticTrigger)
         }
     }
 

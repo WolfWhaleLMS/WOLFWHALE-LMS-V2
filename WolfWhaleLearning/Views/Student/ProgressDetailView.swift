@@ -296,7 +296,7 @@ struct ProgressDetailView: View {
             .padding(.vertical, 5)
             .background(.quaternary, in: Capsule())
         }
-        .sensoryFeedback(.selection, trigger: hapticTrigger)
+        .hapticFeedback(.selection, trigger: hapticTrigger)
     }
 
     // MARK: - Vertical Course Card (for list layout)

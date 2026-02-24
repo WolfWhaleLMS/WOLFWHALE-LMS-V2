@@ -30,7 +30,7 @@ struct TeacherCoursesView: View {
                         hapticTrigger.toggle()
                         showCreateCourse = true
                     }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .accessibilityLabel("Create new course")
                     .accessibilityHint("Double tap to create a new course")
                 }

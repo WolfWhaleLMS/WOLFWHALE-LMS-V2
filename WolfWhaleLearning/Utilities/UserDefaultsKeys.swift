@@ -7,6 +7,7 @@ nonisolated enum UserDefaultsKeys {
     static let biometricEnabled = "biometricEnabled"
     static let colorSchemePreference = "colorSchemePreference"
     static let calendarSyncEnabled = "wolfwhale_calendar_sync_enabled"
+    static let hapticsEnabled = "wolfwhale_haptics_enabled"
 
     // MARK: - Spotlight
     static let spotlightIndexedCount = "wolfwhale_spotlight_indexed_count"

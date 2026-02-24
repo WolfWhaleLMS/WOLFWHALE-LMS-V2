@@ -25,7 +25,7 @@ struct ARExperienceView: View {
                     .foregroundStyle(.white)
                     .padding(16)
             }
-            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
         }
     }
 
@@ -211,7 +211,7 @@ struct ARSimulatorPlaceholderView: View {
                     organelleRow(organelle)
                 }
                 .buttonStyle(.plain)
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
         }
     }

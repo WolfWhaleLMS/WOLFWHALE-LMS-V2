@@ -192,7 +192,7 @@ struct SchoolIDView: View {
                 .frame(height: 50)
                 .background(.black, in: .rect(cornerRadius: 14))
             }
-            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             .accessibilityLabel("Add school ID to Apple Wallet")
             .accessibilityHint("Double tap to add your school ID pass to Apple Wallet")
 

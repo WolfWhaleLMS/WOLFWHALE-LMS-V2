@@ -295,7 +295,7 @@ struct TranscriptExportView: View {
             .buttonStyle(.borderedProminent)
             .tint(.indigo)
             .disabled(isGenerating || viewModel.grades.isEmpty)
-            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
             // Email to Parent
             Button {

@@ -81,7 +81,7 @@ struct AssignmentsView: View {
                     .padding(.vertical, 8)
                     .background(selectedFilter == index ? .purple.opacity(0.2) : Color(.tertiarySystemFill), in: Capsule())
                     .foregroundStyle(selectedFilter == index ? .purple : .secondary)
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .accessibilityLabel("\(label) filter")
                     .accessibilityAddTraits(selectedFilter == index ? .isSelected : [])
                 }
@@ -142,7 +142,7 @@ struct AssignmentsView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.purple)
-                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             }
 
             // Late submit button for overdue assignments that can still be submitted
@@ -161,7 +161,7 @@ struct AssignmentsView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.orange)
-                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             }
 
             // Resubmit button for graded assignments that allow resubmission
@@ -274,7 +274,7 @@ struct AssignmentsView: View {
             }
             .buttonStyle(.borderedProminent)
             .tint(.indigo)
-            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         }
     }
 
@@ -429,7 +429,7 @@ struct ResubmitAssignmentView: View {
                         dismiss()
                     }
                     .disabled(isSubmitting)
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
             .alert("Resubmission Error", isPresented: $showError) {
@@ -608,7 +608,7 @@ struct ResubmitAssignmentView: View {
         .buttonStyle(.borderedProminent)
         .tint(.indigo)
         .disabled(isSubmitDisabled)
-        .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+        .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
     }
 
     // MARK: - Helpers

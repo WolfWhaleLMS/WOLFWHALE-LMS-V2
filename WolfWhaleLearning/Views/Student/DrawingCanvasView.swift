@@ -210,7 +210,7 @@ struct DrawingCanvasView: View {
                         hapticTrigger.toggle()
                         dismiss()
                     }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
@@ -220,7 +220,7 @@ struct DrawingCanvasView: View {
                     } label: {
                         Image(systemName: "square.and.arrow.down")
                     }
-                    .sensoryFeedback(.success, trigger: saveTrigger)
+                    .hapticFeedback(.success, trigger: saveTrigger)
                 }
             }
             .onAppear {
@@ -352,7 +352,7 @@ struct DrawingCanvasView: View {
                     .frame(width: 44, height: 44)
                     .background(Color(UIColor.systemGray5), in: .rect(cornerRadius: 10))
                 }
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
@@ -381,7 +381,7 @@ struct DrawingCanvasView: View {
                 in: .rect(cornerRadius: 10)
             )
         }
-        .sensoryFeedback(.selection, trigger: hapticTrigger)
+        .hapticFeedback(.selection, trigger: hapticTrigger)
     }
 
     private var colorOptions: [UIColor] {
@@ -407,7 +407,7 @@ struct DrawingCanvasView: View {
                     }
                 }
         }
-        .sensoryFeedback(.selection, trigger: hapticTrigger)
+        .hapticFeedback(.selection, trigger: hapticTrigger)
     }
 
     // MARK: - Canvas Area
@@ -446,7 +446,7 @@ struct DrawingCanvasView: View {
                     .font(.body.bold())
             }
             .disabled(drawingService.undoCount == 0)
-            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
             // Redo
             Button {
@@ -458,7 +458,7 @@ struct DrawingCanvasView: View {
                     .font(.body.bold())
             }
             .disabled(drawingService.redoCount == 0)
-            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
             Divider()
                 .frame(height: 24)
@@ -471,7 +471,7 @@ struct DrawingCanvasView: View {
                 Image(systemName: "trash")
                     .font(.body)
             }
-            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
             Spacer()
 
@@ -491,7 +491,7 @@ struct DrawingCanvasView: View {
             }
             .buttonStyle(.bordered)
             .tint(.indigo)
-            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
             // Submit drawing
             Button {
@@ -507,7 +507,7 @@ struct DrawingCanvasView: View {
             .buttonStyle(.borderedProminent)
             .tint(.indigo)
             .disabled(isSubmitting || assignment.isSubmitted)
-            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 10)

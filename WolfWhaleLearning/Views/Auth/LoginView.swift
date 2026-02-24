@@ -79,7 +79,9 @@ struct LoginView: View {
                 // Logo
                 Image("Logo")
                     .resizable()
-                    .aspectRatio(contentMode: .fit)
+                    .interpolation(.high)
+                    .antialiased(true)
+                    .aspectRatio(1, contentMode: .fit)
                     .frame(width: 140, height: 140)
                     .clipShape(RoundedRectangle(cornerRadius: 28))
                     .shadow(color: Theme.brandPurple.opacity(0.7), radius: 24, y: 0)
@@ -195,7 +197,7 @@ struct LoginView: View {
             .tint(.accentColor)
             .clipShape(.rect(cornerRadius: 12))
             .disabled(viewModel.isLoading || viewModel.email.isEmpty || viewModel.password.isEmpty || viewModel.isLoginLockedOut)
-            .sensoryFeedback(.impact(weight: .medium), trigger: viewModel.isAuthenticated)
+            .hapticFeedback(.impact(weight: .medium), trigger: viewModel.isAuthenticated)
             .accessibilityLabel(viewModel.isLoading ? "Signing in" : "Sign In")
             .accessibilityHint("Double tap to sign in with your email and password")
 
@@ -207,7 +209,7 @@ struct LoginView: View {
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(Color.accentColor)
             }
-            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
             .accessibilityHint("Double tap to reset your password")
 
         }
@@ -317,7 +319,7 @@ struct DemoRoleButton: View {
             .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 14))
         }
         .buttonStyle(.plain)
-        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
         .accessibilityLabel("Demo \(role.rawValue)")
         .accessibilityHint("Double tap to sign in as a demo \(role.rawValue.lowercased())")
     }

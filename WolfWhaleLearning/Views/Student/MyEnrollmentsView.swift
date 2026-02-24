@@ -137,7 +137,7 @@ struct MyEnrollmentsView: View {
             } message: {
                 Text("This will remove your enrollment request. You can re-enroll from the Course Catalog.")
             }
-            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         }
     }
 

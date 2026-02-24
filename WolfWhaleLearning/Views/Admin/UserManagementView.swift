@@ -79,7 +79,7 @@ struct UserManagementView: View {
                     } label: {
                         Label("Add User", systemImage: "person.badge.plus")
                     }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .disabled(viewModel.remainingUserSlots <= 0)
                 }
             }
@@ -259,7 +259,7 @@ struct UserManagementView: View {
                     : .secondary
                 )
         }
-        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
         .accessibilityLabel("\(label) filter")
         .accessibilityAddTraits(selectedRole == role ? .isSelected : [])
         .accessibilityHint("Double tap to filter users by \(label.lowercased())")

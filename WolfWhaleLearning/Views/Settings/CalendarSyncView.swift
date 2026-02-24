@@ -83,7 +83,7 @@ struct CalendarSyncView: View {
                     .buttonStyle(.borderedProminent)
                     .tint(.purple)
                     .controlSize(.small)
-                    .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                 }
             }
         } header: {
@@ -105,7 +105,7 @@ struct CalendarSyncView: View {
                 Spacer()
                 Toggle("Sync to Calendar", isOn: $syncEnabled)
                     .labelsHidden()
-                    .sensoryFeedback(.selection, trigger: syncEnabled)
+                    .hapticFeedback(.selection, trigger: syncEnabled)
                     .onChange(of: syncEnabled) { _, newValue in
                         if !newValue {
                             // Revert toggle until user confirms
@@ -137,7 +137,7 @@ struct CalendarSyncView: View {
                 }
             }
             .disabled(!calendarService.isAuthorized || isSyncing)
-            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         } header: {
             sectionHeader(title: "Sync", icon: "calendar.badge.plus")
         }
@@ -272,7 +272,7 @@ struct CalendarSyncView: View {
                 }
             }
             .disabled(!calendarService.isAuthorized || calendarService.syncedEventCount == 0)
-            .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
         } header: {
             sectionHeader(title: "Danger Zone", icon: "exclamationmark.triangle.fill")
         } footer: {

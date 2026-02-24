@@ -75,7 +75,7 @@ struct CoursesListView: View {
                         enrollmentError = nil
                         showJoinSheet = true
                     }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .accessibilityLabel("Join a course")
                     .accessibilityHint("Double tap to enter a class code and enroll")
                 }
@@ -148,7 +148,7 @@ struct CoursesListView: View {
                 .buttonStyle(.borderedProminent)
                 .tint(.indigo)
                 .disabled(classCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isEnrolling)
-                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
                 Spacer()
             }
@@ -161,7 +161,7 @@ struct CoursesListView: View {
                         hapticTrigger.toggle()
                         showJoinSheet = false
                     }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
         }

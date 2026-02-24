@@ -103,7 +103,7 @@ struct ARLibraryView: View {
             .background(isSelected ? Color.accentColor : Color(.tertiarySystemBackground), in: Capsule())
             .foregroundStyle(isSelected ? .white : .primary)
         }
-        .sensoryFeedback(.selection, trigger: isSelected)
+        .hapticFeedback(.selection, trigger: isSelected)
     }
 
     private var featuredSection: some View {

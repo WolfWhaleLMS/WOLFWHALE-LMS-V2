@@ -201,7 +201,7 @@ struct UnitConverterView: View {
                 toUnitIndex = min(2, units.count - 1)
                 inputValue = ""
             }
-            .sensoryFeedback(.impact(flexibility: .soft), trigger: hapticTrigger)
+            .hapticFeedback(.impact(flexibility: .soft), trigger: hapticTrigger)
         }
     }
 

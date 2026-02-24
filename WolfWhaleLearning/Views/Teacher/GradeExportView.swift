@@ -45,7 +45,7 @@ struct GradeExportView: View {
                         hapticTrigger.toggle()
                         dismiss()
                     }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
             .alert("No Data", isPresented: $showNoDataAlert) {
@@ -112,7 +112,7 @@ struct GradeExportView: View {
                 Capsule().strokeBorder(color.opacity(0.3), lineWidth: 1)
             )
         }
-        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
         .accessibilityLabel("\(course.title)\(isSelected ? ", selected" : "")")
     }
 
@@ -274,7 +274,7 @@ struct GradeExportView: View {
                 .buttonStyle(.borderedProminent)
                 .tint(.pink)
                 .disabled(filteredAssignments.isEmpty)
-                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                 .padding(.top, 4)
             }
         }

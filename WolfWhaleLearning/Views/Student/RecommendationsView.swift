@@ -49,7 +49,7 @@ struct RecommendationsView: View {
                     Image(systemName: "arrow.clockwise")
                         .symbolRenderingMode(.hierarchical)
                 }
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 .accessibilityLabel("Refresh Recommendations")
                 .accessibilityHint("Double tap to regenerate AI recommendations")
             }
@@ -441,7 +441,7 @@ struct RecommendationsView: View {
                         in: Capsule()
                     )
                 }
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
         }
         .padding(14)
@@ -523,7 +523,7 @@ struct RecommendationsView: View {
             }
             .buttonStyle(.borderedProminent)
             .tint(.indigo)
-            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
         }
     }
 

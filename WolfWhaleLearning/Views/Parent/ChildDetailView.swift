@@ -231,7 +231,7 @@ struct ChildDetailView: View {
             .tint(.pink)
             .controlSize(.small)
             .disabled(isCreatingConversation)
-            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         }
         .padding(14)
         .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))

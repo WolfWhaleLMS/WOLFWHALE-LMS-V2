@@ -265,8 +265,8 @@ struct MathQuizView: View {
         }
         .navigationTitle("Math Quiz")
         .navigationBarTitleDisplayMode(.inline)
-        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
-        .sensoryFeedback(.impact(weight: .heavy), trigger: wrongHapticTrigger)
+        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .hapticFeedback(.impact(weight: .heavy), trigger: wrongHapticTrigger)
     }
 
     // MARK: - Background

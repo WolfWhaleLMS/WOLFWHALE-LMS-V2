@@ -86,7 +86,7 @@ struct EnhancedCourseCreationView: View {
                         hapticTrigger.toggle()
                         dismiss()
                     }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
             .overlay {
@@ -403,7 +403,7 @@ struct EnhancedCourseCreationView: View {
                                 )
                             }
                             .buttonStyle(.plain)
-                            .sensoryFeedback(.selection, trigger: hapticTrigger)
+                            .hapticFeedback(.selection, trigger: hapticTrigger)
                             .accessibilityLabel("\(course.title), \(selectedPrerequisiteIds.contains(course.id) ? "selected" : "not selected")")
                             .accessibilityHint("Double tap to toggle as prerequisite")
                         }
@@ -464,7 +464,7 @@ struct EnhancedCourseCreationView: View {
             .buttonStyle(.borderedProminent)
             .tint(resolvedAccentColor)
             .disabled(!isValid || isCreating)
-            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             .accessibilityLabel("Create course")
             .accessibilityHint(isValid ? "Double tap to create the course" : "Enter a course title first")
         }

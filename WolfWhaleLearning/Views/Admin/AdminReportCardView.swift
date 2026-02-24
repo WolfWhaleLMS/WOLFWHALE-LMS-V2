@@ -70,7 +70,7 @@ struct AdminReportCardView: View {
                     ShareSheetView(activityItems: [url])
                 }
             }
-            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             .task {
                 await viewModel.loadAcademicCalendar()
             }

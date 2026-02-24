@@ -238,7 +238,7 @@ struct WordBuilderView: View {
         }
         .padding(16)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
-        .sensoryFeedback(.impact(flexibility: .soft), trigger: placedLetters.count)
+        .hapticFeedback(.impact(flexibility: .soft), trigger: placedLetters.count)
     }
 
     private func tileSize(for screenWidth: CGFloat) -> CGFloat {
@@ -490,7 +490,7 @@ struct WordBuilderView: View {
         }
         .padding(24)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 20))
-        .sensoryFeedback(.success, trigger: gameOver)
+        .hapticFeedback(.success, trigger: gameOver)
     }
 
     // MARK: - Logic

@@ -117,7 +117,7 @@ struct LessonView: View {
             }
         }
         #if canImport(UIKit)
-        .sensoryFeedback(.success, trigger: isCompleted)
+        .hapticFeedback(.success, trigger: isCompleted)
         #endif
     }
 
@@ -235,7 +235,7 @@ struct LessonView: View {
             .buttonStyle(.bordered)
             .disabled(isFirst)
             .opacity(isFirst ? 0.4 : 1)
-            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
             // Next / Complete button
             if isLast || onlyOneSlide {
@@ -257,7 +257,7 @@ struct LessonView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(isCompleted ? .green : Theme.courseColor(course.colorName))
-                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             } else {
                 Button {
                     hapticTrigger.toggle()
@@ -275,7 +275,7 @@ struct LessonView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(Theme.courseColor(course.colorName))
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
         }
         .padding(.horizontal)

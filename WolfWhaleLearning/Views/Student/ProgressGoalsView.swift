@@ -181,7 +181,7 @@ struct ProgressGoalsView: View {
                         Label("Edit Goal", systemImage: "pencil")
                             .font(.caption.bold())
                     }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
                     Spacer()
 
@@ -194,7 +194,7 @@ struct ProgressGoalsView: View {
                         Label("Remove", systemImage: "trash")
                             .font(.caption.bold())
                     }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
                 .padding(.top, 4)
             } else {
@@ -222,7 +222,7 @@ struct ProgressGoalsView: View {
                             .padding(.vertical, 8)
                             .background(courseColor, in: Capsule())
                     }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .accessibilityLabel("Set goal for \(course.title)")
                 }
             }
@@ -526,7 +526,7 @@ private struct SetGoalSheet: View {
                                 )
                             }
                             .buttonStyle(.plain)
-                            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                             .accessibilityLabel("\(letter), \(Int(percentage)) percent")
                             .accessibilityAddTraits(isSelected ? .isSelected : [])
                         }
@@ -575,7 +575,7 @@ private struct SetGoalSheet: View {
                         )
                         dismiss()
                     }
-                    .sensoryFeedback(.success, trigger: hapticTrigger)
+                    .hapticFeedback(.success, trigger: hapticTrigger)
                     .bold()
                 }
             }

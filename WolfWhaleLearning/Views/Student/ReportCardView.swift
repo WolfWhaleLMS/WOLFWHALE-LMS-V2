@@ -372,7 +372,7 @@ struct ReportCardView: View {
         .buttonStyle(.borderedProminent)
         .tint(.indigo)
         .disabled(isGenerating)
-        .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+        .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         .padding(.top, 4)
     }
 

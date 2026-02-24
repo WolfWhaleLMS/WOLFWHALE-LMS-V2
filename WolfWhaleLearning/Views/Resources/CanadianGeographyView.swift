@@ -272,7 +272,7 @@ struct CanadianGeographyView: View {
                             }
                         }
                 }
-                .sensoryFeedback(.selection, trigger: selectedTab)
+                .hapticFeedback(.selection, trigger: selectedTab)
             }
         }
         .padding(4)
@@ -359,7 +359,7 @@ struct CanadianGeographyView: View {
                     }
                     .frame(width: max(w, 24), height: max(h, 18))
                     .position(x: x + w / 2, y: y + h / 2)
-                    .sensoryFeedback(.impact(flexibility: .soft), trigger: showProvinceDetail)
+                    .hapticFeedback(.impact(flexibility: .soft), trigger: showProvinceDetail)
                 }
             }
             .frame(width: width, height: height)
@@ -617,7 +617,7 @@ struct CanadianGeographyView: View {
                     .padding(14)
                     .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
                 }
-                .sensoryFeedback(.impact(flexibility: .soft), trigger: showQuiz)
+                .hapticFeedback(.impact(flexibility: .soft), trigger: showQuiz)
             }
         }
     }
@@ -711,7 +711,7 @@ struct CanadianGeographyView: View {
                                 .stroke(optionBorder(option: option, correct: question.correctAnswer), lineWidth: 2)
                         )
                     }
-                    .sensoryFeedback(.impact(flexibility: .rigid), trigger: isAnswerRevealed)
+                    .hapticFeedback(.impact(flexibility: .rigid), trigger: isAnswerRevealed)
                 }
 
                 // Next button
@@ -733,7 +733,7 @@ struct CanadianGeographyView: View {
                                 in: RoundedRectangle(cornerRadius: 14)
                             )
                     }
-                    .sensoryFeedback(.impact(flexibility: .soft), trigger: currentQuestionIndex)
+                    .hapticFeedback(.impact(flexibility: .soft), trigger: currentQuestionIndex)
                 }
             }
         }

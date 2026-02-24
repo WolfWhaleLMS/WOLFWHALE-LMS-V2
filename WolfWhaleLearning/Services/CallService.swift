@@ -7,6 +7,8 @@ import Observation
 @Observable
 final class CallService: NSObject {
 
+    static let shared = CallService()
+
     var activeCallUUID: UUID?
     var isCallActive: Bool = false
     var callDuration: TimeInterval = 0

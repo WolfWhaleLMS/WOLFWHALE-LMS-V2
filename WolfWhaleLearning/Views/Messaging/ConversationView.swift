@@ -132,7 +132,7 @@ struct ConversationView: View {
                     .foregroundStyle(.blue)
             }
             .disabled(messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            .sensoryFeedback(.impact(weight: .light), trigger: messages.count)
+            .hapticFeedback(.impact(weight: .light), trigger: messages.count)
             .accessibilityLabel("Send message")
             .accessibilityHint("Double tap to send your message")
         }

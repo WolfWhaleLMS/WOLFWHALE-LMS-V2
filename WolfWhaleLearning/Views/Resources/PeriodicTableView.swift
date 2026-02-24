@@ -372,7 +372,7 @@ struct PeriodicTableView: View {
                 in: .rect(cornerRadius: 16)
             )
         }
-        .sensoryFeedback(.impact(flexibility: .soft), trigger: showQuiz)
+        .hapticFeedback(.impact(flexibility: .soft), trigger: showQuiz)
     }
 
     // MARK: - All 118 Elements
@@ -553,7 +553,7 @@ private struct FilterChip: View {
                 .clipShape(.rect(cornerRadius: 12))
                 .foregroundStyle(isSelected ? color : .secondary)
         }
-        .sensoryFeedback(.selection, trigger: isSelected)
+        .hapticFeedback(.selection, trigger: isSelected)
     }
 }
 
@@ -756,7 +756,7 @@ private struct QuizSheet: View {
                                     in: .rect(cornerRadius: 14)
                                 )
                         }
-                        .sensoryFeedback(.impact(flexibility: .soft), trigger: questionIndex)
+                        .hapticFeedback(.impact(flexibility: .soft), trigger: questionIndex)
                     }
                 } else {
                     // Results

@@ -147,7 +147,7 @@ struct SpeechToTextView: View {
                 .background(.indigo.gradient, in: .rect(cornerRadius: 14))
             }
             .disabled(speechService.isLoading)
-            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
             #if os(iOS)
             Button {
@@ -189,7 +189,7 @@ struct SpeechToTextView: View {
                     .padding(.vertical, 8)
                     .background(.indigo.opacity(0.1), in: Capsule())
                 }
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
 
             if showLanguagePicker {
@@ -236,7 +236,7 @@ struct SpeechToTextView: View {
                     )
                 }
                 .buttonStyle(.plain)
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
         }
         .padding(14)
@@ -271,7 +271,7 @@ struct SpeechToTextView: View {
                             .font(.subheadline)
                             .foregroundStyle(.indigo)
                     }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
 
@@ -408,7 +408,7 @@ struct SpeechToTextView: View {
                         .contentTransition(.symbolEffect(.replace))
                 }
             }
-            .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
             .accessibilityLabel(speechService.isRecording ? "Stop recording" : "Start recording")
             .onAppear {
                 recordButtonScale = 1.15
@@ -517,7 +517,7 @@ struct SpeechToTextView: View {
                     .padding(.vertical, 12)
                     .background(.indigo.gradient, in: .rect(cornerRadius: 12))
                 }
-                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             }
 
             if let score = pronunciationScore {
@@ -624,7 +624,7 @@ struct SpeechToTextView: View {
                     .padding(.vertical, 12)
                     .background(.red.opacity(0.1), in: .rect(cornerRadius: 12))
                 }
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
         }
     }

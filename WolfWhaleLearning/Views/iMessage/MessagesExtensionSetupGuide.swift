@@ -421,7 +421,7 @@ struct MessagesExtensionSetupGuide: View {
                 }
             }
             .buttonStyle(.plain)
-            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
             if expandedSection == section {
                 VStack(spacing: 0) {

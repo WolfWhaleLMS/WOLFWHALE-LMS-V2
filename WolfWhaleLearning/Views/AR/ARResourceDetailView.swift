@@ -146,7 +146,7 @@ struct ARResourceDetailView: View {
         }
         .buttonStyle(.borderedProminent)
         .tint(Theme.courseColor(resource.colorName))
-        .sensoryFeedback(.impact(weight: .medium), trigger: showARExperience)
+        .hapticFeedback(.impact(weight: .medium), trigger: showARExperience)
     }
 }
 

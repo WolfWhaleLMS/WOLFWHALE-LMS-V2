@@ -181,7 +181,7 @@ struct TakeAttendanceView: View {
             )
         }
         .buttonStyle(.plain)
-        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
     }
 
     // MARK: - Save Button
@@ -206,7 +206,7 @@ struct TakeAttendanceView: View {
         .buttonStyle(.borderedProminent)
         .tint(.pink)
         .disabled(isLoading || enrolledStudents.isEmpty)
-        .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+        .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         .padding(.top, 4)
     }
 

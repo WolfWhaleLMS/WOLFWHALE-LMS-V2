@@ -185,7 +185,7 @@ struct StudentSubmissionsView: View {
                         .background(.blue.opacity(0.12), in: Capsule())
                         .foregroundStyle(.blue)
                     }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .accessibilityLabel("\(noteCount) note\(noteCount == 1 ? "" : "s") for \(name)")
                     .accessibilityHint("Double tap to view and add notes")
                 }

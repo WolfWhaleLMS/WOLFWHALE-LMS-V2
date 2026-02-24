@@ -193,7 +193,7 @@ struct AssignmentTemplatesView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.purple)
-                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                 .accessibilityLabel("Use template \(template.name)")
                 .accessibilityHint("Creates a new assignment from this template")
 
@@ -209,7 +209,7 @@ struct AssignmentTemplatesView: View {
                 }
                 .buttonStyle(.bordered)
                 .tint(.red)
-                .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
                 .accessibilityLabel("Delete template \(template.name)")
             }
         }
@@ -273,7 +273,7 @@ struct AssignmentTemplatesView: View {
                         hapticTrigger.toggle()
                         showUseTemplateSheet = false
                     }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Create") {
@@ -282,7 +282,7 @@ struct AssignmentTemplatesView: View {
                     }
                     .fontWeight(.semibold)
                     .disabled(isCreating)
-                    .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                 }
             }
             .overlay {

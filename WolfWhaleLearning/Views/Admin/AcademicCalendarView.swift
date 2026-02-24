@@ -83,7 +83,7 @@ struct AcademicCalendarView: View {
                     }
                 }
             }
-            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
             .sheet(isPresented: $showAddTerm) {
                 AddTermSheet(viewModel: viewModel)
             }
@@ -750,7 +750,7 @@ struct AddTermSheet: View {
                     .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
-            .sensoryFeedback(.success, trigger: hapticTrigger)
+            .hapticFeedback(.success, trigger: hapticTrigger)
             .onAppear {
                 if let term = editingTerm {
                     name = term.name
@@ -838,7 +838,7 @@ struct AddEventSheet: View {
                     .disabled(title.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
-            .sensoryFeedback(.success, trigger: hapticTrigger)
+            .hapticFeedback(.success, trigger: hapticTrigger)
             .onAppear {
                 if let event = editingEvent {
                     title = event.title
@@ -916,7 +916,7 @@ struct AddGradingPeriodSheet: View {
                     .disabled(name.trimmingCharacters(in: .whitespaces).isEmpty || selectedTermId == nil)
                 }
             }
-            .sensoryFeedback(.success, trigger: hapticTrigger)
+            .hapticFeedback(.success, trigger: hapticTrigger)
         }
     }
 }

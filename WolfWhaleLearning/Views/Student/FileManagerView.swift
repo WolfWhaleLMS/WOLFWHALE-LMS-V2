@@ -95,7 +95,7 @@ struct FileManagerView: View {
                 Text("Are you sure you want to delete \"\(file.fileName).\(file.fileExtension)\"? This cannot be undone.")
             }
         }
-        .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+        .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
     }
 
     // MARK: - File List Content

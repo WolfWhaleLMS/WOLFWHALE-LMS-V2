@@ -5,7 +5,7 @@ struct StudentTabView: View {
     @State private var selectedTab = 0
     @State private var showRadio = false
     @State private var radioHaptic = false
-    private var radioService = RadioService.shared
+    private var radioService: RadioService { RadioService.shared }
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -39,7 +39,7 @@ struct StudentTabView: View {
             .accessibilityLabel("Profile")
             .accessibilityHint("Double tap to view your profile")
         }
-        .sensoryFeedback(.impact(weight: .light), trigger: selectedTab)
+        .hapticFeedback(.impact(weight: .light), trigger: selectedTab)
         .tint(.accentColor)
         .overlay(alignment: .top) {
             OfflineBannerView(isConnected: viewModel.networkMonitor.isConnected)
@@ -50,7 +50,7 @@ struct StudentTabView: View {
                 .padding(.trailing, 16)
                 .padding(.bottom, 90)
         }
-        .sensoryFeedback(.impact(weight: .light), trigger: radioHaptic)
+        .hapticFeedback(.impact(weight: .light), trigger: radioHaptic)
         // Deep-link handling: navigate to the correct tab when a notification is tapped
         .onChange(of: viewModel.notificationService.deepLinkAssignmentId) { _, newValue in
             if newValue != nil {

@@ -182,7 +182,7 @@ struct SignUpView: View {
                 }
                 .foregroundStyle(.purple)
             }
-            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
             .padding(.bottom, 40)
         }
     }
@@ -390,7 +390,7 @@ struct SignUpView: View {
                             .foregroundStyle(selectedRole == role ? .purple : .primary)
                         }
                         .buttonStyle(.plain)
-                        .sensoryFeedback(.selection, trigger: roleHapticTrigger)
+                        .hapticFeedback(.selection, trigger: roleHapticTrigger)
                         .accessibilityLabel("\(role.rawValue) role")
                         .accessibilityHint("Double tap to select \(role.rawValue.lowercased()) role")
                         .accessibilityAddTraits(selectedRole == role ? .isSelected : [])
@@ -499,7 +499,7 @@ struct SignUpView: View {
             .tint(Color.purple)
             .clipShape(.rect(cornerRadius: 12))
             .disabled(isLoading || !isFormValid)
-            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             .accessibilityLabel(isLoading ? "Creating account" : "Create Account")
             .accessibilityHint("Double tap to create your account")
 
@@ -516,7 +516,7 @@ struct SignUpView: View {
                 }
                 .foregroundStyle(.purple)
             }
-            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
             .padding(.top, 4)
         }
         .onChange(of: selectedRole) { _, _ in
@@ -617,7 +617,7 @@ struct SignUpView: View {
                     }
                 }
                 .tint(.blue)
-                .sensoryFeedback(.selection, trigger: hasAcknowledgedAge)
+                .hapticFeedback(.selection, trigger: hasAcknowledgedAge)
             }
 
         case .parent:
@@ -631,7 +631,7 @@ struct SignUpView: View {
                 }
             }
             .tint(.blue)
-            .sensoryFeedback(.selection, trigger: hasAcknowledgedAge)
+            .hapticFeedback(.selection, trigger: hasAcknowledgedAge)
 
         case .teacher, .admin, .superAdmin:
             Toggle(isOn: $hasAcknowledgedAge) {
@@ -644,7 +644,7 @@ struct SignUpView: View {
                 }
             }
             .tint(.blue)
-            .sensoryFeedback(.selection, trigger: hasAcknowledgedAge)
+            .hapticFeedback(.selection, trigger: hasAcknowledgedAge)
         }
     }
 

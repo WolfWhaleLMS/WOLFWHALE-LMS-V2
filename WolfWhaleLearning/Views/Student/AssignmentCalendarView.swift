@@ -115,7 +115,7 @@ struct AssignmentCalendarView: View {
                             .font(.subheadline.bold())
                     }
                 }
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 .accessibilityLabel("Jump to today")
             }
         }
@@ -159,7 +159,7 @@ struct AssignmentCalendarView: View {
             .clipShape(RoundedRectangle(cornerRadius: 10))
         }
         .buttonStyle(.plain)
-        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
         .accessibilityLabel("\(title) view")
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
@@ -210,7 +210,7 @@ struct AssignmentCalendarView: View {
             )
         }
         .buttonStyle(.plain)
-        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
         .accessibilityLabel("Filter: \(title)")
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
@@ -231,7 +231,7 @@ struct AssignmentCalendarView: View {
                         .frame(width: 36, height: 36)
                         .background(.quaternary, in: Circle())
                 }
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 .accessibilityLabel("Previous month")
 
                 Spacer()
@@ -252,7 +252,7 @@ struct AssignmentCalendarView: View {
                         .frame(width: 36, height: 36)
                         .background(.quaternary, in: Circle())
                 }
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 .accessibilityLabel("Next month")
             }
 

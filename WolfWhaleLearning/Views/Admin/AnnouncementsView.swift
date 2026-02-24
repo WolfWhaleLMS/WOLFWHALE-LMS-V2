@@ -42,7 +42,7 @@ struct AnnouncementsView: View {
                         hapticTrigger.toggle()
                         showCreate = true
                     }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .accessibilityLabel("New announcement")
                     .accessibilityHint("Double tap to create a new announcement")
                 }

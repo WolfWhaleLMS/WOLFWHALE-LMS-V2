@@ -65,7 +65,7 @@ struct EmptyStateView: View {
                 }
                 .buttonStyle(.plain)
                 #if canImport(UIKit)
-                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                 #endif
                 .opacity(appeared ? 1 : 0)
                 .offset(y: appeared ? 0 : 16)

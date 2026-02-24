@@ -930,8 +930,8 @@ struct ChessGameView: View {
         .background(Color(.systemGroupedBackground))
         .navigationTitle("Chess")
         .navigationBarTitleDisplayMode(.inline)
-        .sensoryFeedback(.selection, trigger: selectionTrigger)
-        .sensoryFeedback(.success, trigger: captureTrigger)
+        .hapticFeedback(.selection, trigger: selectionTrigger)
+        .hapticFeedback(.success, trigger: captureTrigger)
         .alert(gameOverTitle, isPresented: $showGameOverAlert) {
             Button("New Game") {
                 game.setupBoard()

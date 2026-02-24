@@ -201,7 +201,7 @@ struct StandardsMasteryView: View {
                 .padding(12)
             }
             .buttonStyle(.plain)
-            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
             .accessibilityLabel("\(standard.code): \(standard.title), mastery \(mastery.map { "\(Int($0))%" } ?? "no data")")
             .accessibilityHint("Double tap to \(isExpanded ? "collapse" : "expand") student breakdown")
 

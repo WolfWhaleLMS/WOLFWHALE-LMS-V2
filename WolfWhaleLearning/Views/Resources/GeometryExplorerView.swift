@@ -247,8 +247,8 @@ struct GeometryExplorerView: View {
         }
         .navigationTitle("Geometry Explorer")
         .navigationBarTitleDisplayMode(.inline)
-        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
-        .sensoryFeedback(.impact(weight: .heavy), trigger: wrongHapticTrigger)
+        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .hapticFeedback(.impact(weight: .heavy), trigger: wrongHapticTrigger)
         .onChange(of: selectedShape) { _, newShape in
             dimensions = newShape.defaultDimensions
         }

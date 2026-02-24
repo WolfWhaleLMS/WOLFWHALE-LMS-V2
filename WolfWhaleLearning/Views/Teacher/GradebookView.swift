@@ -72,14 +72,14 @@ struct GradebookView: View {
                     hapticTrigger.toggle()
                     showEditCourse = true
                 }
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Add", systemImage: "plus") {
                     hapticTrigger.toggle()
                     showAddAssignment = true
                 }
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
         }
         .sheet(isPresented: $showAddAssignment) {
@@ -325,7 +325,7 @@ struct GradebookView: View {
             .padding(.vertical, 14)
             .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
         }
-        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
     }
 
     // MARK: - Discussion Forum Link
@@ -515,7 +515,7 @@ struct GradebookView: View {
             }
             .tint(.pink)
             .padding(.top, 2)
-            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
         }
         .padding(12)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
@@ -614,7 +614,7 @@ struct GradebookView: View {
                                     .background(.blue.opacity(0.12), in: Capsule())
                                     .foregroundStyle(.blue)
                                 }
-                                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                                 .accessibilityLabel("\(count) note\(count == 1 ? "" : "s") for \(studentName)")
                                 .accessibilityHint("Double tap to view and add notes")
                             }
@@ -802,7 +802,7 @@ struct GradebookView: View {
                         .foregroundStyle(.tertiary)
                 }
             }
-            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
             .accessibilityLabel("Select learning standards")
             .accessibilityValue("\(newStandardIds.count) standards selected")
             let selected = viewModel.storedLearningStandards.filter { newStandardIds.contains($0.id) }
@@ -823,7 +823,7 @@ struct GradebookView: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .accessibilityLabel("Remove \(std.code)")
                 }
             }
@@ -851,7 +851,7 @@ struct GradebookView: View {
                         resetAssignmentForm()
                         showAddAssignment = false
                     }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Create") {
@@ -860,7 +860,7 @@ struct GradebookView: View {
                     }
                     .fontWeight(.semibold)
                     .disabled(newTitle.trimmingCharacters(in: .whitespaces).isEmpty || isCreating)
-                    .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                 }
             }
             .overlay {

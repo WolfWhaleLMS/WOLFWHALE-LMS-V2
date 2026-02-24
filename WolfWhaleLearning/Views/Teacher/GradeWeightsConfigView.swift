@@ -288,7 +288,7 @@ struct GradeWeightsConfigView: View {
             .buttonStyle(.borderedProminent)
             .tint(isSaved ? .green : .indigo)
             .disabled(!isValid)
-            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
             Button {
                 hapticTrigger.toggle()
@@ -306,7 +306,7 @@ struct GradeWeightsConfigView: View {
             }
             .buttonStyle(.bordered)
             .tint(.secondary)
-            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
         }
     }
 }

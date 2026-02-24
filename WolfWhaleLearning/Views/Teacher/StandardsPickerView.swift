@@ -68,7 +68,7 @@ struct StandardsPickerView: View {
                         hapticTrigger.toggle()
                         dismiss()
                     }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done (\(selectedStandardIds.count))") {
@@ -76,7 +76,7 @@ struct StandardsPickerView: View {
                         dismiss()
                     }
                     .fontWeight(.semibold)
-                    .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                 }
             }
         }
@@ -117,7 +117,7 @@ struct StandardsPickerView: View {
                 )
                 .foregroundStyle(isSelected ? .white : Color(.label))
         }
-        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
         .accessibilityLabel("\(label) filter")
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
@@ -192,7 +192,7 @@ struct StandardsPickerView: View {
                 }
                 .font(.caption.bold())
                 .foregroundStyle(.red)
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
 
             // Show selected standard codes
@@ -271,7 +271,7 @@ struct StandardsPickerView: View {
             )
         }
         .buttonStyle(.plain)
-        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
         .accessibilityLabel("\(standard.code): \(standard.title)")
         .accessibilityHint(isSelected ? "Selected. Double tap to deselect." : "Double tap to select.")
         .accessibilityAddTraits(isSelected ? .isSelected : [])

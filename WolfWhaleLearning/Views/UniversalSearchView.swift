@@ -212,7 +212,7 @@ struct UniversalSearchView: View {
             }
             .padding(.vertical, 2)
         }
-        .sensoryFeedback(.selection, trigger: hapticTrigger)
+        .hapticFeedback(.selection, trigger: hapticTrigger)
     }
 
     // MARK: - Results Header
@@ -273,7 +273,7 @@ struct UniversalSearchView: View {
                 .buttonStyle(.plain)
             }
         }
-        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
     }
 
     // MARK: - Loading

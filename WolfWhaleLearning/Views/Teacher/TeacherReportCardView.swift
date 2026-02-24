@@ -78,8 +78,8 @@ struct TeacherReportCardView: View {
                     }
                 )
             }
-            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
-            .sensoryFeedback(.success, trigger: showSavedConfirmation)
+            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .hapticFeedback(.success, trigger: showSavedConfirmation)
             .task {
                 await viewModel.loadAcademicCalendar()
             }
@@ -491,7 +491,7 @@ struct CommentTemplatesSheet: View {
                     Button("Cancel") { dismiss() }
                 }
             }
-            .sensoryFeedback(.selection, trigger: hapticTrigger)
+            .hapticFeedback(.selection, trigger: hapticTrigger)
         }
     }
 

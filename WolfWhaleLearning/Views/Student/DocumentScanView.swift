@@ -126,7 +126,7 @@ struct DocumentScanView: View {
                         hapticTrigger.toggle()
                         dismiss()
                     }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
 
                 if !scannerService.scannedPages.isEmpty {
@@ -250,7 +250,7 @@ struct DocumentScanView: View {
             }
             .buttonStyle(.borderedProminent)
             .tint(.blue)
-            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
             if scannerService.scanStatus == .complete {
                 HStack(spacing: 6) {
@@ -409,7 +409,7 @@ struct DocumentScanView: View {
             .buttonStyle(.borderedProminent)
             .tint(.green)
             .disabled(isSubmitting || assignment.isSubmitted)
-            .sensoryFeedback(.success, trigger: showSubmitSuccess)
+            .hapticFeedback(.success, trigger: showSubmitSuccess)
 
             if assignment.isSubmitted {
                 HStack(spacing: 6) {

@@ -327,6 +327,9 @@ struct StudentDashboardView: View {
                 exploreLink(icon: "map.fill", title: "Campus", color: .blue) {
                     CampusMapView()
                 }
+                exploreLink(icon: "sparkles", title: "AI Tutor", color: .purple) {
+                    AIAssistantView()
+                }
             }
         }
     }
@@ -432,7 +435,7 @@ struct StudentDashboardView: View {
                     .symbolEffect(.wiggle, value: totalUnreadMessages)
                     .symbolEffect(.bounce, value: totalUnreadMessages)
             }
-            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
             .accessibilityLabel(totalUnreadMessages > 0 ? "\(totalUnreadMessages) notifications" : "Notifications")
         }
     }
@@ -490,7 +493,7 @@ struct NotificationsSheet: View {
                         hapticTrigger.toggle()
                         dismiss()
                     }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
         }

@@ -54,7 +54,7 @@ struct ThreadDetailView: View {
                             systemImage: liveThread.isPinned ? "pin.slash.fill" : "pin.fill"
                         )
                     }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .accessibilityLabel(liveThread.isPinned ? "Unpin thread" : "Pin thread")
                     .accessibilityHint("Double tap to \(liveThread.isPinned ? "unpin" : "pin") this thread")
                 }
@@ -190,7 +190,7 @@ struct ThreadDetailView: View {
                     .font(.title2)
                     .foregroundStyle(replyText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? Color.gray : Color.accentColor)
             }
-            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             .disabled(replyText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             .accessibilityLabel("Send reply")
             .accessibilityHint("Double tap to send your reply")

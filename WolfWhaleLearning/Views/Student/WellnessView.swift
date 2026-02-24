@@ -118,7 +118,7 @@ struct WellnessView: View {
                 .foregroundStyle(.white)
             }
             .padding(.horizontal, 32)
-            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
             if let error = healthService.error {
                 Text(error)
@@ -344,7 +344,7 @@ struct WellnessView: View {
                     .background(.red.gradient, in: RoundedRectangle(cornerRadius: 14))
                     .foregroundStyle(.white)
                 }
-                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             } else {
                 Button {
                     hapticTrigger.toggle()
@@ -368,7 +368,7 @@ struct WellnessView: View {
                     )
                     .foregroundStyle(.white)
                 }
-                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             }
 
             if let error = healthService.error {
@@ -596,7 +596,7 @@ struct WellnessView: View {
                             .foregroundStyle(index < healthService.hydrationGlasses ? .cyan : .gray.opacity(0.4))
                             .frame(maxWidth: .infinity)
                     }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .accessibilityLabel("Glass \(index + 1) of water\(index < healthService.hydrationGlasses ? ", consumed" : "")")
                 }
             }
@@ -616,7 +616,7 @@ struct WellnessView: View {
                     }
                     .foregroundStyle(.secondary)
                 }
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 .frame(maxWidth: .infinity, alignment: .trailing)
             }
         }
@@ -787,7 +787,7 @@ struct WellnessView: View {
                     .foregroundStyle(.tertiary)
             }
         }
-        .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+        .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         .accessibilityLabel("Start \(name) workout")
     }
 

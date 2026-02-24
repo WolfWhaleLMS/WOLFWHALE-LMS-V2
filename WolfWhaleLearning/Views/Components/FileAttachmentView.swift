@@ -47,7 +47,7 @@ struct FileAttachmentView: View {
                     .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))
                 }
                 .buttonStyle(.plain)
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
         }
         .sheet(isPresented: $showFilePicker) {
@@ -98,7 +98,7 @@ struct FileAttachmentView: View {
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
-            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
         }
         .padding(10)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))

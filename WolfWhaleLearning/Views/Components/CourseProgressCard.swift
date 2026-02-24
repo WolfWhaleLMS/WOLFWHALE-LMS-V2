@@ -185,7 +185,7 @@ struct CourseProgressCard: View {
                     .background(courseColor.gradient, in: Capsule())
                 }
                 .buttonStyle(.plain)
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
         }
     }
