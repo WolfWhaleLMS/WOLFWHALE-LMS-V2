@@ -85,9 +85,8 @@ struct LoginView: View {
                 // Logo
                 Image("Logo")
                     .resizable()
-                    .aspectRatio(contentMode: .fill)
-                    .frame(width: 100, height: 100)
-                    .clipShape(Circle())
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 120, height: 120)
                     .shadow(color: Theme.brandBlue.opacity(0.6), radius: 20, y: 0)
                     .shadow(color: .white.opacity(0.2), radius: 40, y: 0)
             }
