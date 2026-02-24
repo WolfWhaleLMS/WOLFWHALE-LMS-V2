@@ -2443,16 +2443,24 @@ struct DataService: Sendable {
 
     /// Fetch teacher available slots.
     func fetchTeacherSlots(teacherId: UUID? = nil) async throws -> [TeacherAvailableSlot] {
-        var query = supabaseClient
-            .from("teacher_available_slots")
-            .select()
-            .order("slot_date", ascending: true)
+        let dtos: [TeacherAvailableSlotDTO]
 
         if let teacherId {
-            query = query.eq("teacher_id", value: teacherId.uuidString)
+            dtos = try await supabaseClient
+                .from("teacher_available_slots")
+                .select()
+                .eq("teacher_id", value: teacherId.uuidString)
+                .order("slot_date", ascending: true)
+                .execute()
+                .value
+        } else {
+            dtos = try await supabaseClient
+                .from("teacher_available_slots")
+                .select()
+                .order("slot_date", ascending: true)
+                .execute()
+                .value
         }
-
-        let dtos: [TeacherAvailableSlotDTO] = try await query.execute().value
 
         return dtos.map { dto in
             TeacherAvailableSlot(
