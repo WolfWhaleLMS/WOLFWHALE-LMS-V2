@@ -12,34 +12,32 @@ struct LoginView: View {
     private enum Field { case email, password }
 
     var body: some View {
-        ZStack {
-            AuroraNightSkyBackground()
-                .ignoresSafeArea()
+        ScrollView {
+            VStack(spacing: 0) {
+                Spacer().frame(height: 20)
 
-            ScrollView {
-                VStack(spacing: 0) {
-                    logoSection
+                logoSection
 
-                    Spacer().frame(height: 12)
+                Spacer().frame(height: 20)
 
-                    loginSection
+                loginSection
 
-                    Spacer().frame(height: 20)
+                Spacer().frame(height: 24)
 
-                    #if DEBUG
-                    dividerSection
+                #if DEBUG
+                dividerSection
 
-                    Spacer().frame(height: 16)
+                Spacer().frame(height: 20)
 
-                    demoSection
-                    #endif
+                demoSection
+                #endif
 
-                    Spacer().frame(height: 24)
-                }
-                .padding(.horizontal, 24)
+                Spacer().frame(height: 32)
             }
-            .scrollDismissesKeyboard(.interactively)
+            .padding(.horizontal, 24)
         }
+        .scrollDismissesKeyboard(.interactively)
+        .background(Color.black.ignoresSafeArea())
         .environment(\.colorScheme, .dark)
         .sheet(isPresented: $showForgotPassword) {
             ForgotPasswordView()
@@ -53,28 +51,24 @@ struct LoginView: View {
     }
 
     private var logoSection: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 8) {
             ZStack {
-                // Distant ambient glow — far behind the logo, doesn't overlap it
                 Circle()
                     .fill(Theme.brandPurple.opacity(glowPulse ? 0.25 : 0.08))
-                    .frame(width: 180, height: 180)
+                    .frame(width: 260, height: 260)
                     .blur(radius: 60)
 
-                // Dark backing so the glass logo pops against lighter colors
-                RoundedRectangle(cornerRadius: 20)
+                RoundedRectangle(cornerRadius: 32)
                     .fill(.black)
-                    .frame(width: 100, height: 100)
+                    .frame(width: 160, height: 160)
 
                 Image("Logo")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .frame(width: 100, height: 100)
-                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                    .frame(width: 160, height: 160)
+                    .clipShape(RoundedRectangle(cornerRadius: 32))
                     .shadow(color: Theme.brandPurple.opacity(glowPulse ? 0.6 : 0.25), radius: 20, y: 0)
-                    .shadow(color: .black.opacity(0.5), radius: 8, y: 2)
             }
-            .frame(height: 130)
             .accessibilityHidden(true)
             .onAppear {
                 withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) {
@@ -83,12 +77,12 @@ struct LoginView: View {
             }
 
             Text("WOLFWHALE")
-                .font(.system(size: 28, weight: .thin, design: .serif))
+                .font(.system(size: 32, weight: .thin, design: .serif))
                 .tracking(4)
                 .foregroundStyle(.primary)
 
             Text("LEARNING MANAGEMENT SYSTEM")
-                .font(.system(size: 10, weight: .medium, design: .serif))
+                .font(.system(size: 11, weight: .medium, design: .serif))
                 .foregroundStyle(.secondary)
                 .tracking(2)
                 .lineLimit(1)
@@ -97,22 +91,20 @@ struct LoginView: View {
     }
 
     private var loginSection: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 16) {
             Text("Sign In")
-                .font(.subheadline.bold())
+                .font(.title3.bold())
                 .foregroundStyle(.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            VStack(spacing: 10) {
-                HStack(spacing: 10) {
+            VStack(spacing: 12) {
+                HStack(spacing: 12) {
                     Image(systemName: "envelope.fill")
-                        .font(.caption)
                         .foregroundStyle(.tertiary)
                         .symbolRenderingMode(.hierarchical)
-                        .frame(width: 18)
+                        .frame(width: 20)
                         .accessibilityHidden(true)
                     TextField("School Email", text: $viewModel.email)
-                        .font(.subheadline)
                         .textContentType(.emailAddress)
                         .keyboardType(.emailAddress)
                         .autocorrectionDisabled()
@@ -123,22 +115,20 @@ struct LoginView: View {
                         .accessibilityLabel("Email address")
                         .accessibilityHint("Enter your school email to sign in")
                 }
-                .padding(11)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 10))
+                .padding(14)
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 10)
+                    RoundedRectangle(cornerRadius: 12)
                         .strokeBorder(focusedField == .email ? Color.accentColor.opacity(0.5) : Color.gray.opacity(0.3), lineWidth: 1)
                 )
 
-                HStack(spacing: 10) {
+                HStack(spacing: 12) {
                     Image(systemName: "lock.fill")
-                        .font(.caption)
                         .foregroundStyle(.tertiary)
                         .symbolRenderingMode(.hierarchical)
-                        .frame(width: 18)
+                        .frame(width: 20)
                         .accessibilityHidden(true)
                     SecureField("Password", text: $viewModel.password)
-                        .font(.subheadline)
                         .textContentType(.password)
                         .focused($focusedField, equals: .password)
                         .submitLabel(.go)
@@ -146,10 +136,10 @@ struct LoginView: View {
                         .accessibilityLabel("Password")
                         .accessibilityHint("Enter your password to sign in")
                 }
-                .padding(11)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 10))
+                .padding(14)
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 10)
+                    RoundedRectangle(cornerRadius: 12)
                         .strokeBorder(focusedField == .password ? Color.accentColor.opacity(0.5) : Color.gray.opacity(0.3), lineWidth: 1)
                 )
             }
@@ -188,7 +178,7 @@ struct LoginView: View {
                     }
                 }
                 .frame(maxWidth: .infinity)
-                .frame(height: 44)
+                .frame(height: 50)
             }
             .buttonStyle(.plain)
             .background(
@@ -197,7 +187,7 @@ struct LoginView: View {
                     startPoint: .leading,
                     endPoint: .trailing
                 ),
-                in: .rect(cornerRadius: 10)
+                in: .rect(cornerRadius: 12)
             )
             .disabled(viewModel.isLoading || viewModel.email.isEmpty || viewModel.password.isEmpty || viewModel.isLoginLockedOut)
             .opacity(viewModel.isLoading || viewModel.email.isEmpty || viewModel.password.isEmpty || viewModel.isLoginLockedOut ? 0.75 : 1.0)
@@ -219,8 +209,8 @@ struct LoginView: View {
             .accessibilityHint("Double tap to reset your password")
 
         }
-        .padding(16)
-        .glassEffect(in: .rect(cornerRadius: 20))
+        .padding(20)
+        .glassEffect(in: .rect(cornerRadius: 24))
     }
 
     private var dividerSection: some View {
