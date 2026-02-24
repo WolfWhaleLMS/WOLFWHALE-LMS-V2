@@ -113,6 +113,7 @@ struct TranscriptExportView: View {
             Image(systemName: "doc.text.fill")
                 .font(.system(size: 36))
                 .foregroundStyle(.indigo)
+                .symbolEffect(.breathe)
 
             Text("Academic Transcript")
                 .font(.title2.bold())
@@ -295,7 +296,7 @@ struct TranscriptExportView: View {
             .buttonStyle(.borderedProminent)
             .tint(.indigo)
             .disabled(isGenerating || viewModel.grades.isEmpty)
-            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
             // Email to Parent
             Button {
@@ -324,6 +325,7 @@ struct TranscriptExportView: View {
             HStack(spacing: 8) {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundStyle(.green)
+                    .symbolEffect(.bounce)
                 Text("Transcript info copied to clipboard")
                     .font(.subheadline.bold())
             }

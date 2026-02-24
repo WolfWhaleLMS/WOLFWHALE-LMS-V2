@@ -93,7 +93,7 @@ struct EditAssignmentView: View {
                     hapticTrigger.toggle()
                     dismiss()
                 }
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
         }
         .alert("Delete Assignment", isPresented: $showDeleteConfirmation) {
@@ -375,7 +375,7 @@ struct EditAssignmentView: View {
                     .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
                 }
                 .disabled(isDuplicating)
-                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                 .accessibilityLabel("Duplicate assignment")
                 .accessibilityHint("Creates a copy of this assignment with a new due date")
 
@@ -397,7 +397,7 @@ struct EditAssignmentView: View {
                     .padding(.vertical, 14)
                     .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
                 }
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 .accessibilityLabel("Save as template")
                 .accessibilityHint("Saves this assignment as a reusable template")
             }
@@ -469,7 +469,7 @@ struct EditAssignmentView: View {
                     }
                     .fontWeight(.semibold)
                     .disabled(templateName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                 }
             }
         }
@@ -594,7 +594,7 @@ struct EditAssignmentView: View {
             .buttonStyle(.borderedProminent)
             .tint(.pink)
             .disabled(isLoading || !isValid || !hasChanges)
-            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         }
         .padding(.top, 4)
     }
@@ -625,7 +625,7 @@ struct EditAssignmentView: View {
             .buttonStyle(.borderedProminent)
             .tint(.red)
             .disabled(isDeleting)
-            .hapticFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
 
             Text("This will permanently delete the assignment and all submissions.")
                 .font(.caption2)

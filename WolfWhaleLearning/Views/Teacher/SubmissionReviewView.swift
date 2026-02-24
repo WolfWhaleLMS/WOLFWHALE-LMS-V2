@@ -122,7 +122,7 @@ struct SubmissionReviewView: View {
                 }
             }
         }
-        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
     }
 
     // MARK: - Header Section
@@ -137,6 +137,7 @@ struct SubmissionReviewView: View {
                         Image(systemName: "doc.text.magnifyingglass")
                             .font(.title2)
                             .foregroundStyle(.white)
+                            .symbolEffect(.pulse)
                     }
 
                 VStack(alignment: .leading, spacing: 4) {
@@ -163,6 +164,7 @@ struct SubmissionReviewView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "clock.badge.exclamationmark.fill")
                         .foregroundStyle(.red)
+                        .symbolEffect(.wiggle, options: .repeat(.periodic(delay: 2)))
                     Text("Past due date")
                         .font(.caption.bold())
                         .foregroundStyle(.red)
@@ -244,6 +246,7 @@ struct SubmissionReviewView: View {
             Image(systemName: "tray")
                 .font(.largeTitle)
                 .foregroundStyle(.secondary)
+                .symbolEffect(.pulse)
             Text("No submissions yet")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
@@ -392,6 +395,7 @@ struct SubmissionReviewView: View {
                 Image(systemName: "person.crop.circle.fill")
                     .font(.largeTitle)
                     .foregroundStyle(.indigo)
+                    .symbolEffect(.bounce)
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(sub.studentName)
@@ -423,6 +427,7 @@ struct SubmissionReviewView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "checkmark.seal.fill")
                         .foregroundStyle(.green)
+                        .symbolEffect(.bounce)
                     Text("Graded: \(Int(grade))%")
                         .font(.subheadline.bold())
                         .foregroundStyle(Theme.gradeColor(grade))

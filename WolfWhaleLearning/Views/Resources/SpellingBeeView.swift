@@ -327,7 +327,7 @@ struct SpellingBeeView: View {
                 .buttonStyle(.borderedProminent)
                 .tint(.purple)
                 .disabled(typedSpelling.trimmingCharacters(in: .whitespaces).isEmpty)
-                .hapticFeedback(.impact, trigger: showResult != nil)
+                .sensoryFeedback(.impact, trigger: showResult != nil)
             } else {
                 Button {
                     advanceToNext()
@@ -403,7 +403,7 @@ struct SpellingBeeView: View {
         }
         .padding(24)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 20))
-        .hapticFeedback(.success, trigger: gameOver)
+        .sensoryFeedback(.success, trigger: gameOver)
     }
 
     // MARK: - Logic

@@ -102,7 +102,7 @@ struct TranscriptPreviewCard: View {
             .buttonStyle(.borderedProminent)
             .tint(.indigo)
             .disabled(isGenerating || viewModel.grades.isEmpty)
-            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         }
         .padding(16)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))

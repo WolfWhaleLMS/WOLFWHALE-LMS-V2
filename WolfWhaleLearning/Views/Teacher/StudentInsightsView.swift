@@ -66,7 +66,7 @@ struct StudentInsightsView: View {
                             studentInsightCard(insight)
                         }
                         .buttonStyle(.plain)
-                        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     }
                 }
             }
@@ -112,6 +112,7 @@ struct StudentInsightsView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .font(.caption)
+                            .symbolEffect(.wiggle, options: .repeat(.periodic(delay: 2)))
                         Text("\(atRiskCount)")
                             .font(.caption.bold())
                     }
@@ -182,7 +183,7 @@ struct StudentInsightsView: View {
                 .padding(.vertical, 8)
                 .background(showAtRiskOnly ? Color.red : Color.red.opacity(0.12), in: Capsule())
             }
-            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             .accessibilityLabel(showAtRiskOnly ? "Showing at-risk students only" : "Show all students")
             .accessibilityHint("Double tap to toggle at-risk filter")
 
@@ -225,6 +226,7 @@ struct StudentInsightsView: View {
             Image(systemName: showAtRiskOnly ? "checkmark.shield.fill" : "person.3.fill")
                 .font(.largeTitle)
                 .foregroundStyle(showAtRiskOnly ? .green : Color(.secondaryLabel))
+                .symbolEffect(.bounce)
 
             Text(showAtRiskOnly ? "No At-Risk Students" : "No Student Data")
                 .font(.headline)
@@ -514,7 +516,7 @@ struct StudentDetailInsightView: View {
                     hapticTrigger.toggle()
                     dismiss()
                 }
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
         }
     }
@@ -668,6 +670,7 @@ struct StudentDetailInsightView: View {
             HStack(spacing: 8) {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundStyle(.red)
+                    .symbolEffect(.wiggle, options: .repeat(.periodic(delay: 3)))
                 Text("Risk Factors")
                     .font(.headline)
                     .foregroundStyle(Color(.label))

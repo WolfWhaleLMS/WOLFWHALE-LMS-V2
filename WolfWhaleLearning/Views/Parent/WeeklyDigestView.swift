@@ -48,6 +48,7 @@ struct WeeklyDigestView: View {
                     Image(systemName: "calendar.circle.fill")
                         .font(.title3)
                         .foregroundStyle(.blue)
+                        .symbolEffect(.pulse)
 
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Week of \(first.weekStartDate, style: .date)")
@@ -319,6 +320,7 @@ struct WeeklyDigestView: View {
             Image(systemName: "doc.text.magnifyingglass")
                 .font(.system(size: 48))
                 .foregroundStyle(.secondary)
+                .symbolEffect(.bounce)
             Text("No Digest Available")
                 .font(.headline)
                 .foregroundStyle(Color(.label))

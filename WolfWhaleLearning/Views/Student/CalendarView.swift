@@ -187,7 +187,7 @@ struct CalendarView: View {
                                 .font(.subheadline.bold())
                         }
                     }
-                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
         }
@@ -209,7 +209,7 @@ struct CalendarView: View {
                         .frame(width: 36, height: 36)
                         .background(.quaternary, in: Circle())
                 }
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 .accessibilityLabel("Previous month")
                 .accessibilityHint("Double tap to go to the previous month")
 
@@ -231,7 +231,7 @@ struct CalendarView: View {
                         .frame(width: 36, height: 36)
                         .background(.quaternary, in: Circle())
                 }
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 .accessibilityLabel("Next month")
                 .accessibilityHint("Double tap to go to the next month")
             }

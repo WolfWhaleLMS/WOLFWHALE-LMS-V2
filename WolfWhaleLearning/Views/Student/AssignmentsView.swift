@@ -81,7 +81,7 @@ struct AssignmentsView: View {
                     .padding(.vertical, 8)
                     .background(selectedFilter == index ? .purple.opacity(0.2) : Color(.tertiarySystemFill), in: Capsule())
                     .foregroundStyle(selectedFilter == index ? .purple : .secondary)
-                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .accessibilityLabel("\(label) filter")
                     .accessibilityAddTraits(selectedFilter == index ? .isSelected : [])
                 }
@@ -142,7 +142,7 @@ struct AssignmentsView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.purple)
-                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             }
 
             // Late submit button for overdue assignments that can still be submitted
@@ -161,7 +161,7 @@ struct AssignmentsView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.orange)
-                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             }
 
             // Resubmit button for graded assignments that allow resubmission
@@ -210,6 +210,7 @@ struct AssignmentsView: View {
         HStack(spacing: 8) {
             Image(systemName: "clock.badge.exclamationmark")
                 .foregroundStyle(.orange)
+                .symbolEffect(.pulse)
             VStack(alignment: .leading, spacing: 2) {
                 if assignment.canSubmitLate {
                     Text("Late submission accepted")
@@ -242,6 +243,7 @@ struct AssignmentsView: View {
             HStack(spacing: 8) {
                 Image(systemName: "arrow.counterclockwise.circle.fill")
                     .foregroundStyle(.indigo)
+                    .symbolEffect(.bounce, options: .repeat(.periodic(delay: 3)))
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Resubmission Available")
                         .font(.caption.bold())
@@ -274,7 +276,7 @@ struct AssignmentsView: View {
             }
             .buttonStyle(.borderedProminent)
             .tint(.indigo)
-            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         }
     }
 
@@ -429,7 +431,7 @@ struct ResubmitAssignmentView: View {
                         dismiss()
                     }
                     .disabled(isSubmitting)
-                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
             .alert("Resubmission Error", isPresented: $showError) {
@@ -608,7 +610,7 @@ struct ResubmitAssignmentView: View {
         .buttonStyle(.borderedProminent)
         .tint(.indigo)
         .disabled(isSubmitDisabled)
-        .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
     }
 
     // MARK: - Helpers

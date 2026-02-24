@@ -54,7 +54,7 @@ struct EnhancedQuizBuilderView: View {
                         hapticTrigger.toggle()
                         dismiss()
                     }
-                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
             .sheet(isPresented: $showAddQuestionSheet) {
@@ -165,7 +165,7 @@ struct EnhancedQuizBuilderView: View {
                             .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
                     )
                 }
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
         }
         .padding(14)
@@ -201,7 +201,7 @@ struct EnhancedQuizBuilderView: View {
                 }
             }
             .buttonStyle(.plain)
-            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
             if showSettings {
                 VStack(spacing: 14) {
@@ -404,7 +404,7 @@ struct EnhancedQuizBuilderView: View {
                         .foregroundStyle(.indigo)
                 }
                 .buttonStyle(.plain)
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
                 Button {
                     hapticTrigger.toggle()
@@ -415,7 +415,7 @@ struct EnhancedQuizBuilderView: View {
                         .foregroundStyle(.indigo)
                 }
                 .buttonStyle(.plain)
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
                 Button {
                     hapticTrigger.toggle()
@@ -426,7 +426,7 @@ struct EnhancedQuizBuilderView: View {
                         .foregroundStyle(.red)
                 }
                 .buttonStyle(.plain)
-                .hapticFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
             }
         }
         .padding(12)
@@ -449,7 +449,7 @@ struct EnhancedQuizBuilderView: View {
         }
         .buttonStyle(.bordered)
         .tint(.indigo)
-        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
     }
 
     // MARK: - Question Type Picker Sheet
@@ -537,7 +537,7 @@ struct EnhancedQuizBuilderView: View {
                 .buttonStyle(.bordered)
                 .tint(.purple)
                 .disabled(draft.questions.isEmpty)
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
                 // Save Draft
                 Button {
@@ -552,7 +552,7 @@ struct EnhancedQuizBuilderView: View {
                 .buttonStyle(.bordered)
                 .tint(.indigo)
                 .disabled(draft.title.trimmingCharacters(in: .whitespaces).isEmpty)
-                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             }
 
             // Publish
@@ -568,7 +568,7 @@ struct EnhancedQuizBuilderView: View {
             .buttonStyle(.borderedProminent)
             .tint(.indigo)
             .disabled(isLoading || !isValid)
-            .hapticFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
         }
         .padding(.top, 4)
     }

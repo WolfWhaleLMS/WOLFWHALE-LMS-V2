@@ -9,7 +9,6 @@ struct RealtimeConversationView: View {
     @State private var sendTrigger = false
     @State private var retryMessageId: UUID?
     @State private var moderationWarning: String?
-    @State private var showCallView = false
     @FocusState private var isTextFieldFocused: Bool
 
     // MARK: - Derived State
@@ -49,24 +48,8 @@ struct RealtimeConversationView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                HStack(spacing: 12) {
-                    Button {
-                        let title = conversation.title
-                        CallService.shared.startCall(to: title, displayName: title)
-                        showCallView = true
-                    } label: {
-                        Image(systemName: "phone.fill")
-                            .font(.body)
-                    }
-                    .tint(.indigo)
-                    .accessibilityLabel("Start voice call")
-
-                    connectionIndicator
-                }
+                connectionIndicator
             }
-        }
-        .fullScreenCover(isPresented: $showCallView) {
-            InCallView(participantName: conversation.title)
         }
         .task {
             await subscribeToRealtime()
@@ -312,7 +295,7 @@ struct RealtimeConversationView: View {
             }
             .tint(.indigo)
             .disabled(messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            .hapticFeedback(.impact(weight: .light), trigger: sendTrigger)
+            .sensoryFeedback(.impact(weight: .light), trigger: sendTrigger)
             .accessibilityLabel("Send message")
             .accessibilityHint("Double tap to send your message")
         }

@@ -2,15 +2,12 @@
   "images" : [
     {
       "filename" : "logo.png",
-      "idiom" : "universal"
+      "idiom" : "universal",
+      "scale" : "1x"
     }
   ],
   "info" : {
     "author" : "xcode",
     "version" : 1
-  },
-  "properties" : {
-    "preserves-vector-representation" : false,
-    "template-rendering-intent" : "original"
   }
 }

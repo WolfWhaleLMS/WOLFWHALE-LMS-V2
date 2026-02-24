@@ -378,6 +378,7 @@ struct ParentDashboardView: View {
                     Image(systemName: "person.2.circle.fill")
                         .font(.title2)
                         .foregroundStyle(.indigo)
+                        .symbolEffect(.pulse)
 
                     Text("Conferences")
                         .font(.caption2.bold())
@@ -409,6 +410,7 @@ struct ParentDashboardView: View {
                     Image(systemName: "doc.text.magnifyingglass")
                         .font(.title2)
                         .foregroundStyle(.teal)
+                        .symbolEffect(.pulse)
 
                     Text("Progress Report")
                         .font(.caption2.bold())
@@ -442,6 +444,7 @@ struct ParentDashboardView: View {
                 HStack {
                     Image(systemName: "megaphone")
                         .foregroundStyle(.secondary)
+                        .symbolEffect(.bounce)
                     Text("No announcements at this time")
                         .foregroundStyle(.secondary)
                 }

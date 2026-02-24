@@ -31,7 +31,7 @@ struct PlaybackSpeedPicker: View {
                 }
                 .buttonStyle(.plain)
                 #if canImport(UIKit)
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 #endif
             }
         }

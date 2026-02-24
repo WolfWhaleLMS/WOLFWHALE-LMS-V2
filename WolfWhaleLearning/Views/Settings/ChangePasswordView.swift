@@ -296,7 +296,7 @@ struct ChangePasswordView: View {
         .tint(.pink)
         .clipShape(.rect(cornerRadius: 12))
         .disabled(!canSubmit)
-        .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
     }
 
     // MARK: - Success Overlay
@@ -326,7 +326,7 @@ struct ChangePasswordView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.pink)
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 .padding(.top, 8)
             }
             .padding(32)

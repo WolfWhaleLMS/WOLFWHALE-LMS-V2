@@ -63,7 +63,7 @@ struct PlagiarismReportView: View {
                         hapticTrigger.toggle()
                         dismiss()
                     }
-                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
         }
@@ -174,7 +174,7 @@ struct PlagiarismReportView: View {
             )
         }
         .buttonStyle(.plain)
-        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         .accessibilityLabel("\(title), \(submissionCount) submissions\(isSelected ? ", selected" : "")")
     }
 
@@ -204,7 +204,7 @@ struct PlagiarismReportView: View {
         .buttonStyle(.borderedProminent)
         .tint(.indigo)
         .disabled(isRunning)
-        .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         .accessibilityLabel("Run plagiarism check on \(title)")
     }
 
@@ -368,7 +368,7 @@ struct PlagiarismReportView: View {
                 .padding(14)
             }
             .buttonStyle(.plain)
-            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
             // Expanded content: matching excerpts
             if isExpanded {

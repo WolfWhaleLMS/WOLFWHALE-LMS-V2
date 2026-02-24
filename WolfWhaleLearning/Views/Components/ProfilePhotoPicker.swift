@@ -57,7 +57,7 @@ struct ProfilePhotoPicker: View {
                 avatarView
             }
             .buttonStyle(.plain)
-            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             .confirmationDialog("Change Profile Photo", isPresented: $showActionSheet, titleVisibility: .visible) {
                 // Photo Library option uses a separate PhotosPicker binding
                 // so we present it via the onChange approach below

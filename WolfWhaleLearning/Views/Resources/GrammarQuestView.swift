@@ -234,7 +234,7 @@ struct GrammarQuestView: View {
                 .disabled(selectedAnswer != nil)
             }
         }
-        .hapticFeedback(.selection, trigger: selectedAnswer)
+        .sensoryFeedback(.selection, trigger: selectedAnswer)
     }
 
     private func optionIndicator(index: Int, correctIndex: Int) -> some View {

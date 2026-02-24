@@ -32,7 +32,7 @@ struct SuperAdminTabView: View {
             .accessibilityLabel("Settings")
             .accessibilityHint("Double tap to view settings and sign out")
         }
-        .hapticFeedback(.impact(weight: .light), trigger: selectedTab)
+        .sensoryFeedback(.impact(weight: .light), trigger: selectedTab)
         .tint(.indigo)
         .overlay(alignment: .top) {
             OfflineBannerView(isConnected: viewModel.networkMonitor.isConnected)

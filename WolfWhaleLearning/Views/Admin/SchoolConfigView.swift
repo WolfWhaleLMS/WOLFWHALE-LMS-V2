@@ -98,7 +98,7 @@ struct SchoolConfigView: View {
                         hapticTrigger.toggle()
                         dismiss()
                     }
-                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
             .task { await loadConfig() }
@@ -207,7 +207,7 @@ struct SchoolConfigView: View {
                     Image(systemName: "minus.circle.fill")
                         .foregroundStyle(color.opacity(0.7))
                 }
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
                 Text("\(Int(value.wrappedValue))")
                     .font(.subheadline.bold())
@@ -221,7 +221,7 @@ struct SchoolConfigView: View {
                     Image(systemName: "plus.circle.fill")
                         .foregroundStyle(color.opacity(0.7))
                 }
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
         }
         .padding(.horizontal, 14)
@@ -376,7 +376,7 @@ struct SchoolConfigView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 12))
             }
             .disabled(!isFormValid)
-            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
             Button {
                 hapticTrigger.toggle()
@@ -390,7 +390,7 @@ struct SchoolConfigView: View {
                     .foregroundStyle(Color(.secondaryLabel))
                     .clipShape(RoundedRectangle(cornerRadius: 12))
             }
-            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
             if let syncError {
                 Label(syncError, systemImage: "exclamationmark.triangle.fill")

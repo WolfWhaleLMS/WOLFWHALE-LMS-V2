@@ -43,7 +43,7 @@ struct CourseColorPicker: View {
                             }
                     }
                     .buttonStyle(.plain)
-                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .accessibilityLabel(item.name)
                     .accessibilityAddTraits(isSelected ? .isSelected : [])
                 }

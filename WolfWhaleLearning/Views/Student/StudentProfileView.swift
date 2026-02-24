@@ -124,7 +124,7 @@ struct StudentProfileView: View {
                     }
                 ))
                 .labelsHidden()
-                .hapticFeedback(.selection, trigger: viewModel.offlineModeEnabled)
+                .sensoryFeedback(.selection, trigger: viewModel.offlineModeEnabled)
             }
 
             if viewModel.isSyncingOffline {
@@ -383,6 +383,6 @@ struct StudentProfileView: View {
         }
         .buttonStyle(.bordered)
         .tint(.red)
-        .hapticFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
     }
 }

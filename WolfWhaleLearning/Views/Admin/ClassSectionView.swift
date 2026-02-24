@@ -66,7 +66,7 @@ struct ClassSectionView: View {
                     TransferStudentSheet(viewModel: viewModel, course: course)
                 }
             }
-            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         }
     }
 
@@ -361,7 +361,7 @@ private struct CreateSectionSheet: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(accentColor)
-                    .hapticFeedback(.success, trigger: hapticTrigger)
+                    .sensoryFeedback(.success, trigger: hapticTrigger)
                     .accessibilityLabel("Create section")
                     .accessibilityHint("Double tap to create the new section")
                 }
@@ -531,7 +531,7 @@ private struct TransferStudentSheet: View {
                                         }
                                         .buttonStyle(.plain)
                                         .disabled(target.isFull)
-                                        .hapticFeedback(.selection, trigger: hapticTrigger)
+                                        .sensoryFeedback(.selection, trigger: hapticTrigger)
                                         .accessibilityLabel("\(target.sectionLabel ?? "Section \(target.sectionNumber ?? 0)"), \(target.enrolledStudentCount) of \(target.maxCapacity) students")
                                     }
                                 }
@@ -563,7 +563,7 @@ private struct TransferStudentSheet: View {
                     .buttonStyle(.borderedProminent)
                     .tint(accentColor)
                     .disabled(selectedTargetSection == nil || studentName.trimmingCharacters(in: .whitespaces).isEmpty)
-                    .hapticFeedback(.success, trigger: hapticTrigger)
+                    .sensoryFeedback(.success, trigger: hapticTrigger)
                     .accessibilityLabel("Transfer student")
                     .accessibilityHint(selectedTargetSection == nil ? "Select a target section first" : "Double tap to transfer")
                 }

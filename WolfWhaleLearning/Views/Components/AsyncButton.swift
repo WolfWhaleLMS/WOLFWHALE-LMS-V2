@@ -39,7 +39,7 @@ struct AsyncButton<Label: View>: View {
             }
         }
         .disabled(isRunning)
-        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         .accessibilityLabel(isRunning ? "Loading" : "")
     }
 }

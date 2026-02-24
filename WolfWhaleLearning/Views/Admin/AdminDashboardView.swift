@@ -76,7 +76,7 @@ struct AdminDashboardView: View {
                 refreshHapticTrigger.toggle()
                 await viewModel.loadData()
             }
-            .hapticFeedback(.impact(weight: .medium), trigger: refreshHapticTrigger)
+            .sensoryFeedback(.impact(weight: .medium), trigger: refreshHapticTrigger)
             .sheet(isPresented: $showBulkImport) {
                 BulkImportView(viewModel: viewModel)
             }
@@ -169,7 +169,7 @@ struct AdminDashboardView: View {
                     )
                 }
                 .buttonStyle(.plain)
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 .accessibilityLabel("Import Users")
                 .accessibilityHint("Opens the bulk CSV user import screen")
             }
@@ -206,7 +206,7 @@ struct AdminDashboardView: View {
                     )
                 }
                 .buttonStyle(.plain)
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 .accessibilityLabel("School Settings")
                 .accessibilityHint("Opens school configuration for grading scale, semester dates, and grade weights")
             }
@@ -242,7 +242,7 @@ struct AdminDashboardView: View {
                     )
                 }
                 .buttonStyle(.plain)
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 .accessibilityLabel("Audit Log")
                 .accessibilityHint("Opens the FERPA and GDPR compliance audit log viewer")
             }
@@ -279,7 +279,7 @@ struct AdminDashboardView: View {
                     )
                 }
                 .buttonStyle(.plain)
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 .accessibilityLabel("Attendance Report")
                 .accessibilityHint("Opens school-wide attendance report with charts and export")
             }
@@ -316,7 +316,7 @@ struct AdminDashboardView: View {
                     )
                 }
                 .buttonStyle(.plain)
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 .accessibilityLabel("Class Sections")
                 .accessibilityHint("Opens class section management for viewing sections, enrollment, and student transfers")
             }
@@ -353,7 +353,7 @@ struct AdminDashboardView: View {
                     )
                 }
                 .buttonStyle(.plain)
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 .accessibilityLabel("Academic Calendar")
                 .accessibilityHint("Opens the academic calendar with terms, events, and grading periods")
             }
@@ -390,7 +390,7 @@ struct AdminDashboardView: View {
                     )
                 }
                 .buttonStyle(.plain)
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 .accessibilityLabel("Report Cards")
                 .accessibilityHint("Opens report card generation with PDF export for all students")
             }

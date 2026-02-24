@@ -151,7 +151,7 @@ struct CourseCatalogView: View {
             } message: {
                 Text("This course is full. You will be added to the waitlist and notified when a spot opens.")
             }
-            .hapticFeedback(.success, trigger: hapticTrigger)
+            .sensoryFeedback(.success, trigger: hapticTrigger)
         }
     }
 
@@ -249,6 +249,7 @@ struct CourseCatalogView: View {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.title3)
                         .foregroundStyle(.green)
+                        .symbolEffect(.bounce)
                         .accessibilityLabel("Enrolled")
                 } else {
                     statusBadge(for: course)

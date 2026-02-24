@@ -298,6 +298,7 @@ struct GradeBreakdownView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "info.circle.fill")
                         .foregroundStyle(.indigo)
+                        .symbolEffect(.pulse)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("You need an average of **\(String(format: "%.1f%%", needed))** on remaining work")
                             .font(.subheadline)
@@ -313,6 +314,7 @@ struct GradeBreakdownView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundStyle(.orange)
+                        .symbolEffect(.wiggle)
                     Text("A \(gradeService.letterGrade(from: targetPct)) (\(String(format: "%.0f%%", targetPct))) may not be achievable based on current grades.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)

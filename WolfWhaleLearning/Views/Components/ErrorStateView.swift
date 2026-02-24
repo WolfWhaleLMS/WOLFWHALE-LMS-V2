@@ -75,7 +75,7 @@ struct ErrorStateView: View {
                 .disabled(isRetrying)
                 .opacity(isRetrying ? 0.7 : 1)
                 #if canImport(UIKit)
-                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                 #endif
                 .opacity(appeared ? 1 : 0)
                 .offset(y: appeared ? 0 : 16)

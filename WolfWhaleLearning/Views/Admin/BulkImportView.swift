@@ -49,7 +49,7 @@ struct BulkImportView: View {
                         hapticTrigger.toggle()
                         dismiss()
                     }
-                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
                 if !parsedRows.isEmpty && importResults == nil && !isImporting {
                     ToolbarItem(placement: .topBarTrailing) {
@@ -57,7 +57,7 @@ struct BulkImportView: View {
                             hapticTrigger.toggle()
                             resetState()
                         }
-                        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     }
                 }
             }
@@ -106,7 +106,7 @@ struct BulkImportView: View {
                         .foregroundStyle(.white)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
-                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             }
             .padding(24)
             .background(Color(.secondarySystemGroupedBackground))
@@ -128,7 +128,7 @@ struct BulkImportView: View {
                         Image(systemName: showManualEntry ? "chevron.up" : "chevron.down")
                             .foregroundStyle(Color(.secondaryLabel))
                     }
-                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
 
                 if showManualEntry {
@@ -153,7 +153,7 @@ struct BulkImportView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
                     .disabled(rawCSVText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                 }
             }
             .padding(16)
@@ -293,7 +293,7 @@ struct BulkImportView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 12))
             }
             .disabled(!hasValidRows || viewModel.remainingUserSlots <= 0)
-            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
             if viewModel.remainingUserSlots <= 0 {
                 Label("No seats remaining. Upgrade your plan to import users.", systemImage: "exclamationmark.triangle.fill")
@@ -493,7 +493,7 @@ struct BulkImportView: View {
                     .foregroundStyle(.white)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
             }
-            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         }
     }
 

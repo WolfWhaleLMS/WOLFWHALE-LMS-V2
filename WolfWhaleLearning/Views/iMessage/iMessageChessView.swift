@@ -501,7 +501,7 @@ struct iMessageChessView: View {
             }
             .buttonStyle(.plain)
             .disabled(!moveJustMade)
-            .hapticFeedback(.success, trigger: showSendConfirmation)
+            .sensoryFeedback(.success, trigger: showSendConfirmation)
         }
         .overlay {
             if showSendConfirmation {

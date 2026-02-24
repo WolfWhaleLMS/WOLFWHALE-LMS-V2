@@ -274,7 +274,7 @@ struct AgeVerificationView: View {
                 }
             }
             .tint(.purple)
-            .hapticFeedback(.selection, trigger: parentalConsentChecked)
+            .sensoryFeedback(.selection, trigger: parentalConsentChecked)
             .accessibilityLabel("Parental consent acknowledgment")
             .accessibilityHint("Toggle to confirm parental consent has been provided")
         }
@@ -302,7 +302,7 @@ struct AgeVerificationView: View {
         .tint(Color.purple)
         .clipShape(.rect(cornerRadius: 12))
         .disabled(!canContinue)
-        .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         .accessibilityLabel("Continue to next step")
         .accessibilityHint(canContinue ? "Double tap to proceed" : "Complete all required fields to continue")
     }

@@ -55,7 +55,7 @@ struct BulkGradingView: View {
                         hapticTrigger.toggle()
                         dismiss()
                     }
-                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
             .overlay {
@@ -130,7 +130,7 @@ struct BulkGradingView: View {
                 Capsule().strokeBorder(color.opacity(0.3), lineWidth: 1)
             )
         }
-        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         .accessibilityLabel("\(course.title)\(isSelected ? ", selected" : "")")
     }
 
@@ -283,7 +283,7 @@ struct BulkGradingView: View {
         .buttonStyle(.borderedProminent)
         .tint(.pink)
         .disabled(isSubmitting || filledCount == 0)
-        .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         .padding(.top, 4)
     }
 

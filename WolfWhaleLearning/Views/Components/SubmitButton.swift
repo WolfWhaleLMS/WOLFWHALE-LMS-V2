@@ -57,7 +57,7 @@ struct SubmitButton: View {
         .buttonStyle(.plain)
         .disabled(!isEnabled || isSubmitting)
         .opacity(isEnabled && !isSubmitting ? 1.0 : 0.6)
-        .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         .accessibilityLabel(isSubmitting ? "Submitting" : title)
         .accessibilityAddTraits(.isButton)
     }

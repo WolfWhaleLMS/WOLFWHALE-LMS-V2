@@ -49,7 +49,7 @@ struct RecommendationsView: View {
                     Image(systemName: "arrow.clockwise")
                         .symbolRenderingMode(.hierarchical)
                 }
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 .accessibilityLabel("Refresh Recommendations")
                 .accessibilityHint("Double tap to regenerate AI recommendations")
             }
@@ -263,6 +263,7 @@ struct RecommendationsView: View {
                 HStack {
                     Image(systemName: "chart.dots.scatter")
                         .foregroundStyle(.indigo)
+                        .symbolEffect(.pulse)
                     Text("Subject Analysis")
                         .font(.headline)
                     Spacer()
@@ -441,7 +442,7 @@ struct RecommendationsView: View {
                         in: Capsule()
                     )
                 }
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
         }
         .padding(14)
@@ -523,7 +524,7 @@ struct RecommendationsView: View {
             }
             .buttonStyle(.borderedProminent)
             .tint(.indigo)
-            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         }
     }
 
@@ -532,6 +533,7 @@ struct RecommendationsView: View {
             Image(systemName: "line.3.horizontal.decrease.circle")
                 .font(.title)
                 .foregroundStyle(.secondary)
+                .symbolEffect(.bounce)
             Text("No \(selectedFilter.rawValue.lowercased()) recommendations")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)

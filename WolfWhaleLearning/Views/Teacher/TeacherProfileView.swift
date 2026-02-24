@@ -44,6 +44,7 @@ struct TeacherProfileView: View {
                 Image(systemName: "person.fill")
                     .font(.system(size: 36))
                     .foregroundStyle(.white)
+                    .symbolEffect(.breathe)
             }
             Text(viewModel.currentUser?.fullName ?? "Teacher")
                 .font(.title2.bold())
@@ -107,7 +108,7 @@ struct TeacherProfileView: View {
                     }
                 ))
                 .labelsHidden()
-                .hapticFeedback(.selection, trigger: viewModel.offlineModeEnabled)
+                .sensoryFeedback(.selection, trigger: viewModel.offlineModeEnabled)
             }
 
             if viewModel.isSyncingOffline {
@@ -217,6 +218,7 @@ struct TeacherProfileView: View {
             HStack {
                 Image(systemName: "info.circle.fill")
                     .foregroundStyle(.blue)
+                    .symbolEffect(.pulse)
                     .frame(width: 28)
                 Text("About")
                     .font(.headline)
@@ -273,6 +275,6 @@ struct TeacherProfileView: View {
         }
         .buttonStyle(.bordered)
         .tint(.red)
-        .hapticFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
     }
 }

@@ -74,6 +74,7 @@ struct QuizView: View {
     private var timerBadge: some View {
         HStack(spacing: 4) {
             Image(systemName: "timer")
+                .symbolEffect(.variableColor.iterative, isActive: timeRemaining < 60)
             Text(timeString)
         }
         .font(.caption.bold().monospacedDigit())
@@ -219,7 +220,7 @@ struct QuizView: View {
                     )
                 }
                 .buttonStyle(.plain)
-                .hapticFeedback(.selection, trigger: selectedAnswers[currentQuestion])
+                .sensoryFeedback(.selection, trigger: selectedAnswers[currentQuestion])
                 .accessibilityLabel("Option \(index + 1): \(option)")
                 .accessibilityAddTraits(selectedAnswers[currentQuestion] == index ? .isSelected : [])
             }
@@ -263,7 +264,7 @@ struct QuizView: View {
             )
         }
         .buttonStyle(.plain)
-        .hapticFeedback(.selection, trigger: selectedAnswers[currentQuestion])
+        .sensoryFeedback(.selection, trigger: selectedAnswers[currentQuestion])
         .accessibilityLabel(label)
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
@@ -517,6 +518,7 @@ struct QuizView: View {
                     HStack(spacing: 8) {
                         Image(systemName: "clock.badge.questionmark")
                             .font(.body)
+                            .symbolEffect(.pulse)
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Pending Manual Review")
                                 .font(.subheadline.bold())
@@ -546,7 +548,7 @@ struct QuizView: View {
             }
             .padding()
         }
-        .hapticFeedback(.success, trigger: isSubmitted)
+        .sensoryFeedback(.success, trigger: isSubmitted)
     }
 
     private func resultStat(label: String, value: String, color: Color) -> some View {

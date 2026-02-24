@@ -186,7 +186,7 @@ struct PeerReviewSetupView: View {
             .buttonStyle(.borderedProminent)
             .tint(.pink)
             .disabled(submittedStudentCount < 2)
-            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             .accessibilityLabel("Assign reviewers")
             .accessibilityHint(submittedStudentCount < 2
                 ? "Needs at least 2 submissions"

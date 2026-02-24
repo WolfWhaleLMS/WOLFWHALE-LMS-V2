@@ -47,7 +47,7 @@ struct ParentSettingsView: View {
                             isOn: $viewModel.absenceAlertEnabled
                         )
                         .labelsHidden()
-                        .hapticFeedback(.selection, trigger: viewModel.absenceAlertEnabled)
+                        .sensoryFeedback(.selection, trigger: viewModel.absenceAlertEnabled)
                     }
                 } header: {
                     Text("Alert Preferences")
@@ -76,7 +76,7 @@ struct ParentSettingsView: View {
                             }
                         ))
                         .labelsHidden()
-                        .hapticFeedback(.selection, trigger: viewModel.offlineModeEnabled)
+                        .sensoryFeedback(.selection, trigger: viewModel.offlineModeEnabled)
                     }
 
                     if viewModel.isSyncingOffline {
@@ -143,7 +143,7 @@ struct ParentSettingsView: View {
                                 )
                             )
                             .labelsHidden()
-                            .hapticFeedback(.selection, trigger: viewModel.biometricEnabled)
+                            .sensoryFeedback(.selection, trigger: viewModel.biometricEnabled)
                         }
                     } header: {
                         Text("Security")
@@ -161,7 +161,7 @@ struct ParentSettingsView: View {
                             .foregroundStyle(.red)
                     }
                     .tint(.red)
-                    .hapticFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
                 }
             }
             .navigationTitle("Settings")

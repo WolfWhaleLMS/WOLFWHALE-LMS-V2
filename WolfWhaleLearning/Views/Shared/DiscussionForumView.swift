@@ -57,7 +57,7 @@ struct DiscussionForumView: View {
                     .background(Color.accentColor, in: Circle())
                     .shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
             }
-            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             .padding(20)
             .accessibilityLabel("New thread")
             .accessibilityHint("Double tap to create a new discussion thread")
@@ -207,7 +207,7 @@ struct DiscussionForumView: View {
                         viewModel.createThread(courseId: course.id, title: newThreadTitle, content: newThreadContent)
                         showNewThread = false
                     }
-                    .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                     .disabled(
                         newThreadTitle.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
                         newThreadContent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty

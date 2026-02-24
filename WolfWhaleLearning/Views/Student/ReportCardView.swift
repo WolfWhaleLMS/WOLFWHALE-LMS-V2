@@ -106,6 +106,7 @@ struct ReportCardView: View {
             Image(systemName: "graduationcap.fill")
                 .font(.system(size: 36))
                 .foregroundStyle(.indigo)
+                .symbolEffect(.breathe)
 
             Text("WolfWhale LMS")
                 .font(.title2.bold())
@@ -305,6 +306,7 @@ struct ReportCardView: View {
             Image(systemName: icon)
                 .font(.title3)
                 .foregroundStyle(color)
+                .symbolEffect(.bounce)
             Text("\(count)")
                 .font(.headline)
             Text(label)
@@ -372,7 +374,7 @@ struct ReportCardView: View {
         .buttonStyle(.borderedProminent)
         .tint(.indigo)
         .disabled(isGenerating)
-        .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         .padding(.top, 4)
     }
 

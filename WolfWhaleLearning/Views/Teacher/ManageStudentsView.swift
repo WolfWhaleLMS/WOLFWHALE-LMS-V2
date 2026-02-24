@@ -96,7 +96,7 @@ struct ManageStudentsView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(copiedCode ? .green : .pink)
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
 
             Text("Share this code with students so they can enroll in the course.")
@@ -239,7 +239,7 @@ struct ManageStudentsView: View {
                     .background(.red.opacity(0.1), in: .rect(cornerRadius: 8))
             }
             .buttonStyle(.plain)
-            .hapticFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
         }
         .padding(12)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))

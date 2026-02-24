@@ -70,6 +70,7 @@ struct ChildDetailView: View {
                     Image(systemName: displayChild.avatarSystemName)
                         .font(.title2)
                         .foregroundStyle(.white)
+                        .symbolEffect(.breathe)
                 }
 
             VStack(alignment: .leading, spacing: 4) {
@@ -160,6 +161,7 @@ struct ChildDetailView: View {
                 HStack {
                     Image(systemName: "book.closed")
                         .foregroundStyle(.secondary)
+                        .symbolEffect(.pulse)
                     Text("No courses enrolled")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
@@ -231,7 +233,7 @@ struct ChildDetailView: View {
             .tint(.pink)
             .controlSize(.small)
             .disabled(isCreatingConversation)
-            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         }
         .padding(14)
         .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 16))
@@ -250,6 +252,7 @@ struct ChildDetailView: View {
                 HStack {
                     Image(systemName: "tray")
                         .foregroundStyle(.secondary)
+                        .symbolEffect(.pulse)
                     Text("No recent assignments")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
@@ -360,6 +363,7 @@ struct ChildDetailView: View {
             Image(systemName: icon)
                 .font(.title2)
                 .foregroundStyle(color)
+                .symbolEffect(.bounce)
 
             Text(title)
                 .font(.subheadline.bold())

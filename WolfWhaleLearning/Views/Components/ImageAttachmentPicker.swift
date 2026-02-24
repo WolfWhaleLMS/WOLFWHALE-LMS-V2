@@ -113,7 +113,7 @@ struct ImageAttachmentPicker: View {
                     .foregroundStyle(.red)
                 }
                 .buttonStyle(.plain)
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
         }
         .onChange(of: selectedPhotos) { _, newItems in
@@ -151,7 +151,7 @@ struct ImageAttachmentPicker: View {
             }
             .buttonStyle(.plain)
             .padding(4)
-            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         }
     }
 

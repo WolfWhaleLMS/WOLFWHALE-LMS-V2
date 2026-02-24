@@ -164,6 +164,7 @@ struct UniversalSearchView: View {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 48))
                     .foregroundStyle(.secondary.opacity(0.5))
+                    .symbolEffect(.pulse)
                 Text("Search Everything")
                     .font(.headline)
                     .foregroundStyle(.secondary)
@@ -212,7 +213,7 @@ struct UniversalSearchView: View {
             }
             .padding(.vertical, 2)
         }
-        .hapticFeedback(.selection, trigger: hapticTrigger)
+        .sensoryFeedback(.selection, trigger: hapticTrigger)
     }
 
     // MARK: - Results Header
@@ -273,7 +274,7 @@ struct UniversalSearchView: View {
                 .buttonStyle(.plain)
             }
         }
-        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
     }
 
     // MARK: - Loading
@@ -297,6 +298,7 @@ struct UniversalSearchView: View {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 44))
                 .foregroundStyle(.secondary.opacity(0.5))
+                .symbolEffect(.bounce)
             Text("No results for '\(searchText)'")
                 .font(.headline)
                 .foregroundStyle(.secondary)

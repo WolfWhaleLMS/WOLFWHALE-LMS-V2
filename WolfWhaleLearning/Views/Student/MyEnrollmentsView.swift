@@ -137,7 +137,7 @@ struct MyEnrollmentsView: View {
             } message: {
                 Text("This will remove your enrollment request. You can re-enroll from the Course Catalog.")
             }
-            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         }
     }
 
@@ -164,6 +164,7 @@ struct MyEnrollmentsView: View {
             Image(systemName: request.status.iconName)
                 .font(.title3)
                 .foregroundStyle(Theme.courseColor(request.status.color))
+                .symbolEffect(.pulse)
                 .frame(width: 32)
 
             VStack(alignment: .leading, spacing: 3) {

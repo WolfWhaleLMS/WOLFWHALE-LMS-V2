@@ -60,7 +60,7 @@ struct TermsAcceptanceView: View {
                     .foregroundStyle(acceptedTerms ? Color.purple : Color.gray.opacity(0.5))
             }
             .buttonStyle(.plain)
-            .hapticFeedback(.selection, trigger: hapticTrigger)
+            .sensoryFeedback(.selection, trigger: hapticTrigger)
             .accessibilityLabel(acceptedTerms ? "Terms of Service accepted" : "Terms of Service not accepted")
             .accessibilityHint("Double tap to toggle acceptance of Terms of Service")
 
@@ -116,7 +116,7 @@ struct TermsAcceptanceView: View {
                     .foregroundStyle(acceptedPrivacy ? Color.purple : Color.gray.opacity(0.5))
             }
             .buttonStyle(.plain)
-            .hapticFeedback(.selection, trigger: hapticTrigger)
+            .sensoryFeedback(.selection, trigger: hapticTrigger)
             .accessibilityLabel(acceptedPrivacy ? "Privacy Policy accepted" : "Privacy Policy not accepted")
             .accessibilityHint("Double tap to toggle acceptance of Privacy Policy")
 

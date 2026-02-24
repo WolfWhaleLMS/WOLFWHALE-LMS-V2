@@ -121,6 +121,7 @@ struct ProgressDetailView: View {
             HStack(spacing: 8) {
                 Image(systemName: "flame.fill")
                     .foregroundStyle(.orange)
+                    .symbolEffect(.bounce, options: .repeat(.periodic(delay: 2)))
                 VStack(alignment: .leading, spacing: 1) {
                     Text("\(streak) Day Streak")
                         .font(.subheadline.bold())
@@ -133,6 +134,7 @@ struct ProgressDetailView: View {
             HStack(spacing: 8) {
                 Image(systemName: "book.closed.fill")
                     .foregroundStyle(.blue)
+                    .symbolEffect(.pulse)
                 VStack(alignment: .leading, spacing: 1) {
                     Text("\(viewModel.courses.count) Courses")
                         .font(.subheadline.bold())
@@ -145,6 +147,7 @@ struct ProgressDetailView: View {
             HStack(spacing: 8) {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundStyle(.green)
+                    .symbolEffect(.bounce)
                 VStack(alignment: .leading, spacing: 1) {
                     let totalCompleted = allProgress.reduce(0) { $0 + $1.lessonsCompleted }
                     let totalLessons = allProgress.reduce(0) { $0 + $1.lessonsTotal }
@@ -173,6 +176,7 @@ struct ProgressDetailView: View {
                     HStack {
                         Image(systemName: "arrow.right.circle.fill")
                             .foregroundStyle(.orange)
+                            .symbolEffect(.wiggle, options: .repeat(.periodic(delay: 3)))
                         Text("Next Up")
                             .font(.headline)
                         Spacer()
@@ -248,6 +252,7 @@ struct ProgressDetailView: View {
                     Image(systemName: "chart.bar.fill")
                         .font(.title2)
                         .foregroundStyle(.secondary)
+                        .symbolEffect(.pulse)
                     Text("No courses yet")
                         .font(.subheadline.bold())
                         .foregroundStyle(.secondary)
@@ -296,7 +301,7 @@ struct ProgressDetailView: View {
             .padding(.vertical, 5)
             .background(.quaternary, in: Capsule())
         }
-        .hapticFeedback(.selection, trigger: hapticTrigger)
+        .sensoryFeedback(.selection, trigger: hapticTrigger)
     }
 
     // MARK: - Vertical Course Card (for list layout)

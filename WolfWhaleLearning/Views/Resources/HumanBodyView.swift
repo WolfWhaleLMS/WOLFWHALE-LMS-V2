@@ -669,7 +669,7 @@ private struct BodySystemDetailSheet: View {
                                 in: .rect(cornerRadius: 14)
                             )
                     }
-                    .hapticFeedback(.impact(flexibility: .soft), trigger: quizIndex)
+                    .sensoryFeedback(.impact(flexibility: .soft), trigger: quizIndex)
                 }
             } else {
                 VStack(spacing: 16) {

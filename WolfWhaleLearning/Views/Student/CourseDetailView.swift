@@ -42,6 +42,7 @@ struct CourseDetailView: View {
                         Image(systemName: course.iconSystemName)
                             .font(.system(size: 36))
                             .foregroundStyle(.white)
+                            .symbolEffect(.breathe)
                         Text(course.title)
                             .font(.title3.bold())
                             .foregroundStyle(.white)
@@ -81,6 +82,7 @@ struct CourseDetailView: View {
                 Image(systemName: "bubble.left.and.bubble.right.fill")
                     .font(.title3)
                     .foregroundStyle(Color.accentColor)
+                    .symbolEffect(.pulse)
                     .frame(width: 36, height: 36)
                     .background(Color.accentColor.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
 
@@ -120,6 +122,7 @@ struct CourseDetailView: View {
                     Image(systemName: "folder")
                         .font(.title2)
                         .foregroundStyle(.secondary)
+                        .symbolEffect(.bounce)
                     Text("No modules yet")
                         .font(.subheadline.bold())
                         .foregroundStyle(.secondary)
@@ -186,6 +189,7 @@ struct CourseDetailView: View {
             if lesson.isCompleted {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundStyle(.green)
+                    .symbolEffect(.bounce)
             } else {
                 Image(systemName: "chevron.right")
                     .font(.caption)

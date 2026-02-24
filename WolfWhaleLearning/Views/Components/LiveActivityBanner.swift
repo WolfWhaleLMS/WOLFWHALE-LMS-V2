@@ -52,7 +52,7 @@ struct LiveActivityBanner: View {
                     .padding(.vertical, 6)
                     .background(.red.gradient, in: Capsule())
             }
-            .hapticFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
             .accessibilityLabel("End live session")
             .accessibilityHint("Double tap to end the current live class session")
         }
@@ -93,7 +93,7 @@ struct LiveActivityBanner: View {
             )
         }
         .buttonStyle(.plain)
-        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         .accessibilityLabel("Start live session")
         .accessibilityHint("Double tap to configure and start a Dynamic Island live session for \(courseName)")
         .sheet(isPresented: $showStartSheet) {
@@ -151,7 +151,7 @@ struct LiveActivityBanner: View {
                         hapticTrigger.toggle()
                         showStartSheet = false
                     }
-                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Start") {
@@ -167,7 +167,7 @@ struct LiveActivityBanner: View {
                         showStartSheet = false
                     }
                     .fontWeight(.semibold)
-                    .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                 }
             }
         }

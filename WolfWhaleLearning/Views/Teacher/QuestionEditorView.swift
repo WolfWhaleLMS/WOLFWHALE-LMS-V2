@@ -48,14 +48,14 @@ struct QuestionEditorView: View {
                 }
                 .fontWeight(.semibold)
                 .foregroundStyle(.indigo)
-                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             }
             ToolbarItem(placement: .cancellationAction) {
                 Button("Cancel") {
                     hapticTrigger.toggle()
                     dismiss()
                 }
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
         }
         .onAppear {
@@ -233,7 +233,7 @@ struct QuestionEditorView: View {
                             .foregroundStyle(question.options[index].isCorrect ? .green : .secondary)
                     }
                     .buttonStyle(.plain)
-                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
                     TextField("Option \(index + 1)", text: $question.options[index].text)
                         .textFieldStyle(.roundedBorder)
@@ -252,7 +252,7 @@ struct QuestionEditorView: View {
                                 .foregroundStyle(.red.opacity(0.7))
                         }
                         .buttonStyle(.plain)
-                        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     }
                 }
             }
@@ -268,7 +268,7 @@ struct QuestionEditorView: View {
                         .font(.subheadline)
                         .foregroundStyle(.indigo)
                 }
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
 
             Text("Tap the circle to mark the correct answer\(allowMultipleCorrect ? "s" : "")")
@@ -336,7 +336,7 @@ struct QuestionEditorView: View {
                     )
                 }
                 .buttonStyle(.plain)
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
         }
         .padding(14)
@@ -377,7 +377,7 @@ struct QuestionEditorView: View {
                                 .foregroundStyle(.red.opacity(0.7))
                         }
                         .buttonStyle(.plain)
-                        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     }
                 }
             }
@@ -392,7 +392,7 @@ struct QuestionEditorView: View {
                     .font(.subheadline)
                     .foregroundStyle(.indigo)
             }
-            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
             Divider()
 
@@ -454,7 +454,7 @@ struct QuestionEditorView: View {
                                 .foregroundStyle(.red.opacity(0.7))
                         }
                         .buttonStyle(.plain)
-                        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     }
                 }
             }
@@ -469,7 +469,7 @@ struct QuestionEditorView: View {
                     .font(.subheadline)
                     .foregroundStyle(.indigo)
             }
-            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
             Divider()
 
@@ -514,7 +514,7 @@ struct QuestionEditorView: View {
                                     .foregroundStyle(.red.opacity(0.7))
                             }
                             .buttonStyle(.plain)
-                            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                         }
                     }
 
@@ -560,7 +560,7 @@ struct QuestionEditorView: View {
                         .font(.subheadline)
                         .foregroundStyle(.indigo)
                 }
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
 
             HStack(spacing: 6) {

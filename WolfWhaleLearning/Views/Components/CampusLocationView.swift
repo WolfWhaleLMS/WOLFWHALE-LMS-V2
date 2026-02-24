@@ -304,7 +304,7 @@ struct CampusLocationView: View {
                 .frame(height: 50)
         }
         .buttonStyle(.borderedProminent)
-        .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         .tint(
             LinearGradient(
                 colors: [.purple, .blue],

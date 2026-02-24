@@ -30,7 +30,7 @@ struct TeacherCoursesView: View {
                         hapticTrigger.toggle()
                         showCreateCourse = true
                     }
-                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .accessibilityLabel("Create new course")
                     .accessibilityHint("Double tap to create a new course")
                 }
@@ -59,6 +59,7 @@ struct TeacherCoursesView: View {
                         Image(systemName: course.iconSystemName)
                             .font(.title3)
                             .foregroundStyle(.white)
+                            .symbolEffect(.pulse)
                     }
 
                 VStack(alignment: .leading, spacing: 4) {

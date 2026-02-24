@@ -35,7 +35,7 @@ struct OnboardingView: View {
                                         .glassEffect(.regular, in: .capsule)
                                 }
                         }
-                        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                         .accessibilityLabel("Skip onboarding")
                         .accessibilityHint("Double tap to skip to login")
                     }
@@ -294,7 +294,7 @@ struct OnboardingView: View {
             .clipShape(.rect(cornerRadius: 16))
             .padding(.horizontal, 32)
             .shadow(color: .pink.opacity(0.4), radius: 16, y: 8)
-            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
             Spacer()
                 .frame(height: 20)

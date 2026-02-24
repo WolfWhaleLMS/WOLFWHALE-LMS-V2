@@ -131,6 +131,7 @@ struct GradesView: View {
                                 Image(systemName: grade.courseIcon)
                                     .foregroundStyle(.white)
                                     .symbolRenderingMode(.hierarchical)
+                                    .symbolEffect(.bounce)
                             }
 
                         VStack(alignment: .leading, spacing: 2) {

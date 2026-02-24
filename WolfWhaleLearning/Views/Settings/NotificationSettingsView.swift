@@ -58,7 +58,7 @@ struct NotificationSettingsView: View {
                             .foregroundStyle(.blue)
                     }
                 }
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
 
             if systemPermission == .notDetermined {
@@ -77,7 +77,7 @@ struct NotificationSettingsView: View {
                             .foregroundStyle(.blue)
                     }
                 }
-                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             }
         } header: {
             sectionHeader(title: "Status", icon: "checkmark.shield.fill")
@@ -155,7 +155,7 @@ struct NotificationSettingsView: View {
                 } label: {
                     Label("Clear All Scheduled", systemImage: "trash")
                 }
-                .hapticFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
             }
         } header: {
             sectionHeader(title: "Scheduled", icon: "calendar.badge.clock")
@@ -227,7 +227,7 @@ struct NotificationSettingsView: View {
             Spacer()
             Toggle(title, isOn: isOn)
                 .labelsHidden()
-                .hapticFeedback(.selection, trigger: isOn.wrappedValue)
+                .sensoryFeedback(.selection, trigger: isOn.wrappedValue)
         }
     }
 

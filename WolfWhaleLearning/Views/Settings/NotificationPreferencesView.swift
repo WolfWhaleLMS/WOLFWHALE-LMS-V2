@@ -67,7 +67,7 @@ struct NotificationPreferencesView: View {
                             .foregroundStyle(.blue)
                     }
                 }
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
         } header: {
             sectionHeader(title: "Status", icon: "checkmark.shield.fill")
@@ -121,7 +121,7 @@ struct NotificationPreferencesView: View {
                         }
                     }
                 }
-                .hapticFeedback(.selection, trigger: hapticTrigger)
+                .sensoryFeedback(.selection, trigger: hapticTrigger)
             }
         } header: {
             sectionHeader(title: "Reminder Timing", icon: "clock.fill")
@@ -192,7 +192,7 @@ struct NotificationPreferencesView: View {
                 } label: {
                     Label("Clear Assignment Reminders", systemImage: "trash")
                 }
-                .hapticFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
             }
 
             Button {
@@ -207,7 +207,7 @@ struct NotificationPreferencesView: View {
                         .foregroundStyle(.indigo)
                 }
             }
-            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         } header: {
             sectionHeader(title: "Scheduled", icon: "calendar.badge.clock")
         }
@@ -246,7 +246,7 @@ struct NotificationPreferencesView: View {
                         .foregroundStyle(.indigo)
                 }
             }
-            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             .overlay {
                 if showTestConfirmation {
                     HStack {
@@ -293,7 +293,7 @@ struct NotificationPreferencesView: View {
             Spacer()
             Toggle(title, isOn: isOn)
                 .labelsHidden()
-                .hapticFeedback(.selection, trigger: isOn.wrappedValue)
+                .sensoryFeedback(.selection, trigger: isOn.wrappedValue)
         }
     }
 

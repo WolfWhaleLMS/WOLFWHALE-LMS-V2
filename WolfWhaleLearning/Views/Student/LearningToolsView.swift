@@ -164,7 +164,7 @@ struct LearningToolsView: View {
                         )
                     }
                     .buttonStyle(.plain)
-                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
             .padding(.horizontal)

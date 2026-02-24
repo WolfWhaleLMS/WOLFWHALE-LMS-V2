@@ -48,7 +48,7 @@ struct SubmitAssignmentView: View {
                         dismiss()
                     }
                     .disabled(isSubmitting)
-                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
             .alert("Submission Error", isPresented: $showError) {
@@ -235,7 +235,7 @@ struct SubmitAssignmentView: View {
         .buttonStyle(.borderedProminent)
         .tint(.blue)
         .disabled(isSubmitDisabled)
-        .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
     }
 
     // MARK: - Loading Overlay

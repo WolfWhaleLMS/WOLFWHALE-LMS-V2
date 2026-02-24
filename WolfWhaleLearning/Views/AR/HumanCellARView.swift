@@ -73,7 +73,7 @@ struct HumanCellARView: View {
                         .font(.title3)
                         .foregroundStyle(.secondary)
                 }
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
 
             if let info = selectedOrganelleInfo {

@@ -70,7 +70,7 @@ struct WhatsNewView: View {
                     .padding(.horizontal, 32)
                     .padding(.vertical, 16)
                     .shadow(color: .indigo.opacity(0.3), radius: 12, y: 6)
-                    .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                 }
             }
         }

@@ -78,8 +78,8 @@ struct TeacherReportCardView: View {
                     }
                 )
             }
-            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
-            .hapticFeedback(.success, trigger: showSavedConfirmation)
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .sensoryFeedback(.success, trigger: showSavedConfirmation)
             .task {
                 await viewModel.loadAcademicCalendar()
             }
@@ -97,6 +97,7 @@ struct TeacherReportCardView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "exclamationmark.triangle")
                         .foregroundStyle(.orange)
+                        .symbolEffect(.wiggle)
                     Text("No terms configured. Ask an administrator to set up the academic calendar.")
                         .font(.subheadline)
                         .foregroundStyle(Color(.secondaryLabel))
@@ -221,6 +222,7 @@ struct TeacherReportCardView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundStyle(.green)
+                            .symbolEffect(.bounce)
                         Text("Saved \(savedCount)")
                             .font(.caption.bold())
                             .foregroundStyle(.green)
@@ -239,6 +241,7 @@ struct TeacherReportCardView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "person.3")
                         .foregroundStyle(Color(.secondaryLabel))
+                        .symbolEffect(.pulse)
                     Text("No students found for this course")
                         .font(.subheadline)
                         .foregroundStyle(Color(.secondaryLabel))
@@ -261,6 +264,7 @@ struct TeacherReportCardView: View {
                 Image(systemName: "person.crop.circle.fill")
                     .font(.title3)
                     .foregroundStyle(.indigo)
+                    .symbolEffect(.pulse)
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(studentName)
@@ -491,7 +495,7 @@ struct CommentTemplatesSheet: View {
                     Button("Cancel") { dismiss() }
                 }
             }
-            .hapticFeedback(.selection, trigger: hapticTrigger)
+            .sensoryFeedback(.selection, trigger: hapticTrigger)
         }
     }
 

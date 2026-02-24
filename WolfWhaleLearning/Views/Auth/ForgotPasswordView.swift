@@ -135,7 +135,7 @@ struct ForgotPasswordView: View {
             .tint(Color.purple)
             .clipShape(.rect(cornerRadius: 12))
             .disabled(isLoading || email.isEmpty)
-            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
             // Back to Login button
             Button {
@@ -150,7 +150,7 @@ struct ForgotPasswordView: View {
                 }
                 .foregroundStyle(.purple)
             }
-            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             .padding(.top, 4)
         }
     }

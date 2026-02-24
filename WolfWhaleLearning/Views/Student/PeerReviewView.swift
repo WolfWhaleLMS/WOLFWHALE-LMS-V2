@@ -473,7 +473,7 @@ struct PeerReviewDetailView: View {
                             )
                         }
                         .buttonStyle(.plain)
-                        .hapticFeedback(.selection, trigger: hapticTrigger)
+                        .sensoryFeedback(.selection, trigger: hapticTrigger)
                         .accessibilityLabel("\(level.label), \(level.points) points")
                         .accessibilityHint(rubricScores[criterion.id] == level.points ? "Currently selected" : "Double tap to select")
                     }
@@ -555,7 +555,7 @@ struct PeerReviewDetailView: View {
             .buttonStyle(.borderedProminent)
             .tint(.indigo)
             .disabled(!isValid || isSubmitting || review.status == .completed)
-            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             .accessibilityLabel("Submit peer review")
             .accessibilityHint(isValid ? "Submits your score and feedback" : "Please provide feedback first")
 

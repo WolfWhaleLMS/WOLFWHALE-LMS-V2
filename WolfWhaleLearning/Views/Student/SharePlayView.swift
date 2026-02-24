@@ -210,7 +210,7 @@ struct SharePlayView: View {
                     .foregroundStyle(sharePlayService.studyState.currentPage > 0 ? .indigo : .secondary)
             }
             .disabled(sharePlayService.studyState.currentPage <= 0)
-            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
             Text("\(sharePlayService.studyState.currentPage + 1)")
                 .font(.title2.bold().monospacedDigit())
@@ -229,7 +229,7 @@ struct SharePlayView: View {
                     .background(.indigo.gradient, in: Capsule())
                     .foregroundStyle(.white)
             }
-            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         }
         .padding(16)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 20))
@@ -254,7 +254,7 @@ struct SharePlayView: View {
                         .background(.indigo.gradient, in: Capsule())
                         .foregroundStyle(.white)
                 }
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
 
             if sharePlayService.currentPageAnnotations.isEmpty {
@@ -330,7 +330,7 @@ struct SharePlayView: View {
                         )
                         .foregroundStyle(sharePlayService.studyState.isQuizMode ? .red : .white)
                 }
-                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             }
 
             if sharePlayService.studyState.isQuizMode {
@@ -421,7 +421,7 @@ struct SharePlayView: View {
         }
         .buttonStyle(.plain)
         .disabled(isSubmitted)
-        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
     }
 
     // MARK: - Leave Session Button
@@ -438,7 +438,7 @@ struct SharePlayView: View {
                 .padding(.vertical, 14)
                 .background(.red.opacity(0.1), in: Capsule())
         }
-        .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
     }
 
     // MARK: - Waiting Card
@@ -468,7 +468,7 @@ struct SharePlayView: View {
                     .background(.ultraThinMaterial, in: Capsule())
                     .foregroundStyle(.secondary)
             }
-            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         }
         .padding(30)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 20))
@@ -510,7 +510,7 @@ struct SharePlayView: View {
                         .background(.indigo.gradient, in: Capsule())
                         .foregroundStyle(.white)
                 }
-                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                 .disabled(sharePlayService.isLoading)
 
                 faceTimePrompt
@@ -578,7 +578,7 @@ struct SharePlayView: View {
                         .background(.indigo.gradient, in: Capsule())
                         .foregroundStyle(.white)
                 }
-                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                 .disabled(newAnnotationText.trimmingCharacters(in: .whitespaces).isEmpty)
             }
             .padding(30)

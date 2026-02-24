@@ -45,8 +45,8 @@ struct DeleteAccountView: View {
         .scrollDismissesKeyboard(.interactively)
         .navigationTitle("Delete Account")
         .navigationBarTitleDisplayMode(.inline)
-        .hapticFeedback(.error, trigger: errorHapticTrigger)
-        .hapticFeedback(.success, trigger: successHapticTrigger)
+        .sensoryFeedback(.error, trigger: errorHapticTrigger)
+        .sensoryFeedback(.success, trigger: successHapticTrigger)
         .overlay {
             if authService.isLoading {
                 deletingOverlay
@@ -260,7 +260,7 @@ struct DeleteAccountView: View {
             .tint(.red)
             .clipShape(.rect(cornerRadius: 12))
             .disabled(!canDelete)
-            .hapticFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
             .accessibilityLabel("Delete my account")
             .accessibilityHint(canDelete ? "Double tap to permanently delete your account" : "Type DELETE above to enable this button")
 
@@ -273,7 +273,7 @@ struct DeleteAccountView: View {
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(.indigo)
             }
-            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             .padding(.top, 4)
         }
     }

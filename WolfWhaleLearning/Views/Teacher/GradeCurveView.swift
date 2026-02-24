@@ -134,7 +134,7 @@ struct GradeCurveView: View {
                         hapticTrigger.toggle()
                         dismiss()
                     }
-                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
             .overlay {
@@ -225,7 +225,7 @@ struct GradeCurveView: View {
                 Capsule().strokeBorder(color.opacity(0.3), lineWidth: 1)
             )
         }
-        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         .accessibilityLabel("\(course.title)\(isSelected ? ", selected" : "")")
     }
 
@@ -294,7 +294,7 @@ struct GradeCurveView: View {
             )
         }
         .buttonStyle(.plain)
-        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         .accessibilityLabel("\(title), \(count) graded submissions\(isSelected ? ", selected" : "")")
     }
 
@@ -446,7 +446,7 @@ struct GradeCurveView: View {
             )
         }
         .buttonStyle(.plain)
-        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         .accessibilityLabel("\(type.rawValue)\(isSelected ? ", selected" : "")")
         .accessibilityHint(type.description)
     }
@@ -702,7 +702,7 @@ struct GradeCurveView: View {
         }
         .buttonStyle(.bordered)
         .tint(.indigo)
-        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         .accessibilityLabel(showPreview ? "Hide preview" : "Preview changes")
     }
 
@@ -728,7 +728,7 @@ struct GradeCurveView: View {
         .buttonStyle(.borderedProminent)
         .tint(.pink)
         .disabled(isApplying || currentStats.count == 0)
-        .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         .accessibilityLabel("Apply \(curveType.rawValue) to \(currentStats.count) grades")
     }
 

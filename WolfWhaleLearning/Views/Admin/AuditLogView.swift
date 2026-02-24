@@ -58,7 +58,7 @@ struct AuditLogView: View {
                     } label: {
                         Label("Filters", systemImage: showFilters ? "line.3.horizontal.decrease.circle.fill" : "line.3.horizontal.decrease.circle")
                     }
-                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
             .task {
@@ -187,7 +187,7 @@ struct AuditLogView: View {
                 Label("Clear Filters", systemImage: "xmark.circle")
                     .foregroundStyle(.red)
             }
-            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         }
     }
 

@@ -139,7 +139,7 @@ struct RadioView: View {
             )
         }
         .buttonStyle(.plain)
-        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         .accessibilityLabel("\(station.name), \(station.description)")
         .accessibilityHint(isActive ? "Currently playing. Double tap to pause." : "Double tap to play.")
     }
@@ -273,7 +273,7 @@ struct RadioView: View {
                     .glassEffect(.regular, in: .circle)
             }
             .disabled(radioService.currentStation == nil)
-            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             .accessibilityLabel("Previous station")
 
             // Play/Pause button
@@ -304,7 +304,7 @@ struct RadioView: View {
                         .contentTransition(.symbolEffect(.replace))
                 }
             }
-            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             .accessibilityLabel(radioService.isPlaying ? "Pause" : "Play")
 
             // Next station
@@ -320,7 +320,7 @@ struct RadioView: View {
                     .glassEffect(.regular, in: .circle)
             }
             .disabled(radioService.currentStation == nil)
-            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             .accessibilityLabel("Next station")
         }
         .frame(maxWidth: .infinity)
@@ -463,7 +463,7 @@ struct RadioView: View {
                             .foregroundStyle(.primary)
                             .contentTransition(.symbolEffect(.replace))
                     }
-                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .accessibilityLabel(radioService.isPlaying ? "Pause" : "Play")
 
                     // Stop
@@ -478,7 +478,7 @@ struct RadioView: View {
                             .font(.title3)
                             .foregroundStyle(.secondary)
                     }
-                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .accessibilityLabel("Stop")
                 }
                 .padding(.horizontal, 16)
@@ -582,7 +582,7 @@ struct RadioMiniPlayer: View {
                         .foregroundStyle(.primary)
                         .contentTransition(.symbolEffect(.replace))
                 }
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
                 Button {
                     hapticTrigger.toggle()
@@ -592,7 +592,7 @@ struct RadioMiniPlayer: View {
                         .font(.caption.bold())
                         .foregroundStyle(.secondary)
                 }
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 10)

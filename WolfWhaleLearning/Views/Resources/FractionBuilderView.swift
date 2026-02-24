@@ -251,8 +251,8 @@ struct FractionBuilderView: View {
         }
         .navigationTitle("Fraction Builder")
         .navigationBarTitleDisplayMode(.inline)
-        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
-        .hapticFeedback(.impact(weight: .heavy), trigger: wrongHapticTrigger)
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .heavy), trigger: wrongHapticTrigger)
     }
 
     private var backgroundGradient: some View {

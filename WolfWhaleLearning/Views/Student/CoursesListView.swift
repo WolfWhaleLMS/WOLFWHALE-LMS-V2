@@ -75,7 +75,7 @@ struct CoursesListView: View {
                         enrollmentError = nil
                         showJoinSheet = true
                     }
-                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .accessibilityLabel("Join a course")
                     .accessibilityHint("Double tap to enter a class code and enroll")
                 }
@@ -93,6 +93,7 @@ struct CoursesListView: View {
                     Image(systemName: "rectangle.and.pencil.and.ellipsis")
                         .font(.largeTitle)
                         .foregroundStyle(.indigo)
+                        .symbolEffect(.bounce)
                     Text("Join a Course")
                         .font(.title2.bold())
                     Text("Enter the class code provided by your teacher.")
@@ -148,7 +149,7 @@ struct CoursesListView: View {
                 .buttonStyle(.borderedProminent)
                 .tint(.indigo)
                 .disabled(classCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isEnrolling)
-                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
                 Spacer()
             }
@@ -161,7 +162,7 @@ struct CoursesListView: View {
                         hapticTrigger.toggle()
                         showJoinSheet = false
                     }
-                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
         }
@@ -201,6 +202,7 @@ struct CoursesListView: View {
                     Image(systemName: course.iconSystemName)
                         .font(.title2)
                         .foregroundStyle(.white)
+                        .symbolEffect(.pulse)
                 }
 
             VStack(alignment: .leading, spacing: 4) {

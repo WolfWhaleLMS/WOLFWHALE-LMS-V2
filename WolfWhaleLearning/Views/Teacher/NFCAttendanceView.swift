@@ -125,7 +125,7 @@ struct NFCAttendanceView: View {
                 Theme.brandGradientHorizontal
             )
             .disabled(nfcService?.isScanning == true || nfcService?.isNFCAvailable != true)
-            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
             if nfcService?.isNFCAvailable != true {
                 Label("NFC is not available on this device", systemImage: "exclamationmark.triangle.fill")
@@ -246,7 +246,7 @@ struct NFCAttendanceView: View {
         .buttonStyle(.borderedProminent)
         .tint(.pink)
         .disabled(checkedInStudents.isEmpty || isSaving)
-        .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         .padding(.top, 4)
     }
 

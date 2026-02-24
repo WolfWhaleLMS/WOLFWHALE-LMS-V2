@@ -51,8 +51,8 @@ struct PasswordResetView: View {
                 successOverlay
             }
         }
-        .hapticFeedback(.success, trigger: successHapticTrigger)
-        .hapticFeedback(.error, trigger: errorHapticTrigger)
+        .sensoryFeedback(.success, trigger: successHapticTrigger)
+        .sensoryFeedback(.error, trigger: errorHapticTrigger)
     }
 
     // MARK: - Header
@@ -232,7 +232,7 @@ struct PasswordResetView: View {
             .tint(.indigo)
             .clipShape(.rect(cornerRadius: 12))
             .disabled(!canSubmit)
-            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             .accessibilityLabel(authService.isLoading ? "Resetting password" : "Reset Password")
             .accessibilityHint("Double tap to set your new password")
         }

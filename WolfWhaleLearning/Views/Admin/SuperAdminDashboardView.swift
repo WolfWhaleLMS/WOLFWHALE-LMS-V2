@@ -53,7 +53,7 @@ struct SuperAdminDashboardView: View {
                     } label: {
                         Label("Add Tenant", systemImage: "plus.circle.fill")
                     }
-                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
             .refreshable {
@@ -266,7 +266,7 @@ struct SuperAdminDashboardView: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .tint(.indigo)
-                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 20)
@@ -337,7 +337,7 @@ struct SuperAdminDashboardView: View {
                     .glassEffect(.regular.tint(.indigo), in: .capsule)
                     .foregroundStyle(.indigo)
             }
-            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         }
         .padding(12)
         .glassEffect(.regular.tint(.indigo), in: RoundedRectangle(cornerRadius: 12))
@@ -361,7 +361,7 @@ struct SuperAdminDashboardView: View {
             .glassEffect(.regular.tint(color).interactive(), in: RoundedRectangle(cornerRadius: 12))
             .foregroundStyle(color)
         }
-        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         .accessibilityLabel(title)
     }
 
@@ -417,7 +417,7 @@ struct SuperAdminDashboardView: View {
                         resetAddTenantForm()
                         showAddTenant = false
                     }
-                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Create") {
@@ -426,7 +426,7 @@ struct SuperAdminDashboardView: View {
                     }
                     .fontWeight(.semibold)
                     .disabled(newTenantName.trimmingCharacters(in: .whitespaces).isEmpty || isAddingTenant)
-                    .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                 }
             }
             .overlay {
@@ -569,7 +569,7 @@ struct SuperAdminDashboardView: View {
                         .foregroundStyle(.white)
                 }
                 .padding(.horizontal, 24)
-                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
                 Spacer()
             }
@@ -581,7 +581,7 @@ struct SuperAdminDashboardView: View {
                         hapticTrigger.toggle()
                         editingTenant = nil
                     }
-                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
             }
         }

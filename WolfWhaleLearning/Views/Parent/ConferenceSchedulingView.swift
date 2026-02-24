@@ -45,7 +45,7 @@ struct ConferenceSchedulingView: View {
                     Image(systemName: "plus.circle.fill")
                         .font(.title3)
                 }
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 .accessibilityLabel("Book new conference")
             }
         }
@@ -195,7 +195,7 @@ struct ConferenceSchedulingView: View {
                 .buttonStyle(.bordered)
                 .tint(.red)
                 .controlSize(.small)
-                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             }
         }
         .padding(14)
@@ -394,7 +394,7 @@ struct BookConferenceSheet: View {
                         hapticTrigger.toggle()
                         dismiss()
                     }
-                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Book") {
@@ -403,7 +403,7 @@ struct BookConferenceSheet: View {
                     }
                     .fontWeight(.semibold)
                     .disabled(!canBook)
-                    .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                 }
             }
             .alert("Error", isPresented: .constant(bookingError != nil)) {

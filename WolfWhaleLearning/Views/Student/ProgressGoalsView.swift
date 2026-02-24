@@ -52,6 +52,7 @@ struct ProgressGoalsView: View {
                     Image(systemName: "target")
                         .font(.title3.bold())
                         .foregroundStyle(.white)
+                        .symbolEffect(.pulse)
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
@@ -104,6 +105,7 @@ struct ProgressGoalsView: View {
             Image(systemName: "chart.bar.doc.horizontal")
                 .font(.largeTitle)
                 .foregroundStyle(.secondary)
+                .symbolEffect(.bounce)
             Text("No Graded Courses")
                 .font(.headline)
                 .foregroundStyle(Color(.label))
@@ -181,7 +183,7 @@ struct ProgressGoalsView: View {
                         Label("Edit Goal", systemImage: "pencil")
                             .font(.caption.bold())
                     }
-                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
                     Spacer()
 
@@ -194,7 +196,7 @@ struct ProgressGoalsView: View {
                         Label("Remove", systemImage: "trash")
                             .font(.caption.bold())
                     }
-                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
                 .padding(.top, 4)
             } else {
@@ -222,7 +224,7 @@ struct ProgressGoalsView: View {
                             .padding(.vertical, 8)
                             .background(courseColor, in: Capsule())
                     }
-                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .accessibilityLabel("Set goal for \(course.title)")
                 }
             }
@@ -526,7 +528,7 @@ private struct SetGoalSheet: View {
                                 )
                             }
                             .buttonStyle(.plain)
-                            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                             .accessibilityLabel("\(letter), \(Int(percentage)) percent")
                             .accessibilityAddTraits(isSelected ? .isSelected : [])
                         }
@@ -575,7 +577,7 @@ private struct SetGoalSheet: View {
                         )
                         dismiss()
                     }
-                    .hapticFeedback(.success, trigger: hapticTrigger)
+                    .sensoryFeedback(.success, trigger: hapticTrigger)
                     .bold()
                 }
             }

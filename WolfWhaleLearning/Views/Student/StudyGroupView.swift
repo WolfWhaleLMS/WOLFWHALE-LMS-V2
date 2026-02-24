@@ -70,7 +70,7 @@ struct StudyGroupView: View {
                         .padding(.vertical, 10)
                         .background(.red.opacity(0.12), in: Capsule())
                 }
-                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             } else {
                 Text("Study Together Nearby")
                     .font(.headline)
@@ -93,7 +93,7 @@ struct StudyGroupView: View {
                             .background(.teal.gradient, in: Capsule())
                             .foregroundStyle(.white)
                     }
-                    .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
                     Button {
                         hapticTrigger.toggle()
@@ -108,7 +108,7 @@ struct StudyGroupView: View {
                             .background(.ultraThinMaterial, in: Capsule())
                             .foregroundStyle(.teal)
                     }
-                    .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                 }
             }
         }
@@ -134,6 +134,7 @@ struct StudyGroupView: View {
                 HStack(spacing: 10) {
                     Image(systemName: "wifi.exclamationmark")
                         .foregroundStyle(.secondary)
+                        .symbolEffect(.variableColor.iterative, options: .repeating)
                     Text("Scanning for nearby students...")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
@@ -174,7 +175,7 @@ struct StudyGroupView: View {
                                 .background(.teal.gradient, in: Capsule())
                                 .foregroundStyle(.white)
                         }
-                        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     }
                     .padding(12)
                     .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
@@ -225,6 +226,7 @@ struct StudyGroupView: View {
 
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundStyle(.green)
+                            .symbolEffect(.bounce)
                     }
                     .padding(12)
                     .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
@@ -252,7 +254,7 @@ struct StudyGroupView: View {
                         .background(.ultraThinMaterial, in: Capsule())
                         .foregroundStyle(.teal)
                 }
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
 
             VStack(spacing: 8) {
@@ -290,7 +292,7 @@ struct StudyGroupView: View {
                             .font(.title2)
                             .foregroundStyle(.teal)
                     }
-                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .disabled(messageText.trimmingCharacters(in: .whitespaces).isEmpty)
                 }
             }
@@ -332,6 +334,7 @@ struct StudyGroupView: View {
                 Image(systemName: "doc.text.fill")
                     .font(.system(size: 48))
                     .foregroundStyle(.teal)
+                    .symbolEffect(.bounce)
 
                 Text("Share Study Notes")
                     .font(.title3.bold())

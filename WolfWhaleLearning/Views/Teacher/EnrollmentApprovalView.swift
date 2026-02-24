@@ -96,7 +96,7 @@ struct EnrollmentApprovalView: View {
             .sheet(isPresented: $showDenySheet) {
                 denyReasonSheet
             }
-            .hapticFeedback(.success, trigger: hapticTrigger)
+            .sensoryFeedback(.success, trigger: hapticTrigger)
         }
     }
 

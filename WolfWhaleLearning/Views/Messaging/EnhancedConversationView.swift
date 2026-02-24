@@ -9,7 +9,6 @@ struct EnhancedConversationView: View {
     @State private var isTyping = false
     @State private var isSubscribed = false
     @State private var moderationWarning: String?
-    @State private var showCallView = false
     @FocusState private var isTextFieldFocused: Bool
 
     // MARK: - Derived State
@@ -39,24 +38,8 @@ struct EnhancedConversationView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                HStack(spacing: 12) {
-                    Button {
-                        let title = conversation.title
-                        CallService.shared.startCall(to: title, displayName: title)
-                        showCallView = true
-                    } label: {
-                        Image(systemName: "phone.fill")
-                            .font(.body)
-                    }
-                    .tint(.pink)
-                    .accessibilityLabel("Start voice call")
-
-                    connectionIndicator
-                }
+                connectionIndicator
             }
-        }
-        .fullScreenCover(isPresented: $showCallView) {
-            InCallView(participantName: conversation.title)
         }
         .onAppear {
             guard !isSubscribed else { return }
@@ -220,7 +203,7 @@ struct EnhancedConversationView: View {
             }
             .tint(.pink)
             .disabled(messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            .hapticFeedback(.impact(weight: .light), trigger: messages.count)
+            .sensoryFeedback(.impact(weight: .light), trigger: messages.count)
             .accessibilityLabel("Send message")
             .accessibilityHint("Double tap to send your message")
         }

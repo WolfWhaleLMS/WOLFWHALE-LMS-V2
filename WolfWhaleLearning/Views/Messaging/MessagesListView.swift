@@ -57,7 +57,7 @@ struct MessagesListView: View {
                         Image(systemName: "square.and.pencil")
                             .symbolRenderingMode(.hierarchical)
                     }
-                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .accessibilityLabel("New conversation")
                     .accessibilityHint("Double tap to start a new conversation")
                 }
@@ -317,7 +317,7 @@ struct NewConversationSheet: View {
                         hapticTrigger.toggle()
                         dismiss()
                     }
-                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .disabled(isCreating)
                 }
                 ToolbarItem(placement: .confirmationAction) {
@@ -330,7 +330,7 @@ struct NewConversationSheet: View {
                         }
                         .bold()
                         .disabled(!canCreate)
-                        .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                        .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                     }
                 }
             }

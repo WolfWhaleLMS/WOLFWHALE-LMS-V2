@@ -222,7 +222,7 @@ struct FlashcardCreatorView: View {
                 }
             }
             .onAppear { loadDecks() }
-            .hapticFeedback(.impact(flexibility: .soft), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(flexibility: .soft), trigger: hapticTrigger)
         }
     }
 
@@ -991,7 +991,7 @@ private struct ClassicStudyView: View {
             Spacer()
         }
         .background(Color(.systemGroupedBackground))
-        .hapticFeedback(.impact(flexibility: .soft), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(flexibility: .soft), trigger: hapticTrigger)
     }
 
     private var completeView: some View {

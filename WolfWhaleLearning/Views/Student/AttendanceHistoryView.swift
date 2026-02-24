@@ -219,6 +219,7 @@ struct AttendanceHistoryView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "flame.fill")
                         .foregroundStyle(.orange)
+                        .symbolEffect(.bounce, options: .repeat(.periodic(delay: 2)))
                     Text("\(currentStreak) Day Streak")
                         .font(.subheadline.bold())
                 }
@@ -263,7 +264,7 @@ struct AttendanceHistoryView: View {
                     Image(systemName: "chevron.left")
                         .font(.subheadline.bold())
                 }
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
                 Spacer()
 
@@ -281,7 +282,7 @@ struct AttendanceHistoryView: View {
                     Image(systemName: "chevron.right")
                         .font(.subheadline.bold())
                 }
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
 
             // Weekday Headers
@@ -355,6 +356,7 @@ struct AttendanceHistoryView: View {
                 HStack {
                     Image(systemName: "tray")
                         .foregroundStyle(.secondary)
+                        .symbolEffect(.pulse)
                     Text("No records for this filter")
                         .foregroundStyle(.secondary)
                 }

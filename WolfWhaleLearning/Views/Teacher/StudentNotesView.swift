@@ -56,7 +56,7 @@ struct StudentNotesView: View {
                     Image(systemName: "plus.circle.fill")
                         .symbolRenderingMode(.hierarchical)
                 }
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 .accessibilityLabel("Add Note")
                 .accessibilityHint("Add a new note for this student")
             }
@@ -158,7 +158,7 @@ struct StudentNotesView: View {
             )
             .foregroundStyle(isSelected ? .white : Color(.label))
         }
-        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         .accessibilityLabel("\(label) filter")
         .accessibilityAddTraits(isSelected ? .isSelected : [])
     }
@@ -256,7 +256,7 @@ struct StudentNotesView: View {
                         .font(.caption.bold())
                         .foregroundStyle(.blue)
                 }
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 .accessibilityLabel("Edit note")
 
                 Button {
@@ -268,7 +268,7 @@ struct StudentNotesView: View {
                         .font(.caption.bold())
                         .foregroundStyle(.red)
                 }
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 .accessibilityLabel("Delete note")
             }
         }
@@ -322,7 +322,7 @@ struct StudentNotesView: View {
                         resetAddForm()
                         showAddNote = false
                     }
-                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
@@ -339,7 +339,7 @@ struct StudentNotesView: View {
                     }
                     .fontWeight(.semibold)
                     .disabled(newNoteContent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                 }
             }
         }
@@ -379,7 +379,7 @@ struct StudentNotesView: View {
                         hapticTrigger.toggle()
                         editingNote = nil
                     }
-                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
@@ -394,7 +394,7 @@ struct StudentNotesView: View {
                     }
                     .fontWeight(.semibold)
                     .disabled(editContent.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                 }
             }
         }

@@ -67,7 +67,7 @@ struct AddUserView: View {
                         hapticTrigger.toggle()
                         dismiss()
                     }
-                    .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Create") {
@@ -76,7 +76,7 @@ struct AddUserView: View {
                     }
                     .fontWeight(.semibold)
                     .disabled(!isFormValid || isLoading)
-                    .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                    .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                 }
             }
             .overlay {

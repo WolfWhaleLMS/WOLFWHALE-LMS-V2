@@ -84,7 +84,7 @@ struct MusicDiscoveryView: View {
                     .padding(.vertical, 14)
                     .background(.purple.gradient, in: .rect(cornerRadius: 14))
             }
-            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         }
         .padding(28)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 20))
@@ -185,7 +185,7 @@ struct MusicDiscoveryView: View {
             .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
         }
         .buttonStyle(.plain)
-        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
     }
 
     // MARK: - Search
@@ -294,7 +294,7 @@ struct MusicDiscoveryView: View {
             .background(.ultraThinMaterial, in: .rect(cornerRadius: 14))
         }
         .buttonStyle(.plain)
-        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
     }
 
     // MARK: - Now Playing Bar
@@ -342,7 +342,7 @@ struct MusicDiscoveryView: View {
                     .foregroundStyle(.primary)
                     .contentTransition(.symbolEffect(.replace))
             }
-            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
             Button {
                 hapticTrigger.toggle()
@@ -352,7 +352,7 @@ struct MusicDiscoveryView: View {
                     .font(.subheadline)
                     .foregroundStyle(.primary)
             }
-            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
