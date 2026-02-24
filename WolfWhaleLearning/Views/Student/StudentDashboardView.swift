@@ -3,8 +3,6 @@ import SwiftUI
 struct StudentDashboardView: View {
     let viewModel: AppViewModel
     @State private var showNotifications = false
-    @State private var showRadio = false
-    @State private var showWidgetGallery = false
     @State private var hapticTrigger = false
 
     private var greeting: String {
@@ -16,84 +14,374 @@ struct StudentDashboardView: View {
         }
     }
 
-    private var totalUnreadMessages: Int {
-        viewModel.totalUnreadMessages
-    }
+    private var totalUnreadMessages: Int { viewModel.totalUnreadMessages }
+
+    // MARK: - Body
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 if viewModel.isDataLoading && viewModel.courses.isEmpty {
-                    VStack(spacing: 20) {
-                        ShimmerLoadingView(rowCount: 3)
-                        LoadingStateView(
-                            icon: "graduationcap.fill",
-                            title: "Loading Dashboard",
-                            message: "Fetching your courses and assignments..."
-                        )
-                    }
-                    .padding(.horizontal)
-                    .padding(.top, 40)
+                    loadingState
                 } else {
-                    LazyVStack(spacing: 16) {
-                        if let dataError = viewModel.dataError {
-                            errorBanner(dataError)
-                        }
-                        coursesSection
-                        upcomingSection
-                        linksSection
-                    }
-                    .padding(.horizontal)
-                    .padding(.bottom, 20)
+                    content
                 }
             }
-            .refreshable {
-                await viewModel.loadData()
-            }
+            .refreshable { await viewModel.loadData() }
             .background { HolographicBackground() }
             .navigationTitle("\(greeting), \(viewModel.currentUser?.firstName ?? "Student")")
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        hapticTrigger.toggle()
-                        showNotifications = true
-                    } label: {
-                        ZStack(alignment: .topTrailing) {
-                            Image(systemName: "bell.fill")
-                                .symbolEffect(.bounce, value: totalUnreadMessages)
-                                .padding(6)
-
-                            if totalUnreadMessages > 0 {
-                                Text("\(totalUnreadMessages)")
-                                    .font(.system(size: 10, weight: .bold))
-                                    .foregroundStyle(.white)
-                                    .frame(minWidth: 16, minHeight: 16)
-                                    .background(.red, in: Circle())
-                            }
-                        }
-                    }
-                    .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
-                    .accessibilityLabel(totalUnreadMessages > 0 ? "Notifications, \(totalUnreadMessages) unread" : "Notifications")
-                }
-            }
+            .toolbar { notificationButton }
             .sheet(isPresented: $showNotifications) {
                 NotificationsSheet(viewModel: viewModel)
-            }
-            .sheet(isPresented: $showRadio) {
-                RadioView()
-            }
-            .sheet(isPresented: $showWidgetGallery) {
-                WidgetGalleryView(viewModel: viewModel)
             }
         }
     }
 
-    // MARK: - Error Banner
+    // MARK: - Content
+
+    private var content: some View {
+        LazyVStack(spacing: 20) {
+            if let dataError = viewModel.dataError {
+                errorBanner(dataError)
+            }
+
+            snapshotCard
+            coursesSection
+            dueSoonSection
+            gradesCard
+            exploreGrid
+        }
+        .padding(.horizontal)
+        .padding(.bottom, 24)
+    }
+
+    // MARK: - Today Snapshot
+
+    private var snapshotCard: some View {
+        HStack(spacing: 0) {
+            snapshotStat(
+                icon: "book.fill",
+                value: "\(viewModel.courses.count)",
+                label: "Courses",
+                color: .indigo
+            )
+            Divider().frame(height: 36)
+            snapshotStat(
+                icon: "checklist",
+                value: "\(viewModel.upcomingAssignments.count)",
+                label: "Due Soon",
+                color: .orange
+            )
+            Divider().frame(height: 36)
+            snapshotStat(
+                icon: "chart.bar.fill",
+                value: String(format: "%.1f", viewModel.gpa),
+                label: "GPA",
+                color: .green
+            )
+        }
+        .padding(.vertical, 16)
+        .glassCard(cornerRadius: 16)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(viewModel.courses.count) courses, \(viewModel.upcomingAssignments.count) assignments due soon, GPA \(String(format: "%.1f", viewModel.gpa))")
+    }
+
+    private func snapshotStat(icon: String, value: String, label: String, color: Color) -> some View {
+        VStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundStyle(color)
+                .symbolRenderingMode(.hierarchical)
+            Text(value)
+                .font(.title2.bold())
+                .foregroundStyle(Color(.label))
+            Text(label)
+                .font(.caption)
+                .foregroundStyle(Color(.secondaryLabel))
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    // MARK: - My Courses
+
+    private var coursesSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            sectionHeader("My Courses", icon: "graduationcap.fill")
+
+            if viewModel.courses.isEmpty {
+                NavigationLink {
+                    CourseCatalogView(viewModel: viewModel)
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.title2)
+                            .foregroundStyle(.indigo)
+                            .symbolRenderingMode(.hierarchical)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Browse Courses")
+                                .font(.subheadline.bold())
+                                .foregroundStyle(Color(.label))
+                            Text("Find and enroll in your first course")
+                                .font(.caption)
+                                .foregroundStyle(Color(.secondaryLabel))
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption.bold())
+                            .foregroundStyle(.tertiary)
+                    }
+                    .padding(16)
+                    .glassCard(cornerRadius: 14)
+                }
+                .buttonStyle(.plain)
+            } else {
+                ForEach(viewModel.courses) { course in
+                    NavigationLink(value: course) {
+                        HStack(spacing: 14) {
+                            // Course icon with color
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(Theme.courseColor(course.colorName).opacity(0.15))
+                                    .frame(width: 42, height: 42)
+                                Image(systemName: course.iconSystemName)
+                                    .font(.system(size: 18, weight: .semibold))
+                                    .foregroundStyle(Theme.courseColor(course.colorName))
+                                    .symbolRenderingMode(.hierarchical)
+                            }
+
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(course.title)
+                                    .font(.subheadline.bold())
+                                    .foregroundStyle(Color(.label))
+                                    .lineLimit(1)
+                                Text(course.teacherName)
+                                    .font(.caption)
+                                    .foregroundStyle(Color(.secondaryLabel))
+                            }
+
+                            Spacer()
+
+                            // Progress pill
+                            Text("\(Int(course.progress * 100))%")
+                                .font(.caption.bold())
+                                .foregroundStyle(Theme.courseColor(course.colorName))
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 4)
+                                .background(Theme.courseColor(course.colorName).opacity(0.12), in: Capsule())
+                        }
+                        .padding(14)
+                        .glassCard(cornerRadius: 14)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("\(course.title), \(course.teacherName), \(Int(course.progress * 100)) percent complete")
+                    .accessibilityHint("Double tap to open course")
+                }
+            }
+        }
+        .navigationDestination(for: Course.self) { course in
+            CourseDetailView(course: course, viewModel: viewModel)
+        }
+    }
+
+    // MARK: - Due Soon
+
+    private var dueSoonSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                sectionHeader("Due Soon", icon: "clock.badge.exclamationmark.fill")
+                Spacer()
+                NavigationLink {
+                    AssignmentsView(viewModel: viewModel)
+                } label: {
+                    Text("See All")
+                        .font(.subheadline)
+                        .foregroundStyle(.accentColor)
+                }
+                .accessibilityHint("Double tap to view all assignments")
+            }
+
+            if viewModel.upcomingAssignments.isEmpty {
+                HStack(spacing: 10) {
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.title3)
+                        .foregroundStyle(.green)
+                        .symbolRenderingMode(.hierarchical)
+                    Text("All caught up — nothing due!")
+                        .font(.subheadline)
+                        .foregroundStyle(Color(.secondaryLabel))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(16)
+                .glassCard(cornerRadius: 14)
+            } else {
+                ForEach(viewModel.upcomingAssignments.prefix(3)) { assignment in
+                    NavigationLink {
+                        AssignmentsView(viewModel: viewModel)
+                    } label: {
+                        HStack(spacing: 12) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(.orange.opacity(0.15))
+                                    .frame(width: 42, height: 42)
+                                Image(systemName: "doc.text.fill")
+                                    .font(.system(size: 16))
+                                    .foregroundStyle(.orange)
+                                    .symbolRenderingMode(.hierarchical)
+                            }
+
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(assignment.title)
+                                    .font(.subheadline.bold())
+                                    .foregroundStyle(Color(.label))
+                                    .lineLimit(1)
+                                Text(assignment.courseName)
+                                    .font(.caption)
+                                    .foregroundStyle(Color(.secondaryLabel))
+                            }
+
+                            Spacer()
+
+                            VStack(alignment: .trailing, spacing: 2) {
+                                Text(assignment.dueDate, style: .relative)
+                                    .font(.caption.bold())
+                                    .foregroundStyle(.orange)
+                                Text("\(assignment.points) pts")
+                                    .font(.caption2)
+                                    .foregroundStyle(Color(.tertiaryLabel))
+                            }
+                        }
+                        .padding(14)
+                        .glassCard(cornerRadius: 14)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("\(assignment.title), \(assignment.courseName), \(assignment.points) points")
+                }
+            }
+        }
+    }
+
+    // MARK: - Grades
+
+    private var gradesCard: some View {
+        NavigationLink {
+            GradesView(viewModel: viewModel)
+        } label: {
+            HStack(spacing: 14) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(.green.opacity(0.15))
+                        .frame(width: 42, height: 42)
+                    Image(systemName: "chart.bar.doc.horizontal.fill")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(.green)
+                        .symbolRenderingMode(.hierarchical)
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("My Grades")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(Color(.label))
+                    Text("GPA \(String(format: "%.1f", viewModel.gpa)) · \(viewModel.overallLetterGrade)")
+                        .font(.caption)
+                        .foregroundStyle(Color(.secondaryLabel))
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.caption.bold())
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(16)
+            .glassCard(cornerRadius: 14)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("My Grades, GPA \(String(format: "%.1f", viewModel.gpa)), \(viewModel.overallLetterGrade)")
+        .accessibilityHint("Double tap to view all grades")
+    }
+
+    // MARK: - Explore Grid
+
+    private var exploreGrid: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            sectionHeader("Explore", icon: "sparkles")
+
+            LazyVGrid(columns: [
+                GridItem(.flexible(), spacing: 12),
+                GridItem(.flexible(), spacing: 12),
+                GridItem(.flexible(), spacing: 12)
+            ], spacing: 12) {
+                exploreLink(icon: "calendar", title: "Calendar", color: .orange) {
+                    AssignmentCalendarView(viewModel: viewModel)
+                }
+                exploreLink(icon: "clock.fill", title: "Schedule", color: .indigo) {
+                    TimetableView(viewModel: viewModel)
+                }
+                exploreLink(icon: "person.badge.clock.fill", title: "Attendance", color: .teal) {
+                    AttendanceHistoryView(viewModel: viewModel)
+                }
+                exploreLink(icon: "scope", title: "Goals", color: .green) {
+                    ProgressGoalsView(viewModel: viewModel)
+                }
+                exploreLink(icon: "books.vertical.fill", title: "Catalog", color: .purple) {
+                    CourseCatalogView(viewModel: viewModel)
+                }
+                exploreLink(icon: "map.fill", title: "Campus", color: .blue) {
+                    CampusMapView()
+                }
+            }
+        }
+    }
+
+    private func exploreLink<D: View>(icon: String, title: String, color: Color, @ViewBuilder destination: @escaping () -> D) -> some View {
+        NavigationLink {
+            destination()
+        } label: {
+            VStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.title3)
+                    .foregroundStyle(color)
+                    .symbolRenderingMode(.hierarchical)
+                    .frame(height: 24)
+                Text(title)
+                    .font(.caption2.bold())
+                    .foregroundStyle(Color(.label))
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 14)
+            .glassCard(cornerRadius: 14)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(title)
+        .accessibilityHint("Double tap to open \(title)")
+    }
+
+    // MARK: - Helpers
+
+    private func sectionHeader(_ title: String, icon: String) -> some View {
+        Label(title, systemImage: icon)
+            .font(.headline)
+            .symbolRenderingMode(.hierarchical)
+    }
+
+    private var loadingState: some View {
+        VStack(spacing: 20) {
+            ShimmerLoadingView(rowCount: 4)
+            LoadingStateView(
+                icon: "graduationcap.fill",
+                title: "Loading Dashboard",
+                message: "Fetching your courses and assignments..."
+            )
+        }
+        .padding(.horizontal)
+        .padding(.top, 40)
+    }
 
     private func errorBanner(_ message: String) -> some View {
         HStack(spacing: 10) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .foregroundStyle(.orange)
+                .symbolRenderingMode(.hierarchical)
             Text(message)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
@@ -107,248 +395,34 @@ struct StudentDashboardView: View {
             .buttonStyle(.plain)
         }
         .padding(12)
-        .background(Color.orange.opacity(0.12))
+        .background(Color.orange.opacity(0.1))
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
-    // MARK: - Courses
-
-    private var coursesSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("My Courses")
-                .font(.headline)
-
-            if viewModel.courses.isEmpty {
-                VStack(spacing: 8) {
-                    Image(systemName: "book.closed")
-                        .font(.title2)
-                        .foregroundStyle(.secondary)
-                    Text("No courses yet")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 24)
-                .glassCard(cornerRadius: 16)
-            } else {
-                ForEach(viewModel.courses) { course in
-                    NavigationLink(value: course) {
-                        HStack(spacing: 14) {
-                            Image(systemName: course.iconSystemName)
-                                .font(.title3)
-                                .foregroundStyle(Theme.courseColor(course.colorName))
-                                .frame(width: 36)
-
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(course.title)
-                                    .font(.subheadline.bold())
-                                    .foregroundStyle(Color(.label))
-                                    .lineLimit(1)
-                                Text(course.teacherName)
-                                    .font(.caption)
-                                    .foregroundStyle(Color(.secondaryLabel))
-                            }
-
-                            Spacer()
-
-                            Text("\(Int(course.progress * 100))%")
-                                .font(.subheadline.bold())
-                                .foregroundStyle(Theme.courseColor(course.colorName))
-                        }
-                        .padding(14)
-                        .glassCard(cornerRadius: 14)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-        }
-        .navigationDestination(for: Course.self) { course in
-            CourseDetailView(course: course, viewModel: viewModel)
-        }
-        .navigationDestination(for: String.self) { destination in
-            if destination == "assignments" {
-                AssignmentsView(viewModel: viewModel)
-            }
-        }
-    }
-
-    // MARK: - Upcoming Deadlines
-
-    private var upcomingSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Text("Upcoming")
-                    .font(.headline)
-                Spacer()
-                NavigationLink("See All", value: "assignments")
-                    .font(.subheadline)
-            }
-
-            if viewModel.upcomingAssignments.isEmpty {
-                HStack(spacing: 8) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.green)
-                    Text("All caught up!")
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 20)
-                .glassCard(cornerRadius: 12)
-            } else {
-                ForEach(viewModel.upcomingAssignments.prefix(3)) { assignment in
-                    HStack(spacing: 12) {
-                        Circle()
-                            .fill(.orange.gradient)
-                            .frame(width: 36, height: 36)
-                            .overlay {
-                                Image(systemName: "doc.text.fill")
-                                    .font(.caption)
-                                    .foregroundStyle(.white)
-                            }
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(assignment.title)
-                                .font(.subheadline.bold())
-                                .foregroundStyle(Color(.label))
-                                .lineLimit(1)
-                            Text(assignment.courseName)
-                                .font(.caption)
-                                .foregroundStyle(Color(.secondaryLabel))
-                        }
-                        Spacer()
-                        Text(assignment.dueDate, style: .relative)
-                            .font(.caption)
-                            .foregroundStyle(.orange)
-                    }
-                    .padding(12)
-                    .glassCard(cornerRadius: 12)
-                }
-            }
-        }
-    }
-
-    // MARK: - Links
-
-    private var linksSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("More")
-                .font(.headline)
-
-            linkRow(icon: "calendar.badge.clock", title: "Calendar", color: .orange) {
-                AssignmentCalendarView(viewModel: viewModel)
-            }
-            linkRow(icon: "target", title: "Goals", color: .green) {
-                ProgressGoalsView(viewModel: viewModel)
-            }
-            linkRow(icon: "calendar.day.timeline.leading", title: "Schedule", color: .indigo) {
-                TimetableView(viewModel: viewModel)
-            }
-            linkRow(icon: "checkmark.shield.fill", title: "Attendance", color: .teal) {
-                AttendanceHistoryView(viewModel: viewModel)
-            }
-            linkRow(icon: "book.and.wrench.fill", title: "Browse Courses", color: .purple) {
-                CourseCatalogView(viewModel: viewModel)
-            }
-            linkRow(icon: "map.fill", title: "Campus Map", color: .blue) {
-                CampusMapView()
-            }
-
-            // Radio & Widgets (sheets)
+    private var notificationButton: some ToolbarContent {
+        ToolbarItem(placement: .topBarTrailing) {
             Button {
                 hapticTrigger.toggle()
-                showRadio = true
+                showNotifications = true
             } label: {
-                HStack(spacing: 12) {
-                    Image(systemName: "radio.fill")
-                        .foregroundStyle(.purple)
-                        .frame(width: 28)
-                    Text("Radio")
-                        .font(.subheadline)
-                        .foregroundStyle(Color(.label))
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
+                ZStack(alignment: .topTrailing) {
+                    Image(systemName: "bell.badge.fill")
+                        .symbolRenderingMode(.hierarchical)
+                        .symbolEffect(.bounce, value: totalUnreadMessages)
+                        .padding(6)
+
+                    if totalUnreadMessages > 0 {
+                        Text("\(totalUnreadMessages)")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(.white)
+                            .frame(minWidth: 16, minHeight: 16)
+                            .background(.red, in: Circle())
+                    }
                 }
-                .padding(14)
-                .glassCard(cornerRadius: 14)
             }
-            .buttonStyle(.plain)
             .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
-
-            Button {
-                hapticTrigger.toggle()
-                showWidgetGallery = true
-            } label: {
-                HStack(spacing: 12) {
-                    Image(systemName: "apps.iphone")
-                        .foregroundStyle(.cyan)
-                        .frame(width: 28)
-                    Text("Widgets")
-                        .font(.subheadline)
-                        .foregroundStyle(Color(.label))
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                }
-                .padding(14)
-                .glassCard(cornerRadius: 14)
-            }
-            .buttonStyle(.plain)
-            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .accessibilityLabel(totalUnreadMessages > 0 ? "\(totalUnreadMessages) notifications" : "Notifications")
         }
-    }
-
-    private func linkRow<Destination: View>(icon: String, title: String, color: Color, @ViewBuilder destination: @escaping () -> Destination) -> some View {
-        NavigationLink {
-            destination()
-        } label: {
-            HStack(spacing: 12) {
-                Image(systemName: icon)
-                    .foregroundStyle(color)
-                    .frame(width: 28)
-                Text(title)
-                    .font(.subheadline)
-                    .foregroundStyle(Color(.label))
-                Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-            }
-            .padding(14)
-            .glassCard(cornerRadius: 14)
-        }
-        .buttonStyle(.plain)
-    }
-
-    // MARK: - Course Card (unused, kept for reference)
-
-    private func courseCard(_ course: Course) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Image(systemName: course.iconSystemName)
-                    .font(.title2)
-                    .foregroundStyle(Theme.courseColor(course.colorName))
-                Spacer()
-                Text("\(Int(course.progress * 100))%")
-                    .font(.caption.bold())
-                    .foregroundStyle(.secondary)
-            }
-
-            Text(course.title)
-                .font(.subheadline.bold())
-                .lineLimit(2)
-                .multilineTextAlignment(.leading)
-
-            Text(course.teacherName)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-
-            StatRing(progress: course.progress, color: Theme.courseColor(course.colorName), lineWidth: 4, size: 32)
-        }
-        .frame(width: 160)
-        .padding(14)
-        .glassCard(cornerRadius: 16)
     }
 }
 
@@ -359,24 +433,25 @@ struct NotificationsSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var hapticTrigger = false
 
-    private var totalUnreadMessages: Int {
-        viewModel.totalUnreadMessages
-    }
-
     var body: some View {
         NavigationStack {
             List {
-                if viewModel.announcements.isEmpty && totalUnreadMessages == 0 {
+                if viewModel.announcements.isEmpty && viewModel.totalUnreadMessages == 0 {
                     ContentUnavailableView(
                         "No Notifications",
-                        systemImage: "bell.slash",
+                        systemImage: "bell.slash.fill",
                         description: Text("You're all caught up!")
                     )
                 }
 
-                if totalUnreadMessages > 0 {
+                if viewModel.totalUnreadMessages > 0 {
                     Section("Messages") {
-                        Label("\(totalUnreadMessages) unread message\(totalUnreadMessages == 1 ? "" : "s")", systemImage: "envelope.fill")
+                        Label {
+                            Text("\(viewModel.totalUnreadMessages) unread message\(viewModel.totalUnreadMessages == 1 ? "" : "s")")
+                        } icon: {
+                            Image(systemName: "envelope.badge.fill")
+                                .symbolRenderingMode(.hierarchical)
+                        }
                     }
                 }
 
