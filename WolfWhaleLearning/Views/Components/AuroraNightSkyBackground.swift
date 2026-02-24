@@ -71,7 +71,6 @@ private struct TwinklingStarsView: View {
                     )
             }
         }
-        .ignoresSafeArea()
     }
 }
 
@@ -157,7 +156,6 @@ private struct AuroraView: View {
                 )
             }
         }
-        .ignoresSafeArea()
         .blendMode(.screen)
     }
 
@@ -220,7 +218,6 @@ private struct EvergreenSkylineView: View {
                 .frame(width: geo.size.width, height: geo.size.height * 0.28)
                 .frame(maxHeight: .infinity, alignment: .bottom)
         }
-        .ignoresSafeArea()
     }
 }
 
