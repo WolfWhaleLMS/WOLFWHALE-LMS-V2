@@ -50,7 +50,7 @@ struct LoginView: View {
     }
 
     private var logoSection: some View {
-        VStack(spacing: 14) {
+        VStack(spacing: 6) {
             ZStack {
                 // Sun ray glow emanating from behind the logo
                 Circle()
@@ -66,18 +66,18 @@ struct LoginView: View {
                             endRadius: 120
                         )
                     )
-                    .frame(width: 240, height: 240)
+                    .frame(width: 180, height: 180)
                     .scaleEffect(glowPulse ? 1.15 : 0.9)
 
                 Circle()
                     .fill(Color.cyan.opacity(0.15))
-                    .frame(width: 150, height: 150)
+                    .frame(width: 110, height: 110)
                     .blur(radius: 25)
                     .scaleEffect(glowPulse ? 1.1 : 0.85)
 
                 Circle()
                     .fill(Color.white.opacity(0.12))
-                    .frame(width: 120, height: 120)
+                    .frame(width: 90, height: 90)
                     .blur(radius: 15)
                     .scaleEffect(glowPulse ? 1.05 : 0.95)
 

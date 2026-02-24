@@ -445,7 +445,7 @@ struct AppSettingsView: View {
 
     private var dangerZoneSection: some View {
         Section {
-            Button(role: .destructive) {
+            Button {
                 signOutHapticTrigger.toggle()
                 showSignOutConfirmation = true
             } label: {
@@ -456,7 +456,6 @@ struct AppSettingsView: View {
                 }
                 .foregroundStyle(.red)
             }
-            .tint(.red)
             .sensoryFeedback(.impact(weight: .heavy), trigger: signOutHapticTrigger)
 
             if viewModel.currentUser?.role != .admin && viewModel.currentUser?.role != .superAdmin {
