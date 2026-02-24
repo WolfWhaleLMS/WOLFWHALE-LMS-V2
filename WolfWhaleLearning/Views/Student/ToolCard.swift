@@ -25,6 +25,8 @@ struct ToolCard: View {
                 Image(systemName: icon)
                     .font(.title3)
                     .foregroundStyle(.white)
+                    .symbolRenderingMode(.hierarchical)
+                    .contentTransition(.symbolEffect(.replace))
             }
 
             VStack(spacing: 4) {

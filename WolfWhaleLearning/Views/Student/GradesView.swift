@@ -130,6 +130,7 @@ struct GradesView: View {
                             .overlay {
                                 Image(systemName: grade.courseIcon)
                                     .foregroundStyle(.white)
+                                    .symbolRenderingMode(.hierarchical)
                             }
 
                         VStack(alignment: .leading, spacing: 2) {

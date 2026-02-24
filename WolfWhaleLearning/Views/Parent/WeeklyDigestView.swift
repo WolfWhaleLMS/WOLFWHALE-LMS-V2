@@ -29,7 +29,7 @@ struct WeeklyDigestView: View {
             .padding(.bottom, 20)
         }
         .background(Color(.systemGroupedBackground))
-        .navigationTitle("Weekly Report")
+        .navigationTitle("Progress Report")
         .navigationBarTitleDisplayMode(.inline)
         .task {
             loadDigests()

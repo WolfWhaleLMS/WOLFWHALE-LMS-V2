@@ -52,7 +52,8 @@ struct ResourceLibraryView: View {
                 Image(systemName: "square.grid.2x2.fill")
                     .font(.system(size: 36, weight: .medium))
                     .foregroundStyle(.white)
-                    // .symbolEffect(.pulse, options: .repeating) — removed to avoid perpetual GPU animation
+                    .symbolRenderingMode(.hierarchical)
+                    .symbolEffect(.breathe, options: .repeat(.periodic(delay: 3)))
 
                 Text("Resource Library")
                     .font(.title2.bold())
@@ -462,6 +463,8 @@ struct ResourceLibraryView: View {
                 Image(systemName: icon)
                     .font(.title2)
                     .foregroundStyle(.white)
+                    .symbolRenderingMode(.hierarchical)
+                    .contentTransition(.symbolEffect(.replace))
             }
 
             VStack(spacing: 4) {
@@ -493,6 +496,8 @@ struct ResourceLibraryView: View {
                     Image(systemName: icon)
                         .font(.system(size: 32, weight: .light))
                         .foregroundStyle(.white.opacity(0.9))
+                        .symbolRenderingMode(.hierarchical)
+                        .symbolEffect(.breathe, options: .repeat(.periodic(delay: 4)))
 
                     HStack(spacing: 4) {
                         Image(systemName: "arkit")
@@ -529,6 +534,8 @@ struct ResourceLibraryView: View {
             Image(systemName: icon)
                 .font(.headline)
                 .foregroundStyle(color)
+                .symbolRenderingMode(.hierarchical)
+                .contentTransition(.symbolEffect(.replace))
             Text(title)
                 .font(.title3.bold())
         }

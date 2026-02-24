@@ -59,6 +59,7 @@ struct StudentProfileView: View {
                 Image(systemName: "person.fill")
                     .font(.system(size: 36))
                     .foregroundStyle(.white)
+                    .symbolRenderingMode(.hierarchical)
             }
 
             Text(viewModel.currentUser?.fullName ?? "Student")
@@ -86,6 +87,8 @@ struct StudentProfileView: View {
             Image(systemName: icon)
                 .font(.title2)
                 .foregroundStyle(color)
+                .symbolRenderingMode(.hierarchical)
+                .contentTransition(.symbolEffect(.replace))
             Text(value)
                 .font(.headline)
             Text(label)
@@ -117,6 +120,8 @@ struct StudentProfileView: View {
                             Image(systemName: achievement.iconSystemName)
                                 .font(.title2)
                                 .foregroundStyle(achievement.isUnlocked ? Theme.courseColor(achievement.rarity.colorName) : .secondary.opacity(0.3))
+                                .symbolRenderingMode(.hierarchical)
+                                .symbolEffect(.bounce, options: .repeat(.periodic(delay: 4)), isActive: achievement.isUnlocked)
                                 .frame(width: 48, height: 48)
                                 .background(
                                     achievement.isUnlocked
@@ -148,6 +153,8 @@ struct StudentProfileView: View {
             HStack {
                 Image(systemName: "flame.fill")
                     .foregroundStyle(.orange)
+                    .symbolRenderingMode(.hierarchical)
+                    .symbolEffect(.breathe.pulse, options: .repeat(.periodic(delay: 3)))
                 Text("\(viewModel.currentUser?.streak ?? 0) Day Streak")
                     .font(.headline)
                 Spacer()
@@ -266,6 +273,7 @@ struct StudentProfileView: View {
                             endPoint: .bottomTrailing
                         )
                     )
+                    .symbolEffect(.rotate, options: .repeat(.periodic(delay: 6)))
 
                 Text("WolfWhale LMS")
                     .font(.headline)

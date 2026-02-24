@@ -111,6 +111,8 @@ struct ContentView: View {
                             endPoint: .bottomTrailing
                         )
                     )
+                    .symbolRenderingMode(.hierarchical)
+                    .symbolEffect(.breathe.pulse, options: .repeat(.continuous))
                 ProgressView()
                     .controlSize(.regular)
             }

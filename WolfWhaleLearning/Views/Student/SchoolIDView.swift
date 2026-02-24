@@ -62,6 +62,8 @@ struct SchoolIDView: View {
                 Image(systemName: "wave.3.right")
                     .font(.title3)
                     .foregroundStyle(.white.opacity(0.6))
+                    .symbolRenderingMode(.hierarchical)
+                    .symbolEffect(.variableColor.iterative, options: .repeat(.periodic(delay: 3)))
                     .accessibilityLabel("NFC enabled")
             }
             .padding(20)

@@ -121,6 +121,7 @@ struct LoginView: View {
                 HStack(spacing: 12) {
                     Image(systemName: "envelope.fill")
                         .foregroundStyle(.tertiary)
+                        .symbolRenderingMode(.hierarchical)
                         .frame(width: 20)
                         .accessibilityHidden(true)
                     TextField("School Email", text: $viewModel.email)
@@ -144,6 +145,7 @@ struct LoginView: View {
                 HStack(spacing: 12) {
                     Image(systemName: "lock.fill")
                         .foregroundStyle(.tertiary)
+                        .symbolRenderingMode(.hierarchical)
                         .frame(width: 20)
                         .accessibilityHidden(true)
                     SecureField("Password", text: $viewModel.password)
@@ -166,6 +168,7 @@ struct LoginView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .font(.caption)
+                        .symbolEffect(.wiggle, options: .repeat(2))
                     Text(error)
                         .font(.caption)
                 }
@@ -188,6 +191,7 @@ struct LoginView: View {
                                 .font(.headline)
                             Image(systemName: "arrow.right")
                                 .font(.subheadline.bold())
+                                .symbolEffect(.wiggle.right, options: .repeat(.periodic(delay: 2)))
                         }
                     }
                 }

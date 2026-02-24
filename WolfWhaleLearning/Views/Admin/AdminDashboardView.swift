@@ -37,6 +37,7 @@ struct AdminDashboardView: View {
                                 HStack(spacing: 10) {
                                     Image(systemName: "exclamationmark.triangle.fill")
                                         .foregroundStyle(.orange)
+                                        .symbolEffect(.wiggle, options: .repeat(.periodic(delay: 2)))
                                     Text(dataError)
                                         .font(.subheadline)
                                         .foregroundStyle(.secondary)
@@ -145,6 +146,7 @@ struct AdminDashboardView: View {
                         Image(systemName: "person.3.sequence.fill")
                             .font(.title3)
                             .foregroundStyle(.blue)
+                            .symbolRenderingMode(.hierarchical)
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Import Users")
                                 .font(.subheadline.bold())
@@ -181,6 +183,7 @@ struct AdminDashboardView: View {
                         Image(systemName: "gearshape.2.fill")
                             .font(.title3)
                             .foregroundStyle(.purple)
+                            .symbolRenderingMode(.hierarchical)
                         VStack(alignment: .leading, spacing: 2) {
                             Text("School Settings")
                                 .font(.subheadline.bold())
@@ -253,6 +256,7 @@ struct AdminDashboardView: View {
                         Image(systemName: "chart.bar.doc.horizontal.fill")
                             .font(.title3)
                             .foregroundStyle(.green)
+                            .symbolRenderingMode(.hierarchical)
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Attendance Report")
                                 .font(.subheadline.bold())
@@ -289,6 +293,7 @@ struct AdminDashboardView: View {
                         Image(systemName: "rectangle.on.rectangle.angled")
                             .font(.title3)
                             .foregroundStyle(.cyan)
+                            .symbolRenderingMode(.hierarchical)
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Class Sections")
                                 .font(.subheadline.bold())
@@ -325,6 +330,7 @@ struct AdminDashboardView: View {
                         Image(systemName: "calendar.badge.clock")
                             .font(.title3)
                             .foregroundStyle(.teal)
+                            .symbolRenderingMode(.hierarchical)
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Academic Calendar")
                                 .font(.subheadline.bold())
@@ -361,6 +367,7 @@ struct AdminDashboardView: View {
                         Image(systemName: "doc.richtext.fill")
                             .font(.title3)
                             .foregroundStyle(.orange)
+                            .symbolRenderingMode(.hierarchical)
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Report Cards")
                                 .font(.subheadline.bold())
@@ -395,6 +402,8 @@ struct AdminDashboardView: View {
             Image(systemName: icon)
                 .font(.title3)
                 .foregroundStyle(color)
+                .symbolRenderingMode(.hierarchical)
+                .contentTransition(.symbolEffect(.replace))
             Text(value)
                 .font(.headline)
                 .foregroundStyle(Color(.label))
@@ -516,6 +525,7 @@ struct AdminDashboardView: View {
                 HStack {
                     Image(systemName: "megaphone")
                         .foregroundStyle(.secondary)
+                        .symbolRenderingMode(.hierarchical)
                     Text("No announcements yet")
                         .foregroundStyle(.secondary)
                 }

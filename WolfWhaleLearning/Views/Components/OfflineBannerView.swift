@@ -19,6 +19,8 @@ struct OfflineBannerView: View {
             Image(systemName: "wifi.slash")
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.pink)
+                .symbolRenderingMode(.hierarchical)
+                .symbolEffect(.variableColor.iterative, options: .repeat(.continuous))
 
             Text("No internet connection")
                 .font(.subheadline.weight(.medium))

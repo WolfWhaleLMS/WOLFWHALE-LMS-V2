@@ -55,6 +55,7 @@ struct MessagesListView: View {
                         showNewConversation = true
                     } label: {
                         Image(systemName: "square.and.pencil")
+                            .symbolRenderingMode(.hierarchical)
                     }
                     .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .accessibilityLabel("New conversation")
@@ -77,6 +78,7 @@ struct MessagesListView: View {
                 Image(systemName: conversation.avatarSystemName)
                     .font(.subheadline)
                     .foregroundStyle(.white)
+                    .symbolRenderingMode(.hierarchical)
             }
 
             VStack(alignment: .leading, spacing: 4) {
@@ -149,7 +151,7 @@ struct NewConversationSheet: View {
         case .teacher:
             // Teachers can message: other teachers, students in their courses, parents.
             let teacherFullName = currentUser.fullName
-            let _ = Set(
+            let taughtCourseNames = Set(
                 viewModel.courses
                     .filter { $0.teacherName == teacherFullName }
                     .map(\.title)

@@ -125,6 +125,7 @@ struct AppSettingsView: View {
                 } icon: {
                     Image(systemName: "person.crop.circle.fill")
                         .foregroundStyle(.pink)
+                        .symbolRenderingMode(.hierarchical)
                 }
             }
 
@@ -136,6 +137,7 @@ struct AppSettingsView: View {
                 } icon: {
                     Image(systemName: "lock.fill")
                         .foregroundStyle(.orange)
+                        .symbolRenderingMode(.hierarchical)
                 }
             }
         } header: {
@@ -154,6 +156,7 @@ struct AppSettingsView: View {
                     } icon: {
                         Image(systemName: viewModel.biometricService.biometricSystemImage)
                             .foregroundStyle(.green)
+                            .symbolRenderingMode(.hierarchical)
                     }
                     Spacer()
                     Toggle(
@@ -182,6 +185,7 @@ struct AppSettingsView: View {
                 } icon: {
                     Image(systemName: "lock.shield")
                         .foregroundStyle(.gray)
+                        .symbolRenderingMode(.hierarchical)
                 }
             }
         } header: {
@@ -219,6 +223,8 @@ struct AppSettingsView: View {
                 } icon: {
                     Image(systemName: appearanceIcon)
                         .foregroundStyle(appearanceIconColor)
+                        .symbolRenderingMode(.hierarchical)
+                        .contentTransition(.symbolEffect(.replace))
                 }
                 Spacer()
                 Picker("Appearance", selection: $colorSchemePreference) {
@@ -250,6 +256,7 @@ struct AppSettingsView: View {
                 } icon: {
                     Image(systemName: "bell.badge.fill")
                         .foregroundStyle(.red)
+                        .symbolRenderingMode(.hierarchical)
                 }
                 Spacer()
                 Toggle("Push Notifications", isOn: $pushNotifications)
@@ -265,6 +272,7 @@ struct AppSettingsView: View {
                 } icon: {
                     Image(systemName: "envelope.badge.fill")
                         .foregroundStyle(.blue)
+                        .symbolRenderingMode(.hierarchical)
                 }
                 Spacer()
                 Toggle("Email Notifications", isOn: $emailNotifications)
@@ -282,6 +290,7 @@ struct AppSettingsView: View {
                 } icon: {
                     Image(systemName: "bell.and.waves.left.and.right.fill")
                         .foregroundStyle(.purple)
+                        .symbolRenderingMode(.hierarchical)
                 }
             }
         } header: {
@@ -301,6 +310,7 @@ struct AppSettingsView: View {
                 } icon: {
                     Image(systemName: "arrow.down.circle.fill")
                         .foregroundStyle(.cyan)
+                        .symbolRenderingMode(.hierarchical)
                 }
             }
 
@@ -312,6 +322,7 @@ struct AppSettingsView: View {
                 } icon: {
                     Image(systemName: "calendar.badge.clock")
                         .foregroundStyle(.purple)
+                        .symbolRenderingMode(.hierarchical)
                 }
             }
         } header: {
@@ -339,6 +350,7 @@ struct AppSettingsView: View {
                 } icon: {
                     Image(systemName: "doc.text.fill")
                         .foregroundStyle(.purple)
+                        .symbolRenderingMode(.hierarchical)
                 }
             }
 
@@ -358,6 +370,7 @@ struct AppSettingsView: View {
                 } icon: {
                     Image(systemName: "hand.raised.fill")
                         .foregroundStyle(.teal)
+                        .symbolRenderingMode(.hierarchical)
                 }
             }
 
@@ -377,6 +390,7 @@ struct AppSettingsView: View {
                 } icon: {
                     Image(systemName: "hand.raised.fingers.spread.fill")
                         .foregroundStyle(.indigo)
+                        .symbolRenderingMode(.hierarchical)
                 }
             }
         } header: {
@@ -395,6 +409,7 @@ struct AppSettingsView: View {
                 } icon: {
                     Image(systemName: "info.circle.fill")
                         .foregroundStyle(.blue)
+                        .symbolRenderingMode(.hierarchical)
                 }
                 Spacer()
                 Text(appVersion)
@@ -408,6 +423,7 @@ struct AppSettingsView: View {
                 } icon: {
                     Image(systemName: "hammer.fill")
                         .foregroundStyle(.gray)
+                        .symbolRenderingMode(.hierarchical)
                 }
                 Spacer()
                 Text(buildNumber)
@@ -427,6 +443,7 @@ struct AppSettingsView: View {
                                 endPoint: .bottomTrailing
                             )
                         )
+                        .symbolEffect(.rotate, options: .repeat(.periodic(delay: 6)))
                     Text("WolfWhale LMS")
                         .font(.caption.bold())
                     Text("\u{00A9} 2025 WolfWhale. All rights reserved.")
@@ -509,6 +526,7 @@ struct AppSettingsView: View {
         HStack(spacing: 6) {
             Image(systemName: icon)
                 .font(.caption2)
+                .symbolRenderingMode(.hierarchical)
             Text(title.uppercased())
                 .font(.caption2.bold())
         }

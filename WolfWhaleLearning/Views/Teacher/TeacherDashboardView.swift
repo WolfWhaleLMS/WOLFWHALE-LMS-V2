@@ -34,6 +34,7 @@ struct TeacherDashboardView: View {
                                 HStack(spacing: 10) {
                                     Image(systemName: "exclamationmark.triangle.fill")
                                         .foregroundStyle(.orange)
+                                        .symbolEffect(.wiggle, options: .repeat(.periodic(delay: 2)))
                                     Text(dataError)
                                         .font(.subheadline)
                                         .foregroundStyle(.secondary)
@@ -100,6 +101,7 @@ struct TeacherDashboardView: View {
                         Image(systemName: "person.badge.clock.fill")
                             .font(.subheadline)
                             .foregroundStyle(.white)
+                            .symbolEffect(.wiggle, options: .repeat(.periodic(delay: 3)))
                     }
 
                     VStack(alignment: .leading, spacing: 2) {
@@ -225,6 +227,7 @@ struct TeacherDashboardView: View {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .font(.subheadline)
                             .foregroundStyle(.white)
+                            .symbolEffect(.breathe.pulse, options: .repeat(.continuous))
                     }
 
                     VStack(alignment: .leading, spacing: 2) {
@@ -385,6 +388,8 @@ struct TeacherDashboardView: View {
             Image(systemName: icon)
                 .font(.title3)
                 .foregroundStyle(color)
+                .symbolRenderingMode(.hierarchical)
+                .contentTransition(.symbolEffect(.replace))
             Text(value)
                 .font(.title2.bold())
                 .foregroundStyle(Color(.label))
@@ -471,6 +476,7 @@ struct TeacherDashboardView: View {
                 Image(systemName: icon)
                     .font(.title2)
                     .foregroundStyle(color)
+                    .symbolRenderingMode(.hierarchical)
                 Text(label)
                     .font(.caption2.bold())
                     .foregroundStyle(Color(.label))
@@ -498,6 +504,7 @@ struct TeacherDashboardView: View {
                 HStack {
                     Image(systemName: "tray")
                         .foregroundStyle(.secondary)
+                        .symbolRenderingMode(.hierarchical)
                     Text("No submissions yet")
                         .foregroundStyle(.secondary)
                 }
@@ -529,6 +536,8 @@ struct TeacherDashboardView: View {
                         if assignment.grade != nil {
                             Image(systemName: "checkmark.circle.fill")
                                 .foregroundStyle(.green)
+                                .symbolRenderingMode(.hierarchical)
+                                .symbolEffect(.pulse)
                         } else {
                             Text("Grade")
                                 .font(.caption.bold())
@@ -558,6 +567,7 @@ struct TeacherDashboardView: View {
                 HStack {
                     Image(systemName: "megaphone")
                         .foregroundStyle(.secondary)
+                        .symbolRenderingMode(.hierarchical)
                     Text("No announcements")
                         .foregroundStyle(.secondary)
                 }

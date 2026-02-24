@@ -92,6 +92,7 @@ struct StudentDashboardView: View {
                 .font(.title3)
                 .foregroundStyle(color)
                 .symbolRenderingMode(.hierarchical)
+                .contentTransition(.symbolEffect(.replace))
             Text(value)
                 .font(.title2.bold())
                 .foregroundStyle(Color(.label))
@@ -106,7 +107,7 @@ struct StudentDashboardView: View {
 
     private var coursesSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            sectionHeader("My Courses", icon: "graduationcap.fill")
+            sectionHeader("My Courses", icon: "graduationcap.fill", effect: .wiggle)
 
             if viewModel.courses.isEmpty {
                 NavigationLink {
@@ -117,6 +118,7 @@ struct StudentDashboardView: View {
                             .font(.title2)
                             .foregroundStyle(.indigo)
                             .symbolRenderingMode(.hierarchical)
+                            .symbolEffect(.pulse, options: .repeat(.periodic(delay: 2)))
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Browse Courses")
                                 .font(.subheadline.bold())
@@ -188,14 +190,14 @@ struct StudentDashboardView: View {
     private var dueSoonSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                sectionHeader("Due Soon", icon: "clock.badge.exclamationmark.fill")
+                sectionHeader("Due Soon", icon: "clock.badge.exclamationmark.fill", effect: .breathe)
                 Spacer()
                 NavigationLink {
                     AssignmentsView(viewModel: viewModel)
                 } label: {
                     Text("See All")
                         .font(.subheadline)
-                        .foregroundStyle(.accentColor)
+                        .foregroundStyle(Color.accentColor)
                 }
                 .accessibilityHint("Double tap to view all assignments")
             }
@@ -206,6 +208,7 @@ struct StudentDashboardView: View {
                         .font(.title3)
                         .foregroundStyle(.green)
                         .symbolRenderingMode(.hierarchical)
+                        .symbolEffect(.bounce, options: .repeat(.periodic(delay: 3)))
                     Text("All caught up — nothing due!")
                         .font(.subheadline)
                         .foregroundStyle(Color(.secondaryLabel))
@@ -304,7 +307,7 @@ struct StudentDashboardView: View {
 
     private var exploreGrid: some View {
         VStack(alignment: .leading, spacing: 12) {
-            sectionHeader("Explore", icon: "sparkles")
+            sectionHeader("Explore", icon: "sparkles", effect: .variableColor)
 
             LazyVGrid(columns: [
                 GridItem(.flexible(), spacing: 12),
@@ -342,6 +345,7 @@ struct StudentDashboardView: View {
                     .font(.title3)
                     .foregroundStyle(color)
                     .symbolRenderingMode(.hierarchical)
+                    .contentTransition(.symbolEffect(.replace))
                     .frame(height: 24)
                 Text(title)
                     .font(.caption2.bold())
@@ -358,10 +362,32 @@ struct StudentDashboardView: View {
 
     // MARK: - Helpers
 
-    private func sectionHeader(_ title: String, icon: String) -> some View {
-        Label(title, systemImage: icon)
-            .font(.headline)
-            .symbolRenderingMode(.hierarchical)
+    private enum SectionEffect {
+        case wiggle, breathe, variableColor, none
+    }
+
+    private func sectionHeader(_ title: String, icon: String, effect: SectionEffect = .none) -> some View {
+        Label {
+            Text(title)
+        } icon: {
+            Group {
+                switch effect {
+                case .wiggle:
+                    Image(systemName: icon)
+                        .symbolEffect(.wiggle, options: .repeat(.periodic(delay: 4)))
+                case .breathe:
+                    Image(systemName: icon)
+                        .symbolEffect(.breathe, options: .repeat(.periodic(delay: 5)))
+                case .variableColor:
+                    Image(systemName: icon)
+                        .symbolEffect(.variableColor.iterative, options: .repeat(.periodic(delay: 3)))
+                case .none:
+                    Image(systemName: icon)
+                }
+            }
+        }
+        .font(.headline)
+        .symbolRenderingMode(.hierarchical)
     }
 
     private var loadingState: some View {
@@ -382,6 +408,7 @@ struct StudentDashboardView: View {
             Image(systemName: "exclamationmark.triangle.fill")
                 .foregroundStyle(.orange)
                 .symbolRenderingMode(.hierarchical)
+                .symbolEffect(.wiggle, options: .repeat(.periodic(delay: 2)))
             Text(message)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
@@ -408,6 +435,7 @@ struct StudentDashboardView: View {
                 ZStack(alignment: .topTrailing) {
                     Image(systemName: "bell.badge.fill")
                         .symbolRenderingMode(.hierarchical)
+                        .symbolEffect(.wiggle, value: totalUnreadMessages)
                         .symbolEffect(.bounce, value: totalUnreadMessages)
                         .padding(6)
 

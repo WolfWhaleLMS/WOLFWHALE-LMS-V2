@@ -10,6 +10,8 @@ struct LoadingStateView: View {
             Image(systemName: icon)
                 .font(.system(size: 48))
                 .foregroundStyle(.secondary.opacity(0.6))
+                .symbolRenderingMode(.hierarchical)
+                .symbolEffect(.variableColor.iterative, options: .repeat(.continuous))
             Text(title)
                 .font(.headline)
                 .foregroundStyle(.secondary)

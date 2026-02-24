@@ -47,6 +47,7 @@ struct RecommendationsView: View {
                     refreshRecommendations()
                 } label: {
                     Image(systemName: "arrow.clockwise")
+                        .symbolRenderingMode(.hierarchical)
                 }
                 .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 .accessibilityLabel("Refresh Recommendations")
