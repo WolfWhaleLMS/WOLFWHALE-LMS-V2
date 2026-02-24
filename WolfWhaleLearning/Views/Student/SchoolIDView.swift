@@ -68,11 +68,7 @@ struct SchoolIDView: View {
             }
             .padding(20)
             .background(
-                LinearGradient(
-                    colors: [.purple, .cyan],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
+                Theme.brandGradient
             )
 
             // Card Body
@@ -83,7 +79,7 @@ struct SchoolIDView: View {
                         RoundedRectangle(cornerRadius: 10)
                             .fill(
                                 LinearGradient(
-                                    colors: [.purple.opacity(0.2), .cyan.opacity(0.2)],
+                                    colors: [Theme.brandPurple.opacity(0.2), Theme.brandBlue.opacity(0.2)],
                                     startPoint: .topLeading,
                                     endPoint: .bottomTrailing
                                 )

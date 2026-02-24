@@ -86,11 +86,7 @@ struct SuperAdminDashboardView: View {
             ZStack {
                 Circle()
                     .fill(
-                        LinearGradient(
-                            colors: [.purple, .cyan],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+                        Theme.brandGradient
                     )
                     .frame(width: 56, height: 56)
                 Image(systemName: "shield.lefthalf.filled")
@@ -230,11 +226,7 @@ struct SuperAdminDashboardView: View {
                         ? AnyShapeStyle(Color.red)
                         : remaining <= 5
                         ? AnyShapeStyle(Color.orange)
-                        : AnyShapeStyle(LinearGradient(
-                            colors: [.purple, .cyan],
-                            startPoint: .leading,
-                            endPoint: .trailing
-                        ))
+                        : AnyShapeStyle(Theme.brandGradientHorizontal)
                     )
                     .frame(width: geo.size.width * min(progress, 1.0), height: 6)
             }
@@ -571,11 +563,7 @@ struct SuperAdminDashboardView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
                         .background(
-                            LinearGradient(
-                                colors: [.purple, .cyan],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            ),
+                            Theme.brandGradientHorizontal,
                             in: .rect(cornerRadius: 14)
                         )
                         .foregroundStyle(.white)

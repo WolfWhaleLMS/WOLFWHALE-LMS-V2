@@ -270,13 +270,7 @@ struct StudentProfileView: View {
                     HStack(spacing: 12) {
                         ZStack {
                             RoundedRectangle(cornerRadius: 8)
-                                .fill(
-                                    LinearGradient(
-                                        colors: [.purple, .cyan],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
+                                .fill(Theme.brandGradient)
                                 .frame(width: 36, height: 36)
                             Image(systemName: "person.text.rectangle.fill")
                                 .font(.subheadline)
@@ -342,13 +336,7 @@ struct StudentProfileView: View {
             VStack(spacing: 12) {
                 Image(systemName: "w.circle.fill")
                     .font(.system(size: 40))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [.purple, .cyan],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .foregroundStyle(Theme.brandGradient)
                     .symbolEffect(.rotate, options: .repeat(.periodic(delay: 6)))
 
                 Text("WolfWhale LMS")

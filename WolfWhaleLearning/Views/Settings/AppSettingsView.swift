@@ -463,13 +463,7 @@ struct AppSettingsView: View {
                 VStack(spacing: 6) {
                     Image(systemName: "w.circle.fill")
                         .font(.system(size: 32))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [.purple, .cyan],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                        .foregroundStyle(Theme.brandGradient)
                         .symbolEffect(.rotate, options: .repeat(.periodic(delay: 6)))
                     Text("WolfWhale LMS")
                         .font(.caption.bold())

@@ -37,24 +37,12 @@ struct ForgotPasswordView: View {
         VStack(spacing: 14) {
             ZStack {
                 Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [Color.purple.opacity(0.15), Color.cyan.opacity(0.15)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .fill(Theme.brandGradientSubtle)
                     .frame(width: 80, height: 80)
 
                 Image(systemName: "key.fill")
                     .font(.system(size: 32))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [.purple, .cyan],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .foregroundStyle(Theme.brandGradient)
             }
 
             Text("Reset Password")

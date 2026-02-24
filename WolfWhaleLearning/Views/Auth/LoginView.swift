@@ -57,8 +57,8 @@ struct LoginView: View {
                     .fill(
                         RadialGradient(
                             colors: [
-                                Color(red: 0.3, green: 0.8, blue: 1.0).opacity(0.2),
-                                Color(red: 0.1, green: 0.5, blue: 0.8).opacity(0.08),
+                                Theme.brandBlue.opacity(0.2),
+                                Theme.brandPurple.opacity(0.08),
                                 .clear
                             ],
                             center: .center,
@@ -70,7 +70,7 @@ struct LoginView: View {
                     .scaleEffect(glowPulse ? 1.15 : 0.9)
 
                 Circle()
-                    .fill(Color.cyan.opacity(0.15))
+                    .fill(Theme.brandBlue.opacity(0.15))
                     .frame(width: 110, height: 110)
                     .blur(radius: 25)
                     .scaleEffect(glowPulse ? 1.1 : 0.85)
@@ -87,7 +87,7 @@ struct LoginView: View {
                     .aspectRatio(contentMode: .fill)
                     .frame(width: 100, height: 100)
                     .clipShape(Circle())
-                    .shadow(color: .cyan.opacity(0.6), radius: 20, y: 0)
+                    .shadow(color: Theme.brandBlue.opacity(0.6), radius: 20, y: 0)
                     .shadow(color: .white.opacity(0.2), radius: 40, y: 0)
             }
             .accessibilityHidden(true)
@@ -101,7 +101,7 @@ struct LoginView: View {
                 .font(.system(size: 36, weight: .thin, design: .serif))
                 .tracking(4)
                 .foregroundStyle(.white)
-                .shadow(color: .cyan.opacity(0.5), radius: 10)
+                .shadow(color: Theme.brandBlue.opacity(0.5), radius: 10)
 
             Text("LEARNING MANAGEMENT SYSTEM")
                 .font(.system(size: 14, weight: .medium, design: .serif))
@@ -273,11 +273,11 @@ struct DemoRoleButton: View {
 
     private var roleGradient: [Color] {
         switch role {
-        case .student: [.indigo, .purple]
+        case .student: [Theme.brandPurple, .purple]
         case .teacher: [.pink, .orange]
         case .parent: [.green, .teal]
-        case .admin: [.blue, .cyan]
-        case .superAdmin: [.indigo, .cyan]
+        case .admin: [Theme.brandBlue, .cyan]
+        case .superAdmin: [Theme.brandPurple, Theme.brandBlue]
         }
     }
 

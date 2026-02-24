@@ -66,11 +66,7 @@ struct BiometricLockView: View {
                         .frame(maxWidth: .infinity)
                         .frame(height: 50)
                         .background(
-                            LinearGradient(
-                                colors: [.purple, .cyan],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
+                            Theme.brandGradientHorizontal
                         )
                         .foregroundStyle(.white)
                         .clipShape(.rect(cornerRadius: 14))

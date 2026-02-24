@@ -120,11 +120,7 @@ struct OnboardingView: View {
                 Image(systemName: "book.and.wrench.fill")
                     .font(.system(size: 64))
                     .foregroundStyle(
-                        LinearGradient(
-                            colors: [.cyan, .purple],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+                        Theme.brandGradient
                     )
                     .shadow(color: .cyan.opacity(0.5), radius: 20)
             }

@@ -105,11 +105,7 @@ struct ContentView: View {
                 Image(systemName: "graduationcap.fill")
                     .font(.system(size: 56))
                     .foregroundStyle(
-                        LinearGradient(
-                            colors: [.purple, .cyan],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
+                        Theme.brandGradient
                     )
                     .symbolRenderingMode(.hierarchical)
                     .symbolEffect(.breathe.pulse, options: .repeat(.continuous))

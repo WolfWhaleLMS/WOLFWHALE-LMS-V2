@@ -226,13 +226,7 @@ struct TeacherProfileView: View {
             VStack(spacing: 12) {
                 Image(systemName: "w.circle.fill")
                     .font(.system(size: 40))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [.purple, .cyan],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .foregroundStyle(Theme.brandGradient)
 
                 Text("WolfWhale LMS")
                     .font(.headline)

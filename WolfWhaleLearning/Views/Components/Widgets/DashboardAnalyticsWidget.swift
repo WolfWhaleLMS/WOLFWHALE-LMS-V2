@@ -30,7 +30,7 @@ struct DashboardAnalyticsWidget: View {
                     Circle()
                         .trim(from: 0, to: min(gpa / 4.0, 1.0))
                         .stroke(
-                            LinearGradient(colors: [.purple, .cyan], startPoint: .topLeading, endPoint: .bottomTrailing),
+                            Theme.brandGradient,
                             style: StrokeStyle(lineWidth: 6, lineCap: .round)
                         )
                         .frame(width: 56, height: 56)

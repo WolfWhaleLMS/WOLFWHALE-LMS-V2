@@ -1,15 +1,54 @@
 import SwiftUI
 
 struct Theme {
+    // MARK: - Brand Colors
+
+    /// Primary brand blue (#1E6EF4)
+    static let brandBlue = Color(red: 30 / 255, green: 110 / 255, blue: 244 / 255)
+
+    /// Secondary brand green (#34C759)
+    static let brandGreen = Color(red: 52 / 255, green: 199 / 255, blue: 89 / 255)
+
+    /// Tertiary brand purple (#564ADE)
+    static let brandPurple = Color(red: 86 / 255, green: 74 / 255, blue: 222 / 255)
+
+    /// Standard brand gradient: purple to blue, top-leading to bottom-trailing
+    static let brandGradient = LinearGradient(
+        colors: [brandPurple, brandBlue],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+
+    /// Horizontal brand gradient variant for buttons and bars
+    static let brandGradientHorizontal = LinearGradient(
+        colors: [brandPurple, brandBlue],
+        startPoint: .leading,
+        endPoint: .trailing
+    )
+
+    /// Brand gradient colors array for use in custom gradients
+    static let brandGradientColors: [Color] = [brandPurple, brandBlue]
+
+    /// Subtle brand gradient (with opacity) for backgrounds
+    static let brandGradientSubtle = LinearGradient(
+        colors: [brandPurple.opacity(0.15), brandBlue.opacity(0.15)],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+
+    // MARK: - Role Colors
+
     static func roleColor(_ role: UserRole) -> Color {
         switch role {
-        case .student: .indigo
+        case .student: brandPurple
         case .teacher: .pink
         case .parent: .green
-        case .admin: .blue
-        case .superAdmin: .purple
+        case .admin: brandBlue
+        case .superAdmin: brandPurple
         }
     }
+
+    // MARK: - Semantic Colors
 
     static func gradeColor(_ grade: Double) -> Color {
         switch grade {
@@ -65,4 +104,3 @@ struct StatRing: View {
         .frame(width: size, height: size)
     }
 }
-

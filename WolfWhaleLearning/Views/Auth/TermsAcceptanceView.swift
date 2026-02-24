@@ -38,11 +38,7 @@ struct TermsAcceptanceView: View {
             Image(systemName: "checkmark.seal.fill")
                 .font(.title3)
                 .foregroundStyle(
-                    LinearGradient(
-                        colors: [.purple, .cyan],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
+                    Theme.brandGradient
                 )
 
             Text("Legal Agreements")

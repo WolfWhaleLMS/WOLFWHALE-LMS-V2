@@ -87,24 +87,12 @@ struct AgeVerificationView: View {
         VStack(spacing: 12) {
             ZStack {
                 Circle()
-                    .fill(
-                        LinearGradient(
-                            colors: [Color.purple.opacity(0.15), Color.cyan.opacity(0.15)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .fill(Theme.brandGradientSubtle)
                     .frame(width: 72, height: 72)
 
                 Image(systemName: "person.badge.clock.fill")
                     .font(.system(size: 28))
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [.purple, .cyan],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .foregroundStyle(Theme.brandGradient)
             }
 
             Text("Age Verification")

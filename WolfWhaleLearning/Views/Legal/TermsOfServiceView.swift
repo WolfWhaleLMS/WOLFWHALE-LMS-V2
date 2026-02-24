@@ -43,13 +43,7 @@ struct TermsOfServiceView: View {
             HStack(spacing: 8) {
                 Image(systemName: "doc.text.fill")
                     .font(.title2)
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [.purple, .cyan],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .foregroundStyle(Theme.brandGradient)
                 Text("WolfWhale LMS")
                     .font(.title2.bold())
             }

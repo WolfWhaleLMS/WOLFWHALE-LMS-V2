@@ -122,11 +122,7 @@ struct NFCAttendanceView: View {
             }
             .buttonStyle(.borderedProminent)
             .tint(
-                LinearGradient(
-                    colors: [.purple, .cyan],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
+                Theme.brandGradientHorizontal
             )
             .disabled(nfcService?.isScanning == true || nfcService?.isNFCAvailable != true)
             .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
@@ -198,11 +194,7 @@ struct NFCAttendanceView: View {
             // Avatar circle
             Circle()
                 .fill(
-                    LinearGradient(
-                        colors: [.purple, .cyan],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
+                    Theme.brandGradient
                 )
                 .frame(width: 40, height: 40)
                 .overlay {
@@ -291,7 +283,7 @@ struct NFCAttendanceView: View {
         switch nfcService?.scanResult {
         case .success: [.green, .mint]
         case .error: [.red, .orange]
-        case nil: nfcService?.isScanning == true ? [.purple, .cyan] : [.purple, .blue]
+        case nil: nfcService?.isScanning == true ? Theme.brandGradientColors : [Theme.brandPurple, Theme.brandBlue]
         }
     }
 

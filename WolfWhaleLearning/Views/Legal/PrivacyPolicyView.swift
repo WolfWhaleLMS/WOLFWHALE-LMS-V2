@@ -46,13 +46,7 @@ struct PrivacyPolicyView: View {
             HStack(spacing: 8) {
                 Image(systemName: "hand.raised.fill")
                     .font(.title2)
-                    .foregroundStyle(
-                        LinearGradient(
-                            colors: [.purple, .cyan],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
+                    .foregroundStyle(Theme.brandGradient)
                 Text("WolfWhale LMS")
                     .font(.title2.bold())
             }
