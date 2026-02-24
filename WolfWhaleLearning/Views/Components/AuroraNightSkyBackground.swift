@@ -102,7 +102,7 @@ private struct AuroraView: View {
     @State private var phase: CGFloat = 0
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
+        TimelineView(.animation(minimumInterval: 1.0 / 15.0)) { timeline in
             Canvas { context, size in
                 let time = timeline.date.timeIntervalSinceReferenceDate
 
@@ -157,6 +157,7 @@ private struct AuroraView: View {
             }
         }
         .blendMode(.screen)
+        .drawingGroup()
     }
 
     private func drawAuroraBand(

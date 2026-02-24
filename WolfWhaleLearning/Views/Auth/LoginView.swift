@@ -97,20 +97,22 @@ struct LoginView: View {
     }
 
     private var loginSection: some View {
-        VStack(spacing: 16) {
+        VStack(spacing: 12) {
             Text("Sign In")
-                .font(.title3.bold())
+                .font(.subheadline.bold())
                 .foregroundStyle(.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            VStack(spacing: 12) {
-                HStack(spacing: 12) {
+            VStack(spacing: 10) {
+                HStack(spacing: 10) {
                     Image(systemName: "envelope.fill")
+                        .font(.caption)
                         .foregroundStyle(.tertiary)
                         .symbolRenderingMode(.hierarchical)
-                        .frame(width: 20)
+                        .frame(width: 18)
                         .accessibilityHidden(true)
                     TextField("School Email", text: $viewModel.email)
+                        .font(.subheadline)
                         .textContentType(.emailAddress)
                         .keyboardType(.emailAddress)
                         .autocorrectionDisabled()
@@ -121,20 +123,22 @@ struct LoginView: View {
                         .accessibilityLabel("Email address")
                         .accessibilityHint("Enter your school email to sign in")
                 }
-                .padding(14)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
+                .padding(11)
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 10))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: 10)
                         .strokeBorder(focusedField == .email ? Color.accentColor.opacity(0.5) : Color.gray.opacity(0.3), lineWidth: 1)
                 )
 
-                HStack(spacing: 12) {
+                HStack(spacing: 10) {
                     Image(systemName: "lock.fill")
+                        .font(.caption)
                         .foregroundStyle(.tertiary)
                         .symbolRenderingMode(.hierarchical)
-                        .frame(width: 20)
+                        .frame(width: 18)
                         .accessibilityHidden(true)
                     SecureField("Password", text: $viewModel.password)
+                        .font(.subheadline)
                         .textContentType(.password)
                         .focused($focusedField, equals: .password)
                         .submitLabel(.go)
@@ -142,10 +146,10 @@ struct LoginView: View {
                         .accessibilityLabel("Password")
                         .accessibilityHint("Enter your password to sign in")
                 }
-                .padding(14)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
+                .padding(11)
+                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 10))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12)
+                    RoundedRectangle(cornerRadius: 10)
                         .strokeBorder(focusedField == .password ? Color.accentColor.opacity(0.5) : Color.gray.opacity(0.3), lineWidth: 1)
                 )
             }
@@ -184,7 +188,7 @@ struct LoginView: View {
                     }
                 }
                 .frame(maxWidth: .infinity)
-                .frame(height: 50)
+                .frame(height: 44)
             }
             .buttonStyle(.plain)
             .background(
@@ -193,7 +197,7 @@ struct LoginView: View {
                     startPoint: .leading,
                     endPoint: .trailing
                 ),
-                in: .rect(cornerRadius: 12)
+                in: .rect(cornerRadius: 10)
             )
             .disabled(viewModel.isLoading || viewModel.email.isEmpty || viewModel.password.isEmpty || viewModel.isLoginLockedOut)
             .opacity(viewModel.isLoading || viewModel.email.isEmpty || viewModel.password.isEmpty || viewModel.isLoginLockedOut ? 0.75 : 1.0)
@@ -215,8 +219,8 @@ struct LoginView: View {
             .accessibilityHint("Double tap to reset your password")
 
         }
-        .padding(20)
-        .glassEffect(in: .rect(cornerRadius: 24))
+        .padding(16)
+        .glassEffect(in: .rect(cornerRadius: 20))
     }
 
     private var dividerSection: some View {
