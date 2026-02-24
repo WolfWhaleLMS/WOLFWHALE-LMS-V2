@@ -244,7 +244,7 @@ struct NFCAttendanceView: View {
             .frame(height: 50)
         }
         .buttonStyle(.borderedProminent)
-        .tint(.pink)
+        .tint(.orange)
         .disabled(checkedInStudents.isEmpty || isSaving)
         .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         .padding(.top, 4)

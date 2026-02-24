@@ -270,7 +270,7 @@ struct PrivacyPolicyView: View {
             number: "8",
             title: "Third-Party Data Sharing",
             icon: "arrow.triangle.branch",
-            color: .pink
+            color: .orange
         ) {
             VStack(alignment: .leading, spacing: 12) {
                 legalParagraph("WolfWhale LMS is committed to minimizing third-party data sharing:")

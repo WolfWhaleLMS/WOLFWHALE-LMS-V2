@@ -818,7 +818,7 @@ private struct WordBuilderConfettiView: View {
         .onAppear {
             particles = (0..<30).map { _ in
                 WordBuilderConfettiParticle(
-                    color: [Color.purple, .blue, .orange, .green, .pink, .yellow].randomElement() ?? .purple,
+                    color: [Color.purple, .blue, .orange, .green, .red, .yellow].randomElement() ?? .purple,
                     size: CGFloat.random(in: 4...10),
                     startX: 0, startY: 0,
                     endX: CGFloat.random(in: -180...180),

@@ -182,7 +182,7 @@ struct ProfilePhotoPicker: View {
                 .overlay {
                     Image(systemName: "camera.fill")
                         .font(.system(size: size * 0.12))
-                        .foregroundStyle(.pink)
+                        .foregroundStyle(.orange)
                 }
                 .offset(x: size * 0.33, y: size * 0.33)
         }
@@ -194,7 +194,7 @@ struct ProfilePhotoPicker: View {
         Circle()
             .fill(
                 LinearGradient(
-                    colors: [.pink, .purple],
+                    colors: [.orange, .purple],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )

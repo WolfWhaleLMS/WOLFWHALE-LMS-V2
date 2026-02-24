@@ -223,7 +223,7 @@ struct EnhancedOnboardingView: View {
                     icon: "clock.fill",
                     title: "Learn on your schedule",
                     description: "Access course materials anytime with offline support and flexible deadlines.",
-                    color: .pink
+                    color: .orange
                 )
             }
             .padding(.horizontal, 24)
@@ -580,7 +580,7 @@ struct EnhancedOnboardingView: View {
     // MARK: - Confetti Helpers
 
     private func confettiColor(for index: Int) -> Color {
-        let colors: [Color] = [.indigo, .purple, .cyan, .pink, .green, .orange, .yellow, .mint]
+        let colors: [Color] = [.indigo, .purple, .cyan, .orange, .green, .red, .yellow, .mint]
         return colors[index % colors.count]
     }
 

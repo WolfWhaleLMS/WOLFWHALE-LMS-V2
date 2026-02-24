@@ -1,96 +1,25 @@
 import Foundation
 
-// MARK: - Late Submission Penalties & Resubmission Logic
+// MARK: - Late Submission Penalties & Resubmission Logic (Delegating to GradesViewModel)
 
 extension AppViewModel {
 
-    // MARK: - Late Penalty Calculation
+    // MARK: - Late Penalty Calculation (delegates to sub-VM)
 
-    /// Calculates the adjusted grade after applying the late penalty for an assignment.
-    /// - Parameters:
-    ///   - rawGradePercent: The raw grade as a percentage (0-100) before penalty.
-    ///   - assignment: The assignment to check late penalty rules against.
-    /// - Returns: The adjusted grade percentage after applying late penalties.
     func adjustedGradeWithLatePenalty(rawGradePercent: Double, for assignment: Assignment) -> Double {
-        guard assignment.latePenaltyType != .none else { return rawGradePercent }
-
-        let daysLate = assignment.daysLate
-        guard daysLate > 0 else { return rawGradePercent }
-
-        // If past max late days, no credit
-        if daysLate > assignment.maxLateDays {
-            return 0
-        }
-
-        switch assignment.latePenaltyType {
-        case .none:
-            return rawGradePercent
-        case .percentPerDay:
-            let penalty = Double(daysLate) * assignment.latePenaltyPerDay
-            return max(rawGradePercent - penalty, 0)
-        case .flatDeduction:
-            let maxPts = Double(assignment.points)
-            guard maxPts > 0 else { return rawGradePercent }
-            let flatDeduction = Double(daysLate) * assignment.latePenaltyPerDay
-            let deductionPercent = (flatDeduction / maxPts) * 100
-            return max(rawGradePercent - deductionPercent, 0)
-        case .noCredit:
-            return 0
-        }
+        gradesVM.adjustedGradeWithLatePenalty(rawGradePercent: rawGradePercent, for: assignment)
     }
 
-    /// Calculates the late penalty as raw points deducted from a score.
-    /// - Parameters:
-    ///   - rawScore: The raw score (points, not percentage) before penalty.
-    ///   - assignment: The assignment with late policy rules.
-    /// - Returns: The adjusted score after applying late penalties.
     func adjustedScoreWithLatePenalty(rawScore: Double, for assignment: Assignment) -> Double {
-        let maxPts = Double(assignment.points)
-        guard maxPts > 0 else { return rawScore }
-
-        let rawPercent = (rawScore / maxPts) * 100
-        let adjustedPercent = adjustedGradeWithLatePenalty(rawGradePercent: rawPercent, for: assignment)
-        return (adjustedPercent / 100) * maxPts
+        gradesVM.adjustedScoreWithLatePenalty(rawScore: rawScore, for: assignment)
     }
 
-    /// Returns a human-readable summary of the late penalty applied to an assignment.
-    /// - Parameter assignment: The assignment to describe.
-    /// - Returns: A display string or nil if no penalty applies.
     func latePenaltySummary(for assignment: Assignment) -> String? {
-        guard assignment.latePenaltyType != .none, assignment.daysLate > 0 else { return nil }
-
-        let daysLate = assignment.daysLate
-        let dayLabel = daysLate == 1 ? "day" : "days"
-
-        if daysLate > assignment.maxLateDays {
-            return "Submission is \(daysLate) \(dayLabel) late (exceeds \(assignment.maxLateDays)-day limit). No credit awarded."
-        }
-
-        switch assignment.latePenaltyType {
-        case .none:
-            return nil
-        case .percentPerDay:
-            let penalty = min(Double(daysLate) * assignment.latePenaltyPerDay, 100)
-            return "Late penalty: -\(Int(penalty))% (\(daysLate) \(dayLabel) x \(Int(assignment.latePenaltyPerDay))% per day)"
-        case .flatDeduction:
-            let deduction = Double(daysLate) * assignment.latePenaltyPerDay
-            return "Late penalty: -\(Int(deduction)) points (\(daysLate) \(dayLabel) x \(Int(assignment.latePenaltyPerDay)) pts per day)"
-        case .noCredit:
-            return "Late submission receives no credit."
-        }
+        gradesVM.latePenaltySummary(for: assignment)
     }
 
     // MARK: - Grade with Late Penalty (Teacher Flow)
 
-    /// Grades a submission with automatic late penalty application.
-    /// This wraps the existing gradeSubmission flow, applying late deductions before saving.
-    /// - Parameters:
-    ///   - assignmentId: The assignment being graded.
-    ///   - studentId: The student being graded (optional, resolved from assignment if nil).
-    ///   - rawScore: The raw score before late penalty (points, not percentage).
-    ///   - letterGrade: The letter grade (will be recalculated after penalty if needed).
-    ///   - feedback: Teacher feedback text.
-    ///   - applyLatePenalty: Whether to automatically apply the late penalty. Default true.
     func gradeWithLatePenalty(
         assignmentId: UUID,
         studentId: UUID?,
@@ -109,8 +38,8 @@ extension AppViewModel {
         let adjustedFeedback: String?
 
         if applyLatePenalty && assignment.latePenaltyType != .none && assignment.daysLate > 0 {
-            adjustedScore = adjustedScoreWithLatePenalty(rawScore: rawScore, for: assignment)
-            let penaltySummary = latePenaltySummary(for: assignment) ?? ""
+            adjustedScore = gradesVM.adjustedScoreWithLatePenalty(rawScore: rawScore, for: assignment)
+            let penaltySummary = gradesVM.latePenaltySummary(for: assignment) ?? ""
             let baseFeedback = feedback ?? ""
             adjustedFeedback = baseFeedback.isEmpty ? penaltySummary : "\(baseFeedback)\n\n\(penaltySummary)"
         } else {
@@ -118,7 +47,6 @@ extension AppViewModel {
             adjustedFeedback = feedback
         }
 
-        // Recalculate letter grade based on adjusted score
         let maxPts = Double(assignment.points)
         let adjustedPercent = maxPts > 0 ? (adjustedScore / maxPts) * 100 : 0
         let adjustedLetterGrade = gradeService.letterGrade(from: adjustedPercent)
@@ -134,19 +62,12 @@ extension AppViewModel {
 
     // MARK: - Resubmission Logic
 
-    /// Handles a resubmission for a previously graded assignment.
-    /// Archives the current submission/grade into resubmission history, then resets submission state.
-    /// - Parameters:
-    ///   - assignmentId: The assignment being resubmitted.
-    ///   - newText: The new submission text.
     func resubmitAssignment(assignmentId: UUID, newText: String) {
         guard let index = assignments.firstIndex(where: { $0.id == assignmentId }) else { return }
         let assignment = assignments[index]
 
-        // Verify resubmission is allowed
         guard assignment.canResubmit else { return }
 
-        // Save previous state for rollback
         let previousSubmission = assignment.submission
         let previousGrade = assignment.grade
         let previousFeedback = assignment.feedback
@@ -155,25 +76,22 @@ extension AppViewModel {
         let previousResubmissionHistory = assignments[index].resubmissionHistory
         let previousResubmissionCount = assignments[index].resubmissionCount
 
-        // Archive current submission into history
         let historyEntry = ResubmissionHistoryEntry(
             id: UUID(),
             submissionText: assignment.submission,
             grade: assignment.grade,
             feedback: assignment.feedback,
-            submittedAt: Date().addingTimeInterval(-1), // approximate original submission time
+            submittedAt: Date().addingTimeInterval(-1),
             gradedAt: Date()
         )
         assignments[index].resubmissionHistory.append(historyEntry)
         assignments[index].resubmissionCount += 1
 
-        // Reset submission state for re-grading
         assignments[index].submission = newText
         assignments[index].grade = nil
         assignments[index].feedback = nil
         assignments[index].isSubmitted = true
 
-        // Extract and store attachment URLs from the new submission text
         let urls = Assignment.extractAttachmentURLs(from: newText)
         if !urls.isEmpty {
             assignments[index].attachmentURLs = urls
@@ -186,7 +104,6 @@ extension AppViewModel {
                 do {
                     try await dataService.submitAssignment(assignmentId: assignmentId, studentId: user.id, content: newText)
                 } catch {
-                    // Revert all optimistic updates — resubmission was NOT persisted
                     if let idx = assignments.firstIndex(where: { $0.id == assignmentId }) {
                         assignments[idx].submission = previousSubmission
                         assignments[idx].grade = previousGrade
@@ -209,8 +126,6 @@ extension AppViewModel {
 
     // MARK: - Assignment Creation with Late Policy & Resubmission
 
-    /// Creates an assignment with late penalty and resubmission settings.
-    /// This extends the existing createAssignment by including late policy and resubmission options.
     func createAssignmentWithPolicy(
         courseId: UUID,
         title: String,
@@ -226,7 +141,6 @@ extension AppViewModel {
     ) async throws {
         guard let user = currentUser else { return }
 
-        // Input validation
         let sanitizedTitle = InputValidator.sanitizeText(title)
         let titleResult = InputValidator.validateAssignmentTitle(sanitizedTitle)
         guard titleResult.valid else {
@@ -271,7 +185,6 @@ extension AppViewModel {
             let courseIds = courses.map(\.id)
             var fetched = try await dataService.fetchAssignments(for: user.id, role: user.role, courseIds: courseIds)
 
-            // Apply local-only late policy & resubmission fields to newly created assignment
             for i in fetched.indices where fetched[i].title == sanitizedTitle && fetched[i].courseId == courseId {
                 fetched[i].latePenaltyType = latePenaltyType
                 fetched[i].latePenaltyPerDay = latePenaltyPerDay
@@ -301,7 +214,6 @@ extension AppViewModel {
 
     // MARK: - Update Late Policy on Existing Assignment
 
-    /// Updates the late policy and resubmission settings on an existing assignment (local state).
     func updateAssignmentPolicy(
         assignmentId: UUID,
         latePenaltyType: LatePenaltyType,

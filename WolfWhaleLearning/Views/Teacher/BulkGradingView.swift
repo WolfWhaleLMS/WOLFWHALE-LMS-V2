@@ -181,7 +181,7 @@ struct BulkGradingView: View {
             // Header: student name + assignment title
             HStack(spacing: 10) {
                 Circle()
-                    .fill(.pink.gradient)
+                    .fill(.red.gradient)
                     .frame(width: 32, height: 32)
                     .overlay {
                         Image(systemName: "person.fill")
@@ -201,10 +201,10 @@ struct BulkGradingView: View {
                 Spacer()
                 Text("\(assignment.points) pts")
                     .font(.caption2.bold())
-                    .foregroundStyle(.pink)
+                    .foregroundStyle(.red)
                     .padding(.horizontal, 8)
                     .padding(.vertical, 3)
-                    .background(.pink.opacity(0.12))
+                    .background(.red.opacity(0.12))
                     .clipShape(Capsule())
             }
 
@@ -239,7 +239,7 @@ struct BulkGradingView: View {
                 } label: {
                     Image(systemName: gradeEntries[index].showFeedback ? "text.bubble.fill" : "text.bubble")
                         .font(.callout)
-                        .foregroundStyle(.pink)
+                        .foregroundStyle(.red)
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(gradeEntries[index].showFeedback ? "Hide feedback" : "Add feedback")
@@ -281,7 +281,7 @@ struct BulkGradingView: View {
             .frame(height: 50)
         }
         .buttonStyle(.borderedProminent)
-        .tint(.pink)
+        .tint(.red)
         .disabled(isSubmitting || filledCount == 0)
         .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         .padding(.top, 4)

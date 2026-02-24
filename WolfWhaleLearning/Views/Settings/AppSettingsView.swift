@@ -124,7 +124,7 @@ struct AppSettingsView: View {
                     Text("Edit Profile")
                 } icon: {
                     Image(systemName: "person.crop.circle.fill")
-                        .foregroundStyle(.pink)
+                        .foregroundStyle(.orange)
                         .symbolRenderingMode(.hierarchical)
                 }
             }

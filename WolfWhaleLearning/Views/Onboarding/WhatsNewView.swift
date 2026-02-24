@@ -182,7 +182,7 @@ struct WhatsNewView: View {
             ),
             WhatsNewFeature(
                 icon: "paintbrush.fill",
-                color: .pink,
+                color: .orange,
                 title: "Refreshed Design",
                 description: "Updated visuals with glass effects and smooth animations for a more polished experience."
             ),

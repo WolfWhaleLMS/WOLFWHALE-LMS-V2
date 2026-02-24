@@ -136,14 +136,14 @@ struct EditProfileView: View {
                                 .frame(width: 52, height: 52)
                                 .background(
                                     selectedAvatar == avatar && !hasUploadedAvatar
-                                        ? AnyShapeStyle(LinearGradient(colors: [.pink, .purple], startPoint: .topLeading, endPoint: .bottomTrailing))
+                                        ? AnyShapeStyle(LinearGradient(colors: [.orange, .purple], startPoint: .topLeading, endPoint: .bottomTrailing))
                                         : AnyShapeStyle(.ultraThinMaterial),
                                     in: .rect(cornerRadius: 12)
                                 )
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
                                         .strokeBorder(
-                                            selectedAvatar == avatar && !hasUploadedAvatar ? Color.pink : Color.clear,
+                                            selectedAvatar == avatar && !hasUploadedAvatar ? Color.orange : Color.clear,
                                             lineWidth: 2
                                         )
                                 )
@@ -172,7 +172,7 @@ struct EditProfileView: View {
         VStack(spacing: 0) {
             HStack(spacing: 12) {
                 Image(systemName: "person.text.rectangle.fill")
-                    .foregroundStyle(.pink)
+                    .foregroundStyle(.orange)
                     .frame(width: 24)
                 Text("Name")
                     .font(.headline)
@@ -365,7 +365,7 @@ struct EditProfileView: View {
                 .frame(height: 50)
             }
             .buttonStyle(.borderedProminent)
-            .tint(.pink)
+            .tint(.orange)
             .clipShape(.rect(cornerRadius: 12))
             .disabled(!canSave)
             .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
@@ -398,8 +398,8 @@ struct EditProfileView: View {
                     dismiss()
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(.pink)
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .tint(.orange)
+                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 .padding(.top, 8)
             }
             .padding(32)

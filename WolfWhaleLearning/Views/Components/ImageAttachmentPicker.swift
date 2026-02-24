@@ -37,7 +37,7 @@ struct ImageAttachmentPicker: View {
             // Header
             HStack {
                 Image(systemName: "photo.on.rectangle.angled")
-                    .foregroundStyle(.pink)
+                    .foregroundStyle(.orange)
                 Text("Photo Attachments")
                     .font(.headline)
                 Spacer()
@@ -76,10 +76,10 @@ struct ImageAttachmentPicker: View {
                         } else {
                             Image(systemName: selectedImages.isEmpty ? "photo.badge.plus" : "plus.circle.fill")
                                 .font(.title3)
-                                .foregroundStyle(.pink)
+                                .foregroundStyle(.orange)
                             Text(selectedImages.isEmpty ? "Add Photos" : "Add More")
                                 .font(.subheadline.bold())
-                                .foregroundStyle(.pink)
+                                .foregroundStyle(.orange)
                         }
                         Spacer()
                         if !selectedImages.isEmpty && !isLoadingImages {

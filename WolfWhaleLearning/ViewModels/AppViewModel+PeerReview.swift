@@ -20,31 +20,29 @@ private enum PeerReviewStore {
     }
 }
 
-// MARK: - Peer Review & Assignment Templates/Cloning
+// MARK: - Peer Review & Assignment Templates/Cloning (Delegating to PeerReviewViewModel)
 
 extension AppViewModel {
 
-    // MARK: - Peer Review Storage
+    // MARK: - Peer Review Storage (backward compatible)
 
     /// In-memory peer reviews. Populated from Supabase or demo data.
+    /// This bridges to the sub-ViewModel while keeping the static storage for backward compatibility.
     var peerReviews: [PeerReview] {
-        get { PeerReviewStore.get(for: self) }
-        set { PeerReviewStore.set(newValue, for: self) }
+        get { peerReviewVM.peerReviews }
+        set { peerReviewVM.peerReviews = newValue }
     }
 
     // MARK: - Assignment Templates (Local)
 
     /// Saved assignment templates stored via UserDefaults.
     var assignmentTemplates: [AssignmentTemplate] {
-        AssignmentTemplateStore.loadTemplates()
+        peerReviewVM.assignmentTemplates
     }
 
     // MARK: - Duplicate Assignment
 
     /// Duplicates an existing assignment, optionally into a different course.
-    /// Copies all fields except: id (new UUID), dueDate (set one week from now),
-    /// submissions, grades, studentId, studentName.
-    /// Returns the new Assignment on success, nil on failure.
     @discardableResult
     func duplicateAssignment(assignmentId: UUID, newCourseId: UUID? = nil) async throws -> Assignment? {
         guard let source = assignments.first(where: { $0.id == assignmentId }) else {
@@ -54,7 +52,7 @@ extension AppViewModel {
 
         let targetCourseId = newCourseId ?? source.courseId
         let targetCourseName = courses.first(where: { $0.id == targetCourseId })?.title ?? source.courseName
-        let newDueDate = Date().addingTimeInterval(7 * 86400) // one week from now
+        let newDueDate = Date().addingTimeInterval(7 * 86400)
 
         let duplicated = Assignment(
             id: UUID(),
@@ -105,25 +103,13 @@ extension AppViewModel {
         return duplicated
     }
 
-    // MARK: - Save as Template
+    // MARK: - Save as Template (delegates to sub-VM)
 
-    /// Saves an assignment as a reusable template in local storage.
     func saveAssignmentAsTemplate(assignmentId: UUID, templateName: String) {
-        guard let source = assignments.first(where: { $0.id == assignmentId }) else {
-            dataError = "Assignment not found."
-            return
+        peerReviewVM.saveAssignmentAsTemplate(assignmentId: assignmentId, templateName: templateName, assignments: assignments)
+        if let error = peerReviewVM.dataError {
+            dataError = error
         }
-
-        let template = AssignmentTemplate(
-            name: templateName.trimmingCharacters(in: .whitespacesAndNewlines),
-            title: source.title,
-            instructions: source.instructions,
-            points: source.points,
-            rubricId: source.rubricId,
-            courseName: source.courseName
-        )
-
-        AssignmentTemplateStore.addTemplate(template)
     }
 
     /// Creates a new assignment from a template in the given course.
@@ -182,307 +168,53 @@ extension AppViewModel {
 
     /// Removes a template from local storage.
     func deleteAssignmentTemplate(id: UUID) {
-        AssignmentTemplateStore.removeTemplate(id: id)
+        peerReviewVM.deleteAssignmentTemplate(id: id)
     }
 
-    // MARK: - Peer Review: Assign Reviewers
+    // MARK: - Peer Review: Assign Reviewers (delegates to sub-VM)
 
-    /// Randomly assigns peer reviewers for an assignment.
-    /// Each submission gets `reviewsPerSubmission` reviewers, and no student reviews their own work.
     func assignPeerReviewers(assignmentId: UUID, reviewsPerSubmission: Int = 2) {
-        // Gather students who have submitted this assignment
-        let submitted = assignments.filter { $0.id == assignmentId && $0.isSubmitted }
-        let submitterIds: [(studentId: UUID, studentName: String?)] = submitted.compactMap { a in
-            guard let studentId = a.studentId else { return nil }
-            return (studentId: studentId, studentName: a.studentName)
-        }
-
-        // Deduplicate by studentId
-        var seen = Set<UUID>()
-        let uniqueSubmitters = submitterIds.filter { seen.insert($0.studentId).inserted }
-
-        guard uniqueSubmitters.count >= 2 else {
-            dataError = "Need at least 2 student submissions to assign peer reviews."
-            return
-        }
-
-        let assignmentTitle = submitted.first?.title ?? "Assignment"
-        var newReviews: [PeerReview] = []
-        let allStudentIds = uniqueSubmitters.map(\.studentId)
-
-        for submitter in uniqueSubmitters {
-            // Pick reviewers: everyone except the submitter, shuffled
-            let candidates = allStudentIds.filter { $0 != submitter.studentId }.shuffled()
-            let count = min(reviewsPerSubmission, candidates.count)
-            let selectedReviewers = Array(candidates.prefix(count))
-
-            for reviewerId in selectedReviewers {
-                let reviewerName = uniqueSubmitters.first(where: { $0.studentId == reviewerId })?.studentName
-
-                let review = PeerReview(
-                    assignmentId: assignmentId,
-                    reviewerId: reviewerId,
-                    submissionOwnerId: submitter.studentId,
-                    status: .assigned,
-                    reviewerName: reviewerName,
-                    submissionOwnerName: submitter.studentName,
-                    assignmentTitle: assignmentTitle
-                )
-                newReviews.append(review)
-            }
-        }
-
-        // Remove existing reviews for this assignment, then add new ones
-        var current = peerReviews
-        current.removeAll { $0.assignmentId == assignmentId }
-        current.append(contentsOf: newReviews)
-        peerReviews = current
-
-        if !isDemoMode {
-            Task {
-                for review in newReviews {
-                    do {
-                        try await supabaseClient
-                            .from("peer_reviews")
-                            .insert([
-                                "id": review.id.uuidString,
-                                "assignment_id": review.assignmentId.uuidString,
-                                "reviewer_id": review.reviewerId.uuidString,
-                                "submission_owner_id": review.submissionOwnerId.uuidString,
-                                "feedback": "",
-                                "status": PeerReviewStatus.assigned.rawValue
-                            ])
-                            .execute()
-                    } catch {
-                        #if DEBUG
-                        print("[AppViewModel] Failed to insert peer review: \(error)")
-                        #endif
-                    }
-                }
-            }
+        peerReviewVM.assignPeerReviewers(
+            assignmentId: assignmentId,
+            reviewsPerSubmission: reviewsPerSubmission,
+            assignments: assignments,
+            isDemoMode: isDemoMode
+        )
+        if let error = peerReviewVM.dataError {
+            dataError = error
         }
     }
 
-    // MARK: - Peer Review: Load Reviews
+    // MARK: - Peer Review: Load Reviews (delegates to sub-VM)
 
-    /// Loads peer reviews for a specific assignment (teacher view).
     func loadPeerReviews(assignmentId: UUID) {
-        if isDemoMode {
-            // Demo reviews are already in memory from assignPeerReviewers
-            return
-        }
-
-        Task {
-            do {
-                struct PeerReviewDTO: Decodable {
-                    let id: UUID
-                    let assignmentId: UUID
-                    let reviewerId: UUID
-                    let submissionOwnerId: UUID
-                    let score: Double?
-                    let feedback: String
-                    let status: String
-                    let createdAt: String
-                    let completedAt: String?
-
-                    enum CodingKeys: String, CodingKey {
-                        case id
-                        case assignmentId = "assignment_id"
-                        case reviewerId = "reviewer_id"
-                        case submissionOwnerId = "submission_owner_id"
-                        case score, feedback, status
-                        case createdAt = "created_at"
-                        case completedAt = "completed_at"
-                    }
-                }
-
-                let dtos: [PeerReviewDTO] = try await supabaseClient
-                    .from("peer_reviews")
-                    .select()
-                    .eq("assignment_id", value: assignmentId.uuidString)
-                    .order("created_at", ascending: false)
-                    .execute()
-                    .value
-
-                let formatter = ISO8601DateFormatter()
-                let reviews = dtos.map { dto in
-                    PeerReview(
-                        id: dto.id,
-                        assignmentId: dto.assignmentId,
-                        reviewerId: dto.reviewerId,
-                        submissionOwnerId: dto.submissionOwnerId,
-                        score: dto.score,
-                        feedback: dto.feedback,
-                        status: PeerReviewStatus(rawValue: dto.status) ?? .assigned,
-                        createdDate: formatter.date(from: dto.createdAt) ?? Date(),
-                        completedDate: dto.completedAt.flatMap { formatter.date(from: $0) }
-                    )
-                }
-
-                var current = peerReviews
-                current.removeAll { $0.assignmentId == assignmentId }
-                current.append(contentsOf: reviews)
-                peerReviews = current
-            } catch {
-                #if DEBUG
-                print("[AppViewModel] loadPeerReviews failed: \(error)")
-                #endif
-            }
-        }
+        peerReviewVM.loadPeerReviews(assignmentId: assignmentId, isDemoMode: isDemoMode)
     }
 
     /// Loads peer reviews assigned TO the current student.
     func loadMyPeerReviews() {
         guard let userId = currentUser?.id else { return }
-
-        if isDemoMode {
-            // In demo mode, reviews are already in memory
-            return
-        }
-
-        Task {
-            do {
-                struct PeerReviewDTO: Decodable {
-                    let id: UUID
-                    let assignmentId: UUID
-                    let reviewerId: UUID
-                    let submissionOwnerId: UUID
-                    let score: Double?
-                    let feedback: String
-                    let status: String
-                    let createdAt: String
-                    let completedAt: String?
-
-                    enum CodingKeys: String, CodingKey {
-                        case id
-                        case assignmentId = "assignment_id"
-                        case reviewerId = "reviewer_id"
-                        case submissionOwnerId = "submission_owner_id"
-                        case score, feedback, status
-                        case createdAt = "created_at"
-                        case completedAt = "completed_at"
-                    }
-                }
-
-                let dtos: [PeerReviewDTO] = try await supabaseClient
-                    .from("peer_reviews")
-                    .select()
-                    .eq("reviewer_id", value: userId.uuidString)
-                    .order("created_at", ascending: false)
-                    .execute()
-                    .value
-
-                let formatter = ISO8601DateFormatter()
-                let reviews = dtos.map { dto in
-                    PeerReview(
-                        id: dto.id,
-                        assignmentId: dto.assignmentId,
-                        reviewerId: dto.reviewerId,
-                        submissionOwnerId: dto.submissionOwnerId,
-                        score: dto.score,
-                        feedback: dto.feedback,
-                        status: PeerReviewStatus(rawValue: dto.status) ?? .assigned,
-                        createdDate: formatter.date(from: dto.createdAt) ?? Date(),
-                        completedDate: dto.completedAt.flatMap { formatter.date(from: $0) }
-                    )
-                }
-
-                // Replace only reviews for this reviewer
-                var current = peerReviews
-                current.removeAll { $0.reviewerId == userId }
-                current.append(contentsOf: reviews)
-                peerReviews = current
-            } catch {
-                #if DEBUG
-                print("[AppViewModel] loadMyPeerReviews failed: \(error)")
-                #endif
-            }
-        }
+        peerReviewVM.loadMyPeerReviews(userId: userId, isDemoMode: isDemoMode)
     }
 
-    // MARK: - Peer Review: Submit Review
+    // MARK: - Peer Review: Submit Review (delegates to sub-VM)
 
-    /// Submits a peer review with score and feedback.
     func submitPeerReview(reviewId: UUID, score: Double, feedback: String, rubricScores: [UUID: Int]? = nil) {
-        var current = peerReviews
-        guard let idx = current.firstIndex(where: { $0.id == reviewId }) else {
-            dataError = "Peer review not found."
-            return
-        }
-
-        let trimmedFeedback = feedback.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedFeedback.isEmpty else {
-            dataError = "Please provide feedback for your peer review."
-            return
-        }
-
-        current[idx].score = score
-        current[idx].feedback = trimmedFeedback
-        current[idx].rubricScores = rubricScores
-        current[idx].status = .completed
-        current[idx].completedDate = Date()
-        peerReviews = current
-
-        if !isDemoMode {
-            Task {
-                do {
-                    let formatter = ISO8601DateFormatter()
-                    formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-
-                    try await supabaseClient
-                        .from("peer_reviews")
-                        .update([
-                            "score": "\(score)",
-                            "feedback": trimmedFeedback,
-                            "status": PeerReviewStatus.completed.rawValue,
-                            "completed_at": formatter.string(from: Date())
-                        ])
-                        .eq("id", value: reviewId.uuidString)
-                        .execute()
-                } catch {
-                    // Revert on failure
-                    var reverted = peerReviews
-                    if let idx = reverted.firstIndex(where: { $0.id == reviewId }) {
-                        reverted[idx].score = nil
-                        reverted[idx].feedback = ""
-                        reverted[idx].status = .assigned
-                        reverted[idx].completedDate = nil
-                        peerReviews = reverted
-                    }
-                    dataError = "Failed to submit peer review. Please try again."
-                    #if DEBUG
-                    print("[AppViewModel] submitPeerReview failed: \(error)")
-                    #endif
-                }
-            }
+        peerReviewVM.submitPeerReview(
+            reviewId: reviewId,
+            score: score,
+            feedback: feedback,
+            rubricScores: rubricScores,
+            isDemoMode: isDemoMode
+        )
+        if let error = peerReviewVM.dataError {
+            dataError = error
         }
     }
 
-    // MARK: - Peer Review: Mark In Progress
+    // MARK: - Peer Review: Mark In Progress (delegates to sub-VM)
 
-    /// Marks a peer review as in progress when the student starts reviewing.
     func markPeerReviewInProgress(reviewId: UUID) {
-        var current = peerReviews
-        guard let idx = current.firstIndex(where: { $0.id == reviewId }) else { return }
-        guard current[idx].status == .assigned else { return }
-
-        current[idx].status = .inProgress
-        peerReviews = current
-
-        if !isDemoMode {
-            Task {
-                do {
-                    try await supabaseClient
-                        .from("peer_reviews")
-                        .update(["status": PeerReviewStatus.inProgress.rawValue])
-                        .eq("id", value: reviewId.uuidString)
-                        .execute()
-                } catch {
-                    #if DEBUG
-                    print("[AppViewModel] markPeerReviewInProgress failed: \(error)")
-                    #endif
-                }
-            }
-        }
+        peerReviewVM.markPeerReviewInProgress(reviewId: reviewId, isDemoMode: isDemoMode)
     }
 }

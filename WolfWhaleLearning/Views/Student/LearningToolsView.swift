@@ -64,7 +64,7 @@ struct LearningToolsView: View {
     private let allTools: [ToolItem] = [
         // Language
         ToolItem(title: "Spelling Bee", subtitle: "Practice your spelling", icon: "textformat", gradientColors: [.yellow, .orange], category: .language),
-        ToolItem(title: "Grammar Quest", subtitle: "Master grammar rules", icon: "text.book.closed.fill", gradientColors: [.purple, .pink], category: .language),
+        ToolItem(title: "Grammar Quest", subtitle: "Master grammar rules", icon: "text.book.closed.fill", gradientColors: [.purple, .orange], category: .language),
         ToolItem(title: "French Vocab", subtitle: "Learn French vocabulary", icon: "character.book.closed.fill", gradientColors: [.blue, .indigo], category: .language),
         ToolItem(title: "Speech to Text", subtitle: "Dictate your notes", icon: "waveform", gradientColors: [.indigo, .purple], category: .language),
 
@@ -81,7 +81,7 @@ struct LearningToolsView: View {
 
         // Tools
         ToolItem(title: "Document Scanner", subtitle: "Scan & digitize documents", icon: "doc.viewfinder.fill", gradientColors: [.blue, .cyan], category: .tools),
-        ToolItem(title: "Drawing Canvas", subtitle: "Sketch & annotate", icon: "pencil.tip.crop.circle", gradientColors: [.pink, .purple], category: .tools),
+        ToolItem(title: "Drawing Canvas", subtitle: "Sketch & annotate", icon: "pencil.tip.crop.circle", gradientColors: [.orange, .purple], category: .tools),
         ToolItem(title: "Flashcards", subtitle: "Create & study flashcards", icon: "rectangle.on.rectangle.angled", gradientColors: [.yellow, .orange], category: .tools),
         ToolItem(title: "Typing Tutor", subtitle: "Improve typing speed", icon: "keyboard.fill", gradientColors: [.gray, .blue], category: .tools),
 

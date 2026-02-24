@@ -34,6 +34,9 @@ final class OfflineStorageService {
     private static let gradesFile = "offline_grades.json"
     private static let conversationsFile = "offline_conversations.json"
     private static let userProfileFile = "offline_user_profile.json"
+    private static let metadataFile = "offline_metadata.json"
+    private static let conflictHistoryFile = "offline_conflict_history.json"
+    private static let syncResultFile = "offline_last_sync_result.json"
 
     // MARK: - Directory (per-user)
 
@@ -187,6 +190,42 @@ final class OfflineStorageService {
         return load(filename: Self.userProfileFile)
     }
 
+    // MARK: - Cache Metadata (for conflict resolution)
+
+    func saveMetadata(_ metadata: [CachedItemMetadata]) {
+        guard currentUserId != nil else { return }
+        save(metadata, filename: Self.metadataFile)
+    }
+
+    func loadMetadata() -> [CachedItemMetadata] {
+        guard currentUserId != nil else { return [] }
+        return load(filename: Self.metadataFile) ?? []
+    }
+
+    // MARK: - Conflict History
+
+    func saveConflictHistory(_ history: [SyncConflict]) {
+        guard currentUserId != nil else { return }
+        save(history, filename: Self.conflictHistoryFile)
+    }
+
+    func loadConflictHistory() -> [SyncConflict] {
+        guard currentUserId != nil else { return [] }
+        return load(filename: Self.conflictHistoryFile) ?? []
+    }
+
+    // MARK: - Sync Result
+
+    func saveSyncResult(_ result: SyncResult) {
+        guard currentUserId != nil else { return }
+        save(result, filename: Self.syncResultFile)
+    }
+
+    func loadSyncResult() -> SyncResult? {
+        guard currentUserId != nil else { return nil }
+        return load(filename: Self.syncResultFile)
+    }
+
     // MARK: - Clear All
 
     func clearAllData() {
@@ -239,6 +278,7 @@ final class OfflineStorageService {
             ("Grades", Self.gradesFile),
             ("Conversations", Self.conversationsFile),
             ("User Profile", Self.userProfileFile),
+            ("Sync Metadata", Self.metadataFile),
         ]
         let fm = FileManager.default
         return files.compactMap { label, filename in

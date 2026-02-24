@@ -202,6 +202,15 @@ class AppViewModel {
     }
     var isSyncingOffline = false
     var offlineStorage = OfflineStorageService()
+    // Conflict resolution for offline sync (server-wins strategy)
+    private var _conflictResolution: ConflictResolutionService?
+    var conflictResolution: ConflictResolutionService {
+        if let existing = _conflictResolution { return existing }
+        let service = ConflictResolutionService()
+        service.configure(offlineStorage: offlineStorage, networkMonitor: networkMonitor)
+        _conflictResolution = service
+        return service
+    }
     // Lazy: CKContainer.default() crashes without iCloud capability/entitlements
     private var _cloudSync: CloudSyncService?
     var cloudSync: CloudSyncService {
@@ -276,6 +285,56 @@ class AppViewModel {
         let service = DrawingService()
         _drawingService = service
         return service
+    }
+
+    // MARK: - Feature Sub-ViewModels
+    // These sub-ViewModels hold domain-specific state and logic.
+    // AppViewModel creates them lazily and delegates to them.
+    // Views can access them via appViewModel.gradesVM, appViewModel.discussionsVM, etc.
+
+    private var _gradesVM: GradesViewModel?
+    /// Grade-related state and logic: weighted calculations, grade curves, CSV export, late penalties, etc.
+    var gradesVM: GradesViewModel {
+        if let existing = _gradesVM { return existing }
+        let vm = GradesViewModel()
+        _gradesVM = vm
+        return vm
+    }
+
+    private var _discussionsVM: DiscussionViewModel?
+    /// Discussion forum state and logic: threads, replies, pinning.
+    var discussionsVM: DiscussionViewModel {
+        if let existing = _discussionsVM { return existing }
+        let vm = DiscussionViewModel()
+        _discussionsVM = vm
+        return vm
+    }
+
+    private var _peerReviewVM: PeerReviewViewModel?
+    /// Peer review state and logic: assigning reviewers, submitting reviews, templates.
+    var peerReviewVM: PeerReviewViewModel {
+        if let existing = _peerReviewVM { return existing }
+        let vm = PeerReviewViewModel()
+        _peerReviewVM = vm
+        return vm
+    }
+
+    private var _parentFeaturesVM: ParentFeaturesViewModel?
+    /// Parent-specific state and logic: children, alerts, conferences.
+    var parentFeaturesVM: ParentFeaturesViewModel {
+        if let existing = _parentFeaturesVM { return existing }
+        let vm = ParentFeaturesViewModel()
+        _parentFeaturesVM = vm
+        return vm
+    }
+
+    private var _academicCalendarVM: AcademicCalendarViewModel?
+    /// Academic calendar state and logic: terms, events, grading periods, report cards.
+    var academicCalendarVM: AcademicCalendarViewModel {
+        if let existing = _academicCalendarVM { return existing }
+        let vm = AcademicCalendarViewModel()
+        _academicCalendarVM = vm
+        return vm
     }
 
     /// GPA on a 4.0 scale, computed from weighted course grades.
@@ -544,7 +603,14 @@ class AppViewModel {
                     await pushService.removeTokenFromServer(userId: userId)
                 }
                 pushService.clearAllNotifications()
-                try? await supabaseClient.auth.signOut()
+                do {
+                    try await supabaseClient.auth.signOut()
+                } catch {
+                    #if DEBUG
+                    print("[AppViewModel] Sign out error: \(error)")
+                    #endif
+                    // Still clear local state even on sign-out error
+                }
             }
         }
 
@@ -594,6 +660,7 @@ class AppViewModel {
         _pushService = nil
         _calendarService = nil
         _cloudSync = nil
+        _conflictResolution = nil
         _speechService = nil
         _recommendationService = nil
         _healthService = nil
@@ -602,6 +669,13 @@ class AppViewModel {
         #if canImport(GroupActivities)
         _sharePlayService = nil
         #endif
+
+        // 7a. Clear feature sub-ViewModels so they are re-created fresh for the next user
+        _gradesVM = nil
+        _discussionsVM = nil
+        _peerReviewVM = nil
+        _parentFeaturesVM = nil
+        _academicCalendarVM = nil
 
         // 8. Deindex all Spotlight items for the previous user
         Task { await spotlightService.deindexAllContent() }
@@ -700,14 +774,21 @@ class AppViewModel {
     func syncProfile() {
         guard let user = currentUser, !isDemoMode else { return }
         Task {
-            let update = UpdateStudentXpDTO(
-                streakDays: user.streak
-            )
-            _ = try? await supabaseClient
-                .from("student_xp")
-                .update(update)
-                .eq("student_id", value: user.id.uuidString)
-                .execute()
+            do {
+                let update = UpdateStudentXpDTO(
+                    streakDays: user.streak
+                )
+                _ = try await supabaseClient
+                    .from("student_xp")
+                    .update(update)
+                    .eq("student_id", value: user.id.uuidString)
+                    .execute()
+            } catch {
+                dataError = "Unable to sync profile. Please try again."
+                #if DEBUG
+                print("[AppViewModel] Sync profile error: \(error)")
+                #endif
+            }
         }
     }
 
@@ -758,14 +839,28 @@ class AppViewModel {
             coursePagination.hasMore = newCourses.count >= coursePagination.pageSize
 
             // Always load announcements (small, capped at 20 by the service)
-            announcements = (try? await dataService.fetchAnnouncements()) ?? []
+            do {
+                announcements = try await dataService.fetchAnnouncements()
+            } catch {
+                #if DEBUG
+                print("[AppViewModel] Fetch announcements error: \(error)")
+                #endif
+                // Non-blocking: announcements are supplementary
+            }
 
             // Per-role essential data for the dashboard
             switch user.role {
             case .student:
                 // Students need grades summary on the dashboard
                 let courseIds = courses.map(\.id)
-                grades = (try? await dataService.fetchGrades(for: user.id, courseIds: courseIds)) ?? []
+                do {
+                    grades = try await dataService.fetchGrades(for: user.id, courseIds: courseIds)
+                } catch {
+                    gradeError = "Unable to load grades. Please try again."
+                    #if DEBUG
+                    print("[AppViewModel] Fetch grades error: \(error)")
+                    #endif
+                }
                 gradesLoaded = true
 
             case .teacher:
@@ -773,7 +868,14 @@ class AppViewModel {
                 break
 
             case .parent:
-                children = (try? await dataService.fetchChildren(for: user.id)) ?? []
+                do {
+                    children = try await dataService.fetchChildren(for: user.id)
+                } catch {
+                    dataError = "Unable to load children data. Please try again."
+                    #if DEBUG
+                    print("[AppViewModel] Fetch children error: \(error)")
+                    #endif
+                }
                 scheduleParentAlerts()
 
             case .admin, .superAdmin:
@@ -781,17 +883,30 @@ class AppViewModel {
                 await withTaskGroup(of: Void.self) { group in
                     group.addTask { @MainActor in
                         self.userPagination.reset()
-                        let newUsers = (try? await self.dataService.fetchAllUsers(
-                            schoolId: user.schoolId,
-                            offset: self.userPagination.offset,
-                            limit: self.userPagination.pageSize
-                        )) ?? []
-                        self.allUsers = newUsers
-                        self.userPagination.offset = newUsers.count
-                        self.userPagination.hasMore = newUsers.count >= self.userPagination.pageSize
+                        do {
+                            let newUsers = try await self.dataService.fetchAllUsers(
+                                schoolId: user.schoolId,
+                                offset: self.userPagination.offset,
+                                limit: self.userPagination.pageSize
+                            )
+                            self.allUsers = newUsers
+                            self.userPagination.offset = newUsers.count
+                            self.userPagination.hasMore = newUsers.count >= self.userPagination.pageSize
+                        } catch {
+                            self.dataError = "Unable to load users. Please try again."
+                            #if DEBUG
+                            print("[AppViewModel] Fetch all users error: \(error)")
+                            #endif
+                        }
                     }
                     group.addTask { @MainActor in
-                        self.schoolMetrics = try? await self.dataService.fetchSchoolMetrics(schoolId: user.schoolId)
+                        do {
+                            self.schoolMetrics = try await self.dataService.fetchSchoolMetrics(schoolId: user.schoolId)
+                        } catch {
+                            #if DEBUG
+                            print("[AppViewModel] Fetch school metrics error: \(error)")
+                            #endif
+                        }
                     }
                 }
             }
@@ -849,35 +964,50 @@ class AppViewModel {
         guard !assignmentsLoaded, !isDemoMode, let user = currentUser else { return }
         let courseIds = courses.map(\.id)
         assignmentPagination.reset()
-        let newAssignments = (try? await dataService.fetchAssignments(
-            for: user.id,
-            role: user.role,
-            courseIds: courseIds,
-            offset: assignmentPagination.offset,
-            limit: assignmentPagination.pageSize
-        )) ?? []
-        assignments = newAssignments
-        assignmentPagination.offset = newAssignments.count
-        assignmentPagination.hasMore = newAssignments.count >= assignmentPagination.pageSize
-        assignmentsLoaded = true
+        do {
+            let newAssignments = try await dataService.fetchAssignments(
+                for: user.id,
+                role: user.role,
+                courseIds: courseIds,
+                offset: assignmentPagination.offset,
+                limit: assignmentPagination.pageSize
+            )
+            assignments = newAssignments
+            assignmentPagination.offset = newAssignments.count
+            assignmentPagination.hasMore = newAssignments.count >= assignmentPagination.pageSize
+            assignmentsLoaded = true
 
-        // Schedule due-date reminders for newly loaded assignments
-        notificationService.scheduleDueDateRemindersIfEnabled(assignments: newAssignments)
-        await dueDateReminderService.refreshReminders(assignments: newAssignments)
+            // Schedule due-date reminders for newly loaded assignments
+            notificationService.scheduleDueDateRemindersIfEnabled(assignments: newAssignments)
+            await dueDateReminderService.refreshReminders(assignments: newAssignments)
+        } catch {
+            dataError = "Unable to load assignments. Please try again."
+            #if DEBUG
+            print("[AppViewModel] Fetch assignments error: \(error)")
+            #endif
+            assignmentsLoaded = true
+        }
     }
 
     /// Called when user opens the Messages tab. Loads conversations only if not already loaded.
     func loadConversationsIfNeeded() async {
         guard !conversationsLoaded, !isDemoMode, let user = currentUser else { return }
         conversationPagination.reset()
-        let newConversations = (try? await dataService.fetchConversations(
-            for: user.id,
-            offset: conversationPagination.offset,
-            limit: conversationPagination.pageSize
-        )) ?? []
-        conversations = newConversations
-        conversationPagination.offset = newConversations.count
-        conversationPagination.hasMore = newConversations.count >= conversationPagination.pageSize
+        do {
+            let newConversations = try await dataService.fetchConversations(
+                for: user.id,
+                offset: conversationPagination.offset,
+                limit: conversationPagination.pageSize
+            )
+            conversations = newConversations
+            conversationPagination.offset = newConversations.count
+            conversationPagination.hasMore = newConversations.count >= conversationPagination.pageSize
+        } catch {
+            dataError = "Unable to load conversations. Please try again."
+            #if DEBUG
+            print("[AppViewModel] Fetch conversations error: \(error)")
+            #endif
+        }
         conversationsLoaded = true
     }
 
@@ -885,7 +1015,14 @@ class AppViewModel {
     func loadGradesIfNeeded() async {
         guard !gradesLoaded, !isDemoMode, let user = currentUser else { return }
         let courseIds = courses.map(\.id)
-        grades = (try? await dataService.fetchGrades(for: user.id, courseIds: courseIds)) ?? []
+        do {
+            grades = try await dataService.fetchGrades(for: user.id, courseIds: courseIds)
+        } catch {
+            gradeError = "Unable to load grades. Please try again."
+            #if DEBUG
+            print("[AppViewModel] Fetch grades error: \(error)")
+            #endif
+        }
         gradesLoaded = true
     }
 
@@ -895,21 +1032,42 @@ class AppViewModel {
     func loadQuizzesIfNeeded() async {
         guard !quizzesLoaded, !isDemoMode, let user = currentUser else { return }
         let courseIds = courses.map(\.id)
-        quizzes = (try? await dataService.fetchQuizzes(for: user.id, courseIds: courseIds)) ?? []
+        do {
+            quizzes = try await dataService.fetchQuizzes(for: user.id, courseIds: courseIds)
+        } catch {
+            dataError = "Unable to load quizzes. Please try again."
+            #if DEBUG
+            print("[AppViewModel] Fetch quizzes error: \(error)")
+            #endif
+        }
         quizzesLoaded = true
     }
 
     /// Called when user opens the Attendance section. Loads attendance only if not already loaded.
     func loadAttendanceIfNeeded() async {
         guard !attendanceLoaded, !isDemoMode, let user = currentUser else { return }
-        attendance = (try? await dataService.fetchAttendance(for: user.id)) ?? []
+        do {
+            attendance = try await dataService.fetchAttendance(for: user.id)
+        } catch {
+            dataError = "Unable to load attendance records. Please try again."
+            #if DEBUG
+            print("[AppViewModel] Fetch attendance error: \(error)")
+            #endif
+        }
         attendanceLoaded = true
     }
 
     /// Called when user opens the Achievements section. Loads achievements only if not already loaded.
     func loadAchievementsIfNeeded() async {
         guard !achievementsLoaded, !isDemoMode, let user = currentUser else { return }
-        achievements = (try? await dataService.fetchAchievements(for: user.id)) ?? []
+        do {
+            achievements = try await dataService.fetchAchievements(for: user.id)
+        } catch {
+            dataError = "Unable to load achievements. Please try again."
+            #if DEBUG
+            print("[AppViewModel] Fetch achievements error: \(error)")
+            #endif
+        }
         achievementsLoaded = true
     }
 
@@ -1141,10 +1299,21 @@ class AppViewModel {
     // MARK: - Offline Storage Helpers
 
     /// Sync all data for offline use. Called when user enables offline mode or taps "Sync Now".
+    /// When reconnecting after being offline, runs conflict resolution (server-wins) before
+    /// updating the local cache, so users are notified if their offline edits were overwritten.
     func syncForOfflineUse() async {
         isSyncingOffline = true
         if networkMonitor.isConnected {
+            // Fetch fresh server data
             await loadData()
+
+            // Run conflict resolution against what we had cached locally
+            conflictResolution.resolveConflicts(
+                serverCourses: courses,
+                serverAssignments: assignments,
+                serverGrades: grades,
+                serverConversations: conversations
+            )
         }
         saveDataToOfflineStorage()
         offlineModeEnabled = true
@@ -1159,6 +1328,14 @@ class AppViewModel {
         if let user = currentUser {
             offlineStorage.saveUserProfile(user)
         }
+        // Build and persist metadata for conflict detection on next sync
+        let metadata = conflictResolution.buildMetadata(
+            courses: courses,
+            assignments: assignments,
+            grades: grades,
+            conversations: conversations
+        )
+        offlineStorage.saveMetadata(metadata)
         offlineStorage.lastSyncDate = Date()
     }
 
@@ -2090,7 +2267,7 @@ class AppViewModel {
                 Course(
                     id: UUID(), title: "Creative Writing",
                     description: "Explore fiction, poetry, and narrative through weekly workshops.",
-                    teacherName: "Ms. Maya Angelou", iconSystemName: "pencil.and.outline", colorName: "pink",
+                    teacherName: "Ms. Maya Angelou", iconSystemName: "pencil.and.outline", colorName: "orange",
                     modules: [], enrolledStudentCount: 18, progress: 0, classCode: "CW-2024"
                 ),
                 Course(
@@ -2312,7 +2489,7 @@ class AppViewModel {
     }
 
     // MARK: - Teacher: Create Lesson
-    func createLesson(courseId: UUID, moduleId: UUID, title: String, content: String, duration: Int, type: LessonType, xpReward: Int) async throws {
+    func createLesson(courseId: UUID, moduleId: UUID, title: String, content: String, duration: Int, type: LessonType, xpReward: Int, slideResources: [SlideResource] = []) async throws {
         isLoading = true
         defer { isLoading = false }
 
@@ -2326,7 +2503,8 @@ class AppViewModel {
                         duration: duration,
                         isCompleted: false,
                         type: type,
-                        xpReward: xpReward
+                        xpReward: xpReward,
+                        slideResources: slideResources
                     )
                     courses[courseIndex].modules[modIndex].lessons.append(newLesson)
                     return

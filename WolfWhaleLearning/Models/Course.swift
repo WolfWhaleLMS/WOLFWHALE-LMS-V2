@@ -135,6 +135,52 @@ nonisolated struct Lesson: Identifiable, Hashable, Sendable, Codable {
     var type: LessonType
     var xpReward: Int
     var videoURL: String?
+    var slideResources: [SlideResource]
+
+    // MARK: - Coding Keys
+
+    enum CodingKeys: String, CodingKey {
+        case id, title, content, duration, isCompleted, type, xpReward, videoURL, slideResources
+    }
+
+    // MARK: - Init
+
+    init(
+        id: UUID,
+        title: String,
+        content: String,
+        duration: Int,
+        isCompleted: Bool,
+        type: LessonType,
+        xpReward: Int,
+        videoURL: String? = nil,
+        slideResources: [SlideResource] = []
+    ) {
+        self.id = id
+        self.title = title
+        self.content = content
+        self.duration = duration
+        self.isCompleted = isCompleted
+        self.type = type
+        self.xpReward = xpReward
+        self.videoURL = videoURL
+        self.slideResources = slideResources
+    }
+
+    // MARK: - Decodable (backward-compatible with JSON missing slideResources)
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        id = try container.decode(UUID.self, forKey: .id)
+        title = try container.decode(String.self, forKey: .title)
+        content = try container.decode(String.self, forKey: .content)
+        duration = try container.decode(Int.self, forKey: .duration)
+        isCompleted = try container.decode(Bool.self, forKey: .isCompleted)
+        type = try container.decode(LessonType.self, forKey: .type)
+        xpReward = try container.decode(Int.self, forKey: .xpReward)
+        videoURL = try container.decodeIfPresent(String.self, forKey: .videoURL)
+        slideResources = try container.decodeIfPresent([SlideResource].self, forKey: .slideResources) ?? []
+    }
 }
 
 // MARK: - Course Schedule

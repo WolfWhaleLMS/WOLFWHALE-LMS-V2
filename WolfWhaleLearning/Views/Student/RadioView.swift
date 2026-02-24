@@ -386,7 +386,7 @@ struct RadioView: View {
                     Circle()
                         .fill(
                             LinearGradient(
-                                colors: [.purple, .pink],
+                                colors: [.purple, .orange],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
                             )

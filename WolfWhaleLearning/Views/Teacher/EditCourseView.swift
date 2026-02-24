@@ -18,8 +18,8 @@ struct EditCourseView: View {
     @Environment(\.dismiss) private var dismiss
 
     private static let colorOptions = [
-        "blue", "purple", "orange", "green", "pink",
-        "red", "indigo", "teal", "mint", "cyan"
+        "blue", "purple", "orange", "green", "mint",
+        "red", "indigo", "teal", "yellow", "cyan"
     ]
 
     private static let iconOptions = [
@@ -264,7 +264,7 @@ struct EditCourseView: View {
                 .frame(height: 50)
             }
             .buttonStyle(.borderedProminent)
-            .tint(.pink)
+            .tint(.orange)
             .disabled(isLoading || !isValid || !hasChanges)
             .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         }

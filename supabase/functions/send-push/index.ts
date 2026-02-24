@@ -21,6 +21,7 @@
 
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import * as jose from "https://deno.land/x/jose@v4.14.4/index.ts";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -74,14 +75,11 @@ function getSupabaseClient() {
 // APNs JWT Generation
 // ---------------------------------------------------------------------------
 
-// TODO: Implement APNs JWT token generation using the ES256 algorithm.
+// APNs JWT token generation using the ES256 algorithm.
 //
 // Apple requires a short-lived JWT signed with your .p8 key:
 //   Header:  { alg: "ES256", kid: APNS_KEY_ID }
 //   Payload: { iss: APNS_TEAM_ID, iat: <unix timestamp> }
-//
-// You can use a library like `jose` for Deno:
-//   import * as jose from "https://deno.land/x/jose@v4.14.4/index.ts";
 //
 // Cache the token for ~50 minutes (Apple tokens are valid for 1 hour).
 
@@ -96,27 +94,26 @@ async function getAPNsJWT(): Promise<string> {
     return cachedToken;
   }
 
-  // TODO: Replace this stub with real JWT signing.
-  //
-  // Example with jose:
-  //
-  // const keyId = Deno.env.get("APNS_KEY_ID")!;
-  // const teamId = Deno.env.get("APNS_TEAM_ID")!;
-  // const privateKeyBase64 = Deno.env.get("APNS_PRIVATE_KEY")!;
-  // const privateKeyPem = atob(privateKeyBase64);
-  //
-  // const ecPrivateKey = await jose.importPKCS8(privateKeyPem, "ES256");
-  // const jwt = await new jose.SignJWT({ iss: teamId, iat: now })
-  //   .setProtectedHeader({ alg: "ES256", kid: keyId })
-  //   .sign(ecPrivateKey);
-  //
-  // cachedToken = jwt;
-  // cachedTokenTimestamp = now;
-  // return jwt;
+  const keyId = Deno.env.get("APNS_KEY_ID");
+  const teamId = Deno.env.get("APNS_TEAM_ID");
+  const privateKeyBase64 = Deno.env.get("APNS_PRIVATE_KEY");
 
-  throw new Error(
-    "APNs JWT generation not implemented. See TODO comments above."
-  );
+  if (!keyId || !teamId || !privateKeyBase64) {
+    throw new Error(
+      "Missing APNs environment variables. Set APNS_KEY_ID, APNS_TEAM_ID, and APNS_PRIVATE_KEY."
+    );
+  }
+
+  const privateKeyPem = atob(privateKeyBase64);
+  const ecPrivateKey = await jose.importPKCS8(privateKeyPem, "ES256");
+
+  const jwt = await new jose.SignJWT({ iss: teamId, iat: now })
+    .setProtectedHeader({ alg: "ES256", kid: keyId })
+    .sign(ecPrivateKey);
+
+  cachedToken = jwt;
+  cachedTokenTimestamp = now;
+  return jwt;
 }
 
 // ---------------------------------------------------------------------------

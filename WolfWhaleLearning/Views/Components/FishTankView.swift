@@ -49,7 +49,7 @@ struct FishTankView: View {
         Fish(color: .red, size: 22, yPosition: 0.62, speed: 3.5, delay: 1.0),
         Fish(color: .cyan, size: 20, yPosition: 0.38, speed: 6.0, delay: 1.5),
         Fish(color: .green, size: 16, yPosition: 0.72, speed: 4.5, delay: 0.8),
-        Fish(color: .pink, size: 19, yPosition: 0.55, speed: 5.0, delay: 2.0),
+        Fish(color: .orange, size: 19, yPosition: 0.55, speed: 5.0, delay: 2.0),
     ]
 
     // MARK: - Bubble Data

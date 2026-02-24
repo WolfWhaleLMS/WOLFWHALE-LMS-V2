@@ -1,5 +1,101 @@
 import SwiftUI
 
+// MARK: - Resource Category
+
+enum ResourceCategory: String, CaseIterable, Identifiable {
+    case tools = "Study Tools"
+    case mathematics = "Mathematics"
+    case science = "Science"
+    case english = "English"
+    case french = "French"
+    case canadianStudies = "Canadian Studies"
+    case geography = "Geography"
+    case ar = "AR Experiences"
+    case games = "Games"
+
+    var id: String { rawValue }
+
+    var iconName: String {
+        switch self {
+        case .tools: "wrench.and.screwdriver.fill"
+        case .mathematics: "function"
+        case .science: "atom"
+        case .english: "textformat.abc"
+        case .french: "globe.europe.africa.fill"
+        case .canadianStudies: "mappin.and.ellipse"
+        case .geography: "globe.americas.fill"
+        case .ar: "arkit"
+        case .games: "gamecontroller.fill"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .tools: .gray
+        case .mathematics: .green
+        case .science: .orange
+        case .english: .cyan
+        case .french: .blue
+        case .canadianStudies: .red
+        case .geography: .teal
+        case .ar: .indigo
+        case .games: .purple
+        }
+    }
+}
+
+// MARK: - Resource Item
+
+struct ResourceItem: Identifiable {
+    let id = UUID()
+    let title: String
+    let description: String
+    let icon: String
+    let color1: Color
+    let color2: Color
+    let category: ResourceCategory
+
+    static let allResources: [ResourceItem] = [
+        // Study Tools
+        ResourceItem(title: "Flashcard Creator", description: "Create & study flashcards", icon: "rectangle.on.rectangle.angled", color1: .yellow, color2: .orange, category: .tools),
+        ResourceItem(title: "Unit Converter", description: "Convert between units", icon: "arrow.left.arrow.right", color1: .mint, color2: .teal, category: .tools),
+        ResourceItem(title: "Typing Tutor", description: "Improve your typing speed", icon: "keyboard.fill", color1: .gray, color2: .blue, category: .tools),
+        ResourceItem(title: "AI Study Assistant", description: "Ask questions & get help", icon: "sparkles", color1: .purple, color2: .indigo, category: .tools),
+
+        // Mathematics
+        ResourceItem(title: "Math Quiz", description: "Test your math skills", icon: "function", color1: .green, color2: .mint, category: .mathematics),
+        ResourceItem(title: "Fraction Builder", description: "Master fractions visually", icon: "circle.lefthalf.filled", color1: .teal, color2: .green, category: .mathematics),
+        ResourceItem(title: "Geometry Explorer", description: "Shapes, angles & more", icon: "triangle.fill", color1: .blue, color2: .cyan, category: .mathematics),
+
+        // Science
+        ResourceItem(title: "Periodic Table", description: "Explore all elements", icon: "tablecells.fill", color1: .indigo, color2: .purple, category: .science),
+        ResourceItem(title: "Human Body", description: "Interactive anatomy guide", icon: "figure.stand", color1: .orange, color2: .red, category: .science),
+
+        // English
+        ResourceItem(title: "Word Builder", description: "Build words from letters", icon: "textformat.abc", color1: .cyan, color2: .blue, category: .english),
+        ResourceItem(title: "Spelling Bee", description: "Practice your spelling", icon: "textformat", color1: .yellow, color2: .orange, category: .english),
+        ResourceItem(title: "Grammar Quest", description: "Master grammar rules", icon: "text.book.closed.fill", color1: .purple, color2: .orange, category: .english),
+
+        // French
+        ResourceItem(title: "French Vocab", description: "Learn French vocabulary", icon: "character.book.closed.fill", color1: .blue, color2: .indigo, category: .french),
+        ResourceItem(title: "French Verbs", description: "Conjugation practice", icon: "text.word.spacing", color1: .red, color2: .blue, category: .french),
+
+        // Canadian Studies
+        ResourceItem(title: "Canadian History", description: "Interactive timeline of key events", icon: "clock.arrow.circlepath", color1: .red, color2: .orange, category: .canadianStudies),
+        ResourceItem(title: "Canadian Geography", description: "Provinces, capitals & more", icon: "map.fill", color1: .green, color2: .teal, category: .canadianStudies),
+        ResourceItem(title: "Indigenous Peoples", description: "History, culture & contributions", icon: "leaf.fill", color1: .orange, color2: .brown, category: .canadianStudies),
+
+        // Geography
+        ResourceItem(title: "World Map Quiz", description: "Test your geography knowledge", icon: "globe.desk.fill", color1: .teal, color2: .green, category: .geography),
+
+        // Games
+        ResourceItem(title: "Chess", description: "Strategic thinking & planning", icon: "crown.fill", color1: .purple, color2: .indigo, category: .games),
+    ]
+}
+
+// MARK: - Resource Library View
+
+
 struct ResourceLibraryView: View {
     @Bindable var viewModel: AppViewModel
 

@@ -663,7 +663,7 @@ struct SharePlayView: View {
     }
 
     private func avatarColor(for name: String) -> Color {
-        let colors: [Color] = [.indigo, .purple, .teal, .orange, .pink, .cyan, .mint, .blue]
+        let colors: [Color] = [.indigo, .purple, .teal, .orange, .red, .cyan, .mint, .blue]
         let hash = abs(name.hashValue)
         return colors[hash % colors.count]
     }

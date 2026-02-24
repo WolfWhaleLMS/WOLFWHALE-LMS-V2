@@ -36,7 +36,7 @@ enum UnitCategory: String, CaseIterable, Identifiable {
         case .area: return .green
         case .speed: return .purple
         case .time: return .indigo
-        case .data: return .pink
+        case .data: return .orange
         }
     }
 

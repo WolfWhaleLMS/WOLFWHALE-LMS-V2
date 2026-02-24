@@ -78,7 +78,7 @@ struct TakeAttendanceView: View {
                 HStack {
                     Spacer()
                     ProgressView("Loading students...")
-                        .tint(.pink)
+                        .tint(.orange)
                     Spacer()
                 }
                 .padding(.vertical, 24)
@@ -204,7 +204,7 @@ struct TakeAttendanceView: View {
             .frame(height: 50)
         }
         .buttonStyle(.borderedProminent)
-        .tint(.pink)
+        .tint(.orange)
         .disabled(isLoading || enrolledStudents.isEmpty)
         .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         .padding(.top, 4)

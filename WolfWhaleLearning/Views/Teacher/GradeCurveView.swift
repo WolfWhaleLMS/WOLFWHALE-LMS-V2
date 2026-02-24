@@ -270,7 +270,7 @@ struct GradeCurveView: View {
         } label: {
             HStack(spacing: 12) {
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                    .foregroundStyle(isSelected ? .pink : .secondary)
+                    .foregroundStyle(isSelected ? .red : .secondary)
                     .font(.title3)
 
                 VStack(alignment: .leading, spacing: 2) {
@@ -288,7 +288,7 @@ struct GradeCurveView: View {
             .padding(12)
             .background(
                 isSelected
-                    ? Color.pink.opacity(0.08)
+                    ? Color.red.opacity(0.08)
                     : Color(.tertiarySystemGroupedBackground),
                 in: RoundedRectangle(cornerRadius: 12)
             )
@@ -415,10 +415,10 @@ struct GradeCurveView: View {
             HStack(spacing: 12) {
                 Image(systemName: type.iconName)
                     .font(.title3)
-                    .foregroundStyle(isSelected ? .white : .pink)
+                    .foregroundStyle(isSelected ? .white : .red)
                     .frame(width: 36, height: 36)
                     .background(
-                        isSelected ? Color.pink : Color.pink.opacity(0.12),
+                        isSelected ? Color.red : Color.red.opacity(0.12),
                         in: RoundedRectangle(cornerRadius: 10)
                     )
 
@@ -436,12 +436,12 @@ struct GradeCurveView: View {
 
                 if isSelected {
                     Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(.pink)
+                        .foregroundStyle(.red)
                 }
             }
             .padding(12)
             .background(
-                isSelected ? Color.pink.opacity(0.08) : Color(.tertiarySystemGroupedBackground),
+                isSelected ? Color.red.opacity(0.08) : Color(.tertiarySystemGroupedBackground),
                 in: RoundedRectangle(cornerRadius: 12)
             )
         }
@@ -483,11 +483,11 @@ struct GradeCurveView: View {
                 Spacer()
                 Text("+\(String(format: "%.0f", flatPoints)) pts")
                     .font(.subheadline.bold())
-                    .foregroundStyle(.pink)
+                    .foregroundStyle(.red)
             }
 
             Slider(value: $flatPoints, in: 1...30, step: 1)
-                .tint(.pink)
+                .tint(.red)
                 .onChange(of: flatPoints) { _, _ in showPreview = false }
                 .accessibilityLabel("Points to add: \(Int(flatPoints))")
 
@@ -512,11 +512,11 @@ struct GradeCurveView: View {
                 Spacer()
                 Text("\(String(format: "%.0f", (percentageFactor - 1.0) * 100))% boost")
                     .font(.subheadline.bold())
-                    .foregroundStyle(.pink)
+                    .foregroundStyle(.red)
             }
 
             Slider(value: $percentageFactor, in: 1.01...1.50, step: 0.01)
-                .tint(.pink)
+                .tint(.red)
                 .onChange(of: percentageFactor) { _, _ in showPreview = false }
                 .accessibilityLabel("Percentage boost: \(Int((percentageFactor - 1.0) * 100)) percent")
 
@@ -542,10 +542,10 @@ struct GradeCurveView: View {
                     Spacer()
                     Text(String(format: "%.0f", bellTargetMean))
                         .font(.subheadline.bold())
-                        .foregroundStyle(.pink)
+                        .foregroundStyle(.red)
                 }
                 Slider(value: $bellTargetMean, in: 60...95, step: 1)
-                    .tint(.pink)
+                    .tint(.red)
                     .onChange(of: bellTargetMean) { _, _ in showPreview = false }
                     .accessibilityLabel("Target mean: \(Int(bellTargetMean))")
             }
@@ -558,10 +558,10 @@ struct GradeCurveView: View {
                     Spacer()
                     Text(String(format: "%.0f", bellTargetStdDev))
                         .font(.subheadline.bold())
-                        .foregroundStyle(.pink)
+                        .foregroundStyle(.red)
                 }
                 Slider(value: $bellTargetStdDev, in: 3...20, step: 1)
-                    .tint(.pink)
+                    .tint(.red)
                     .onChange(of: bellTargetStdDev) { _, _ in showPreview = false }
                     .accessibilityLabel("Target standard deviation: \(Int(bellTargetStdDev))")
             }
@@ -599,7 +599,7 @@ struct GradeCurveView: View {
                 .foregroundStyle(.secondary)
             Image(systemName: "arrow.down")
                 .font(.caption2)
-                .foregroundStyle(.pink)
+                .foregroundStyle(.red)
             Text("\(to)%")
                 .font(.caption2.bold())
                 .foregroundStyle(.green)
@@ -726,7 +726,7 @@ struct GradeCurveView: View {
             .frame(height: 50)
         }
         .buttonStyle(.borderedProminent)
-        .tint(.pink)
+        .tint(.red)
         .disabled(isApplying || currentStats.count == 0)
         .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         .accessibilityLabel("Apply \(curveType.rawValue) to \(currentStats.count) grades")

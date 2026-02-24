@@ -95,8 +95,8 @@ struct ManageStudentsView: View {
                     .padding(.vertical, 8)
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(copiedCode ? .green : .pink)
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .tint(copiedCode ? .green : .orange)
+                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
 
             Text("Share this code with students so they can enroll in the course.")
@@ -113,7 +113,7 @@ struct ManageStudentsView: View {
                         .frame(height: 44)
                 }
                 .buttonStyle(.bordered)
-                .tint(.pink)
+                .tint(.orange)
             }
         }
         .padding(14)
@@ -161,7 +161,7 @@ struct ManageStudentsView: View {
                 HStack {
                     Spacer()
                     ProgressView()
-                        .tint(.pink)
+                        .tint(.orange)
                     Spacer()
                 }
                 .padding(.vertical, 24)

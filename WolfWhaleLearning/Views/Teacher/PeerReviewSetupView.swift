@@ -79,7 +79,7 @@ struct PeerReviewSetupView: View {
     private var headerSection: some View {
         HStack(spacing: 12) {
             RoundedRectangle(cornerRadius: 12)
-                .fill(.pink.gradient)
+                .fill(.red.gradient)
                 .frame(width: 44, height: 44)
                 .overlay {
                     Image(systemName: "person.2.circle.fill")
@@ -119,7 +119,7 @@ struct PeerReviewSetupView: View {
             Spacer()
             Toggle("", isOn: $peerReviewEnabled)
                 .labelsHidden()
-                .tint(.pink)
+                .tint(.red)
         }
         .padding(14)
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
@@ -184,7 +184,7 @@ struct PeerReviewSetupView: View {
                     .frame(height: 50)
             }
             .buttonStyle(.borderedProminent)
-            .tint(.pink)
+            .tint(.red)
             .disabled(submittedStudentCount < 2)
             .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             .accessibilityLabel("Assign reviewers")
@@ -223,7 +223,7 @@ struct PeerReviewSetupView: View {
                 statusCard(
                     label: "In Progress",
                     value: "\(inProgressReviews.count)",
-                    color: .orange
+                    color: .red
                 )
                 statusCard(
                     label: "Pending",
@@ -336,7 +336,7 @@ struct PeerReviewSetupView: View {
 
     private func statusColor(_ status: PeerReviewStatus) -> Color {
         switch status {
-        case .assigned: .orange
+        case .assigned: .red
         case .inProgress: .blue
         case .completed: .green
         }

@@ -236,7 +236,7 @@ struct DiscussionForumView: View {
     }
 
     private func avatarColor(for name: String) -> Color {
-        let colors: [Color] = [.blue, .purple, .indigo, .orange, .teal, .pink, .mint, .cyan]
+        let colors: [Color] = [.blue, .purple, .indigo, .orange, .teal, .red, .mint, .cyan]
         let hash = abs(name.hashValue)
         return colors[hash % colors.count]
     }

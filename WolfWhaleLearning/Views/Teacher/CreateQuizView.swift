@@ -101,7 +101,7 @@ struct CreateQuizView: View {
             HStack {
                 Text("Question \(index + 1)")
                     .font(.subheadline.bold())
-                    .foregroundStyle(.pink)
+                    .foregroundStyle(.red)
                 Spacer()
                 if questions.count > 1 {
                     Button {
@@ -132,7 +132,7 @@ struct CreateQuizView: View {
                 HStack(spacing: 8) {
                     Image(systemName: questions[index].type.iconName)
                         .font(.caption)
-                        .foregroundStyle(.pink)
+                        .foregroundStyle(.red)
                     Text(questions[index].type.displayName)
                         .font(.caption.bold())
                     Spacer()
@@ -266,7 +266,7 @@ struct CreateQuizView: View {
             } label: {
                 Label("Add Accepted Answer", systemImage: "plus.circle")
                     .font(.caption)
-                    .foregroundStyle(.pink)
+                    .foregroundStyle(.red)
             }
         }
     }
@@ -310,7 +310,7 @@ struct CreateQuizView: View {
             } label: {
                 Label("Add Pair", systemImage: "plus.circle")
                     .font(.caption)
-                    .foregroundStyle(.pink)
+                    .foregroundStyle(.red)
             }
 
             HStack(spacing: 4) {
@@ -370,8 +370,8 @@ struct CreateQuizView: View {
                 .padding(.vertical, 12)
         }
         .buttonStyle(.bordered)
-        .tint(.pink)
-        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .tint(.red)
+        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
     }
 
     // MARK: - Create Button
@@ -404,7 +404,7 @@ struct CreateQuizView: View {
                 .frame(height: 50)
             }
             .buttonStyle(.borderedProminent)
-            .tint(.pink)
+            .tint(.red)
             .disabled(isLoading || !isValid)
             .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         }

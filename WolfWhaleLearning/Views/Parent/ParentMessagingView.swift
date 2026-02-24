@@ -151,7 +151,7 @@ struct ParentMessagingView: View {
 
         return HStack(spacing: 14) {
             Circle()
-                .fill(LinearGradient(colors: [.pink, .purple], startPoint: .topLeading, endPoint: .bottomTrailing))
+                .fill(LinearGradient(colors: [.orange, .purple], startPoint: .topLeading, endPoint: .bottomTrailing))
                 .frame(width: 44, height: 44)
                 .overlay {
                     Image(systemName: "person.crop.rectangle.fill")
@@ -179,7 +179,7 @@ struct ParentMessagingView: View {
                     .font(.caption.bold())
             }
             .buttonStyle(.borderedProminent)
-            .tint(.pink)
+            .tint(.orange)
             .disabled(isCreatingConversation)
             .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         }
@@ -244,7 +244,7 @@ struct ParentMessagingView: View {
                         .font(.caption2.bold())
                         .foregroundStyle(.white)
                         .frame(width: 20, height: 20)
-                        .background(.pink, in: Circle())
+                        .background(.orange, in: Circle())
                 }
             }
         }

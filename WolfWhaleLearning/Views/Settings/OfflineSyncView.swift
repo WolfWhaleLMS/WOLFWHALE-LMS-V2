@@ -4,15 +4,19 @@ struct OfflineSyncView: View {
     let viewModel: AppViewModel
 
     @State private var showClearConfirmation = false
+    @State private var showClearHistoryConfirmation = false
     @State private var hapticTrigger = false
     @State private var isSyncingNow = false
 
     private var offlineStorage: OfflineStorageService { viewModel.offlineStorage }
     private var cloudSync: CloudSyncService { viewModel.cloudSync }
+    private var conflictService: ConflictResolutionService { viewModel.conflictResolution }
 
     var body: some View {
         List {
             offlineStatusSection
+            syncResultSection
+            conflictsSection
             iCloudSection
             storageBreakdownSection
             actionsSection
@@ -28,10 +32,23 @@ struct OfflineSyncView: View {
         ) {
             Button("Clear All Offline Data", role: .destructive) {
                 offlineStorage.clearAllData()
+                conflictService.clearHistory()
             }
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This will remove all cached offline data. The app will require an internet connection to reload data.")
+        }
+        .confirmationDialog(
+            "Clear Conflict History",
+            isPresented: $showClearHistoryConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Clear History", role: .destructive) {
+                conflictService.clearHistory()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This will remove the record of previously resolved sync conflicts.")
         }
     }
 
@@ -88,6 +105,226 @@ struct OfflineSyncView: View {
             }
         } header: {
             sectionHeader(title: "Offline Data", icon: "arrow.down.circle.fill")
+        }
+    }
+
+    // MARK: - Sync Result Section
+
+    private var syncResultSection: some View {
+        Section {
+            if let result = conflictService.lastSyncResult {
+                // Last sync time
+                HStack {
+                    Label {
+                        Text("Last Sync")
+                    } icon: {
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                            .foregroundStyle(.blue)
+                    }
+                    Spacer()
+                    Text(result.syncedAt, format: .dateTime.month(.abbreviated).day().hour().minute())
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+
+                // Items synced
+                HStack {
+                    Label {
+                        Text("Items Synced")
+                    } icon: {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
+                    }
+                    Spacer()
+                    Text("\(result.itemsSynced)")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.secondary)
+                }
+
+                // Conflicts resolved
+                HStack {
+                    Label {
+                        Text("Conflicts Resolved")
+                    } icon: {
+                        Image(systemName: result.conflictsResolved > 0
+                              ? "exclamationmark.triangle.fill"
+                              : "checkmark.shield.fill")
+                            .foregroundStyle(result.conflictsResolved > 0 ? .orange : .green)
+                    }
+                    Spacer()
+                    Text("\(result.conflictsResolved)")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(result.conflictsResolved > 0 ? .orange : .secondary)
+                }
+
+                // Status
+                HStack {
+                    Label {
+                        Text("Status")
+                    } icon: {
+                        Image(systemName: result.isSuccess ? "checkmark.seal.fill" : "xmark.seal.fill")
+                            .foregroundStyle(result.isSuccess ? .green : .red)
+                    }
+                    Spacer()
+                    Text(result.isSuccess ? "Success" : "Errors Occurred")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(result.isSuccess ? .green : .red)
+                }
+
+                // Errors (if any)
+                if !result.errors.isEmpty {
+                    ForEach(result.errors, id: \.self) { error in
+                        HStack(spacing: 8) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.red)
+                                .font(.caption)
+                            Text(error)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            } else {
+                HStack {
+                    Spacer()
+                    VStack(spacing: 6) {
+                        Image(systemName: "arrow.triangle.2.circlepath")
+                            .font(.title2)
+                            .foregroundStyle(.tertiary)
+                        Text("No sync performed yet")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
+                    Spacer()
+                }
+                .listRowBackground(Color.clear)
+            }
+        } header: {
+            sectionHeader(title: "Last Sync Result", icon: "arrow.triangle.2.circlepath")
+        } footer: {
+            Text("Shows the result of the most recent data synchronization with the server. Conflicts are resolved using a server-wins strategy.")
+        }
+    }
+
+    // MARK: - Conflicts Section
+
+    private var conflictsSection: some View {
+        Section {
+            // Pending conflicts (from most recent sync)
+            if !conflictService.pendingConflicts.isEmpty {
+                ForEach(conflictService.pendingConflicts) { conflict in
+                    conflictRow(conflict, isPending: true)
+                }
+            }
+
+            // Recent conflict history
+            let recentHistory = Array(conflictService.conflictHistory.prefix(10))
+            if recentHistory.isEmpty && conflictService.pendingConflicts.isEmpty {
+                HStack {
+                    Spacer()
+                    VStack(spacing: 6) {
+                        Image(systemName: "checkmark.shield.fill")
+                            .font(.title2)
+                            .foregroundStyle(.tertiary)
+                        Text("No conflicts detected")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
+                    Spacer()
+                }
+                .listRowBackground(Color.clear)
+            } else if !recentHistory.isEmpty {
+                // Show history items that aren't also in pending
+                let pendingIds = Set(conflictService.pendingConflicts.map(\.id))
+                let historyOnly = recentHistory.filter { !pendingIds.contains($0.id) }
+                ForEach(historyOnly) { conflict in
+                    conflictRow(conflict, isPending: false)
+                }
+            }
+
+            // Clear history button
+            if !conflictService.conflictHistory.isEmpty {
+                Button {
+                    showClearHistoryConfirmation = true
+                } label: {
+                    HStack {
+                        Label {
+                            Text("Clear Conflict History")
+                        } icon: {
+                            Image(systemName: "trash")
+                                .foregroundStyle(.orange)
+                        }
+                        Spacer()
+                        Text("\(conflictService.conflictHistory.count)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+        } header: {
+            sectionHeader(title: "Sync Conflicts", icon: "arrow.triangle.branch")
+        } footer: {
+            if !conflictService.pendingConflicts.isEmpty {
+                Text("The server version was used for \(conflictService.pendingConflicts.count) item(s) that changed while you were offline. Your local changes were replaced with the latest server data.")
+            } else {
+                Text("When data changes while you are offline, the server version takes priority to ensure accuracy. Conflicts are listed here for your reference.")
+            }
+        }
+    }
+
+    // MARK: - Conflict Row
+
+    private func conflictRow(_ conflict: SyncConflict, isPending: Bool) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: iconForEntityType(conflict.entityType))
+                .font(.body)
+                .foregroundStyle(isPending ? .orange : .secondary)
+                .frame(width: 24)
+
+            VStack(alignment: .leading, spacing: 2) {
+                HStack(spacing: 4) {
+                    Text(conflict.entityName)
+                        .font(.subheadline.bold())
+                        .lineLimit(1)
+                    if isPending {
+                        Text("NEW")
+                            .font(.system(size: 9, weight: .bold))
+                            .padding(.horizontal, 4)
+                            .padding(.vertical, 1)
+                            .background(.orange.opacity(0.2))
+                            .foregroundStyle(.orange)
+                            .clipShape(RoundedRectangle(cornerRadius: 3))
+                    }
+                }
+
+                HStack(spacing: 4) {
+                    Text(conflict.entityType.capitalized)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Text("--")
+                        .font(.caption2)
+                        .foregroundStyle(.quaternary)
+                    Text(resolutionLabel(conflict.resolution))
+                        .font(.caption2)
+                        .foregroundStyle(resolutionColor(conflict.resolution))
+                }
+
+                Text(conflict.resolvedAt, format: .dateTime.month(.abbreviated).day().hour().minute())
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+
+            Spacer()
+
+            if isPending {
+                Button {
+                    conflictService.dismissConflict(conflict)
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+            }
         }
     }
 
@@ -219,18 +456,18 @@ struct OfflineSyncView: View {
                             .foregroundStyle(.blue)
                     }
                     Spacer()
-                    if isSyncingNow || cloudSync.isSyncing {
+                    if isSyncingNow || cloudSync.isSyncing || conflictService.isSyncing {
                         ProgressView()
                             .controlSize(.small)
                     }
                 }
             }
-            .disabled(isSyncingNow || cloudSync.isSyncing)
-            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .disabled(isSyncingNow || cloudSync.isSyncing || conflictService.isSyncing)
+            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         } header: {
             sectionHeader(title: "Actions", icon: "bolt.fill")
         } footer: {
-            Text("Refreshes data from the server and updates the local cache. Also syncs preferences to iCloud if enabled.")
+            Text("Refreshes data from the server, resolves any offline conflicts, and updates the local cache. Also syncs preferences to iCloud if enabled.")
         }
     }
 
@@ -276,7 +513,8 @@ struct OfflineSyncView: View {
     private func performSync() {
         isSyncingNow = true
         Task {
-            await viewModel.loadData()
+            // Sync data and resolve conflicts
+            await viewModel.syncForOfflineUse()
             if let user = viewModel.currentUser, cloudSync.isSyncEnabled {
                 // Only sync non-PII preferences to iCloud (FERPA compliance)
                 let safeUser = sanitizedUserForCloudSync(user)
@@ -293,6 +531,7 @@ struct OfflineSyncView: View {
         case "Grades": return "chart.bar.fill"
         case "Conversations": return "bubble.left.and.bubble.right.fill"
         case "User Profile": return "person.crop.circle.fill"
+        case "Sync Metadata": return "arrow.triangle.branch"
         default: return "doc.fill"
         }
     }
@@ -303,8 +542,35 @@ struct OfflineSyncView: View {
         case "Assignments": return .orange
         case "Grades": return .green
         case "Conversations": return .blue
-        case "User Profile": return .pink
+        case "User Profile": return .orange
+        case "Sync Metadata": return .indigo
         default: return .gray
+        }
+    }
+
+    private func iconForEntityType(_ type: String) -> String {
+        switch type {
+        case "course": return "book.fill"
+        case "assignment": return "doc.text.fill"
+        case "grade": return "chart.bar.fill"
+        case "conversation": return "bubble.left.and.bubble.right.fill"
+        default: return "doc.fill"
+        }
+    }
+
+    private func resolutionLabel(_ resolution: ConflictResolution) -> String {
+        switch resolution {
+        case .serverWins: return "Server version used"
+        case .localWins: return "Local version kept"
+        case .noConflict: return "No conflict"
+        }
+    }
+
+    private func resolutionColor(_ resolution: ConflictResolution) -> Color {
+        switch resolution {
+        case .serverWins: return .orange
+        case .localWins: return .green
+        case .noConflict: return .secondary
         }
     }
 

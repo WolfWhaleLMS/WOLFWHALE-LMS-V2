@@ -53,7 +53,7 @@ struct PickedFile: Identifiable, Hashable, Sendable {
         case "txt", "rtf":
             return .gray
         default:
-            return .pink
+            return .orange
         }
     }
 }

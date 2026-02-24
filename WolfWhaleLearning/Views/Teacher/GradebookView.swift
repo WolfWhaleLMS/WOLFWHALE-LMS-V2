@@ -415,9 +415,9 @@ struct GradebookView: View {
                     HStack(spacing: 10) {
                         Image(systemName: "person.2.circle.fill")
                             .font(.title3)
-                            .foregroundStyle(.pink)
+                            .foregroundStyle(.red)
                             .frame(width: 32, height: 32)
-                            .background(.pink.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
+                            .background(.red.opacity(0.12), in: RoundedRectangle(cornerRadius: 8))
 
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Peer Review")
@@ -513,7 +513,7 @@ struct GradebookView: View {
                 Label("Add Lesson", systemImage: "plus.circle")
                     .font(.caption.bold())
             }
-            .tint(.pink)
+            .tint(.red)
             .padding(.top, 2)
             .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         }
@@ -588,10 +588,10 @@ struct GradebookView: View {
                         HStack(spacing: 4) {
                             Image(systemName: "person.fill")
                                 .font(.caption2)
-                                .foregroundStyle(.pink)
+                                .foregroundStyle(.red)
                             Text(studentName)
                                 .font(.caption)
-                                .foregroundStyle(.pink)
+                                .foregroundStyle(.red)
 
                             // Notes badge button
                             if let studentId = assignment.studentId {
@@ -705,8 +705,8 @@ struct GradebookView: View {
                         .font(.caption2.bold())
                         .padding(.horizontal, 10)
                         .padding(.vertical, 6)
-                        .background(.pink.opacity(0.1), in: Capsule())
-                        .foregroundStyle(.pink)
+                        .background(.red.opacity(0.1), in: Capsule())
+                        .foregroundStyle(.red)
                 }
                 .accessibilityLabel("Set up peer review for \(assignment.title)")
 

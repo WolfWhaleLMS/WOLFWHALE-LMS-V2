@@ -2,6 +2,7 @@ import SwiftUI
 
 struct TeacherDashboardView: View {
     @Bindable var viewModel: AppViewModel
+    @Environment(\.horizontalSizeClass) private var sizeClass
     @State private var liveActivityService: LiveActivityService?
     @State private var showCreateCourse = false
     @State private var showCreateAssignment = false
@@ -12,64 +13,28 @@ struct TeacherDashboardView: View {
     @State private var showGradeExport = false
     @State private var showInsightsCoursePicker = false
     @State private var hapticTrigger = false
+    @State private var selectedIPadCourse: Course?
 
     var body: some View {
         NavigationStack {
-            ScrollView {
+            Group {
                 if viewModel.isDataLoading && viewModel.courses.isEmpty {
-                    VStack(spacing: 20) {
-                        ShimmerLoadingView(rowCount: 4)
-                        LoadingStateView(
-                            icon: "person.crop.rectangle.stack.fill",
-                            title: "Loading Dashboard",
-                            message: "Fetching your courses, submissions, and announcements..."
-                        )
-                    }
-                    .padding(.horizontal)
-                    .padding(.top, 40)
-                } else {
-                    GlassEffectContainer {
-                        LazyVStack(spacing: 16) {
-                            if let dataError = viewModel.dataError {
-                                HStack(spacing: 10) {
-                                    Image(systemName: "exclamationmark.triangle.fill")
-                                        .foregroundStyle(.orange)
-                                        .symbolEffect(.wiggle, options: .repeat(.periodic(delay: 2)))
-                                    Text(dataError)
-                                        .font(.subheadline)
-                                        .foregroundStyle(.secondary)
-                                    Spacer()
-                                    Button {
-                                        viewModel.dataError = nil
-                                    } label: {
-                                        Image(systemName: "xmark.circle.fill")
-                                            .foregroundStyle(.secondary)
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-                                .padding(12)
-                                .background(Color.orange.opacity(0.12))
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .strokeBorder(Color.orange.opacity(0.3), lineWidth: 1)
-                                )
-                                .accessibilityElement(children: .combine)
-                                .accessibilityLabel("Warning: \(dataError)")
-                            }
-                            overviewCards
-                            enrollmentRequestsBanner
-                            conferencesBanner
-                            atRiskStudentsBanner
-                            studentInsightsLink
-                            liveActivityBanner
-                            quickActions
-                            recentActivity
-                            announcementsSection
+                    ScrollView {
+                        VStack(spacing: 20) {
+                            ShimmerLoadingView(rowCount: 4)
+                            LoadingStateView(
+                                icon: "person.crop.rectangle.stack.fill",
+                                title: "Loading Dashboard",
+                                message: "Fetching your courses, submissions, and announcements..."
+                            )
                         }
+                        .padding(.horizontal)
+                        .padding(.top, 40)
                     }
-                    .padding(.horizontal)
-                    .padding(.bottom, 20)
+                } else if sizeClass == .regular {
+                    iPadTeacherContent
+                } else {
+                    iPhoneTeacherContent
                 }
             }
             .background { HolographicBackground() }
@@ -84,6 +49,343 @@ struct TeacherDashboardView: View {
                 await viewModel.loadData()
                 await viewModel.loadEnrollmentRequests()
             }
+        }
+    }
+
+    // MARK: - iPad Teacher Layout (Sidebar + Main)
+
+    private var iPadTeacherContent: some View {
+        HStack(spacing: 0) {
+            // Left sidebar: courses list + quick actions
+            ScrollView {
+                VStack(spacing: 16) {
+                    overviewCards
+
+                    // Course list for sidebar
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("My Courses")
+                            .font(.headline)
+
+                        if viewModel.courses.isEmpty {
+                            HStack {
+                                Image(systemName: "book")
+                                    .foregroundStyle(.secondary)
+                                Text("No courses yet")
+                                    .foregroundStyle(.secondary)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(Color(.secondarySystemGroupedBackground))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                        } else {
+                            ForEach(viewModel.courses) { course in
+                                Button {
+                                    withAnimation(.smooth) {
+                                        selectedIPadCourse = selectedIPadCourse?.id == course.id ? nil : course
+                                    }
+                                } label: {
+                                    HStack(spacing: 12) {
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .fill(Theme.courseColor(course.colorName).gradient)
+                                            .frame(width: 36, height: 36)
+                                            .overlay {
+                                                Image(systemName: course.iconSystemName)
+                                                    .font(.caption)
+                                                    .foregroundStyle(.white)
+                                            }
+
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(course.title)
+                                                .font(.subheadline.bold())
+                                                .foregroundStyle(Color(.label))
+                                                .lineLimit(1)
+                                            Text("\(course.enrolledStudentCount) students")
+                                                .font(.caption)
+                                                .foregroundStyle(Color(.secondaryLabel))
+                                        }
+
+                                        Spacer()
+
+                                        let atRiskCount = viewModel.atRiskStudents(for: course.id).count
+                                        if atRiskCount > 0 {
+                                            HStack(spacing: 3) {
+                                                Image(systemName: "exclamationmark.triangle.fill")
+                                                    .font(.system(size: 9))
+                                                Text("\(atRiskCount)")
+                                                    .font(.caption2.bold())
+                                            }
+                                            .foregroundStyle(.red)
+                                        }
+
+                                        Image(systemName: "chevron.right")
+                                            .font(.caption2)
+                                            .foregroundStyle(Color(.tertiaryLabel))
+                                    }
+                                    .padding(10)
+                                    .background(
+                                        selectedIPadCourse?.id == course.id
+                                            ? Theme.courseColor(course.colorName).opacity(0.1)
+                                            : Color(.tertiarySystemGroupedBackground)
+                                    )
+                                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
+
+                    quickActions
+
+                    liveActivityBanner
+                }
+                .padding()
+            }
+            .frame(width: 360)
+
+            Divider()
+
+            // Right main content: selected course insights or overview
+            ScrollView {
+                VStack(spacing: 16) {
+                    if let dataError = viewModel.dataError {
+                        HStack(spacing: 10) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.orange)
+                                .symbolEffect(.wiggle, options: .repeat(.periodic(delay: 2)))
+                            Text(dataError)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            Button {
+                                viewModel.dataError = nil
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundStyle(.secondary)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(12)
+                        .background(Color.orange.opacity(0.12))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .strokeBorder(Color.orange.opacity(0.3), lineWidth: 1)
+                        )
+                    }
+
+                    if let course = selectedIPadCourse {
+                        iPadCoursePanel(course)
+                    } else {
+                        enrollmentRequestsBanner
+                        conferencesBanner
+                        atRiskStudentsBanner
+                        studentInsightsLink
+                        recentActivity
+                        announcementsSection
+                    }
+                }
+                .padding()
+            }
+            .frame(maxWidth: .infinity)
+        }
+    }
+
+    // MARK: - iPad Course Detail Panel
+
+    private func iPadCoursePanel(_ course: Course) -> some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Course header
+            HStack(spacing: 16) {
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(Theme.courseColor(course.colorName).gradient)
+                    .frame(width: 56, height: 56)
+                    .overlay {
+                        Image(systemName: course.iconSystemName)
+                            .font(.title2)
+                            .foregroundStyle(.white)
+                    }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(course.title)
+                        .font(.title3.bold())
+                    Text("\(course.enrolledStudentCount) students enrolled")
+                        .font(.subheadline)
+                        .foregroundStyle(Color(.secondaryLabel))
+                }
+
+                Spacer()
+
+                NavigationLink {
+                    StudentInsightsView(course: course, viewModel: viewModel)
+                } label: {
+                    Text("Insights")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(Theme.courseColor(course.colorName), in: Capsule())
+                }
+            }
+            .padding(16)
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+
+            // At-risk students for this course
+            let atRiskStudents = viewModel.atRiskStudents(for: course.id)
+            if !atRiskStudents.isEmpty {
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.red)
+                        Text("At-Risk Students")
+                            .font(.headline)
+                    }
+
+                    ForEach(atRiskStudents) { student in
+                        HStack(spacing: 10) {
+                            Circle()
+                                .fill(Theme.gradeColor(student.currentGrade).gradient)
+                                .frame(width: 28, height: 28)
+                                .overlay {
+                                    Text(String(student.studentName.prefix(1)).uppercased())
+                                        .font(.caption2.bold())
+                                        .foregroundStyle(.white)
+                                }
+
+                            Text(student.studentName)
+                                .font(.subheadline)
+                                .foregroundStyle(Color(.label))
+
+                            Spacer()
+
+                            Text(String(format: "%.0f%%", student.currentGrade))
+                                .font(.subheadline.bold())
+                                .foregroundStyle(Theme.gradeColor(student.currentGrade))
+
+                            Text(student.riskLevel.rawValue)
+                                .font(.system(size: 10, weight: .bold))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3)
+                                .background(student.riskLevel == .high ? Color.red : (student.riskLevel == .medium ? Color.red.opacity(0.8) : Color.orange), in: Capsule())
+                        }
+                    }
+                }
+                .padding(14)
+                .background(Color(.secondarySystemGroupedBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16)
+                        .strokeBorder(Color.red.opacity(0.3), lineWidth: 1)
+                )
+            }
+
+            // Recent submissions for this course
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Recent Submissions")
+                    .font(.headline)
+
+                let courseSubmissions = viewModel.assignments.filter { $0.isSubmitted && $0.courseId == course.id }
+                if courseSubmissions.isEmpty {
+                    HStack {
+                        Image(systemName: "tray")
+                            .foregroundStyle(.secondary)
+                        Text("No submissions for this course yet")
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 20)
+                    .background(Color(.secondarySystemGroupedBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                } else {
+                    ForEach(courseSubmissions.prefix(5)) { assignment in
+                        HStack(spacing: 12) {
+                            Circle()
+                                .fill(.blue.gradient)
+                                .frame(width: 36, height: 36)
+                                .overlay {
+                                    Image(systemName: "doc.text.fill")
+                                        .font(.caption)
+                                        .foregroundStyle(.white)
+                                }
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(assignment.title)
+                                    .font(.subheadline.bold())
+                                    .foregroundStyle(Color(.label))
+                                    .lineLimit(1)
+                                Text(assignment.courseName)
+                                    .font(.caption)
+                                    .foregroundStyle(Color(.secondaryLabel))
+                            }
+                            Spacer()
+                            if assignment.grade != nil {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .foregroundStyle(.green)
+                            } else {
+                                Text("Grade")
+                                    .font(.caption.bold())
+                                    .foregroundStyle(.white)
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 4)
+                                    .background(Color.orange)
+                                    .clipShape(Capsule())
+                            }
+                        }
+                        .padding(12)
+                        .background(Color(.secondarySystemGroupedBackground))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - iPhone Teacher Content (Original Layout)
+
+    private var iPhoneTeacherContent: some View {
+        ScrollView {
+            GlassEffectContainer {
+                LazyVStack(spacing: 16) {
+                    if let dataError = viewModel.dataError {
+                        HStack(spacing: 10) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.orange)
+                                .symbolEffect(.wiggle, options: .repeat(.periodic(delay: 2)))
+                            Text(dataError)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            Button {
+                                viewModel.dataError = nil
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundStyle(.secondary)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(12)
+                        .background(Color.orange.opacity(0.12))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .strokeBorder(Color.orange.opacity(0.3), lineWidth: 1)
+                        )
+                        .accessibilityElement(children: .combine)
+                        .accessibilityLabel("Warning: \(dataError)")
+                    }
+                    overviewCards
+                    enrollmentRequestsBanner
+                    conferencesBanner
+                    atRiskStudentsBanner
+                    studentInsightsLink
+                    liveActivityBanner
+                    quickActions
+                    recentActivity
+                    announcementsSection
+                }
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 20)
         }
     }
 
@@ -376,7 +678,7 @@ struct TeacherDashboardView: View {
     private var overviewCards: some View {
         let columns = [GridItem(.flexible()), GridItem(.flexible())]
         return LazyVGrid(columns: columns, spacing: 12) {
-            dashCard(icon: "book.fill", value: "\(viewModel.courses.count)", label: "Courses", color: .pink)
+            dashCard(icon: "book.fill", value: "\(viewModel.courses.count)", label: "Courses", color: .orange)
             dashCard(icon: "person.3.fill", value: "\(viewModel.courses.reduce(0) { $0 + $1.enrolledStudentCount })", label: "Students", color: .blue)
             dashCard(icon: "doc.text.fill", value: "\(viewModel.pendingGradingCount)", label: "Needs Grading", color: .orange)
             dashCard(icon: "chart.bar.fill", value: String(format: "%.1f%%", viewModel.gpa), label: "Avg Grade", color: .green)
@@ -415,7 +717,7 @@ struct TeacherDashboardView: View {
                 .font(.headline)
 
             HStack(spacing: 12) {
-                quickActionButton(icon: "plus.circle.fill", label: "New Course", color: .pink) {
+                quickActionButton(icon: "plus.circle.fill", label: "New Course", color: .orange) {
                     showCreateCourse = true
                 }
                 quickActionButton(icon: "megaphone.fill", label: "Announce", color: .orange) {

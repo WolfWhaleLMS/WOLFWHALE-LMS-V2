@@ -39,7 +39,7 @@ struct TeacherProfileView: View {
         VStack(spacing: 14) {
             ZStack {
                 Circle()
-                    .fill(LinearGradient(colors: [.pink, .purple], startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .fill(LinearGradient(colors: [.orange, .purple], startPoint: .topLeading, endPoint: .bottomTrailing))
                     .frame(width: 80, height: 80)
                 Image(systemName: "person.fill")
                     .font(.system(size: 36))

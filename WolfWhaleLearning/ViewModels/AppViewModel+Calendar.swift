@@ -65,9 +65,10 @@ extension AppViewModel {
         return courses.filter { courseIds.contains($0.id) }
     }
 
-    /// Current numeric grade for a given course (from grades array).
+    /// Current numeric grade for a given course (delegates to GradesViewModel).
     func currentGrade(for courseId: UUID) -> Double? {
-        grades.first(where: { $0.courseId == courseId })?.numericGrade
+        gradesVM.grades = grades
+        return gradesVM.currentGrade(for: courseId)
     }
 
     /// Count of remaining (not submitted) assignments for a course.

@@ -205,7 +205,7 @@ struct TermsOfServiceView: View {
             number: "6",
             title: "Termination",
             icon: "xmark.circle.fill",
-            color: .pink
+            color: .orange
         ) {
             VStack(alignment: .leading, spacing: 12) {
                 bulletPoint("WolfWhale or your educational institution may suspend or terminate your access to the platform at any time for violations of these Terms or for any reason consistent with institutional policies.")

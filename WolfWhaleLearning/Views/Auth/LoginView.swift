@@ -37,7 +37,7 @@ struct LoginView: View {
             .padding(.horizontal, 24)
         }
         .scrollDismissesKeyboard(.interactively)
-        .background { HolographicBackground() }
+        .background { AuroraNightSkyBackground() }
         .environment(\.colorScheme, .dark)
         .sheet(isPresented: $showForgotPassword) {
             ForgotPasswordView()
@@ -54,26 +54,26 @@ struct LoginView: View {
         VStack(spacing: 6) {
             ZStack {
                 // Purple glow emanating from behind the logo
-                Circle()
+                RoundedRectangle(cornerRadius: 36)
                     .fill(
                         RadialGradient(
                             colors: [
-                                Theme.brandPurple.opacity(0.25),
-                                Theme.brandPurple.opacity(0.08),
+                                Theme.brandPurple.opacity(0.375),
+                                Theme.brandPurple.opacity(0.12),
                                 .clear
                             ],
                             center: .center,
-                            startRadius: 50,
-                            endRadius: 140
+                            startRadius: 75,
+                            endRadius: 210
                         )
                     )
-                    .frame(width: 200, height: 200)
+                    .frame(width: 300, height: 300)
                     .scaleEffect(glowPulse ? 1.15 : 0.9)
 
-                Circle()
-                    .fill(Theme.brandPurple.opacity(0.15))
-                    .frame(width: 130, height: 130)
-                    .blur(radius: 30)
+                RoundedRectangle(cornerRadius: 28)
+                    .fill(Theme.brandPurple.opacity(0.225))
+                    .frame(width: 195, height: 195)
+                    .blur(radius: 45)
                     .scaleEffect(glowPulse ? 1.1 : 0.85)
 
                 // Logo
@@ -82,7 +82,7 @@ struct LoginView: View {
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 140, height: 140)
                     .clipShape(RoundedRectangle(cornerRadius: 28))
-                    .shadow(color: Theme.brandPurple.opacity(0.7), radius: 24, y: 0)
+                    .shadow(color: Theme.brandPurple.opacity(1.0), radius: 36, y: 0)
             }
             .accessibilityHidden(true)
             .onAppear {
@@ -182,8 +182,10 @@ struct LoginView: View {
                         HStack(spacing: 8) {
                             Text("Sign In")
                                 .font(.headline)
+                                .foregroundStyle(.white)
                             Image(systemName: "arrow.right")
                                 .font(.subheadline.bold())
+                                .foregroundStyle(.white)
                                 .symbolEffect(.wiggle.right, options: .repeat(.periodic(delay: 2)))
                         }
                     }
@@ -191,11 +193,19 @@ struct LoginView: View {
                 .frame(maxWidth: .infinity)
                 .frame(height: 50)
             }
-            .buttonStyle(.borderedProminent)
-            .tint(.accentColor)
-            .clipShape(.rect(cornerRadius: 12))
+            .buttonStyle(.plain)
+            .background(
+                LinearGradient(
+                    colors: [Theme.brandBlue, Theme.brandPurple],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                ),
+                in: .rect(cornerRadius: 12)
+            )
             .disabled(viewModel.isLoading || viewModel.email.isEmpty || viewModel.password.isEmpty || viewModel.isLoginLockedOut)
-            .sensoryFeedback(.impact(weight: .medium), trigger: viewModel.isAuthenticated)
+            .opacity(viewModel.isLoading || viewModel.email.isEmpty || viewModel.password.isEmpty || viewModel.isLoginLockedOut ? 0.75 : 1.0)
+            .hapticFeedback(.impact(weight: .medium), trigger: viewModel.isAuthenticated)
+            .retroSound(.confirm, trigger: viewModel.isAuthenticated)
             .accessibilityLabel(viewModel.isLoading ? "Signing in" : "Sign In")
             .accessibilityHint("Double tap to sign in with your email and password")
 
@@ -207,7 +217,8 @@ struct LoginView: View {
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(Color.accentColor)
             }
-            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .retroSound(.tap, trigger: hapticTrigger)
             .accessibilityHint("Double tap to reset your password")
 
         }
@@ -267,7 +278,7 @@ struct DemoRoleButton: View {
     private var roleGradient: [Color] {
         switch role {
         case .student: [Theme.brandPurple, .purple]
-        case .teacher: [.pink, .orange]
+        case .teacher: [.orange, .yellow]
         case .parent: [.green, .teal]
         case .admin: [Theme.brandBlue, .cyan]
         case .superAdmin: [Theme.brandPurple, Theme.brandBlue]
@@ -317,7 +328,8 @@ struct DemoRoleButton: View {
             .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 14))
         }
         .buttonStyle(.plain)
-        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .retroSound(.coin, trigger: hapticTrigger)
         .accessibilityLabel("Demo \(role.rawValue)")
         .accessibilityHint("Double tap to sign in as a demo \(role.rawValue.lowercased())")
     }

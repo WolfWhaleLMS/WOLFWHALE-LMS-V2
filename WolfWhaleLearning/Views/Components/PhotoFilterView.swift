@@ -219,7 +219,7 @@ struct PhotoFilterView: View {
                 .padding(.vertical, 14)
                 .background(
                     LinearGradient(
-                        colors: [.pink, .purple],
+                        colors: [.orange, .purple],
                         startPoint: .leading,
                         endPoint: .trailing
                     ),

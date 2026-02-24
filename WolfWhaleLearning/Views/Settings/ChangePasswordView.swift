@@ -120,7 +120,7 @@ struct ChangePasswordView: View {
                 Circle()
                     .fill(
                         LinearGradient(
-                            colors: [.pink.opacity(0.15), .purple.opacity(0.15)],
+                            colors: [.red.opacity(0.15), .purple.opacity(0.15)],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -131,7 +131,7 @@ struct ChangePasswordView: View {
                     .font(.system(size: 30))
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [.pink, .purple],
+                            colors: [.red, .purple],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
@@ -185,7 +185,7 @@ struct ChangePasswordView: View {
     private func passwordField(icon: String, placeholder: String, text: Binding<String>, field: Field) -> some View {
         HStack(spacing: 12) {
             Image(systemName: icon)
-                .foregroundStyle(.pink)
+                .foregroundStyle(.red)
                 .frame(width: 24)
             SecureField(placeholder, text: text)
                 .textContentType(field == .current ? .password : .newPassword)
@@ -293,7 +293,7 @@ struct ChangePasswordView: View {
             .frame(height: 50)
         }
         .buttonStyle(.borderedProminent)
-        .tint(.pink)
+        .tint(.red)
         .clipShape(.rect(cornerRadius: 12))
         .disabled(!canSubmit)
         .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
@@ -325,8 +325,8 @@ struct ChangePasswordView: View {
                     dismiss()
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(.pink)
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .tint(.red)
+                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 .padding(.top, 8)
             }
             .padding(32)

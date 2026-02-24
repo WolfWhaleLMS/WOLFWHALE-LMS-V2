@@ -42,7 +42,7 @@ private enum GeometryShape: String, CaseIterable, Identifiable {
         case .rectangle: return .green
         case .triangle: return .orange
         case .trapezoid: return .purple
-        case .parallelogram: return .pink
+        case .parallelogram: return .orange
         case .sphere: return .cyan
         case .cylinder: return .indigo
         case .cone: return .red

@@ -34,10 +34,10 @@ struct FileAttachmentView: View {
                     HStack(spacing: 10) {
                         Image(systemName: "plus.circle.fill")
                             .font(.title3)
-                            .foregroundStyle(.pink)
+                            .foregroundStyle(.orange)
                         Text("Add Attachment")
                             .font(.subheadline.bold())
-                            .foregroundStyle(.pink)
+                            .foregroundStyle(.orange)
                         Spacer()
                         Text("\(attachments.count)/\(maxAttachments)")
                             .font(.caption)

@@ -102,7 +102,7 @@ struct DeleteAccountView: View {
                 .foregroundStyle(.primary)
                 .padding(.bottom, 12)
 
-            deletionItem(icon: "person.crop.circle.fill", color: .pink, text: "Your profile and personal information")
+            deletionItem(icon: "person.crop.circle.fill", color: .orange, text: "Your profile and personal information")
             deletionItem(icon: "book.closed.fill", color: .indigo, text: "All course enrollments")
             deletionItem(icon: "chart.bar.fill", color: .orange, text: "Grades and academic records")
             deletionItem(icon: "bubble.left.and.bubble.right.fill", color: .blue, text: "Messages and conversations")

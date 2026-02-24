@@ -33,7 +33,8 @@ struct ContentView: View {
             // Safe without a developer account: UNUserNotificationCenter
             // works for local notifications. Both methods handle errors internally.
             viewModel.notificationService.registerCategories()
-            await viewModel.notificationService.requestAuthorization()
+            // TODO: Re-enable when ready to prompt for notifications.
+            // await viewModel.notificationService.requestAuthorization()
 
             viewModel.checkSession()
         }
@@ -100,18 +101,10 @@ struct ContentView: View {
 
     private var splashView: some View {
         ZStack {
-            Color(.systemBackground).ignoresSafeArea()
-            VStack(spacing: 20) {
-                Image(systemName: "graduationcap.fill")
-                    .font(.system(size: 56))
-                    .foregroundStyle(
-                        Theme.brandGradient
-                    )
-                    .symbolRenderingMode(.hierarchical)
-                    .symbolEffect(.breathe.pulse, options: .repeat(.continuous))
-                ProgressView()
-                    .controlSize(.regular)
-            }
+            Color.black.ignoresSafeArea()
+            ProgressView()
+                .tint(.white)
+                .controlSize(.regular)
         }
     }
 

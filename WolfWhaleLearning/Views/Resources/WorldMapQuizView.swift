@@ -58,7 +58,7 @@ enum Continent: String, CaseIterable, Identifiable {
         case .northAmerica: [.blue, .cyan]
         case .southAmerica: [.green, .mint]
         case .europe: [.purple, .indigo]
-        case .asia: [.red, .pink]
+        case .asia: [.red, .orange]
         case .africa: [.orange, .yellow]
         case .oceania: [.cyan, .teal]
         }

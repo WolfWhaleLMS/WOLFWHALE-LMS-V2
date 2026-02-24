@@ -2,8 +2,10 @@ import SwiftUI
 
 struct StudentDashboardView: View {
     let viewModel: AppViewModel
+    @Environment(\.horizontalSizeClass) private var sizeClass
     @State private var showNotifications = false
     @State private var hapticTrigger = false
+    @State private var selectedCourse: Course?
 
     private var greeting: String {
         let hour = Calendar.current.component(.hour, from: Date())
@@ -20,11 +22,13 @@ struct StudentDashboardView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
+            Group {
                 if viewModel.isDataLoading && viewModel.courses.isEmpty {
-                    loadingState
+                    ScrollView { loadingState }
+                } else if sizeClass == .regular {
+                    iPadContent
                 } else {
-                    content
+                    ScrollView { content }
                 }
             }
             .refreshable { await viewModel.loadData() }
@@ -37,7 +41,344 @@ struct StudentDashboardView: View {
         }
     }
 
-    // MARK: - Content
+    // MARK: - iPad Content (Two-Column)
+
+    private var iPadContent: some View {
+        HStack(spacing: 0) {
+            // Left column: snapshot + courses list + quick links
+            ScrollView {
+                VStack(spacing: 20) {
+                    if let dataError = viewModel.dataError {
+                        errorBanner(dataError)
+                    }
+
+                    snapshotCard
+
+                    // Courses as a vertical list for iPad sidebar
+                    iPadCoursesList
+
+                    quickLinksGrid
+                }
+                .padding()
+            }
+            .frame(width: 360)
+
+            Divider()
+
+            // Right column: selected course detail or due-soon assignments
+            ScrollView {
+                VStack(spacing: 20) {
+                    if let course = selectedCourse {
+                        iPadCourseDetail(course)
+                    } else {
+                        // Show due-soon assignments as default right-panel content
+                        iPadDueSoonList
+
+                        iPadQuickLinksExpanded
+                    }
+                }
+                .padding()
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .navigationDestination(for: Course.self) { course in
+            CourseDetailView(course: course, viewModel: viewModel)
+        }
+    }
+
+    // MARK: - iPad Sidebar Courses List
+
+    private var iPadCoursesList: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            sectionHeader("My Courses", icon: "graduationcap.fill", effect: .wiggle)
+
+            if viewModel.courses.isEmpty {
+                NavigationLink {
+                    CourseCatalogView(viewModel: viewModel)
+                } label: {
+                    HStack(spacing: 12) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.title2)
+                            .foregroundStyle(.indigo)
+                            .symbolRenderingMode(.hierarchical)
+                        Text("Browse Courses")
+                            .font(.subheadline.bold())
+                            .foregroundStyle(Color(.label))
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption.bold())
+                            .foregroundStyle(.tertiary)
+                    }
+                    .padding(14)
+                    .glassCard(cornerRadius: 14)
+                }
+                .buttonStyle(.plain)
+            } else {
+                ForEach(viewModel.courses) { course in
+                    Button {
+                        withAnimation(.smooth) {
+                            selectedCourse = selectedCourse?.id == course.id ? nil : course
+                        }
+                    } label: {
+                        HStack(spacing: 12) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(Theme.courseColor(course.colorName).opacity(0.15))
+                                    .frame(width: 40, height: 40)
+                                Image(systemName: course.iconSystemName)
+                                    .font(.system(size: 18, weight: .semibold))
+                                    .foregroundStyle(Theme.courseColor(course.colorName))
+                            }
+
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(course.title)
+                                    .font(.subheadline.bold())
+                                    .foregroundStyle(Color(.label))
+                                    .lineLimit(1)
+                                Text(course.teacherName)
+                                    .font(.caption)
+                                    .foregroundStyle(Color(.secondaryLabel))
+                                    .lineLimit(1)
+                            }
+
+                            Spacer()
+
+                            Text("\(Int(course.progress * 100))%")
+                                .font(.caption.bold())
+                                .foregroundStyle(Theme.courseColor(course.colorName))
+                        }
+                        .padding(12)
+                        .background(
+                            selectedCourse?.id == course.id
+                                ? Theme.courseColor(course.colorName).opacity(0.1)
+                                : Color.clear
+                        )
+                        .glassCard(cornerRadius: 14)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("\(course.title), \(course.teacherName), \(Int(course.progress * 100)) percent complete")
+                }
+            }
+        }
+    }
+
+    // MARK: - iPad Course Detail Panel
+
+    private func iPadCourseDetail(_ course: Course) -> some View {
+        VStack(alignment: .leading, spacing: 20) {
+            // Course header
+            HStack(spacing: 16) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(Theme.courseColor(course.colorName).opacity(0.15))
+                        .frame(width: 56, height: 56)
+                    Image(systemName: course.iconSystemName)
+                        .font(.title2)
+                        .foregroundStyle(Theme.courseColor(course.colorName))
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(course.title)
+                        .font(.title3.bold())
+                    Text(course.teacherName)
+                        .font(.subheadline)
+                        .foregroundStyle(Color(.secondaryLabel))
+                }
+
+                Spacer()
+
+                NavigationLink(value: course) {
+                    Text("Open")
+                        .font(.subheadline.bold())
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(Theme.courseColor(course.colorName), in: Capsule())
+                }
+            }
+            .padding(16)
+            .glassCard(cornerRadius: 16)
+
+            // Progress
+            VStack(alignment: .leading, spacing: 8) {
+                HStack {
+                    Text("Progress")
+                        .font(.headline)
+                    Spacer()
+                    Text("\(Int(course.progress * 100))%")
+                        .font(.headline)
+                        .foregroundStyle(Theme.courseColor(course.colorName))
+                }
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        Capsule()
+                            .fill(Theme.courseColor(course.colorName).opacity(0.15))
+                        Capsule()
+                            .fill(Theme.courseColor(course.colorName))
+                            .frame(width: geo.size.width * min(course.progress, 1.0))
+                    }
+                }
+                .frame(height: 8)
+            }
+            .padding(16)
+            .glassCard(cornerRadius: 16)
+
+            // Assignments for this course
+            VStack(alignment: .leading, spacing: 12) {
+                sectionHeader("Assignments", icon: "doc.text.fill", effect: .wiggle)
+
+                let courseAssignments = viewModel.upcomingAssignments.filter { $0.courseId == course.id }
+                if courseAssignments.isEmpty {
+                    HStack(spacing: 10) {
+                        Image(systemName: "checkmark.seal.fill")
+                            .font(.title3)
+                            .foregroundStyle(.green)
+                        Text("No upcoming assignments for this course")
+                            .font(.subheadline)
+                            .foregroundStyle(Color(.secondaryLabel))
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(16)
+                    .glassCard(cornerRadius: 14)
+                } else {
+                    ForEach(courseAssignments) { assignment in
+                        HStack(spacing: 12) {
+                            Image(systemName: "doc.text.fill")
+                                .font(.title3)
+                                .foregroundStyle(.orange)
+                                .symbolRenderingMode(.hierarchical)
+
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(assignment.title)
+                                    .font(.subheadline.bold())
+                                    .foregroundStyle(Color(.label))
+                                Text(assignment.dueDate, style: .relative)
+                                    .font(.caption)
+                                    .foregroundStyle(.orange)
+                            }
+
+                            Spacer()
+
+                            Text("\(assignment.points) pts")
+                                .font(.caption.bold())
+                                .foregroundStyle(Color(.tertiaryLabel))
+                        }
+                        .padding(14)
+                        .glassCard(cornerRadius: 14)
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - iPad Due Soon (Right Panel Default)
+
+    private var iPadDueSoonList: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                sectionHeader("Due Soon", icon: "clock.badge.exclamationmark.fill", effect: .wiggle)
+                Spacer()
+                NavigationLink {
+                    AssignmentsView(viewModel: viewModel)
+                } label: {
+                    Text("See All")
+                        .font(.subheadline)
+                        .foregroundStyle(Color.accentColor)
+                }
+            }
+
+            if viewModel.upcomingAssignments.isEmpty {
+                HStack(spacing: 10) {
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.title3)
+                        .foregroundStyle(.green)
+                        .symbolRenderingMode(.hierarchical)
+                    Text("All caught up -- nothing due!")
+                        .font(.subheadline)
+                        .foregroundStyle(Color(.secondaryLabel))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(16)
+                .glassCard(cornerRadius: 14)
+            } else {
+                ForEach(viewModel.upcomingAssignments.prefix(8)) { assignment in
+                    NavigationLink {
+                        AssignmentsView(viewModel: viewModel)
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "doc.text.fill")
+                                .font(.title3)
+                                .foregroundStyle(.orange)
+                                .symbolRenderingMode(.hierarchical)
+
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(assignment.title)
+                                    .font(.subheadline.bold())
+                                    .foregroundStyle(Color(.label))
+                                    .lineLimit(1)
+                                Text(assignment.courseName)
+                                    .font(.caption)
+                                    .foregroundStyle(Color(.secondaryLabel))
+                                    .lineLimit(1)
+                            }
+
+                            Spacer()
+
+                            VStack(alignment: .trailing, spacing: 3) {
+                                Text(assignment.dueDate, style: .relative)
+                                    .font(.caption.bold())
+                                    .foregroundStyle(.orange)
+                                Text("\(assignment.points) pts")
+                                    .font(.caption2)
+                                    .foregroundStyle(Color(.tertiaryLabel))
+                            }
+                        }
+                        .padding(14)
+                        .glassCard(cornerRadius: 14)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
+    // MARK: - iPad Expanded Quick Links (Right Panel)
+
+    private var iPadQuickLinksExpanded: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            sectionHeader("Quick Links", icon: "sparkles", effect: .wiggle)
+
+            LazyVGrid(columns: [
+                GridItem(.flexible(), spacing: 12),
+                GridItem(.flexible(), spacing: 12),
+                GridItem(.flexible(), spacing: 12)
+            ], spacing: 12) {
+                exploreLink(icon: "chart.bar.doc.horizontal.fill", title: "Grades", color: .green) {
+                    GradesView(viewModel: viewModel)
+                }
+                exploreLink(icon: "calendar", title: "Calendar", color: .orange) {
+                    AssignmentCalendarView(viewModel: viewModel)
+                }
+                exploreLink(icon: "clock.fill", title: "Schedule", color: .indigo) {
+                    TimetableView(viewModel: viewModel)
+                }
+                exploreLink(icon: "person.badge.clock.fill", title: "Attendance", color: .teal) {
+                    AttendanceHistoryView(viewModel: viewModel)
+                }
+                exploreLink(icon: "books.vertical.fill", title: "Catalog", color: .purple) {
+                    CourseCatalogView(viewModel: viewModel)
+                }
+                exploreLink(icon: "map.fill", title: "Campus", color: .blue) {
+                    CampusMapView()
+                }
+                exploreLink(icon: "sparkles", title: "AI Tutor", color: .purple) {
+                    AIAssistantView()
+                }
+            }
+        }
+    }
+
+    // MARK: - Content (iPhone)
 
     private var content: some View {
         VStack(spacing: 20) {
@@ -100,6 +441,7 @@ struct StudentDashboardView: View {
                 .foregroundStyle(color)
                 .symbolRenderingMode(.hierarchical)
                 .contentTransition(.symbolEffect(.replace))
+                .symbolEffect(.wiggle, options: .repeat(.periodic(delay: 4)))
             Text(value)
                 .font(.title2.bold())
                 .foregroundStyle(Color(.label))
@@ -174,6 +516,7 @@ struct StudentDashboardView: View {
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(Theme.courseColor(course.colorName))
                     .symbolRenderingMode(.hierarchical)
+                    .symbolEffect(.wiggle, options: .repeat(.periodic(delay: 4)))
             }
 
             VStack(alignment: .leading, spacing: 3) {
@@ -217,7 +560,7 @@ struct StudentDashboardView: View {
     private var dueSoonCarousel: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                sectionHeader("Due Soon", icon: "clock.badge.exclamationmark.fill", effect: .breathe)
+                sectionHeader("Due Soon", icon: "clock.badge.exclamationmark.fill", effect: .wiggle)
                 Spacer()
                 NavigationLink {
                     AssignmentsView(viewModel: viewModel)
@@ -270,6 +613,7 @@ struct StudentDashboardView: View {
                 .font(.title3)
                 .foregroundStyle(.orange)
                 .symbolRenderingMode(.hierarchical)
+                .symbolEffect(.wiggle, options: .repeat(.periodic(delay: 4)))
 
             Text(assignment.title)
                 .font(.subheadline.bold())
@@ -303,7 +647,7 @@ struct StudentDashboardView: View {
 
     private var quickLinksGrid: some View {
         VStack(alignment: .leading, spacing: 12) {
-            sectionHeader("Quick Links", icon: "sparkles", effect: .variableColor)
+            sectionHeader("Quick Links", icon: "sparkles", effect: .wiggle)
 
             LazyVGrid(columns: [
                 GridItem(.flexible(), spacing: 12),
@@ -341,6 +685,7 @@ struct StudentDashboardView: View {
                     .foregroundStyle(color)
                     .symbolRenderingMode(.hierarchical)
                     .contentTransition(.symbolEffect(.replace))
+                    .symbolEffect(.wiggle, options: .repeat(.periodic(delay: 4)))
                     .frame(height: 24)
                 Text(title)
                     .font(.caption2.bold())

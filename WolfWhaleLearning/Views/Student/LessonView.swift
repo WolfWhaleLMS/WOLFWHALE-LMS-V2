@@ -67,6 +67,11 @@ struct LessonView: View {
         return result
     }
 
+    /// Resources attached to the current slide.
+    private var currentSlideResources: [SlideResource] {
+        lesson.slideResources.filter { $0.slideIndex == currentSlide }
+    }
+
     /// Whether this lesson should display as a video lesson.
     private var isVideoLesson: Bool {
         lesson.type == .video && resolvedVideoURL != nil
@@ -152,6 +157,11 @@ struct LessonView: View {
                     // Current slide content
                     slideContentCard(text: slides[currentSlide])
                         .id(currentSlide) // force re-render for transition
+
+                    // Slide resources (attached tools)
+                    if !currentSlideResources.isEmpty {
+                        slideResourcesRow
+                    }
 
                     // Related AR section
                     relatedARSection
@@ -483,6 +493,73 @@ struct LessonView: View {
                 .padding(16)
                 .glassCard(cornerRadius: 16)
             }
+        }
+    }
+
+    // MARK: - Slide Resources Row
+
+    private var slideResourcesRow: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Label("Slide Resources", systemImage: "book.and.wrench.fill")
+                .font(.subheadline.bold())
+                .foregroundStyle(Color(.label))
+
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    ForEach(currentSlideResources) { resource in
+                        NavigationLink {
+                            resourceDestinationView(for: resource.resourceTitle)
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: resource.resourceIcon)
+                                    .font(.callout)
+                                    .foregroundStyle(.purple)
+                                Text(resource.resourceTitle)
+                                    .font(.caption.bold())
+                                    .foregroundStyle(Color(.label))
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 10)
+                            .glassCard(cornerRadius: 12)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+            }
+        }
+        .padding(16)
+        .glassCard(cornerRadius: 16)
+        .transition(.asymmetric(
+            insertion: .move(edge: .bottom).combined(with: .opacity),
+            removal: .opacity
+        ))
+    }
+
+    // MARK: - Resource Destination View
+
+    @ViewBuilder
+    private func resourceDestinationView(for title: String) -> some View {
+        switch title {
+        case "Flashcard Creator": FlashcardCreatorView()
+        case "Unit Converter": UnitConverterView()
+        case "Typing Tutor": TypingTutorView()
+        case "AI Study Assistant": AIAssistantView()
+        case "Math Quiz": MathQuizView()
+        case "Fraction Builder": FractionBuilderView()
+        case "Geometry Explorer": GeometryExplorerView()
+        case "Periodic Table": PeriodicTableView()
+        case "Human Body": HumanBodyView()
+        case "Word Builder": WordBuilderView()
+        case "Spelling Bee": SpellingBeeView()
+        case "Grammar Quest": GrammarQuestView()
+        case "French Vocab": FrenchVocabView()
+        case "French Verbs": FrenchVerbView()
+        case "Canadian History": CanadianHistoryTimelineView()
+        case "Canadian Geography": CanadianGeographyView()
+        case "Indigenous Peoples": IndigenousPeoplesView()
+        case "World Map Quiz": WorldMapQuizView()
+        case "Chess": ChessGameView()
+        default: Text("Coming Soon")
         }
     }
 

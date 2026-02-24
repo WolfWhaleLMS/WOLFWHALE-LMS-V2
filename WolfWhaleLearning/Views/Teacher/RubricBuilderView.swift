@@ -145,7 +145,7 @@ struct RubricBuilderView: View {
             HStack {
                 Text("Criterion \(index + 1)")
                     .font(.subheadline.bold())
-                    .foregroundStyle(.pink)
+                    .foregroundStyle(.red)
                 Spacer()
                 if criteria.count > 1 {
                     Button {
@@ -196,7 +196,7 @@ struct RubricBuilderView: View {
                     } label: {
                         Image(systemName: "plus.circle.fill")
                             .font(.caption)
-                            .foregroundStyle(.pink)
+                            .foregroundStyle(.red)
                     }
                     .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 }
@@ -218,7 +218,7 @@ struct RubricBuilderView: View {
             VStack(spacing: 2) {
                 Text("\(criteria[criterionIndex].levels[levelIndex].points)")
                     .font(.caption.bold())
-                    .foregroundStyle(.pink)
+                    .foregroundStyle(.red)
                 Text("pts")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
@@ -275,8 +275,8 @@ struct RubricBuilderView: View {
                 .padding(.vertical, 12)
         }
         .buttonStyle(.bordered)
-        .tint(.pink)
-        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .tint(.red)
+        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
     }
 
     // MARK: - Total Points Card
@@ -289,7 +289,7 @@ struct RubricBuilderView: View {
             Spacer()
             Text("\(criteria.reduce(0) { $0 + $1.maxPoints })")
                 .font(.title3.bold())
-                .foregroundStyle(.pink)
+                .foregroundStyle(.red)
         }
         .padding(14)
         .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 12))
@@ -317,7 +317,7 @@ struct RubricBuilderView: View {
                 .frame(height: 50)
             }
             .buttonStyle(.borderedProminent)
-            .tint(.pink)
+            .tint(.red)
             .disabled(isLoading || !isValid)
             .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             .padding(.top, 4)

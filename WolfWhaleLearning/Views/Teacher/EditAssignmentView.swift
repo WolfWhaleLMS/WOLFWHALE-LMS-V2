@@ -128,7 +128,7 @@ struct EditAssignmentView: View {
     private var assignmentHeader: some View {
         HStack(spacing: 12) {
             RoundedRectangle(cornerRadius: 12)
-                .fill(.pink.gradient)
+                .fill(.orange.gradient)
                 .frame(width: 44, height: 44)
                 .overlay {
                     Image(systemName: "doc.text.fill")
@@ -196,7 +196,7 @@ struct EditAssignmentView: View {
                 displayedComponents: [.date, .hourAndMinute]
             )
             .datePickerStyle(.graphical)
-            .tint(.pink)
+            .tint(.orange)
         }
         .padding(14)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
@@ -213,7 +213,7 @@ struct EditAssignmentView: View {
                 .font(.subheadline)
 
             // Points preview
-            pointsPreview(label: "Points", value: "\(points)", color: .pink)
+            pointsPreview(label: "Points", value: "\(points)", color: .orange)
         }
         .padding(14)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
@@ -592,7 +592,7 @@ struct EditAssignmentView: View {
                 .frame(height: 50)
             }
             .buttonStyle(.borderedProminent)
-            .tint(.pink)
+            .tint(.orange)
             .disabled(isLoading || !isValid || !hasChanges)
             .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         }

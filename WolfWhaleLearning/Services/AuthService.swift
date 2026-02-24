@@ -154,7 +154,14 @@ final class AuthService {
                 .execute()
 
             // Sign out after deletion
-            try? await supabaseClient.auth.signOut()
+            do {
+                try await supabaseClient.auth.signOut()
+            } catch {
+                #if DEBUG
+                print("[AuthService] Sign out after deletion error: \(error)")
+                #endif
+                // Still return true — account data was deleted successfully
+            }
             return true
         } catch {
             // If the RPC fails (e.g. function not available), attempt a best-effort cleanup
@@ -235,12 +242,24 @@ final class AuthService {
                     .execute()
 
                 // Sign out
-                try? await supabaseClient.auth.signOut()
+                do {
+                    try await supabaseClient.auth.signOut()
+                } catch {
+                    #if DEBUG
+                    print("[AuthService] Sign out after cleanup error: \(error)")
+                    #endif
+                }
                 return true
             } catch {
                 self.error = "Failed to delete account. Please contact your administrator."
                 // Still sign out even if cleanup partially failed
-                try? await supabaseClient.auth.signOut()
+                do {
+                    try await supabaseClient.auth.signOut()
+                } catch {
+                    #if DEBUG
+                    print("[AuthService] Sign out after failed cleanup error: \(error)")
+                    #endif
+                }
                 return false
             }
         }

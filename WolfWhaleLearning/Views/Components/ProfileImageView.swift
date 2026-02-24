@@ -86,12 +86,12 @@ struct ProfileImageView: View {
     private var backgroundColor: LinearGradient {
         let palette: [(Color, Color)] = [
             (.indigo, .purple),
-            (.purple, .pink),
+            (.purple, .orange),
             (.blue, .indigo),
             (.teal, .blue),
             (.indigo, .blue),
             (.purple, .indigo),
-            (.pink, .purple),
+            (.orange, .purple),
             (.blue, .purple),
         ]
 

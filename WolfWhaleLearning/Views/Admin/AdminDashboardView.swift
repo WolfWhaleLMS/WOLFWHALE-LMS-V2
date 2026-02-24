@@ -2,6 +2,7 @@ import SwiftUI
 
 struct AdminDashboardView: View {
     let viewModel: AppViewModel
+    @Environment(\.horizontalSizeClass) private var sizeClass
     @State private var refreshHapticTrigger = false
     @State private var showBulkImport = false
     @State private var showSchoolConfig = false
@@ -30,44 +31,10 @@ struct AdminDashboardView: View {
                     }
                     .padding(.horizontal)
                     .padding(.top, 40)
+                } else if sizeClass == .regular {
+                    iPadAdminContent
                 } else {
-                    GlassEffectContainer {
-                        LazyVStack(spacing: 16) {
-                            if let dataError = viewModel.dataError {
-                                HStack(spacing: 10) {
-                                    Image(systemName: "exclamationmark.triangle.fill")
-                                        .foregroundStyle(.orange)
-                                        .symbolEffect(.wiggle, options: .repeat(.periodic(delay: 2)))
-                                    Text(dataError)
-                                        .font(.subheadline)
-                                        .foregroundStyle(.secondary)
-                                    Spacer()
-                                    Button {
-                                        viewModel.dataError = nil
-                                    } label: {
-                                        Image(systemName: "xmark.circle.fill")
-                                            .foregroundStyle(.secondary)
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-                                .padding(12)
-                                .background(Color.orange.opacity(0.12))
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .strokeBorder(Color.orange.opacity(0.3), lineWidth: 1)
-                                )
-                                .accessibilityElement(children: .combine)
-                                .accessibilityLabel("Warning: \(dataError)")
-                            }
-                            metricsGrid
-                            quickActionsSection
-                            attendanceCard
-                            recentSection
-                        }
-                    }
-                    .padding(.horizontal)
-                    .padding(.bottom, 20)
+                    iPhoneAdminContent
                 }
             }
             .background { HolographicBackground() }
@@ -120,11 +87,177 @@ struct AdminDashboardView: View {
         .requireRole(.admin, .superAdmin, currentRole: viewModel.currentUser?.role)
     }
 
+    // MARK: - iPad Admin Layout (Two-Column Grid)
+
+    private var iPadAdminContent: some View {
+        VStack(spacing: 16) {
+            if let dataError = viewModel.dataError {
+                adminErrorBanner(dataError)
+                    .padding(.horizontal)
+            }
+
+            // Metrics in a wider grid (4 columns on iPad)
+            iPadMetricsGrid
+                .padding(.horizontal)
+
+            // Two-column layout: quick actions + attendance on left, announcements on right
+            HStack(alignment: .top, spacing: 16) {
+                // Left column
+                VStack(spacing: 16) {
+                    iPadQuickActionsGrid
+                    attendanceCard
+                }
+                .frame(maxWidth: .infinity)
+
+                // Right column
+                VStack(spacing: 16) {
+                    recentSection
+                }
+                .frame(maxWidth: .infinity)
+            }
+            .padding(.horizontal)
+        }
+        .padding(.bottom, 20)
+    }
+
+    // MARK: - iPad Metrics Grid (4 columns)
+
+    private var iPadMetricsGrid: some View {
+        let columns = [
+            GridItem(.flexible()),
+            GridItem(.flexible()),
+            GridItem(.flexible()),
+            GridItem(.flexible()),
+            GridItem(.flexible()),
+            GridItem(.flexible())
+        ]
+        return LazyVGrid(columns: columns, spacing: 12) {
+            metricCard(icon: "person.fill", value: "\(metrics.totalStudents)", label: "Students", color: .purple)
+            metricCard(icon: "person.crop.rectangle.fill", value: "\(metrics.totalTeachers)", label: "Teachers", color: .orange)
+            metricCard(icon: "book.fill", value: "\(metrics.totalCourses)", label: "Courses", color: .blue)
+            metricCard(icon: "checkmark.circle.fill", value: "\(Int(metrics.averageAttendance * 100))%", label: "Attendance", color: .green)
+            metricCard(icon: "chart.bar.fill", value: String(format: "%.1f", metrics.averageGPA), label: "Avg GPA", color: .orange)
+            metricCard(icon: "person.wave.2.fill", value: "\(metrics.activeUsers)", label: "Active", color: .teal)
+        }
+    }
+
+    // MARK: - iPad Quick Actions Grid (2x2 grid)
+
+    private var iPadQuickActionsGrid: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Quick Actions")
+                .font(.headline)
+
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                iPadActionCard(icon: "person.3.sequence.fill", title: "Import Users", subtitle: "CSV roster upload", color: .blue) {
+                    showBulkImport = true
+                }
+                iPadActionCard(icon: "gearshape.2.fill", title: "School Settings", subtitle: "Grading, semesters", color: .purple) {
+                    showSchoolConfig = true
+                }
+                iPadActionCard(icon: "doc.text.magnifyingglass", title: "Audit Log", subtitle: "Compliance trail", color: .indigo) {
+                    showAuditLog = true
+                }
+                iPadActionCard(icon: "chart.bar.doc.horizontal.fill", title: "Attendance", subtitle: "School analytics", color: .green) {
+                    showAttendanceReport = true
+                }
+                iPadActionCard(icon: "rectangle.on.rectangle.angled", title: "Sections", subtitle: "Manage capacity", color: .cyan) {
+                    showClassSections = true
+                }
+                iPadActionCard(icon: "calendar.badge.clock", title: "Calendar", subtitle: "Terms & events", color: .teal) {
+                    showAcademicCalendar = true
+                }
+                iPadActionCard(icon: "doc.richtext.fill", title: "Report Cards", subtitle: "Generate & export", color: .orange) {
+                    showReportCards = true
+                }
+            }
+        }
+    }
+
+    private func iPadActionCard(icon: String, title: String, subtitle: String, color: Color, action: @escaping () -> Void) -> some View {
+        Button {
+            hapticTrigger.toggle()
+            action()
+        } label: {
+            VStack(alignment: .leading, spacing: 8) {
+                Image(systemName: icon)
+                    .font(.title2)
+                    .foregroundStyle(color)
+                    .symbolRenderingMode(.hierarchical)
+
+                Text(title)
+                    .font(.subheadline.bold())
+                    .foregroundStyle(Color(.label))
+
+                Text(subtitle)
+                    .font(.caption2)
+                    .foregroundStyle(Color(.secondaryLabel))
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(14)
+            .background(Color(.secondarySystemGroupedBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .strokeBorder(color.opacity(0.2), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .accessibilityLabel("\(title): \(subtitle)")
+    }
+
+    private func adminErrorBanner(_ dataError: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.orange)
+                .symbolEffect(.wiggle, options: .repeat(.periodic(delay: 2)))
+            Text(dataError)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            Spacer()
+            Button {
+                viewModel.dataError = nil
+            } label: {
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(12)
+        .background(Color.orange.opacity(0.12))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .strokeBorder(Color.orange.opacity(0.3), lineWidth: 1)
+        )
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Warning: \(dataError)")
+    }
+
+    // MARK: - iPhone Admin Content (Original Layout)
+
+    private var iPhoneAdminContent: some View {
+        GlassEffectContainer {
+            LazyVStack(spacing: 16) {
+                if let dataError = viewModel.dataError {
+                    adminErrorBanner(dataError)
+                }
+                metricsGrid
+                quickActionsSection
+                attendanceCard
+                recentSection
+            }
+        }
+        .padding(.horizontal)
+        .padding(.bottom, 20)
+    }
+
     private var metricsGrid: some View {
         let columns = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]
         return LazyVGrid(columns: columns, spacing: 12) {
             metricCard(icon: "person.fill", value: "\(metrics.totalStudents)", label: "Students", color: .purple)
-            metricCard(icon: "person.crop.rectangle.fill", value: "\(metrics.totalTeachers)", label: "Teachers", color: .pink)
+            metricCard(icon: "person.crop.rectangle.fill", value: "\(metrics.totalTeachers)", label: "Teachers", color: .orange)
             metricCard(icon: "book.fill", value: "\(metrics.totalCourses)", label: "Courses", color: .blue)
             metricCard(icon: "checkmark.circle.fill", value: "\(Int(metrics.averageAttendance * 100))%", label: "Attendance", color: .green)
             metricCard(icon: "chart.bar.fill", value: String(format: "%.1f", metrics.averageGPA), label: "Avg GPA", color: .orange)

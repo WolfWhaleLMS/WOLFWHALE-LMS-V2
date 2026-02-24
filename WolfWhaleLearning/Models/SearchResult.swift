@@ -35,7 +35,7 @@ nonisolated enum SearchCategory: String, CaseIterable, Sendable {
         case .assignments: .orange
         case .messages: .purple
         case .people: .teal
-        case .lessons: .pink
+        case .lessons: .orange
         }
     }
 }

@@ -117,7 +117,7 @@ struct GradeSubmissionView: View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 12) {
                 RoundedRectangle(cornerRadius: 12)
-                    .fill(.pink.gradient)
+                    .fill(.red.gradient)
                     .frame(width: 44, height: 44)
                     .overlay {
                         Image(systemName: "doc.text.fill")
@@ -139,14 +139,14 @@ struct GradeSubmissionView: View {
             if let studentName = assignment.studentName {
                 HStack(spacing: 8) {
                     Image(systemName: "person.fill")
-                        .foregroundStyle(.pink)
+                        .foregroundStyle(.red)
                     Text(studentName)
                         .font(.subheadline.bold())
                         .foregroundStyle(.primary)
                 }
                 .padding(8)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .background(.pink.opacity(0.1), in: .rect(cornerRadius: 10))
+                .background(.red.opacity(0.1), in: .rect(cornerRadius: 10))
             }
 
             HStack(spacing: 16) {
@@ -244,7 +244,7 @@ struct GradeSubmissionView: View {
                 } else {
                     Image(systemName: "eye.circle.fill")
                         .font(.title3)
-                        .foregroundStyle(.pink)
+                        .foregroundStyle(.red)
                 }
             }
             .padding(10)
@@ -318,7 +318,7 @@ struct GradeSubmissionView: View {
                     Spacer()
                     Text("\(rubricTotalSelected) / \(rubric.totalPoints) pts")
                         .font(.subheadline.bold())
-                        .foregroundStyle(.pink)
+                        .foregroundStyle(.red)
                 }
 
                 ForEach(rubric.criteria) { criterion in
@@ -336,8 +336,8 @@ struct GradeSubmissionView: View {
                         .padding(.vertical, 10)
                 }
                 .buttonStyle(.bordered)
-                .tint(.pink)
-                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .tint(.red)
+                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             }
             .padding(14)
             .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
@@ -355,7 +355,7 @@ struct GradeSubmissionView: View {
                 let selected = rubricSelections[criterion.id]
                 Text(selected != nil ? "\(selected!) / \(criterion.maxPoints)" : "-- / \(criterion.maxPoints)")
                     .font(.caption.bold())
-                    .foregroundStyle(selected != nil ? .pink : .secondary)
+                    .foregroundStyle(selected != nil ? .red : .secondary)
             }
 
             if !criterion.description.isEmpty {
@@ -397,14 +397,14 @@ struct GradeSubmissionView: View {
             .padding(.horizontal, 10)
             .padding(.vertical, 6)
             .background(
-                isSelected ? .pink.opacity(0.2) : Color(.tertiarySystemFill),
+                isSelected ? .red.opacity(0.2) : Color(.tertiarySystemFill),
                 in: .rect(cornerRadius: 8)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 8)
-                    .stroke(isSelected ? .pink : .clear, lineWidth: 1.5)
+                    .stroke(isSelected ? .red : .clear, lineWidth: 1.5)
             )
-            .foregroundStyle(isSelected ? .pink : Color(.label))
+            .foregroundStyle(isSelected ? .red : Color(.label))
         }
         .buttonStyle(.plain)
         .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
@@ -668,7 +668,7 @@ struct GradeSubmissionView: View {
             .frame(height: 50)
         }
         .buttonStyle(.borderedProminent)
-        .tint(.pink)
+        .tint(.red)
         .disabled(isLoading || !isValid)
         .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         .padding(.top, 4)

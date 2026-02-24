@@ -2,6 +2,7 @@ import Foundation
 import Supabase
 import UserNotifications
 import UIKit
+import Security
 
 /// Manages remote (APNs) push notification registration, device-token
 /// persistence, and incoming push payload routing.
@@ -26,7 +27,47 @@ final class PushNotificationService {
 
     // MARK: - Constants
 
-    private static let tokenDefaultsKey = "wolfwhale_apns_device_token"
+    private static let keychainService = "com.wolfwhale.lms.push"
+    private static let keychainAccount = "apns_device_token"
+
+    // MARK: - Keychain Helpers
+
+    private static func saveToKeychain(_ value: String) {
+        let data = Data(value.utf8)
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: keychainAccount
+        ]
+        SecItemDelete(query as CFDictionary)
+        var addQuery = query
+        addQuery[kSecValueData as String] = data
+        addQuery[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+        SecItemAdd(addQuery as CFDictionary, nil)
+    }
+
+    private static func loadFromKeychain() -> String? {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: keychainAccount,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+        guard status == errSecSuccess, let data = result as? Data else { return nil }
+        return String(data: data, encoding: .utf8)
+    }
+
+    private static func deleteFromKeychain() {
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrService as String: keychainService,
+            kSecAttrAccount as String: keychainAccount
+        ]
+        SecItemDelete(query as CFDictionary)
+    }
 
     // MARK: - Authorization & Registration
 
@@ -60,7 +101,7 @@ final class PushNotificationService {
     func handleDeviceToken(_ tokenData: Data) {
         let hex = tokenData.map { String(format: "%02.2hhx", $0) }.joined()
         deviceToken = hex
-        UserDefaults.standard.set(hex, forKey: Self.tokenDefaultsKey)
+        Self.saveToKeychain(hex)
         #if DEBUG
         print("[PushNotificationService] Device token: \(hex.prefix(8))...")
         #endif
@@ -78,7 +119,7 @@ final class PushNotificationService {
     /// Upload the current device token to the Supabase `device_tokens` table.
     /// Should be called after a successful login.
     func sendTokenToServer(userId: UUID) async {
-        guard let token = deviceToken ?? UserDefaults.standard.string(forKey: Self.tokenDefaultsKey) else {
+        guard let token = deviceToken ?? Self.loadFromKeychain() else {
             #if DEBUG
             print("[PushNotificationService] No device token available to send.")
             #endif
@@ -135,7 +176,7 @@ final class PushNotificationService {
 
         // Clear local cache
         deviceToken = nil
-        UserDefaults.standard.removeObject(forKey: Self.tokenDefaultsKey)
+        Self.deleteFromKeychain()
     }
 
     // MARK: - Remote Notification Handling

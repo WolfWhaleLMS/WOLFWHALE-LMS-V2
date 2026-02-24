@@ -876,11 +876,11 @@ struct FrenchVocabData {
     static let allCategories: [VocabCategory] =
         [
             VocabCategory(name: "Greetings", icon: "hand.wave.fill", color1: .blue, color2: .cyan, words: greetings),
-            VocabCategory(name: "Family", icon: "figure.2.and.child.holdinghands", color1: .pink, color2: .red, words: family),
+            VocabCategory(name: "Family", icon: "figure.2.and.child.holdinghands", color1: .orange, color2: .red, words: family),
             VocabCategory(name: "Food", icon: "fork.knife", color1: .orange, color2: .yellow, words: food),
             VocabCategory(name: "School", icon: "graduationcap.fill", color1: .purple, color2: .indigo, words: school),
             VocabCategory(name: "Animals", icon: "pawprint.fill", color1: .green, color2: .mint, words: animals),
-            VocabCategory(name: "Body Parts", icon: "figure.stand", color1: .red, color2: .pink, words: bodyParts),
+            VocabCategory(name: "Body Parts", icon: "figure.stand", color1: .red, color2: .orange, words: bodyParts),
             VocabCategory(name: "Colours", icon: "paintpalette.fill", color1: .indigo, color2: .purple, words: colours),
             VocabCategory(name: "Numbers", icon: "number", color1: .teal, color2: .blue, words: numbers),
             VocabCategory(name: "Weather", icon: "cloud.sun.fill", color1: .cyan, color2: .blue, words: weather),

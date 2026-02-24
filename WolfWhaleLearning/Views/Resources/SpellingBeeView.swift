@@ -693,7 +693,7 @@ struct SpellingConfettiOverlay: View {
         .onAppear {
             particles = (0..<40).map { _ in
                 SpellingConfettiPiece(
-                    color: [.purple, .blue, .orange, .green, .pink, .yellow, .red, .indigo].randomElement() ?? .purple,
+                    color: [.purple, .blue, .orange, .green, .teal, .yellow, .red, .indigo].randomElement() ?? .purple,
                     width: CGFloat.random(in: 4...8),
                     height: CGFloat.random(in: 8...16),
                     rotation: Double.random(in: 0...720),

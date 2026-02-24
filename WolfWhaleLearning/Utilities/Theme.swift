@@ -41,7 +41,7 @@ struct Theme {
     static func roleColor(_ role: UserRole) -> Color {
         switch role {
         case .student: brandPurple
-        case .teacher: .pink
+        case .teacher: .orange
         case .parent: .green
         case .admin: brandBlue
         case .superAdmin: brandPurple
@@ -66,7 +66,7 @@ struct Theme {
         case "orange": .orange
         case "purple": .purple
         case "red": .red
-        case "pink": .pink
+        case "pink": .mint
         case "indigo": .indigo
         case "teal": .teal
         case "mint": .mint

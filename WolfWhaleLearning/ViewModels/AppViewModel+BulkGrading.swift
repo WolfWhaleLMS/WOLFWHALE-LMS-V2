@@ -1,6 +1,6 @@
 import Foundation
 
-// MARK: - Teacher: Bulk Grading & CSV Export
+// MARK: - Teacher: Bulk Grading & CSV Export (Delegating CSV export to GradesViewModel)
 
 extension AppViewModel {
 
@@ -10,6 +10,10 @@ extension AppViewModel {
     /// raw score (points earned, NOT percentage), and optional feedback text.
     /// Returns the number of successfully graded submissions.
     /// Throws if ALL submissions fail; partial failures are reported via gradeError.
+    ///
+    /// Note: This method stays in the AppViewModel extension because it relies heavily on
+    /// `gradeSubmission`, `refreshData`, `assignments`, `currentUser`, and `isDemoMode`,
+    /// which are all owned by AppViewModel.
     func bulkGradeSubmissions(grades: [(assignmentId: UUID, studentId: UUID?, score: Double, feedback: String)]) async throws -> Int {
         isLoading = true
         gradeError = nil
@@ -96,67 +100,18 @@ extension AppViewModel {
         return successCount
     }
 
-    // MARK: - Export Grades to CSV
+    // MARK: - Export Grades to CSV (delegates to GradesViewModel)
 
     /// Generates a CSV file with graded assignment data for a given course.
     /// Columns: Student Name, Assignment, Grade, Letter Grade, Submitted Date, Feedback
     /// Returns the file URL in the temporary directory, or nil if no data.
     func exportGradesToCSV(courseId: UUID, startDate: Date? = nil, endDate: Date? = nil) -> URL? {
-        let courseAssignments = assignments.filter { $0.courseId == courseId && $0.isSubmitted }
-
-        let filtered: [Assignment]
-        if let start = startDate, let end = endDate {
-            filtered = courseAssignments.filter { $0.dueDate >= start && $0.dueDate <= end }
-        } else if let start = startDate {
-            filtered = courseAssignments.filter { $0.dueDate >= start }
-        } else if let end = endDate {
-            filtered = courseAssignments.filter { $0.dueDate <= end }
-        } else {
-            filtered = courseAssignments
-        }
-
-        guard !filtered.isEmpty else { return nil }
-
-        let courseName = courses.first(where: { $0.id == courseId })?.title ?? "Course"
-        let dateFormatter = DateFormatter()
-        dateFormatter.dateStyle = .medium
-
-        var csv = "Student Name,Assignment,Grade,Letter Grade,Submitted Date,Feedback\n"
-
-        for assignment in filtered {
-            let studentName = (assignment.studentName ?? "Unknown Student")
-                .replacingOccurrences(of: ",", with: " ")
-            let title = assignment.title
-                .replacingOccurrences(of: ",", with: " ")
-            let gradeStr: String
-            let letterGrade: String
-            if let grade = assignment.grade {
-                gradeStr = String(format: "%.1f%%", grade)
-                letterGrade = gradeService.letterGrade(from: grade)
-            } else {
-                gradeStr = "Not Graded"
-                letterGrade = "--"
-            }
-            let dateStr = dateFormatter.string(from: assignment.dueDate)
-            let feedbackStr = (assignment.feedback ?? "")
-                .replacingOccurrences(of: ",", with: " ")
-                .replacingOccurrences(of: "\n", with: " ")
-
-            csv += "\(studentName),\(title),\(gradeStr),\(letterGrade),\(dateStr),\(feedbackStr)\n"
-        }
-
-        let sanitizedName = courseName.replacingOccurrences(of: " ", with: "_")
-        let fileName = "Grades_\(sanitizedName)_\(dateFormatter.string(from: Date()).replacingOccurrences(of: " ", with: "_")).csv"
-        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
-
-        do {
-            try csv.write(to: tempURL, atomically: true, encoding: .utf8)
-            return tempURL
-        } catch {
-            #if DEBUG
-            print("[AppViewModel] CSV export failed: \(error)")
-            #endif
-            return nil
-        }
+        gradesVM.exportGradesToCSV(
+            courseId: courseId,
+            assignments: assignments,
+            courses: courses,
+            startDate: startDate,
+            endDate: endDate
+        )
     }
 }

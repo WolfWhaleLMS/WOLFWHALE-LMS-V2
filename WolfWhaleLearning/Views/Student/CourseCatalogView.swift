@@ -500,7 +500,7 @@ struct CourseCatalogView: View {
         case let s where s.contains("science") || s.contains("bio") || s.contains("chem") || s.contains("physics"): return .green
         case let s where s.contains("english") || s.contains("literature") || s.contains("writing"): return .purple
         case let s where s.contains("history") || s.contains("social"): return .orange
-        case let s where s.contains("art") || s.contains("design"): return .pink
+        case let s where s.contains("art") || s.contains("design"): return .orange
         case let s where s.contains("music"): return .indigo
         case let s where s.contains("computer") || s.contains("tech") || s.contains("programming"): return .cyan
         case let s where s.contains("physical") || s.contains("pe") || s.contains("sport"): return .red

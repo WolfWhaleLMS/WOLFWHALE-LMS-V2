@@ -88,7 +88,7 @@ struct StudentNotesView: View {
     private var headerSection: some View {
         HStack(spacing: 14) {
             RoundedRectangle(cornerRadius: 16)
-                .fill(.pink.gradient)
+                .fill(.orange.gradient)
                 .frame(width: 56, height: 56)
                 .overlay {
                     Image(systemName: "person.fill")

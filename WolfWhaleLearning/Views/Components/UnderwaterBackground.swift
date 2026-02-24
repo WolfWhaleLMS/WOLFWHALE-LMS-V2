@@ -186,7 +186,7 @@ private struct FishSwimmingView: View {
         switch index {
         case 0: return (.orange, .yellow)
         case 1: return (.cyan, .blue)
-        case 2: return (.pink, .red)
+        case 2: return (.orange, .red)
         case 3: return (.yellow, .orange)
         case 4: return (.mint, .teal)
         case 5: return (.purple, .indigo)

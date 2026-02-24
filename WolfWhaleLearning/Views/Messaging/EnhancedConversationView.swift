@@ -9,6 +9,7 @@ struct EnhancedConversationView: View {
     @State private var isTyping = false
     @State private var isSubscribed = false
     @State private var moderationWarning: String?
+    @State private var showCallView = false
     @FocusState private var isTextFieldFocused: Bool
 
     // MARK: - Derived State
@@ -38,7 +39,20 @@ struct EnhancedConversationView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                connectionIndicator
+                HStack(spacing: 12) {
+                    Button {
+                        let title = conversation.title
+                        CallService.shared.startCall(to: title, displayName: title)
+                        showCallView = true
+                    } label: {
+                        Image(systemName: "phone.fill")
+                            .font(.body)
+                    }
+                    .tint(.orange)
+                    .accessibilityLabel("Start voice call")
+
+                    connectionIndicator
+                }
             }
         }
         .onAppear {
@@ -126,7 +140,7 @@ struct EnhancedConversationView: View {
                         )
                     )
                     .glassEffect(
-                        message.isFromCurrentUser ? .regular.tint(.pink) : .identity,
+                        message.isFromCurrentUser ? .regular.tint(.orange) : .identity,
                         in: RoundedRectangle(cornerRadius: 16)
                     )
 
@@ -143,7 +157,7 @@ struct EnhancedConversationView: View {
 
     private func bubbleBackground(isCurrentUser: Bool) -> AnyShapeStyle {
         if isCurrentUser {
-            return AnyShapeStyle(.pink)
+            return AnyShapeStyle(.orange)
         } else {
             return AnyShapeStyle(.ultraThinMaterial)
         }
@@ -201,7 +215,7 @@ struct EnhancedConversationView: View {
                     .font(.title2)
                     .symbolRenderingMode(.hierarchical)
             }
-            .tint(.pink)
+            .tint(.orange)
             .disabled(messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             .sensoryFeedback(.impact(weight: .light), trigger: messages.count)
             .accessibilityLabel("Send message")

@@ -13,6 +13,8 @@ struct CreateLessonView: View {
     @State private var showSuccess = false
     @State private var errorMessage: String?
     @State private var hapticTrigger = false
+    @State private var attachedResources: [SlideResource] = []
+    @State private var showResourcePicker = false
 
     @Environment(\.dismiss) private var dismiss
 
@@ -21,12 +23,31 @@ struct CreateLessonView: View {
         !content.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
+    /// Number of slides based on current content (counting `---` separators + 1).
+    private var slideCount: Int {
+        let trimmed = content.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return 1 }
+
+        let bySeparator = trimmed.components(separatedBy: "\n---\n")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        if bySeparator.count > 1 { return bySeparator.count }
+
+        let byLoose = trimmed.components(separatedBy: "---")
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        if byLoose.count > 1 { return byLoose.count }
+
+        return 1
+    }
+
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
                 moduleHeader
                 lessonDetailsSection
                 contentSection
+                slideResourcesSection
                 createButton
             }
             .padding(.horizontal)
@@ -39,6 +60,12 @@ struct CreateLessonView: View {
             if showSuccess {
                 successOverlay
             }
+        }
+        .sheet(isPresented: $showResourcePicker) {
+            SlideResourcePickerSheet(
+                slideCount: slideCount,
+                attachedResources: $attachedResources
+            )
         }
     }
 
@@ -105,7 +132,7 @@ struct CreateLessonView: View {
 
     private func lessonTypeButton(_ type: LessonType) -> some View {
         let isSelected = lessonType == type
-        let color: Color = .pink
+        let color: Color = .orange
         return Button {
             hapticTrigger.toggle()
             withAnimation(.snappy(duration: 0.2)) {
@@ -160,6 +187,80 @@ struct CreateLessonView: View {
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
     }
 
+    // MARK: - Slide Resources Section
+
+    private var slideResourcesSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label("Slide Resources", systemImage: "book.and.wrench.fill")
+                .font(.headline)
+
+            if attachedResources.isEmpty {
+                HStack(spacing: 8) {
+                    Image(systemName: "info.circle")
+                        .font(.caption)
+                        .foregroundStyle(.purple)
+                    Text("Attach tools from the Resource Library to individual slides. Students will see them while viewing the lesson.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(10)
+                .background(.purple.opacity(0.08), in: .rect(cornerRadius: 10))
+            } else {
+                ForEach(attachedResources) { resource in
+                    HStack(spacing: 10) {
+                        Image(systemName: resource.resourceIcon)
+                            .font(.callout)
+                            .foregroundStyle(.purple)
+                            .frame(width: 28, height: 28)
+                            .background(.purple.opacity(0.15), in: .rect(cornerRadius: 6))
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(resource.resourceTitle)
+                                .font(.subheadline.bold())
+                            Text("Slide \(resource.slideIndex + 1)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Spacer()
+
+                        Button {
+                            withAnimation(.snappy(duration: 0.2)) {
+                                attachedResources.removeAll { $0.id == resource.id }
+                            }
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.body)
+                                .foregroundStyle(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(10)
+                    .background(Color(.tertiarySystemFill), in: .rect(cornerRadius: 10))
+                }
+            }
+
+            Button {
+                hapticTrigger.toggle()
+                showResourcePicker = true
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "plus.circle.fill")
+                    Text("Attach Resource")
+                        .fontWeight(.medium)
+                }
+                .font(.subheadline)
+                .frame(maxWidth: .infinity)
+                .frame(height: 40)
+            }
+            .buttonStyle(.bordered)
+            .tint(.purple)
+            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        }
+        .padding(14)
+        .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
+    }
+
     // MARK: - Create Button
 
     private var createButton: some View {
@@ -190,7 +291,7 @@ struct CreateLessonView: View {
                 .frame(height: 50)
             }
             .buttonStyle(.borderedProminent)
-            .tint(.pink)
+            .tint(.orange)
             .disabled(isLoading || !isValid)
             .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         }
@@ -243,7 +344,8 @@ struct CreateLessonView: View {
                     content: trimmedContent,
                     duration: duration,
                     type: lessonType,
-                    xpReward: 0
+                    xpReward: 0,
+                    slideResources: attachedResources
                 )
                 isLoading = false
                 withAnimation(.snappy) {
@@ -255,6 +357,123 @@ struct CreateLessonView: View {
             } catch {
                 errorMessage = "Failed to create lesson. Please try again."
                 isLoading = false
+            }
+        }
+    }
+}
+
+// MARK: - Slide Resource Picker Sheet
+
+struct SlideResourcePickerSheet: View {
+    let slideCount: Int
+    @Binding var attachedResources: [SlideResource]
+
+    @State private var selectedSlideIndex = 0
+    @State private var hapticTrigger = false
+    @Environment(\.dismiss) private var dismiss
+
+    /// Categories in display order.
+    private var categories: [String] {
+        var seen = Set<String>()
+        var result: [String] = []
+        for resource in AttachableResource.allCases {
+            if seen.insert(resource.category).inserted {
+                result.append(resource.category)
+            }
+        }
+        return result
+    }
+
+    private func resources(for category: String) -> [AttachableResource] {
+        AttachableResource.allCases.filter { $0.category == category }
+    }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                slidePickerSection
+                ForEach(categories, id: \.self) { category in
+                    Section(category) {
+                        ForEach(resources(for: category)) { resource in
+                            resourceRow(resource)
+                        }
+                    }
+                }
+            }
+            .listStyle(.insetGrouped)
+            .navigationTitle("Attach Resource")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+            }
+        }
+    }
+
+    private var slidePickerSection: some View {
+        Section {
+            Picker("Slide", selection: $selectedSlideIndex) {
+                ForEach(0..<slideCount, id: \.self) { index in
+                    Text("Slide \(index + 1)").tag(index)
+                }
+            }
+            .pickerStyle(.menu)
+        } header: {
+            Text("Select Slide")
+        } footer: {
+            Text("The resource will appear on this slide for students.")
+        }
+    }
+
+    private func isAlreadyAttached(_ resource: AttachableResource) -> Bool {
+        attachedResources.contains {
+            $0.slideIndex == selectedSlideIndex && $0.resourceTitle == resource.rawValue
+        }
+    }
+
+    @ViewBuilder
+    private func resourceRow(_ resource: AttachableResource) -> some View {
+        let attached = isAlreadyAttached(resource)
+        Button {
+            guard !attached else { return }
+            hapticTrigger.toggle()
+            let newResource = SlideResource(
+                slideIndex: selectedSlideIndex,
+                resourceTitle: resource.rawValue,
+                resourceIcon: resource.iconName,
+                colorName: "purple"
+            )
+            withAnimation(.snappy(duration: 0.2)) {
+                attachedResources.append(newResource)
+            }
+            dismiss()
+        } label: {
+            resourceRowLabel(resource, attached: attached)
+        }
+        .disabled(attached)
+        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+    }
+
+    private func resourceRowLabel(_ resource: AttachableResource, attached: Bool) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: resource.iconName)
+                .font(.title3)
+                .foregroundStyle(attached ? Color.secondary : Color.purple)
+                .frame(width: 32, height: 32)
+
+            Text(resource.rawValue)
+                .font(.body)
+                .foregroundStyle(attached ? .secondary : .primary)
+
+            Spacer()
+
+            if attached {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(.green)
+            } else {
+                Image(systemName: "plus.circle")
+                    .foregroundStyle(.purple)
             }
         }
     }

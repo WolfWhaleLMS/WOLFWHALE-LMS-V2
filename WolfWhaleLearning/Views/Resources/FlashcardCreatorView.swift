@@ -999,7 +999,7 @@ private struct ClassicStudyView: View {
             Image(systemName: "party.popper.fill")
                 .font(.system(size: 60))
                 .foregroundStyle(
-                    LinearGradient(colors: [.orange, .pink, .purple], startPoint: .topLeading, endPoint: .bottomTrailing)
+                    LinearGradient(colors: [.orange, .red, .purple], startPoint: .topLeading, endPoint: .bottomTrailing)
                 )
 
             Text("Session Complete!")

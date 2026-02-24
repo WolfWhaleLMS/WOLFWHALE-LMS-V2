@@ -124,7 +124,7 @@ struct GradeExportView: View {
                 Label("Filter by Date Range", systemImage: "calendar")
                     .font(.headline)
             }
-            .tint(.pink)
+            .tint(.red)
 
             if useDateFilter {
                 HStack(spacing: 12) {
@@ -272,7 +272,7 @@ struct GradeExportView: View {
                         .frame(height: 50)
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(.pink)
+                .tint(.red)
                 .disabled(filteredAssignments.isEmpty)
                 .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
                 .padding(.top, 4)

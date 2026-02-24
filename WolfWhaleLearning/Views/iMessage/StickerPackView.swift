@@ -218,7 +218,7 @@ struct Sticker: Identifiable, Equatable {
         Sticker(
             name: "Brain Power",
             symbolName: "brain.head.profile",
-            gradientColors: [.pink, .purple]
+            gradientColors: [.orange, .purple]
         ),
         Sticker(
             name: "Homework Time",
@@ -238,7 +238,7 @@ struct Sticker: Identifiable, Equatable {
         Sticker(
             name: "Love Learning",
             symbolName: "heart.fill",
-            gradientColors: [.red, .pink]
+            gradientColors: [.red, .orange]
         ),
         Sticker(
             name: "Great Idea",

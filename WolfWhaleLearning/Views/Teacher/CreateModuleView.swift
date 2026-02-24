@@ -110,7 +110,7 @@ struct CreateModuleView: View {
                 .frame(height: 50)
             }
             .buttonStyle(.borderedProminent)
-            .tint(.pink)
+            .tint(.orange)
             .disabled(isLoading || !isValid)
             .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         }

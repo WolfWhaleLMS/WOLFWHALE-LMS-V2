@@ -3,6 +3,7 @@ import SwiftUI
 struct ChildDetailView: View {
     let child: ChildInfo
     @Bindable var viewModel: AppViewModel
+    @Environment(\.horizontalSizeClass) private var sizeClass
 
     @State private var isCreatingConversation = false
     @State private var messageTeacherError: String?
@@ -36,15 +37,11 @@ struct ChildDetailView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 16) {
-                childHeader
-                academicSummary
-                courseGradesSection
-                recentAssignmentsSection
-                quickActionsSection
+            if sizeClass == .regular {
+                iPadChildLayout
+            } else {
+                iPhoneChildLayout
             }
-            .padding(.horizontal)
-            .padding(.bottom, 20)
         }
         .background(Color(.systemGroupedBackground))
         .navigationTitle(displayChild.name)
@@ -57,6 +54,43 @@ struct ChildDetailView: View {
         } message: {
             Text(messageTeacherError ?? "")
         }
+    }
+
+    // MARK: - iPad Layout (Two-Column)
+
+    private var iPadChildLayout: some View {
+        HStack(alignment: .top, spacing: 20) {
+            // Left column: header + academic summary + quick actions
+            VStack(spacing: 16) {
+                childHeader
+                academicSummary
+                quickActionsSection
+            }
+            .frame(maxWidth: .infinity)
+
+            // Right column: course grades + recent assignments
+            VStack(spacing: 16) {
+                courseGradesSection
+                recentAssignmentsSection
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .padding(.horizontal)
+        .padding(.bottom, 20)
+    }
+
+    // MARK: - iPhone Layout (Original Single Column)
+
+    private var iPhoneChildLayout: some View {
+        VStack(spacing: 16) {
+            childHeader
+            academicSummary
+            courseGradesSection
+            recentAssignmentsSection
+            quickActionsSection
+        }
+        .padding(.horizontal)
+        .padding(.bottom, 20)
     }
 
     // MARK: - Child Header
@@ -230,7 +264,7 @@ struct ChildDetailView: View {
                     .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
-            .tint(.pink)
+            .tint(.orange)
             .controlSize(.small)
             .disabled(isCreatingConversation)
             .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
@@ -350,7 +384,7 @@ struct ChildDetailView: View {
                         icon: "message.fill",
                         title: "Message",
                         subtitle: "Contact teachers",
-                        color: .pink
+                        color: .orange
                     )
                 }
                 .buttonStyle(.plain)

@@ -66,7 +66,7 @@ struct DataPrivacyInfoView: View {
             VStack(alignment: .leading, spacing: 16) {
                 dataCategory(
                     icon: "person.crop.circle.fill",
-                    iconColor: .pink,
+                    iconColor: .orange,
                     title: "Account Information",
                     items: [
                         "Name and email address",

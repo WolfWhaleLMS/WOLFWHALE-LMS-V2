@@ -291,7 +291,7 @@ struct WeeklyDigestView: View {
                         HStack {
                             Text(comment.teacherName)
                                 .font(.caption.bold())
-                                .foregroundStyle(.pink)
+                                .foregroundStyle(.orange)
                             Spacer()
                             Text(comment.courseName)
                                 .font(.caption2)

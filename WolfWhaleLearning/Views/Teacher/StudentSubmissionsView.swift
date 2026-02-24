@@ -153,7 +153,7 @@ struct StudentSubmissionsView: View {
             HStack(spacing: 10) {
                 Image(systemName: "person.crop.circle.fill")
                     .font(.title3)
-                    .foregroundStyle(.pink)
+                    .foregroundStyle(.orange)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(name)
                         .font(.subheadline.bold())

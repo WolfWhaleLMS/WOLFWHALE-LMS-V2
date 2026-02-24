@@ -323,7 +323,7 @@ struct HumanBodyView: View {
         BodySystem(
             name: "Muscular",
             icon: "figure.strengthtraining.traditional",
-            color: .pink,
+            color: .orange,
             overview: "The muscular system consists of over 600 muscles that allow you to move, maintain posture, and generate heat. There are three types: skeletal (voluntary), smooth (involuntary), and cardiac (heart). Muscles make up about 40% of your total body weight!",
             organs: [
                 BodyOrgan(name: "Skeletal Muscles", icon: "figure.strengthtraining.traditional", description: "Voluntary muscles attached to bones that allow conscious movement. There are about 640 of them."),

@@ -162,7 +162,7 @@ struct OnboardingView: View {
 
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
                 roleCard(icon: "graduationcap.fill", title: "Student", description: "Learn, grow, and level up", colors: [.indigo, .purple])
-                roleCard(icon: "person.fill.checkmark", title: "Teacher", description: "Create and manage courses", colors: [.pink, .orange])
+                roleCard(icon: "person.fill.checkmark", title: "Teacher", description: "Create and manage courses", colors: [.red, .orange])
                 roleCard(icon: "figure.and.child.holdinghands", title: "Parent", description: "Track your child's progress", colors: [.green, .teal])
                 roleCard(icon: "shield.lefthalf.filled", title: "Admin", description: "Oversee the entire school", colors: [.blue, .cyan])
             }
@@ -193,7 +193,7 @@ struct OnboardingView: View {
                 featureRow(icon: "chart.bar.fill", title: "Grades & Analytics", description: "Real-time grade tracking and detailed performance insights", color: .green)
                 featureRow(icon: "bubble.left.and.bubble.right.fill", title: "Messaging", description: "Built-in communication between students, teachers, and parents", color: .purple)
                 featureRow(icon: "megaphone.fill", title: "Announcements", description: "School-wide and class-specific announcements", color: .orange)
-                featureRow(icon: "person.crop.rectangle.stack.fill", title: "Attendance", description: "Digital attendance tracking and history", color: .pink)
+                featureRow(icon: "person.crop.rectangle.stack.fill", title: "Attendance", description: "Digital attendance tracking and history", color: .orange)
             }
             .padding(.horizontal, 24)
 
@@ -254,12 +254,12 @@ struct OnboardingView: View {
                     .font(.system(size: 56))
                     .foregroundStyle(
                         LinearGradient(
-                            colors: [.pink, .cyan],
+                            colors: [.orange, .cyan],
                             startPoint: .topLeading,
                             endPoint: .bottomTrailing
                         )
                     )
-                    .shadow(color: .pink.opacity(0.4), radius: 20)
+                    .shadow(color: .orange.opacity(0.4), radius: 20)
             }
 
             VStack(spacing: 16) {
@@ -290,11 +290,11 @@ struct OnboardingView: View {
                 .foregroundStyle(.white)
             }
             .buttonStyle(.borderedProminent)
-            .tint(.pink)
+            .tint(.orange)
             .clipShape(.rect(cornerRadius: 16))
             .padding(.horizontal, 32)
-            .shadow(color: .pink.opacity(0.4), radius: 16, y: 8)
-            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .shadow(color: .orange.opacity(0.4), radius: 16, y: 8)
+            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
             Spacer()
                 .frame(height: 20)

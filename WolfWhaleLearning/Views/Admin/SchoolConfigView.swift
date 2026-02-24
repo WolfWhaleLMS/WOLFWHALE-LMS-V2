@@ -306,7 +306,7 @@ struct SchoolConfigView: View {
             weightSlider(label: "Quizzes", icon: "questionmark.circle.fill", color: .orange, value: $defaultQuizWeight)
             weightSlider(label: "Participation", icon: "hand.raised.fill", color: .green, value: $defaultParticipationWeight)
             weightSlider(label: "Midterm", icon: "pencil.and.outline", color: .purple, value: $defaultMidtermWeight)
-            weightSlider(label: "Final Exam", icon: "graduationcap.fill", color: .pink, value: $defaultFinalWeight)
+            weightSlider(label: "Final Exam", icon: "graduationcap.fill", color: .orange, value: $defaultFinalWeight)
 
             // Total indicator
             HStack {

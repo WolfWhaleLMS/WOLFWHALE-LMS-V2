@@ -208,7 +208,7 @@ struct ManageModulesView: View {
                     } label: {
                         Image(systemName: "pencil")
                             .font(.caption)
-                            .foregroundStyle(.pink)
+                            .foregroundStyle(.orange)
                     }
                     .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
@@ -311,7 +311,7 @@ struct ManageModulesView: View {
                 } label: {
                     Image(systemName: "pencil")
                         .font(.caption2)
-                        .foregroundStyle(.pink)
+                        .foregroundStyle(.orange)
                 }
                 .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
@@ -360,7 +360,7 @@ struct ManageModulesView: View {
                             .frame(height: 44)
                         }
                         .buttonStyle(.borderedProminent)
-                        .tint(.pink)
+                        .tint(.orange)
                         .disabled(isLoading || newModuleTitle.trimmingCharacters(in: .whitespaces).isEmpty)
                         .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
@@ -395,8 +395,8 @@ struct ManageModulesView: View {
                         .frame(height: 50)
                 }
                 .buttonStyle(.borderedProminent)
-                .tint(.pink)
-                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .tint(.orange)
+                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             }
 
             if let errorMessage {
