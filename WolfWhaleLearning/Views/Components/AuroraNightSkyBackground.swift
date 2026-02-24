@@ -17,7 +17,6 @@ struct AuroraNightSkyBackground: View {
                 startPoint: .top,
                 endPoint: .bottom
             )
-            .ignoresSafeArea()
 
             // Stars
             TwinklingStarsView()
@@ -28,6 +27,7 @@ struct AuroraNightSkyBackground: View {
             // Evergreen tree skyline
             EvergreenSkylineView()
         }
+        .ignoresSafeArea()
     }
 }
 
