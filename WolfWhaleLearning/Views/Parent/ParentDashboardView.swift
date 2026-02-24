@@ -54,7 +54,7 @@ struct ParentDashboardView: View {
                             // Alerts section -- shown above child cards
                             alertsSection
 
-                            // Quick access: Conferences & Progress Report
+                            // Quick access: Conferences & Weekly Report
                             parentQuickLinks
 
                             ForEach(verifiedChildren) { child in
@@ -363,7 +363,7 @@ struct ParentDashboardView: View {
         .accessibilityLabel("\(label): \(value)")
     }
 
-    // MARK: - Quick Links (Conferences & Progress Report)
+    // MARK: - Quick Links (Conferences & Weekly Report)
 
     private var parentQuickLinks: some View {
         HStack(spacing: 12) {
@@ -406,7 +406,7 @@ struct ParentDashboardView: View {
                         .font(.title2)
                         .foregroundStyle(.teal)
 
-                    Text("Progress Report")
+                    Text("Weekly Report")
                         .font(.caption2.bold())
                         .foregroundStyle(Color(.label))
 
@@ -424,8 +424,8 @@ struct ParentDashboardView: View {
                 )
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Progress Report")
-            .accessibilityHint("Double tap to view weekly progress report")
+            .accessibilityLabel("Weekly Report")
+            .accessibilityHint("Double tap to view weekly report")
         }
     }
 
