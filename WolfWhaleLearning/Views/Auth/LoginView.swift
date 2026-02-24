@@ -34,6 +34,7 @@ struct LoginView: View {
             }
             .padding(.horizontal, 24)
         }
+        .scrollIndicators(.hidden)
         .scrollDismissesKeyboard(.interactively)
         .background(Color.black.ignoresSafeArea())
         .environment(\.colorScheme, .dark)
