@@ -470,7 +470,6 @@ struct ResourceLibraryView: View {
                     .font(.title2)
                     .foregroundStyle(.white)
                     .symbolRenderingMode(.hierarchical)
-                    .contentTransition(.symbolEffect(.replace))
             }
 
             VStack(spacing: 4) {
@@ -541,7 +540,6 @@ struct ResourceLibraryView: View {
                 .font(.headline)
                 .foregroundStyle(color)
                 .symbolRenderingMode(.hierarchical)
-                .contentTransition(.symbolEffect(.replace))
             Text(title)
                 .font(.title3.bold())
         }

@@ -202,7 +202,7 @@ struct CoursesListView: View {
                     Image(systemName: course.iconSystemName)
                         .font(.title2)
                         .foregroundStyle(.white)
-                        .symbolEffect(.pulse)
+
                 }
 
             VStack(alignment: .leading, spacing: 4) {
