@@ -106,12 +106,50 @@ struct DeepLinkHandler {
         }
     }
 
+    // MARK: - Role-Based Access Control
+
+    /// Determines the minimum required roles for a given deep-link destination.
+    /// Returns `nil` if the destination is available to all authenticated users.
+    // Note: Server-side RLS enforces data access; this is a UI-level guard
+    private static func requiredRoles(for destination: DeepLinkDestination) -> Set<UserRole>? {
+        switch destination {
+        case .grades:
+            // Grading / gradebook is restricted to teachers and admins
+            return [.teacher, .admin, .superAdmin]
+        case .tools:
+            // Teacher/admin tools panel
+            return [.teacher, .admin, .superAdmin]
+        case .assignments, .schedule, .course, .assignment, .quiz,
+             .wellness, .sharePlay, .recommendations:
+            return nil // Available to all authenticated users
+        }
+    }
+
+    /// Returns `true` if the current user's role is allowed to navigate to the destination.
+    /// If no role restriction exists for the destination, always returns `true`.
+    private static func isAuthorized(for destination: DeepLinkDestination, in viewModel: AppViewModel) -> Bool {
+        guard let required = requiredRoles(for: destination) else { return true }
+        guard let role = viewModel.currentUser?.role else { return false }
+        return required.contains(role)
+    }
+
     // MARK: - Apply Destination to ViewModel
 
     /// Updates navigation-related state on the given ``AppViewModel`` to navigate
     /// to the supplied ``DeepLinkDestination``. The tab views observe these
     /// properties and react accordingly.
+    ///
+    /// Performs a UI-level role check before navigating. If the user lacks the
+    /// required role the navigation is silently dropped.
+    // Note: Server-side RLS enforces data access; this is a UI-level guard
     static func navigate(to destination: DeepLinkDestination, in viewModel: AppViewModel) {
+        guard isAuthorized(for: destination, in: viewModel) else {
+            #if DEBUG
+            print("[DeepLink] Blocked navigation to \(destination) — insufficient role (\(viewModel.currentUser?.role.rawValue ?? "nil"))")
+            #endif
+            return
+        }
+
         switch destination {
         case .assignments:
             viewModel.notificationService.deepLinkAssignmentId = UUID()

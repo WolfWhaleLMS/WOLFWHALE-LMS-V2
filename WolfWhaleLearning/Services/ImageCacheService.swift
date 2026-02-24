@@ -53,7 +53,13 @@ final class ImageCacheService: @unchecked Sendable {
         // Disk cache directory
         let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
         diskCacheURL = caches.appendingPathComponent("ImageCache", isDirectory: true)
-        try? FileManager.default.createDirectory(at: diskCacheURL, withIntermediateDirectories: true)
+        do {
+            try FileManager.default.createDirectory(at: diskCacheURL, withIntermediateDirectories: true)
+        } catch {
+            #if DEBUG
+            print("[ImageCacheService] Failed to create disk cache directory: \(error.localizedDescription)")
+            #endif
+        }
     }
 
     // MARK: - Public API
@@ -115,7 +121,13 @@ final class ImageCacheService: @unchecked Sendable {
         // Disk cache (asynchronous)
         let path = diskPath(for: key)
         ioQueue.async { [weak self] in
-            try? data.write(to: path, options: .atomic)
+            do {
+                try data.write(to: path, options: .atomic)
+            } catch {
+                #if DEBUG
+                print("[ImageCacheService] Failed to write image to disk cache: \(error.localizedDescription)")
+                #endif
+            }
             self?.trimDiskCacheIfNeeded()
         }
     }

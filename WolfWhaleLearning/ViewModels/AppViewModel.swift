@@ -575,6 +575,9 @@ class AppViewModel {
     }
 
     func loginAsDemo(role: UserRole) {
+        #if !DEBUG
+        fatalError("Demo mode must not be available in release builds")
+        #endif
         isDemoMode = true
         currentUser = mockService.sampleUser(role: role)
         loadMockData()
@@ -805,7 +808,7 @@ class AppViewModel {
         guard networkMonitor.isConnected else {
             if offlineStorage.hasOfflineData {
                 dataError = "No internet connection. Using offline data."
-                loadOfflineData()
+                await loadOfflineData()
             } else {
                 dataError = "No internet connection. Using offline mode."
                 loadMockData()
@@ -949,7 +952,7 @@ class AppViewModel {
             isDataLoading = false
             if offlineStorage.hasOfflineData {
                 dataError = "Could not load data. Using offline data."
-                loadOfflineData()
+                await loadOfflineData()
             } else {
                 dataError = "Could not load data. Using offline mode."
                 loadMockData()
@@ -1308,7 +1311,7 @@ class AppViewModel {
             await loadData()
 
             // Run conflict resolution against what we had cached locally
-            conflictResolution.resolveConflicts(
+            await conflictResolution.resolveConflicts(
                 serverCourses: courses,
                 serverAssignments: assignments,
                 serverGrades: grades,
@@ -1339,17 +1342,17 @@ class AppViewModel {
         offlineStorage.lastSyncDate = Date()
     }
 
-    private func loadOfflineData() {
+    private func loadOfflineData() async {
         // Ensure offline storage is scoped to the current user before loading
         if let userId = currentUser?.id {
             offlineStorage.setCurrentUser(userId)
         }
-        courses = offlineStorage.loadCourses()
-        assignments = offlineStorage.loadAssignments()
-        grades = offlineStorage.loadGrades()
-        conversations = offlineStorage.loadConversations()
+        courses = await offlineStorage.loadCourses()
+        assignments = await offlineStorage.loadAssignments()
+        grades = await offlineStorage.loadGrades()
+        conversations = await offlineStorage.loadConversations()
         if currentUser == nil {
-            currentUser = offlineStorage.loadUserProfile()
+            currentUser = await offlineStorage.loadUserProfile()
         }
         cacheDataForSiri()
     }

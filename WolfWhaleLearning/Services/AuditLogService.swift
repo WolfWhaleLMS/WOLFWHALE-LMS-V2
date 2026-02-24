@@ -264,7 +264,7 @@ final class AuditLogService {
 
     private func startPeriodicFlush() {
         flushTask?.cancel()
-        flushTask = Task { [weak self] in
+        flushTask = Task { @MainActor [weak self] in
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(self?.flushInterval ?? 30))
                 guard !Task.isCancelled else { break }

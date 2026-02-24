@@ -74,7 +74,13 @@ struct FileUploadService: Sendable {
             }
 
             // Read file data
-            guard let data = try? Data(contentsOf: fileURL) else {
+            let data: Data
+            do {
+                data = try Data(contentsOf: fileURL)
+            } catch {
+                #if DEBUG
+                print("[FileUploadService] Failed to read file data: \(error.localizedDescription)")
+                #endif
                 throw FileUploadError.invalidFileData
             }
 
@@ -134,9 +140,16 @@ struct FileUploadService: Sendable {
     ///   - path: The path within the bucket.
     /// - Returns: The public `URL`, or `nil` if it could not be constructed.
     func getPublicURL(bucket: String, path: String) -> URL? {
-        try? supabaseClient.storage
-            .from(bucket)
-            .getPublicURL(path: path)
+        do {
+            return try supabaseClient.storage
+                .from(bucket)
+                .getPublicURL(path: path)
+        } catch {
+            #if DEBUG
+            print("[FileUploadService] getPublicURL failed for \(bucket)/\(path): \(error.localizedDescription)")
+            #endif
+            return nil
+        }
     }
 
     // MARK: - Helpers

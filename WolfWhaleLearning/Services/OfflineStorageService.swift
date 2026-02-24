@@ -107,22 +107,24 @@ final class OfflineStorageService {
         }
     }
 
-    private func load<T: Decodable>(filename: String) -> T? {
-        // Note: load is synchronous by design so callers can use the return value immediately.
-        // For large datasets, callers should invoke from a background context.
+    private func load<T: Decodable>(filename: String) async -> T? {
+        // Capture the file URL on the MainActor, then perform file I/O off the main thread
         let url = cacheDirectory.appendingPathComponent(filename)
-        guard FileManager.default.fileExists(atPath: url.path) else { return nil }
-        do {
-            let data = try Data(contentsOf: url)
-            let decoder = JSONDecoder()
-            decoder.dateDecodingStrategy = .iso8601
-            return try decoder.decode(T.self, from: data)
-        } catch {
-            #if DEBUG
-            print("[OfflineStorage] Failed to load \(filename): \(error)")
-            #endif
-            return nil
-        }
+        return await Task.detached(priority: .utility) {
+            let fm = FileManager.default
+            guard fm.fileExists(atPath: url.path) else { return nil as T? }
+            do {
+                let data = try Data(contentsOf: url)
+                let decoder = JSONDecoder()
+                decoder.dateDecodingStrategy = .iso8601
+                return try decoder.decode(T.self, from: data)
+            } catch {
+                #if DEBUG
+                print("[OfflineStorage] Failed to load \(filename): \(error)")
+                #endif
+                return nil
+            }
+        }.value
     }
 
     // MARK: - Courses
@@ -133,9 +135,9 @@ final class OfflineStorageService {
         recalculateCacheSize()
     }
 
-    func loadCourses() -> [Course] {
+    func loadCourses() async -> [Course] {
         guard currentUserId != nil else { return [] }
-        return load(filename: Self.coursesFile) ?? []
+        return await load(filename: Self.coursesFile) ?? []
     }
 
     // MARK: - Assignments
@@ -146,9 +148,9 @@ final class OfflineStorageService {
         recalculateCacheSize()
     }
 
-    func loadAssignments() -> [Assignment] {
+    func loadAssignments() async -> [Assignment] {
         guard currentUserId != nil else { return [] }
-        return load(filename: Self.assignmentsFile) ?? []
+        return await load(filename: Self.assignmentsFile) ?? []
     }
 
     // MARK: - Grades
@@ -159,9 +161,9 @@ final class OfflineStorageService {
         recalculateCacheSize()
     }
 
-    func loadGrades() -> [GradeEntry] {
+    func loadGrades() async -> [GradeEntry] {
         guard currentUserId != nil else { return [] }
-        return load(filename: Self.gradesFile) ?? []
+        return await load(filename: Self.gradesFile) ?? []
     }
 
     // MARK: - Conversations
@@ -172,9 +174,9 @@ final class OfflineStorageService {
         recalculateCacheSize()
     }
 
-    func loadConversations() -> [Conversation] {
+    func loadConversations() async -> [Conversation] {
         guard currentUserId != nil else { return [] }
-        return load(filename: Self.conversationsFile) ?? []
+        return await load(filename: Self.conversationsFile) ?? []
     }
 
     // MARK: - User Profile
@@ -185,9 +187,9 @@ final class OfflineStorageService {
         recalculateCacheSize()
     }
 
-    func loadUserProfile() -> User? {
+    func loadUserProfile() async -> User? {
         guard currentUserId != nil else { return nil }
-        return load(filename: Self.userProfileFile)
+        return await load(filename: Self.userProfileFile)
     }
 
     // MARK: - Cache Metadata (for conflict resolution)
@@ -197,9 +199,9 @@ final class OfflineStorageService {
         save(metadata, filename: Self.metadataFile)
     }
 
-    func loadMetadata() -> [CachedItemMetadata] {
+    func loadMetadata() async -> [CachedItemMetadata] {
         guard currentUserId != nil else { return [] }
-        return load(filename: Self.metadataFile) ?? []
+        return await load(filename: Self.metadataFile) ?? []
     }
 
     // MARK: - Conflict History
@@ -209,9 +211,9 @@ final class OfflineStorageService {
         save(history, filename: Self.conflictHistoryFile)
     }
 
-    func loadConflictHistory() -> [SyncConflict] {
+    func loadConflictHistory() async -> [SyncConflict] {
         guard currentUserId != nil else { return [] }
-        return load(filename: Self.conflictHistoryFile) ?? []
+        return await load(filename: Self.conflictHistoryFile) ?? []
     }
 
     // MARK: - Sync Result
@@ -221,9 +223,9 @@ final class OfflineStorageService {
         save(result, filename: Self.syncResultFile)
     }
 
-    func loadSyncResult() -> SyncResult? {
+    func loadSyncResult() async -> SyncResult? {
         guard currentUserId != nil else { return nil }
-        return load(filename: Self.syncResultFile)
+        return await load(filename: Self.syncResultFile)
     }
 
     // MARK: - Clear All

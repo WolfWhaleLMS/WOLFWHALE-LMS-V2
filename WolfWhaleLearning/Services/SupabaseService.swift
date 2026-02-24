@@ -22,7 +22,7 @@ private func withRetry<T>(maxAttempts: Int = 3, delay: Duration = .seconds(1), _
             }
         }
     }
-    throw lastError!
+    throw lastError ?? URLError(.unknown)
 }
 
 struct DataService: Sendable {
@@ -652,10 +652,17 @@ struct DataService: Sendable {
                         }
                     }
                     // Try to extract explanation from JSON metadata
-                    if let expData = explanationText.data(using: .utf8),
-                       let json = try? JSONSerialization.jsonObject(with: expData) as? [String: Any],
-                       let exp = json["explanation"] as? String {
-                        explanationText = exp
+                    if let expData = explanationText.data(using: .utf8) {
+                        do {
+                            if let json = try JSONSerialization.jsonObject(with: expData) as? [String: Any],
+                               let exp = json["explanation"] as? String {
+                                explanationText = exp
+                            }
+                        } catch {
+                            #if DEBUG
+                            print("[SupabaseService] Matching explanation JSON parse failed: \(error.localizedDescription)")
+                            #endif
+                        }
                     }
                     return QuizQuestion(
                         id: q.id,
@@ -671,11 +678,18 @@ struct DataService: Sendable {
                     var essayPromptText = ""
                     var minWords = 0
                     var explanationText = ""
-                    if let expData = (q.explanation ?? "").data(using: .utf8),
-                       let json = try? JSONSerialization.jsonObject(with: expData) as? [String: Any] {
-                        essayPromptText = json["essayPrompt"] as? String ?? ""
-                        minWords = json["essayMinWords"] as? Int ?? 0
-                        explanationText = json["explanation"] as? String ?? ""
+                    if let expData = (q.explanation ?? "").data(using: .utf8) {
+                        do {
+                            if let json = try JSONSerialization.jsonObject(with: expData) as? [String: Any] {
+                                essayPromptText = json["essayPrompt"] as? String ?? ""
+                                minWords = json["essayMinWords"] as? Int ?? 0
+                                explanationText = json["explanation"] as? String ?? ""
+                            }
+                        } catch {
+                            #if DEBUG
+                            print("[SupabaseService] Essay explanation JSON parse failed: \(error.localizedDescription)")
+                            #endif
+                        }
                     }
                     return QuizQuestion(
                         id: q.id,
@@ -1699,16 +1713,28 @@ struct DataService: Sendable {
                 "essayMinWords": essayMinWords,
                 "explanation": explanation
             ]
-            if let data = try? JSONSerialization.data(withJSONObject: essayMeta),
-               let str = String(data: data, encoding: .utf8) {
-                storedExplanation = str
+            do {
+                let data = try JSONSerialization.data(withJSONObject: essayMeta)
+                if let str = String(data: data, encoding: .utf8) {
+                    storedExplanation = str
+                }
+            } catch {
+                #if DEBUG
+                print("[SupabaseService] Essay meta serialization failed: \(error.localizedDescription)")
+                #endif
             }
         } else if questionType == QuizQuestionType.matching.rawValue {
             // Encode matching pairs into explanation as JSON
             let pairs = matchingPairs.map { ["prompt": $0.prompt, "answer": $0.answer] }
-            if let data = try? JSONSerialization.data(withJSONObject: ["pairs": pairs, "explanation": explanation]),
-               let str = String(data: data, encoding: .utf8) {
-                storedExplanation = str
+            do {
+                let data = try JSONSerialization.data(withJSONObject: ["pairs": pairs, "explanation": explanation])
+                if let str = String(data: data, encoding: .utf8) {
+                    storedExplanation = str
+                }
+            } catch {
+                #if DEBUG
+                print("[SupabaseService] Matching pairs serialization failed: \(error.localizedDescription)")
+                #endif
             }
         }
 

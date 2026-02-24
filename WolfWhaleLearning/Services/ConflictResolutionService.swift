@@ -53,7 +53,7 @@ final class ConflictResolutionService {
     func configure(offlineStorage: OfflineStorageService, networkMonitor: NetworkMonitor) {
         self.offlineStorage = offlineStorage
         self.networkMonitor = networkMonitor
-        loadPersistedHistory()
+        Task { await loadPersistedHistory() }
     }
 
     // MARK: - Public API
@@ -77,7 +77,7 @@ final class ConflictResolutionService {
         serverAssignments: [Assignment],
         serverGrades: [GradeEntry],
         serverConversations: [Conversation]
-    ) -> SyncResult {
+    ) async -> SyncResult {
         guard let storage = offlineStorage else {
             let result = SyncResult(itemsSynced: 0, errors: ["Offline storage not available."])
             lastSyncResult = result
@@ -87,7 +87,7 @@ final class ConflictResolutionService {
         isSyncing = true
         defer { isSyncing = false }
 
-        let metadata = storage.loadMetadata()
+        let metadata = await storage.loadMetadata()
         var conflicts: [SyncConflict] = []
         var errors: [String] = []
         var itemsSynced = 0
@@ -327,9 +327,9 @@ final class ConflictResolutionService {
 
     /// Call this when the user modifies data while offline.  Updates the metadata
     /// entry for the given entity so the next sync cycle knows to check for conflicts.
-    func markAsLocallyModified(entityId: UUID, entityType: String) {
+    func markAsLocallyModified(entityId: UUID, entityType: String) async {
         guard let storage = offlineStorage else { return }
-        var metadata = storage.loadMetadata()
+        var metadata = await storage.loadMetadata()
         if let index = metadata.firstIndex(where: { $0.id == entityId && $0.entityType == entityType }) {
             let existing = metadata[index]
             metadata[index] = CachedItemMetadata(
@@ -354,9 +354,9 @@ final class ConflictResolutionService {
         }
     }
 
-    private func loadPersistedHistory() {
+    private func loadPersistedHistory() async {
         guard let storage = offlineStorage else { return }
-        conflictHistory = storage.loadConflictHistory()
-        lastSyncResult = storage.loadSyncResult()
+        conflictHistory = await storage.loadConflictHistory()
+        lastSyncResult = await storage.loadSyncResult()
     }
 }

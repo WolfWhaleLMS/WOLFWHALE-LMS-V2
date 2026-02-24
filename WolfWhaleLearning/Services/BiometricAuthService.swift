@@ -7,6 +7,10 @@ class BiometricAuthService {
     var biometricType: LABiometryType = .none
     var isUnlocked: Bool = false
 
+    /// Optional reference to AuthService for refreshing the Supabase session
+    /// after a successful biometric unlock. Injected by the caller (e.g. AppViewModel).
+    var authService: AuthService?
+
     init() {
         checkBiometricAvailability()
     }
@@ -85,6 +89,19 @@ class BiometricAuthService {
             }
             if success {
                 isUnlocked = true
+                // Refresh the Supabase session after biometric success to ensure
+                // the backend token is still valid. This prevents a stale JWT from
+                // causing silent 401s on the next API call.
+                // TODO: Refresh Supabase session after biometric success
+                // Once AuthService is injected, uncomment the following:
+                if let authService {
+                    let refreshed = await authService.refreshSession()
+                    #if DEBUG
+                    if !refreshed {
+                        print("[BiometricAuth] Supabase session refresh failed after biometric unlock")
+                    }
+                    #endif
+                }
             }
             return success
         } catch let error as BiometricError {

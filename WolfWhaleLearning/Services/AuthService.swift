@@ -112,18 +112,38 @@ final class AuthService {
 
     // MARK: - Session Management
 
-    /// Attempts to refresh the current Supabase session.
+    /// Attempts to refresh the current Supabase session with retry logic.
     /// Returns `false` if refresh fails (token expired, need to re-login).
+    /// Auth-related errors (unauthorized/forbidden) are not retried.
     func refreshSession() async -> Bool {
-        do {
-            _ = try await supabaseClient.auth.refreshSession()
-            return true
-        } catch {
-            #if DEBUG
-            print("[AuthService] Session refresh failed: \(error)")
-            #endif
-            return false
+        let maxRetries = 3
+        for attempt in 1...maxRetries {
+            do {
+                _ = try await supabaseClient.auth.refreshSession()
+                return true
+            } catch {
+                #if DEBUG
+                print("[AuthService] Session refresh attempt \(attempt)/\(maxRetries) failed: \(error)")
+                #endif
+
+                // Don't retry auth-related errors — user needs to re-login
+                let message = error.localizedDescription.lowercased()
+                if message.contains("unauthorized") || message.contains("forbidden")
+                    || message.contains("invalid") || message.contains("expired")
+                    || message.contains("401") || message.contains("403") {
+                    return false
+                }
+
+                // Don't retry on last attempt
+                if attempt >= maxRetries {
+                    return false
+                }
+
+                // Exponential backoff before next retry
+                try? await Task.sleep(for: .seconds(Double(attempt)))
+            }
         }
+        return false
     }
 
     /// Checks if there is a valid session.
