@@ -29,7 +29,7 @@ struct AIAssistantView: View {
                             Image(systemName: "arrow.counterclockwise")
                                 .symbolRenderingMode(.hierarchical)
                         }
-                        .hapticFeedback(.impact(weight: .light), trigger: clearTrigger)
+                        .sensoryFeedback(.impact(weight: .light), trigger: clearTrigger)
                         .accessibilityLabel("Reset conversation")
                     }
                 }
@@ -282,7 +282,7 @@ struct AIAssistantView: View {
                     .contentTransition(.symbolEffect(.replace))
             }
             .disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || service.isProcessing)
-            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             .accessibilityLabel("Send message")
         }
         .padding(.horizontal, 12)
