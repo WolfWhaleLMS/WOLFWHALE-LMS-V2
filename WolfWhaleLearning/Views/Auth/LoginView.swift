@@ -98,15 +98,15 @@ struct LoginView: View {
             }
 
             Text("WOLF WHALE")
-                .font(.system(size: 36, weight: .black, design: .serif))
-                .tracking(2)
+                .font(.system(size: 36, weight: .thin, design: .serif))
+                .tracking(4)
                 .foregroundStyle(.white)
                 .shadow(color: .cyan.opacity(0.5), radius: 10)
 
             Text("LEARNING MANAGEMENT SYSTEM")
-                .font(.system(size: 10, weight: .medium, design: .serif))
-                .foregroundStyle(.white.opacity(0.7))
-                .tracking(3)
+                .font(.system(size: 14, weight: .medium, design: .serif))
+                .foregroundStyle(.white.opacity(0.85))
+                .tracking(4)
         }
     }
 
@@ -221,14 +221,14 @@ struct LoginView: View {
     private var dividerSection: some View {
         HStack(spacing: 16) {
             Rectangle()
-                .fill(Color.gray.opacity(0.3))
+                .fill(Color.white.opacity(0.3))
                 .frame(height: 1)
             Text("OR TRY A DEMO")
                 .font(.system(size: 11, weight: .semibold, design: .serif))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.white.opacity(0.8))
                 .tracking(1.5)
             Rectangle()
-                .fill(Color.gray.opacity(0.3))
+                .fill(Color.white.opacity(0.3))
                 .frame(height: 1)
         }
     }
@@ -237,7 +237,7 @@ struct LoginView: View {
         VStack(spacing: 12) {
             Text("Explore the platform with a demo account")
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.white.opacity(0.75))
 
             LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
                 ForEach(UserRole.allCases.filter { $0 != .superAdmin }) { role in

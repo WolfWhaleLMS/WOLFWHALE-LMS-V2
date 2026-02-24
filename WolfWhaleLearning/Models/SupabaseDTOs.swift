@@ -1132,3 +1132,100 @@ nonisolated struct InsertDeviceTokenDTO: Encodable, Sendable {
         case userId = "user_id"
     }
 }
+
+// MARK: - Conference DTOs
+
+nonisolated struct ConferenceDTO: Codable, Sendable {
+    let id: UUID
+    let tenantId: UUID?
+    let parentId: UUID
+    let teacherId: UUID
+    let teacherName: String
+    let parentName: String
+    let childName: String
+    let conferenceDate: String
+    let duration: Int
+    let status: String
+    let notes: String?
+    let location: String?
+    let slotId: UUID?
+    let createdAt: String?
+    let updatedAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, duration, status, notes, location
+        case tenantId = "tenant_id"
+        case parentId = "parent_id"
+        case teacherId = "teacher_id"
+        case teacherName = "teacher_name"
+        case parentName = "parent_name"
+        case childName = "child_name"
+        case conferenceDate = "conference_date"
+        case slotId = "slot_id"
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
+    }
+}
+
+nonisolated struct InsertConferenceDTO: Encodable, Sendable {
+    let tenantId: UUID?
+    let parentId: UUID
+    let teacherId: UUID
+    let teacherName: String
+    let parentName: String
+    let childName: String
+    let conferenceDate: String
+    let duration: Int
+    let status: String
+    let notes: String?
+    let location: String?
+    let slotId: UUID?
+
+    enum CodingKeys: String, CodingKey {
+        case duration, status, notes, location
+        case tenantId = "tenant_id"
+        case parentId = "parent_id"
+        case teacherId = "teacher_id"
+        case teacherName = "teacher_name"
+        case parentName = "parent_name"
+        case childName = "child_name"
+        case conferenceDate = "conference_date"
+        case slotId = "slot_id"
+    }
+}
+
+nonisolated struct TeacherAvailableSlotDTO: Codable, Sendable {
+    let id: UUID
+    let tenantId: UUID?
+    let teacherId: UUID
+    let slotDate: String
+    let durationMinutes: Int
+    let isBooked: Bool
+    let createdAt: String?
+    let updatedAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case tenantId = "tenant_id"
+        case teacherId = "teacher_id"
+        case slotDate = "slot_date"
+        case durationMinutes = "duration_minutes"
+        case isBooked = "is_booked"
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
+    }
+}
+
+nonisolated struct InsertTeacherSlotDTO: Encodable, Sendable {
+    let tenantId: UUID?
+    let teacherId: UUID
+    let slotDate: String
+    let durationMinutes: Int
+
+    enum CodingKeys: String, CodingKey {
+        case tenantId = "tenant_id"
+        case teacherId = "teacher_id"
+        case slotDate = "slot_date"
+        case durationMinutes = "duration_minutes"
+    }
+}

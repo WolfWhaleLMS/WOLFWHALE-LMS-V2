@@ -195,10 +195,12 @@ struct TeacherProfileView: View {
             viewModel.logout()
         } label: {
             Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
+                .foregroundStyle(.red)
                 .frame(maxWidth: .infinity)
                 .frame(height: 44)
         }
         .buttonStyle(.bordered)
+        .tint(.red)
         .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
     }
 }

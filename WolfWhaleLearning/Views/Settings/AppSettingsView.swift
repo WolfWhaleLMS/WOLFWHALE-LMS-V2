@@ -454,7 +454,9 @@ struct AppSettingsView: View {
                 } icon: {
                     Image(systemName: "rectangle.portrait.and.arrow.right")
                 }
+                .foregroundStyle(.red)
             }
+            .tint(.red)
             .sensoryFeedback(.impact(weight: .heavy), trigger: signOutHapticTrigger)
 
             if viewModel.currentUser?.role != .admin && viewModel.currentUser?.role != .superAdmin {

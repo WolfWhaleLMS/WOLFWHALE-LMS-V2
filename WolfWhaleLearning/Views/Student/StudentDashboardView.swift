@@ -2,7 +2,6 @@ import SwiftUI
 
 struct StudentDashboardView: View {
     let viewModel: AppViewModel
-    @State private var appeared = false
     @State private var showNotifications = false
     @State private var showRadio = false
     @State private var showWidgetGallery = false
@@ -17,30 +16,6 @@ struct StudentDashboardView: View {
         }
     }
 
-    private var totalLessons: Int {
-        viewModel.courses.reduce(0) { $0 + $1.totalLessons }
-    }
-
-    private var completedLessons: Int {
-        viewModel.courses.reduce(0) { $0 + $1.completedLessons }
-    }
-
-    private var lessonsProgress: Double {
-        totalLessons > 0 ? Double(completedLessons) / Double(totalLessons) : 0
-    }
-
-    private var totalAssignments: Int {
-        viewModel.assignments.count
-    }
-
-    private var submittedAssignments: Int {
-        viewModel.assignments.filter(\.isSubmitted).count
-    }
-
-    private var assignmentsProgress: Double {
-        totalAssignments > 0 ? Double(submittedAssignments) / Double(totalAssignments) : 0
-    }
-
     private var totalUnreadMessages: Int {
         viewModel.totalUnreadMessages
     }
@@ -50,11 +25,11 @@ struct StudentDashboardView: View {
             ScrollView {
                 if viewModel.isDataLoading && viewModel.courses.isEmpty {
                     VStack(spacing: 20) {
-                        ShimmerLoadingView(rowCount: 4)
+                        ShimmerLoadingView(rowCount: 3)
                         LoadingStateView(
                             icon: "graduationcap.fill",
                             title: "Loading Dashboard",
-                            message: "Fetching your courses, assignments, and progress..."
+                            message: "Fetching your courses and assignments..."
                         )
                     }
                     .padding(.horizontal)
@@ -64,11 +39,9 @@ struct StudentDashboardView: View {
                         if let dataError = viewModel.dataError {
                             errorBanner(dataError)
                         }
-                        activitySection
                         coursesSection
                         upcomingSection
-                        quickLinksSection
-                        campusSection
+                        linksSection
                     }
                     .padding(.horizontal)
                     .padding(.bottom, 20)
@@ -101,7 +74,6 @@ struct StudentDashboardView: View {
                     }
                     .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                     .accessibilityLabel(totalUnreadMessages > 0 ? "Notifications, \(totalUnreadMessages) unread" : "Notifications")
-                    .accessibilityHint("Double tap to view notifications")
                 }
             }
             .sheet(isPresented: $showNotifications) {
@@ -137,72 +109,57 @@ struct StudentDashboardView: View {
         .padding(12)
         .background(Color.orange.opacity(0.12))
         .clipShape(RoundedRectangle(cornerRadius: 12))
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .strokeBorder(Color.orange.opacity(0.3), lineWidth: 1)
-        )
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Warning: \(message)")
     }
 
-    // MARK: - Activity Section
-
-    private var activitySection: some View {
-        VStack(spacing: 16) {
-            HStack(spacing: 20) {
-                ActivityRingView(
-                    lessonsProgress: lessonsProgress,
-                    assignmentsProgress: assignmentsProgress
-                )
-
-                VStack(alignment: .leading, spacing: 10) {
-                    ActivityRingLabel(title: "Lessons", value: "\(completedLessons)/\(totalLessons) done", color: .green)
-                    ActivityRingLabel(title: "Assignments", value: "\(submittedAssignments)/\(totalAssignments) done", color: .cyan)
-                }
-                Spacer()
-            }
-            .padding(20)
-        }
-        .glassCard(cornerRadius: 20)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("Activity rings: \(completedLessons) of \(totalLessons) lessons done, \(submittedAssignments) of \(totalAssignments) assignments done")
-    }
-
-    // MARK: - Courses Section
+    // MARK: - Courses
 
     private var coursesSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Continue Learning")
+            Text("My Courses")
                 .font(.headline)
 
             if viewModel.courses.isEmpty {
-                VStack(spacing: 10) {
+                VStack(spacing: 8) {
                     Image(systemName: "book.closed")
                         .font(.title2)
                         .foregroundStyle(.secondary)
                     Text("No courses yet")
-                        .font(.subheadline.bold())
+                        .font(.subheadline)
                         .foregroundStyle(.secondary)
-                    Text("Enroll in a course to start learning")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 24)
                 .glassCard(cornerRadius: 16)
             } else {
-                ScrollView(.horizontal) {
-                    LazyHStack(spacing: 12) {
-                        ForEach(viewModel.courses) { course in
-                            NavigationLink(value: course) {
-                                courseCard(course)
+                ForEach(viewModel.courses) { course in
+                    NavigationLink(value: course) {
+                        HStack(spacing: 14) {
+                            Image(systemName: course.iconSystemName)
+                                .font(.title3)
+                                .foregroundStyle(Theme.courseColor(course.colorName))
+                                .frame(width: 36)
+
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(course.title)
+                                    .font(.subheadline.bold())
+                                    .foregroundStyle(Color(.label))
+                                    .lineLimit(1)
+                                Text(course.teacherName)
+                                    .font(.caption)
+                                    .foregroundStyle(Color(.secondaryLabel))
                             }
-                            .buttonStyle(.plain)
+
+                            Spacer()
+
+                            Text("\(Int(course.progress * 100))%")
+                                .font(.subheadline.bold())
+                                .foregroundStyle(Theme.courseColor(course.colorName))
                         }
+                        .padding(14)
+                        .glassCard(cornerRadius: 14)
                     }
+                    .buttonStyle(.plain)
                 }
-                .contentMargins(.horizontal, 0)
-                .scrollIndicators(.hidden)
             }
         }
         .navigationDestination(for: Course.self) { course in
@@ -215,38 +172,37 @@ struct StudentDashboardView: View {
         }
     }
 
-    // MARK: - Upcoming Section
+    // MARK: - Upcoming Deadlines
 
     private var upcomingSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                Text("Upcoming Deadlines")
+                Text("Upcoming")
                     .font(.headline)
                 Spacer()
                 NavigationLink("See All", value: "assignments")
                     .font(.subheadline)
-                    .accessibilityHint("Double tap to view all assignments")
             }
 
             if viewModel.upcomingAssignments.isEmpty {
-                HStack {
+                HStack(spacing: 8) {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(.green)
                     Text("All caught up!")
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.vertical, 24)
+                .padding(.vertical, 20)
                 .glassCard(cornerRadius: 12)
             } else {
                 ForEach(viewModel.upcomingAssignments.prefix(3)) { assignment in
                     HStack(spacing: 12) {
                         Circle()
                             .fill(.orange.gradient)
-                            .frame(width: 40, height: 40)
+                            .frame(width: 36, height: 36)
                             .overlay {
                                 Image(systemName: "doc.text.fill")
-                                    .font(.subheadline)
+                                    .font(.caption)
                                     .foregroundStyle(.white)
                             }
                         VStack(alignment: .leading, spacing: 2) {
@@ -259,198 +215,113 @@ struct StudentDashboardView: View {
                                 .foregroundStyle(Color(.secondaryLabel))
                         }
                         Spacer()
-                        VStack(alignment: .trailing, spacing: 2) {
-                            Text(assignment.dueDate, style: .relative)
-                                .font(.caption)
-                                .foregroundStyle(.orange)
-                            Text("\(assignment.points) pts")
-                                .font(.caption2)
-                                .foregroundStyle(Color(.secondaryLabel))
-                        }
+                        Text(assignment.dueDate, style: .relative)
+                            .font(.caption)
+                            .foregroundStyle(.orange)
                     }
                     .padding(12)
                     .glassCard(cornerRadius: 12)
-                    .accessibilityElement(children: .combine)
-                    .accessibilityLabel("\(assignment.title) for \(assignment.courseName), due \(assignment.dueDate.formatted(.dateTime.month(.abbreviated).day())), \(assignment.points) points")
                 }
             }
         }
     }
 
-    // MARK: - Quick Links
+    // MARK: - Links
 
-    private var quickLinksSection: some View {
+    private var linksSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Quick Links")
+            Text("More")
                 .font(.headline)
 
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                quickLinkCard(
-                    icon: "calendar.badge.clock",
-                    title: "Calendar",
-                    color: .orange,
-                    destination: AnyView(AssignmentCalendarView(viewModel: viewModel))
-                )
-
-                quickLinkCard(
-                    icon: "target",
-                    title: "Goals",
-                    color: .green,
-                    destination: AnyView(ProgressGoalsView(viewModel: viewModel))
-                )
-
-                quickLinkCard(
-                    icon: "calendar.day.timeline.leading",
-                    title: "Schedule",
-                    color: .indigo,
-                    destination: AnyView(TimetableView(viewModel: viewModel))
-                )
-
-                quickLinkCard(
-                    icon: "calendar.badge.clock",
-                    title: "Attendance",
-                    color: .green,
-                    destination: AnyView(AttendanceHistoryView(viewModel: viewModel))
-                )
+            linkRow(icon: "calendar.badge.clock", title: "Calendar", color: .orange) {
+                AssignmentCalendarView(viewModel: viewModel)
+            }
+            linkRow(icon: "target", title: "Goals", color: .green) {
+                ProgressGoalsView(viewModel: viewModel)
+            }
+            linkRow(icon: "calendar.day.timeline.leading", title: "Schedule", color: .indigo) {
+                TimetableView(viewModel: viewModel)
+            }
+            linkRow(icon: "checkmark.shield.fill", title: "Attendance", color: .teal) {
+                AttendanceHistoryView(viewModel: viewModel)
+            }
+            linkRow(icon: "book.and.wrench.fill", title: "Browse Courses", color: .purple) {
+                CourseCatalogView(viewModel: viewModel)
+            }
+            linkRow(icon: "map.fill", title: "Campus Map", color: .blue) {
+                CampusMapView()
             }
 
-            // Browse Courses
-            NavigationLink {
-                CourseCatalogView(viewModel: viewModel)
+            // Radio & Widgets (sheets)
+            Button {
+                hapticTrigger.toggle()
+                showRadio = true
             } label: {
                 HStack(spacing: 12) {
-                    ZStack {
-                        Circle()
-                            .fill(LinearGradient(colors: [.indigo, .purple], startPoint: .topLeading, endPoint: .bottomTrailing))
-                            .frame(width: 40, height: 40)
-                        Image(systemName: "book.and.wrench.fill")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(.white)
-                    }
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text("Browse Courses")
-                            .font(.subheadline.bold())
-                            .foregroundStyle(Color(.label))
-                        Text("Discover and enroll in new courses")
-                            .font(.caption)
-                            .foregroundStyle(Color(.secondaryLabel))
-                    }
-
+                    Image(systemName: "radio.fill")
+                        .foregroundStyle(.purple)
+                        .frame(width: 28)
+                    Text("Radio")
+                        .font(.subheadline)
+                        .foregroundStyle(Color(.label))
                     Spacer()
-
                     Image(systemName: "chevron.right")
-                        .font(.caption)
+                        .font(.caption2)
                         .foregroundStyle(.tertiary)
                 }
                 .padding(14)
-                .glassCard(cornerRadius: 16)
+                .glassCard(cornerRadius: 14)
             }
             .buttonStyle(.plain)
-            .accessibilityLabel("Browse Courses")
-            .accessibilityHint("Double tap to discover and enroll in new courses")
-        }
-    }
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
-    private func quickLinkCard(icon: String, title: String, color: Color, destination: AnyView) -> some View {
-        NavigationLink {
-            destination
-        } label: {
-            VStack(spacing: 8) {
-                Image(systemName: icon)
-                    .font(.title2)
-                    .foregroundStyle(color)
-                Text(title)
-                    .font(.caption.bold())
-                    .foregroundStyle(.primary)
+            Button {
+                hapticTrigger.toggle()
+                showWidgetGallery = true
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: "apps.iphone")
+                        .foregroundStyle(.cyan)
+                        .frame(width: 28)
+                    Text("Widgets")
+                        .font(.subheadline)
+                        .foregroundStyle(Color(.label))
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
+                .padding(14)
+                .glassCard(cornerRadius: 14)
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
-            .glassCard(cornerRadius: 14)
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(title)
-        .accessibilityHint("Double tap to open \(title)")
-    }
-
-    // MARK: - Campus Section (Compact)
-
-    private var campusSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Campus")
-                .font(.headline)
-
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                campusLink(icon: "map.fill", title: "Campus Map", color: .blue) {
-                    CampusMapView()
-                }
-
-                campusLink(icon: "location.magnifyingglass", title: "Classrooms", color: .green) {
-                    ClassroomFinderView(courses: viewModel.courses)
-                }
-
-                Button {
-                    hapticTrigger.toggle()
-                    showRadio = true
-                } label: {
-                    VStack(spacing: 8) {
-                        Image(systemName: "radio.fill")
-                            .font(.title2)
-                            .foregroundStyle(.purple)
-                        Text("Radio")
-                            .font(.caption.bold())
-                            .foregroundStyle(.primary)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .glassCard(cornerRadius: 14)
-                }
-                .buttonStyle(.plain)
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
-
-                Button {
-                    hapticTrigger.toggle()
-                    showWidgetGallery = true
-                } label: {
-                    VStack(spacing: 8) {
-                        Image(systemName: "apps.iphone")
-                            .font(.title2)
-                            .foregroundStyle(.cyan)
-                        Text("Widgets")
-                            .font(.caption.bold())
-                            .foregroundStyle(.primary)
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .glassCard(cornerRadius: 14)
-                }
-                .buttonStyle(.plain)
-                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
-            }
+            .buttonStyle(.plain)
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         }
     }
 
-    private func campusLink<Destination: View>(icon: String, title: String, color: Color, @ViewBuilder destination: @escaping () -> Destination) -> some View {
+    private func linkRow<Destination: View>(icon: String, title: String, color: Color, @ViewBuilder destination: @escaping () -> Destination) -> some View {
         NavigationLink {
             destination()
         } label: {
-            VStack(spacing: 8) {
+            HStack(spacing: 12) {
                 Image(systemName: icon)
-                    .font(.title2)
                     .foregroundStyle(color)
+                    .frame(width: 28)
                 Text(title)
-                    .font(.caption.bold())
-                    .foregroundStyle(.primary)
+                    .font(.subheadline)
+                    .foregroundStyle(Color(.label))
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
+            .padding(14)
             .glassCard(cornerRadius: 14)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(title)
     }
 
-    // MARK: - Course Card
+    // MARK: - Course Card (unused, kept for reference)
 
     private func courseCard(_ course: Course) -> some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -478,9 +349,6 @@ struct StudentDashboardView: View {
         .frame(width: 160)
         .padding(14)
         .glassCard(cornerRadius: 16)
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(course.title), taught by \(course.teacherName), \(Int(course.progress * 100)) percent complete")
-        .accessibilityHint("Double tap to open course")
     }
 }
 

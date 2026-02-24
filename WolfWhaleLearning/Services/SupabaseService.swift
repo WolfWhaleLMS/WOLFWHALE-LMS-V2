@@ -2389,6 +2389,111 @@ struct DataService: Sendable {
             return profiles
         }
     }
+
+    // MARK: - Conferences
+
+    /// Fetch conferences for a user (parent or teacher).
+    func fetchConferences(userId: UUID, role: UserRole) async throws -> [Conference] {
+        let column = role == .parent ? "parent_id" : "teacher_id"
+        let dtos: [ConferenceDTO] = try await supabaseClient
+            .from("conferences")
+            .select()
+            .eq(column, value: userId.uuidString)
+            .order("conference_date", ascending: false)
+            .execute()
+            .value
+
+        return dtos.map { dto in
+            Conference(
+                id: dto.id,
+                parentId: dto.parentId,
+                teacherId: dto.teacherId,
+                teacherName: dto.teacherName,
+                parentName: dto.parentName,
+                childName: dto.childName,
+                date: parseDate(dto.conferenceDate),
+                duration: dto.duration,
+                status: ConferenceStatus(rawValue: dto.status) ?? .requested,
+                notes: dto.notes,
+                location: dto.location
+            )
+        }
+    }
+
+    /// Create a conference request.
+    func createConference(_ dto: InsertConferenceDTO) async throws -> ConferenceDTO {
+        let result: ConferenceDTO = try await supabaseClient
+            .from("conferences")
+            .insert(dto)
+            .select()
+            .single()
+            .execute()
+            .value
+        return result
+    }
+
+    /// Update conference status (approve, decline, cancel).
+    func updateConferenceStatus(conferenceId: UUID, status: String) async throws {
+        try await supabaseClient
+            .from("conferences")
+            .update(["status": status])
+            .eq("id", value: conferenceId.uuidString)
+            .execute()
+    }
+
+    /// Fetch teacher available slots.
+    func fetchTeacherSlots(teacherId: UUID? = nil) async throws -> [TeacherAvailableSlot] {
+        var query = supabaseClient
+            .from("teacher_available_slots")
+            .select()
+            .order("slot_date", ascending: true)
+
+        if let teacherId {
+            query = query.eq("teacher_id", value: teacherId.uuidString)
+        }
+
+        let dtos: [TeacherAvailableSlotDTO] = try await query.execute().value
+
+        return dtos.map { dto in
+            TeacherAvailableSlot(
+                id: dto.id,
+                teacherId: dto.teacherId,
+                date: parseDate(dto.slotDate),
+                durationMinutes: dto.durationMinutes,
+                isBooked: dto.isBooked
+            )
+        }
+    }
+
+    /// Create a teacher available slot.
+    func createTeacherSlot(_ dto: InsertTeacherSlotDTO) async throws -> TeacherAvailableSlotDTO {
+        let result: TeacherAvailableSlotDTO = try await supabaseClient
+            .from("teacher_available_slots")
+            .insert(dto)
+            .select()
+            .single()
+            .execute()
+            .value
+        return result
+    }
+
+    /// Delete a teacher available slot.
+    func deleteTeacherSlot(slotId: UUID) async throws {
+        try await supabaseClient
+            .from("teacher_available_slots")
+            .delete()
+            .eq("id", value: slotId.uuidString)
+            .execute()
+    }
+
+    /// Mark a slot as booked or unbooked.
+    func updateSlotBookedStatus(slotId: UUID, isBooked: Bool) async throws {
+        try await supabaseClient
+            .from("teacher_available_slots")
+            .update(["is_booked": isBooked])
+            .eq("id", value: slotId.uuidString)
+            .execute()
+    }
 }
 
 actor EnrollmentRateLimiter {

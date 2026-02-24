@@ -5,14 +5,30 @@ import UserNotifications
 
 extension AppViewModel {
 
-    // MARK: - Conference Properties (stored as arrays on AppViewModel)
+    // MARK: - Conference Data Loading
 
-    // NOTE: conferences and teacherAvailableSlots are declared as stored
-    // properties in this extension file's companion section below the class.
-    // Because Swift @Observable requires stored properties on the class itself,
-    // we use a lightweight wrapper pattern: the views call these methods
-    // which operate on the `conferences` and `teacherAvailableSlots` arrays
-    // that are added to AppViewModel via the stored-property block at the bottom.
+    /// Loads conferences and available slots from Supabase for the current user.
+    func loadConferencesIfNeeded() async {
+        guard let user = currentUser, !isDemoMode else {
+            if isDemoMode { loadDemoConferenceData() }
+            return
+        }
+
+        do {
+            conferences = try await dataService.fetchConferences(userId: user.id, role: user.role)
+
+            // Parents need to see all teacher slots; teachers only their own
+            if user.role == .parent {
+                teacherAvailableSlots = try await dataService.fetchTeacherSlots()
+            } else if user.role == .teacher {
+                teacherAvailableSlots = try await dataService.fetchTeacherSlots(teacherId: user.id)
+            }
+        } catch {
+            #if DEBUG
+            print("[AppViewModel] Failed to load conferences: \(error)")
+            #endif
+        }
+    }
 
     // MARK: - Parent: Book Conference
 
@@ -26,42 +42,99 @@ extension AppViewModel {
     ) {
         guard let user = currentUser, user.role == .parent else { return }
 
-        // Mark the slot as booked
-        if let slotIndex = teacherAvailableSlots.firstIndex(where: { $0.id == slotId }) {
-            let slot = teacherAvailableSlots[slotIndex]
-            teacherAvailableSlots[slotIndex].isBooked = true
+        // Find the slot to get its date
+        guard let slotIndex = teacherAvailableSlots.firstIndex(where: { $0.id == slotId }) else { return }
+        let slot = teacherAvailableSlots[slotIndex]
 
-            let conference = Conference(
-                parentId: user.id,
-                teacherId: teacherId,
-                teacherName: teacherName,
-                parentName: user.fullName,
-                childName: childName,
-                date: slot.date,
-                duration: slot.durationMinutes,
-                status: .requested,
-                notes: notes,
-                location: "Room 101"
-            )
-            conferences.append(conference)
+        // Optimistic update: mark slot as booked locally
+        teacherAvailableSlots[slotIndex].isBooked = true
 
-            // Send a local notification about the booking
-            scheduleConferenceNotification(conference: conference, message: "Conference requested with \(teacherName) for \(childName).")
+        let conference = Conference(
+            parentId: user.id,
+            teacherId: teacherId,
+            teacherName: teacherName,
+            parentName: user.fullName,
+            childName: childName,
+            date: slot.date,
+            duration: slot.durationMinutes,
+            status: .requested,
+            notes: notes,
+            location: "Room 101"
+        )
+        conferences.append(conference)
+
+        // Persist to Supabase
+        Task {
+            do {
+                let formatter = ISO8601DateFormatter()
+                formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
+                let dto = InsertConferenceDTO(
+                    tenantId: UUID(uuidString: user.schoolId ?? ""),
+                    parentId: user.id,
+                    teacherId: teacherId,
+                    teacherName: teacherName,
+                    parentName: user.fullName,
+                    childName: childName,
+                    conferenceDate: formatter.string(from: slot.date),
+                    duration: slot.durationMinutes,
+                    status: "requested",
+                    notes: notes,
+                    location: "Room 101",
+                    slotId: slotId
+                )
+                _ = try await dataService.createConference(dto)
+                try await dataService.updateSlotBookedStatus(slotId: slotId, isBooked: true)
+            } catch {
+                // Rollback on failure
+                if let idx = self.teacherAvailableSlots.firstIndex(where: { $0.id == slotId }) {
+                    self.teacherAvailableSlots[idx].isBooked = false
+                }
+                self.conferences.removeAll { $0.id == conference.id }
+                #if DEBUG
+                print("[AppViewModel] Failed to book conference: \(error)")
+                #endif
+            }
         }
+
+        scheduleConferenceNotification(conference: conference, message: "Conference requested with \(teacherName) for \(childName).")
     }
 
     /// Parent cancels a conference.
     func cancelConference(_ conferenceId: UUID) {
         guard let index = conferences.firstIndex(where: { $0.id == conferenceId }) else { return }
+        let previousStatus = conferences[index].status
         conferences[index].status = .cancelled
 
-        // Free up the slot
+        // Free up the slot locally
         let conference = conferences[index]
         if let slotIndex = teacherAvailableSlots.firstIndex(where: {
             $0.teacherId == conference.teacherId &&
             Calendar.current.isDate($0.date, equalTo: conference.date, toGranularity: .minute)
         }) {
             teacherAvailableSlots[slotIndex].isBooked = false
+        }
+
+        // Persist to Supabase
+        Task {
+            do {
+                try await dataService.updateConferenceStatus(conferenceId: conferenceId, status: "cancelled")
+                // Also free the slot in DB
+                if let slot = teacherAvailableSlots.first(where: {
+                    $0.teacherId == conference.teacherId &&
+                    Calendar.current.isDate($0.date, equalTo: conference.date, toGranularity: .minute)
+                }) {
+                    try await dataService.updateSlotBookedStatus(slotId: slot.id, isBooked: false)
+                }
+            } catch {
+                // Rollback
+                if let idx = self.conferences.firstIndex(where: { $0.id == conferenceId }) {
+                    self.conferences[idx].status = previousStatus
+                }
+                #if DEBUG
+                print("[AppViewModel] Failed to cancel conference: \(error)")
+                #endif
+            }
         }
     }
 
@@ -77,11 +150,47 @@ extension AppViewModel {
             durationMinutes: durationMinutes
         )
         teacherAvailableSlots.append(slot)
+
+        // Persist to Supabase
+        Task {
+            do {
+                let formatter = ISO8601DateFormatter()
+                formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+
+                let dto = InsertTeacherSlotDTO(
+                    tenantId: UUID(uuidString: user.schoolId ?? ""),
+                    teacherId: user.id,
+                    slotDate: formatter.string(from: date),
+                    durationMinutes: durationMinutes
+                )
+                _ = try await dataService.createTeacherSlot(dto)
+            } catch {
+                self.teacherAvailableSlots.removeAll { $0.id == slot.id }
+                #if DEBUG
+                print("[AppViewModel] Failed to add slot: \(error)")
+                #endif
+            }
+        }
     }
 
     /// Teacher removes an available time slot.
     func removeAvailableSlot(_ slotId: UUID) {
+        let removed = teacherAvailableSlots.first { $0.id == slotId }
         teacherAvailableSlots.removeAll { $0.id == slotId }
+
+        // Persist to Supabase
+        Task {
+            do {
+                try await dataService.deleteTeacherSlot(slotId: slotId)
+            } catch {
+                if let removed {
+                    self.teacherAvailableSlots.append(removed)
+                }
+                #if DEBUG
+                print("[AppViewModel] Failed to remove slot: \(error)")
+                #endif
+            }
+        }
     }
 
     /// Teacher approves a conference request.
@@ -90,6 +199,21 @@ extension AppViewModel {
         conferences[index].status = .confirmed
 
         let conf = conferences[index]
+
+        // Persist to Supabase
+        Task {
+            do {
+                try await dataService.updateConferenceStatus(conferenceId: conferenceId, status: "confirmed")
+            } catch {
+                if let idx = self.conferences.firstIndex(where: { $0.id == conferenceId }) {
+                    self.conferences[idx].status = .requested
+                }
+                #if DEBUG
+                print("[AppViewModel] Failed to approve conference: \(error)")
+                #endif
+            }
+        }
+
         scheduleConferenceNotification(
             conference: conf,
             message: "Your conference with \(conf.teacherName) regarding \(conf.childName) has been confirmed for \(conf.timeSlotLabel)."
@@ -101,13 +225,30 @@ extension AppViewModel {
         guard let index = conferences.firstIndex(where: { $0.id == conferenceId }) else { return }
         conferences[index].status = .cancelled
 
-        // Free the slot
+        // Free the slot locally
         let conf = conferences[index]
         if let slotIndex = teacherAvailableSlots.firstIndex(where: {
             $0.teacherId == conf.teacherId &&
             Calendar.current.isDate($0.date, equalTo: conf.date, toGranularity: .minute)
         }) {
             teacherAvailableSlots[slotIndex].isBooked = false
+        }
+
+        // Persist to Supabase
+        Task {
+            do {
+                try await dataService.updateConferenceStatus(conferenceId: conferenceId, status: "cancelled")
+                if let slot = teacherAvailableSlots.first(where: {
+                    $0.teacherId == conf.teacherId &&
+                    Calendar.current.isDate($0.date, equalTo: conf.date, toGranularity: .minute)
+                }) {
+                    try await dataService.updateSlotBookedStatus(slotId: slot.id, isBooked: false)
+                }
+            } catch {
+                #if DEBUG
+                print("[AppViewModel] Failed to decline conference: \(error)")
+                #endif
+            }
         }
     }
 
@@ -194,7 +335,6 @@ extension AppViewModel {
         let calendar = Calendar.current
 
         if user.role == .parent {
-            // Generate some demo teacher availability slots
             let teacherNames = courses.isEmpty
                 ? ["Dr. Sarah Chen", "Mr. David Park", "Ms. Emily Torres"]
                 : courses.map(\.teacherName)
@@ -205,10 +345,9 @@ extension AppViewModel {
 
             for (tIndex, teacherName) in uniqueTeachers.enumerated() {
                 let teacherId = UUID()
-                // Generate 3 available slots per teacher over the next 2 weeks
                 for dayOffset in [2, 5, 8] {
                     guard let slotDate = calendar.date(byAdding: .day, value: dayOffset, to: Date()) else { continue }
-                    let hour = 9 + tIndex  // stagger hours: 9 AM, 10 AM, 11 AM
+                    let hour = 9 + tIndex
                     guard let dateWithTime = calendar.date(bySettingHour: hour, minute: 0, second: 0, of: slotDate) else { continue }
 
                     slots.append(TeacherAvailableSlot(
@@ -218,7 +357,6 @@ extension AppViewModel {
                     ))
                 }
 
-                // Add one confirmed conference in the past
                 if let pastDate = calendar.date(byAdding: .day, value: -3, to: Date()),
                    let pastWithTime = calendar.date(bySettingHour: 10, minute: 0, second: 0, of: pastDate) {
                     let childName = children.first?.name ?? "Alex Rivera"
@@ -241,7 +379,6 @@ extension AppViewModel {
             conferences = confs
 
         } else if user.role == .teacher {
-            // Generate teacher-side availability
             var slots: [TeacherAvailableSlot] = []
             var confs: [Conference] = []
 
@@ -249,7 +386,7 @@ extension AppViewModel {
                 guard let slotDate = calendar.date(byAdding: .day, value: dayOffset, to: Date()),
                       let dateWithTime = calendar.date(bySettingHour: 14, minute: 0, second: 0, of: slotDate) else { continue }
 
-                let isBooked = dayOffset <= 3  // first two are booked
+                let isBooked = dayOffset <= 3
                 slots.append(TeacherAvailableSlot(
                     teacherId: user.id,
                     date: dateWithTime,

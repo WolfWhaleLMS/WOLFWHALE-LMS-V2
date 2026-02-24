@@ -94,7 +94,9 @@ struct ParentSettingsView: View {
                         viewModel.logout()
                     } label: {
                         Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
+                            .foregroundStyle(.red)
                     }
+                    .tint(.red)
                     .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
                 }
             }
