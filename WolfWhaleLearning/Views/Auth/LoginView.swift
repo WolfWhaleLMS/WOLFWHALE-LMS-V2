@@ -38,6 +38,7 @@ struct LoginView: View {
         }
         .scrollDismissesKeyboard(.interactively)
         .background { HolographicBackground() }
+        .environment(\.colorScheme, .dark)
         .sheet(isPresented: $showForgotPassword) {
             ForgotPasswordView()
         }
@@ -100,12 +101,11 @@ struct LoginView: View {
             Text("WOLF WHALE")
                 .font(.system(size: 36, weight: .thin, design: .serif))
                 .tracking(4)
-                .foregroundStyle(.white)
-                .shadow(color: Theme.brandBlue.opacity(0.5), radius: 10)
+                .foregroundStyle(.primary)
 
             Text("LEARNING MANAGEMENT SYSTEM")
                 .font(.system(size: 14, weight: .medium, design: .serif))
-                .foregroundStyle(.white.opacity(0.85))
+                .foregroundStyle(.secondary)
                 .tracking(4)
         }
     }
@@ -114,7 +114,7 @@ struct LoginView: View {
         VStack(spacing: 16) {
             Text("Sign In")
                 .font(.title3.bold())
-                .foregroundStyle(.white)
+                .foregroundStyle(.primary)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             VStack(spacing: 12) {
@@ -225,14 +225,14 @@ struct LoginView: View {
     private var dividerSection: some View {
         HStack(spacing: 16) {
             Rectangle()
-                .fill(Color.white.opacity(0.3))
+                .fill(Color.secondary.opacity(0.3))
                 .frame(height: 1)
             Text("OR TRY A DEMO")
                 .font(.system(size: 11, weight: .semibold, design: .serif))
-                .foregroundStyle(.white.opacity(0.8))
+                .foregroundStyle(.secondary)
                 .tracking(1.5)
             Rectangle()
-                .fill(Color.white.opacity(0.3))
+                .fill(Color.secondary.opacity(0.3))
                 .frame(height: 1)
         }
     }
@@ -241,7 +241,7 @@ struct LoginView: View {
         VStack(spacing: 12) {
             Text("Explore the platform with a demo account")
                 .font(.subheadline)
-                .foregroundStyle(.white.opacity(0.75))
+                .foregroundStyle(.secondary)
 
             LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
                 ForEach(UserRole.allCases.filter { $0 != .superAdmin }) { role in
