@@ -91,7 +91,7 @@ struct LoginView: View {
                 }
             }
 
-            Text("WOLF WHALE")
+            Text("WOLFWHALE")
                 .font(.system(size: 36, weight: .thin, design: .serif))
                 .tracking(4)
                 .foregroundStyle(.primary)
