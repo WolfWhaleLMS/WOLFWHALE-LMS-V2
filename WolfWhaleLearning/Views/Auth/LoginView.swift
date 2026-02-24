@@ -53,9 +53,9 @@ struct LoginView: View {
         VStack(spacing: 8) {
             ZStack {
                 Circle()
-                    .fill(Theme.brandPurple.opacity(glowPulse ? 0.25 : 0.08))
-                    .frame(width: 200, height: 200)
-                    .blur(radius: 50)
+                    .fill(Theme.brandPurple.opacity(glowPulse ? 0.45 : 0.15))
+                    .frame(width: 300, height: 300)
+                    .blur(radius: 75)
 
                 RoundedRectangle(cornerRadius: 32)
                     .fill(.black)
