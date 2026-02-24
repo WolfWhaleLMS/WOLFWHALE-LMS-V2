@@ -55,7 +55,7 @@ struct ResourceLibraryView: View {
                 .frame(height: 160)
 
             VStack(spacing: 8) {
-                Image(systemName: "square.grid.2x2.fill")
+                Image(systemName: "books.vertical.fill")
                     .font(.system(size: 36, weight: .medium))
                     .foregroundStyle(.white)
                     .symbolRenderingMode(.hierarchical)

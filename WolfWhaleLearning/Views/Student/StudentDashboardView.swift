@@ -427,21 +427,10 @@ struct StudentDashboardView: View {
                 hapticTrigger.toggle()
                 showNotifications = true
             } label: {
-                ZStack(alignment: .topTrailing) {
-                    Image(systemName: "bell.badge.fill")
-                        .symbolRenderingMode(.hierarchical)
-                        .symbolEffect(.wiggle, value: totalUnreadMessages)
-                        .symbolEffect(.bounce, value: totalUnreadMessages)
-                        .padding(6)
-
-                    if totalUnreadMessages > 0 {
-                        Text("\(totalUnreadMessages)")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundStyle(.white)
-                            .frame(minWidth: 16, minHeight: 16)
-                            .background(.red, in: Circle())
-                    }
-                }
+                Image(systemName: totalUnreadMessages > 0 ? "bell.badge.fill" : "bell.fill")
+                    .symbolRenderingMode(.hierarchical)
+                    .symbolEffect(.wiggle, value: totalUnreadMessages)
+                    .symbolEffect(.bounce, value: totalUnreadMessages)
             }
             .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             .accessibilityLabel(totalUnreadMessages > 0 ? "\(totalUnreadMessages) notifications" : "Notifications")
