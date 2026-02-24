@@ -53,45 +53,36 @@ struct LoginView: View {
     private var logoSection: some View {
         VStack(spacing: 6) {
             ZStack {
-                // Sun ray glow emanating from behind the logo
+                // Purple glow emanating from behind the logo
                 Circle()
                     .fill(
                         RadialGradient(
                             colors: [
-                                Theme.brandBlue.opacity(0.2),
+                                Theme.brandPurple.opacity(0.25),
                                 Theme.brandPurple.opacity(0.08),
                                 .clear
                             ],
                             center: .center,
-                            startRadius: 40,
-                            endRadius: 120
+                            startRadius: 50,
+                            endRadius: 140
                         )
                     )
-                    .frame(width: 180, height: 180)
+                    .frame(width: 200, height: 200)
                     .scaleEffect(glowPulse ? 1.15 : 0.9)
 
                 Circle()
-                    .fill(Theme.brandBlue.opacity(0.15))
-                    .frame(width: 110, height: 110)
-                    .blur(radius: 25)
+                    .fill(Theme.brandPurple.opacity(0.15))
+                    .frame(width: 130, height: 130)
+                    .blur(radius: 30)
                     .scaleEffect(glowPulse ? 1.1 : 0.85)
 
-                Circle()
-                    .fill(Color.white.opacity(0.12))
-                    .frame(width: 90, height: 90)
-                    .blur(radius: 15)
-                    .scaleEffect(glowPulse ? 1.05 : 0.95)
-
-                // Logo with black circle background
+                // Logo
                 Image("Logo")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .padding(16)
-                    .frame(width: 120, height: 120)
-                    .background(Circle().fill(Color.black))
-                    .clipShape(Circle())
-                    .shadow(color: Theme.brandBlue.opacity(0.6), radius: 20, y: 0)
-                    .shadow(color: .white.opacity(0.2), radius: 40, y: 0)
+                    .frame(width: 140, height: 140)
+                    .clipShape(RoundedRectangle(cornerRadius: 28))
+                    .shadow(color: Theme.brandPurple.opacity(0.7), radius: 24, y: 0)
             }
             .accessibilityHidden(true)
             .onAppear {
