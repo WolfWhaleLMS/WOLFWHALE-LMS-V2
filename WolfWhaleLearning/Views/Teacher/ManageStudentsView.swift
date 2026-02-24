@@ -96,7 +96,7 @@ struct ManageStudentsView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(copiedCode ? .green : .orange)
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             }
 
             Text("Share this code with students so they can enroll in the course.")

@@ -371,7 +371,7 @@ struct CreateQuizView: View {
         }
         .buttonStyle(.bordered)
         .tint(.red)
-        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
     }
 
     // MARK: - Create Button

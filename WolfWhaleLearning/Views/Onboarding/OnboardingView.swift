@@ -294,7 +294,7 @@ struct OnboardingView: View {
             .clipShape(.rect(cornerRadius: 16))
             .padding(.horizontal, 32)
             .shadow(color: .orange.opacity(0.4), radius: 16, y: 8)
-            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
             Spacer()
                 .frame(height: 20)

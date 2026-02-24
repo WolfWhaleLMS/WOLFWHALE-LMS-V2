@@ -255,7 +255,7 @@ struct CreateLessonView: View {
             }
             .buttonStyle(.bordered)
             .tint(.purple)
-            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         }
         .padding(14)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
@@ -452,7 +452,7 @@ struct SlideResourcePickerSheet: View {
             resourceRowLabel(resource, attached: attached)
         }
         .disabled(attached)
-        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
     }
 
     private func resourceRowLabel(_ resource: AttachableResource, attached: Bool) -> some View {

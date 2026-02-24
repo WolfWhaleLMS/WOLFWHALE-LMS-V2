@@ -276,7 +276,7 @@ struct RubricBuilderView: View {
         }
         .buttonStyle(.bordered)
         .tint(.red)
-        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
     }
 
     // MARK: - Total Points Card

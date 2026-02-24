@@ -399,7 +399,7 @@ struct EditProfileView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.orange)
-                .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 .padding(.top, 8)
             }
             .padding(32)

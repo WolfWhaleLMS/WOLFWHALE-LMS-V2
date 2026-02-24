@@ -396,7 +396,7 @@ struct ManageModulesView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.orange)
-                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             }
 
             if let errorMessage {

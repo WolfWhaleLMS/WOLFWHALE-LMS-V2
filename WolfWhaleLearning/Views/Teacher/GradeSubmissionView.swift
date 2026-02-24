@@ -337,7 +337,7 @@ struct GradeSubmissionView: View {
                 }
                 .buttonStyle(.bordered)
                 .tint(.red)
-                .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
             }
             .padding(14)
             .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))

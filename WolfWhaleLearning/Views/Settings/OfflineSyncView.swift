@@ -463,7 +463,7 @@ struct OfflineSyncView: View {
                 }
             }
             .disabled(isSyncingNow || cloudSync.isSyncing || conflictService.isSyncing)
-            .hapticFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
         } header: {
             sectionHeader(title: "Actions", icon: "bolt.fill")
         } footer: {

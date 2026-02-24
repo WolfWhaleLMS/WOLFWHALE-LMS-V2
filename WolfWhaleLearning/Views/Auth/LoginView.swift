@@ -204,7 +204,7 @@ struct LoginView: View {
             )
             .disabled(viewModel.isLoading || viewModel.email.isEmpty || viewModel.password.isEmpty || viewModel.isLoginLockedOut)
             .opacity(viewModel.isLoading || viewModel.email.isEmpty || viewModel.password.isEmpty || viewModel.isLoginLockedOut ? 0.75 : 1.0)
-            .hapticFeedback(.impact(weight: .medium), trigger: viewModel.isAuthenticated)
+            .sensoryFeedback(.impact(weight: .medium), trigger: viewModel.isAuthenticated)
             .retroSound(.confirm, trigger: viewModel.isAuthenticated)
             .accessibilityLabel(viewModel.isLoading ? "Signing in" : "Sign In")
             .accessibilityHint("Double tap to sign in with your email and password")
@@ -217,7 +217,7 @@ struct LoginView: View {
                     .font(.subheadline.weight(.medium))
                     .foregroundStyle(Color.accentColor)
             }
-            .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+            .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
             .retroSound(.tap, trigger: hapticTrigger)
             .accessibilityHint("Double tap to reset your password")
 
@@ -328,7 +328,7 @@ struct DemoRoleButton: View {
             .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 14))
         }
         .buttonStyle(.plain)
-        .hapticFeedback(.impact(weight: .light), trigger: hapticTrigger)
+        .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
         .retroSound(.coin, trigger: hapticTrigger)
         .accessibilityLabel("Demo \(role.rawValue)")
         .accessibilityHint("Double tap to sign in as a demo \(role.rawValue.lowercased())")
