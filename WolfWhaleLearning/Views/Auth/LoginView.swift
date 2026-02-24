@@ -12,32 +12,34 @@ struct LoginView: View {
     private enum Field { case email, password }
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                Spacer().frame(height: 20)
+        ZStack {
+            AuroraNightSkyBackground()
+                .ignoresSafeArea()
 
-                logoSection
+            ScrollView {
+                VStack(spacing: 0) {
+                    logoSection
 
-                Spacer().frame(height: 16)
+                    Spacer().frame(height: 12)
 
-                loginSection
+                    loginSection
 
-                Spacer().frame(height: 24)
+                    Spacer().frame(height: 20)
 
-                #if DEBUG
-                dividerSection
+                    #if DEBUG
+                    dividerSection
 
-                Spacer().frame(height: 20)
+                    Spacer().frame(height: 16)
 
-                demoSection
-                #endif
+                    demoSection
+                    #endif
 
-                Spacer().frame(height: 32)
+                    Spacer().frame(height: 24)
+                }
+                .padding(.horizontal, 24)
             }
-            .padding(.horizontal, 24)
+            .scrollDismissesKeyboard(.interactively)
         }
-        .scrollDismissesKeyboard(.interactively)
-        .background { AuroraNightSkyBackground() }
         .environment(\.colorScheme, .dark)
         .sheet(isPresented: $showForgotPassword) {
             ForgotPasswordView()
@@ -51,28 +53,28 @@ struct LoginView: View {
     }
 
     private var logoSection: some View {
-        VStack(spacing: 6) {
+        VStack(spacing: 4) {
             ZStack {
-                // Soft glow behind the logo — uses Circle + blur so no hard edges
+                // Distant ambient glow — far behind the logo, doesn't overlap it
                 Circle()
-                    .fill(Theme.brandPurple.opacity(glowPulse ? 0.40 : 0.15))
+                    .fill(Theme.brandPurple.opacity(glowPulse ? 0.25 : 0.08))
                     .frame(width: 180, height: 180)
-                    .blur(radius: 50)
+                    .blur(radius: 60)
 
-                Circle()
-                    .fill(Theme.brandPurple.opacity(glowPulse ? 0.25 : 0.10))
-                    .frame(width: 130, height: 130)
-                    .blur(radius: 35)
+                // Dark backing so the glass logo pops against lighter colors
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(.black)
+                    .frame(width: 100, height: 100)
 
-                // Logo
                 Image("Logo")
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .frame(width: 120, height: 120)
-                    .clipShape(RoundedRectangle(cornerRadius: 24))
-                    .shadow(color: Theme.brandPurple.opacity(glowPulse ? 1.0 : 0.5), radius: 30, y: 0)
+                    .frame(width: 100, height: 100)
+                    .clipShape(RoundedRectangle(cornerRadius: 20))
+                    .shadow(color: Theme.brandPurple.opacity(glowPulse ? 0.6 : 0.25), radius: 20, y: 0)
+                    .shadow(color: .black.opacity(0.5), radius: 8, y: 2)
             }
-            .frame(width: 200, height: 200)
+            .frame(height: 130)
             .accessibilityHidden(true)
             .onAppear {
                 withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) {
@@ -81,14 +83,16 @@ struct LoginView: View {
             }
 
             Text("WOLFWHALE")
-                .font(.system(size: 32, weight: .thin, design: .serif))
+                .font(.system(size: 28, weight: .thin, design: .serif))
                 .tracking(4)
                 .foregroundStyle(.primary)
 
             Text("LEARNING MANAGEMENT SYSTEM")
-                .font(.system(size: 12, weight: .medium, design: .serif))
+                .font(.system(size: 10, weight: .medium, design: .serif))
                 .foregroundStyle(.secondary)
-                .tracking(3)
+                .tracking(2)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
         }
     }
 
