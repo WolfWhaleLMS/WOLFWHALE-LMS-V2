@@ -8,15 +8,21 @@ struct ResourceLibraryView: View {
             ScrollView {
                 LazyVStack(spacing: 28) {
                     heroSection
-                    arExperiencesSection
+
+                    // Tools (main category)
+                    toolsSection
                     mathematicsSection
                     scienceSection
                     englishSection
                     frenchSection
                     canadianStudiesSection
                     geographySection
+
+                    // AR Experiences
+                    arExperiencesSection
+
+                    // Mini Games
                     gamesSection
-                    toolsSection
                 }
                 .padding(.top, 8)
                 .padding(.bottom, 32)
