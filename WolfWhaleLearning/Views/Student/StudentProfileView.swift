@@ -13,6 +13,7 @@ struct StudentProfileView: View {
                 VStack(spacing: 20) {
                     profileHeader
                     statsGrid
+                    offlineModeSection
                     schoolIDLink
                     achievementsSection
                     streakSection
@@ -100,6 +101,81 @@ struct StudentProfileView: View {
         .glassCard(cornerRadius: 14)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(label): \(value)")
+    }
+
+    private var offlineModeSection: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Image(systemName: "arrow.down.circle.fill")
+                    .foregroundStyle(.cyan)
+                    .symbolRenderingMode(.hierarchical)
+                    .frame(width: 28)
+                Text("Offline Mode")
+                    .font(.headline)
+                Spacer()
+                Toggle("Offline Mode", isOn: Binding(
+                    get: { viewModel.offlineModeEnabled },
+                    set: { newValue in
+                        if newValue {
+                            Task { await viewModel.syncForOfflineUse() }
+                        } else {
+                            viewModel.offlineModeEnabled = false
+                        }
+                    }
+                ))
+                .labelsHidden()
+                .sensoryFeedback(.selection, trigger: viewModel.offlineModeEnabled)
+            }
+
+            if viewModel.isSyncingOffline {
+                HStack(spacing: 8) {
+                    ProgressView()
+                        .controlSize(.small)
+                    Text("Downloading courses for offline use...")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            } else if viewModel.offlineModeEnabled {
+                HStack(spacing: 8) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundStyle(.green)
+                        .symbolRenderingMode(.hierarchical)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("All courses available offline")
+                            .font(.caption.bold())
+                            .foregroundStyle(.primary)
+                        if let lastSync = viewModel.offlineStorage.lastSyncDate {
+                            Text("Last synced \(lastSync, style: .relative) ago")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    Spacer()
+                    Button {
+                        Task { await viewModel.syncForOfflineUse() }
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                            .font(.caption.bold())
+                            .foregroundStyle(.cyan)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Sync now")
+                }
+            } else {
+                HStack(spacing: 8) {
+                    Image(systemName: "info.circle.fill")
+                        .foregroundStyle(.secondary)
+                        .symbolRenderingMode(.hierarchical)
+                    Text("Enable to download all courses, assignments, and grades for offline access.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .padding(16)
+        .glassCard(cornerRadius: 16)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel("Offline Mode")
     }
 
     private var achievementsSection: some View {

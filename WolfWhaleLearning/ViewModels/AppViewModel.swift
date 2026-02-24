@@ -193,6 +193,14 @@ class AppViewModel {
     }
 
     // MARK: - Offline Storage & Cloud Sync
+    var offlineModeEnabled: Bool {
+        get { UserDefaults.standard.bool(forKey: "wolfwhale_offline_mode_enabled") }
+        set {
+            UserDefaults.standard.set(newValue, forKey: "wolfwhale_offline_mode_enabled")
+            if newValue { saveDataToOfflineStorage() }
+        }
+    }
+    var isSyncingOffline = false
     var offlineStorage = OfflineStorageService()
     // Lazy: CKContainer.default() crashes without iCloud capability/entitlements
     private var _cloudSync: CloudSyncService?
@@ -1090,6 +1098,9 @@ class AppViewModel {
             // English Literature -- TTh 1:00-2:15 PM, Room 105
             (.tuesday, 780, "Room 105"),
             (.thursday, 780, "Room 105"),
+            // Intro to Computer Science -- MW 2:30-3:20 PM, Lab 218
+            (.monday, 870, "Lab 218"),
+            (.wednesday, 870, "Lab 218"),
         ]
 
         let mwfDuration = 50
@@ -1104,6 +1115,7 @@ class AppViewModel {
             case 1: courseSlots = Array(slots[3...4])
             case 2: courseSlots = Array(slots[5...7])
             case 3: courseSlots = Array(slots[8...9])
+            case 4: courseSlots = Array(slots[10...11])
             default: continue
             }
 
@@ -1127,6 +1139,17 @@ class AppViewModel {
     }
 
     // MARK: - Offline Storage Helpers
+
+    /// Sync all data for offline use. Called when user enables offline mode or taps "Sync Now".
+    func syncForOfflineUse() async {
+        isSyncingOffline = true
+        if networkMonitor.isConnected {
+            await loadData()
+        }
+        saveDataToOfflineStorage()
+        offlineModeEnabled = true
+        isSyncingOffline = false
+    }
 
     private func saveDataToOfflineStorage() {
         offlineStorage.saveCourses(courses)

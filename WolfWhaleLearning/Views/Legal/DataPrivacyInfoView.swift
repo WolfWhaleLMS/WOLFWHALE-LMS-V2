@@ -270,7 +270,7 @@ struct DataPrivacyInfoView: View {
             legalParagraph("If you have any questions about your data or want to exercise your rights, please contact:")
 
             VStack(alignment: .leading, spacing: 6) {
-                contactRow(icon: "envelope", text: "privacy@wolfwhalelms.com")
+                contactRow(icon: "envelope", text: "info@wolfwhale.ca")
                 contactRow(icon: "building.2", text: "Your school administrator")
             }
         }

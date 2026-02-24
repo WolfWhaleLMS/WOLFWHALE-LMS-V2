@@ -23,12 +23,14 @@ struct MockDataService {
         let scienceId = UUID()
         let historyId = UUID()
         let englishId = UUID()
+        let csId = UUID()
 
         return [
             Course(id: mathId, title: "Algebra II", description: "Advanced algebraic concepts including polynomials, quadratics, and functions.", teacherName: "Dr. Sarah Chen", iconSystemName: "function", colorName: "blue", modules: makeMathModules(), enrolledStudentCount: 28, progress: 0.65, classCode: "MATH-2024"),
             Course(id: scienceId, title: "AP Biology", description: "College-level biology covering cellular processes, genetics, and ecology.", teacherName: "Mr. David Park", iconSystemName: "leaf.fill", colorName: "green", modules: makeScienceModules(), enrolledStudentCount: 24, progress: 0.42, classCode: "BIO-2024"),
             Course(id: historyId, title: "World History", description: "Comprehensive survey of world civilizations from ancient to modern times.", teacherName: "Ms. Emily Torres", iconSystemName: "globe.americas.fill", colorName: "orange", modules: makeHistoryModules(), enrolledStudentCount: 32, progress: 0.78, classCode: "HIST-2024"),
             Course(id: englishId, title: "English Literature", description: "Critical analysis of classic and contemporary literary works.", teacherName: "Mrs. Lisa Johnson", iconSystemName: "text.book.closed.fill", colorName: "purple", modules: makeEnglishModules(), enrolledStudentCount: 26, progress: 0.55, classCode: "ENG-2024"),
+            Course(id: csId, title: "Intro to Computer Science", description: "Foundations of programming, algorithms, and computational thinking using Python.", teacherName: "Mr. Jason Lee", iconSystemName: "chevron.left.forwardslash.chevron.right", colorName: "teal", modules: makeCSModules(), enrolledStudentCount: 22, progress: 0.35, classCode: "CS-2024"),
         ]
     }
 
@@ -48,6 +50,11 @@ struct MockDataService {
             Assignment(id: UUID(), title: "Cell Division Lab Report", courseId: UUID(), courseName: "AP Biology", instructions: "Write a complete lab report on the mitosis experiment conducted in class. Include hypothesis, materials, methods, results with data tables, and conclusion.", dueDate: cal.date(byAdding: .day, value: 5, to: Date()) ?? Date(), points: 150, isSubmitted: false, submission: nil, grade: nil, feedback: nil, xpReward: 0),
             Assignment(id: UUID(), title: "Roman Empire Timeline Project", courseId: UUID(), courseName: "World History", instructions: "Create an illustrated timeline of the Roman Empire from the founding of Rome (753 BCE) to the fall of the Western Empire (476 CE). Include at least 15 key events with brief descriptions.", dueDate: cal.date(byAdding: .day, value: 7, to: Date()) ?? Date(), points: 120, isSubmitted: false, submission: nil, grade: nil, feedback: nil, xpReward: 0),
             Assignment(id: UUID(), title: "Poetry Portfolio", courseId: UUID(), courseName: "English Literature", instructions: "Compile a portfolio of 3 original poems using techniques studied in class: one sonnet, one free verse, and one villanelle. Include a reflective introduction explaining your creative choices.", dueDate: cal.date(byAdding: .day, value: 10, to: Date()) ?? Date(), points: 100, isSubmitted: false, submission: nil, grade: nil, feedback: nil, xpReward: 0),
+            // Computer Science assignments
+            Assignment(id: UUID(), title: "Python Calculator Project", courseId: UUID(), courseName: "Intro to Computer Science", instructions: "Build a command-line calculator in Python that supports addition, subtraction, multiplication, division, and exponentiation. Handle division by zero gracefully and include a menu-driven interface.", dueDate: cal.date(byAdding: .day, value: 4, to: Date()) ?? Date(), points: 100, isSubmitted: false, submission: nil, grade: nil, feedback: nil, xpReward: 0),
+            Assignment(id: UUID(), title: "HTML Portfolio Page", courseId: UUID(), courseName: "Intro to Computer Science", instructions: "Create a personal portfolio web page using HTML and CSS. Include sections for About Me, Projects, and Contact. Use semantic HTML elements and responsive design principles.", dueDate: cal.date(byAdding: .day, value: -6, to: Date()) ?? Date(), points: 80, isSubmitted: true, submission: "Submitted via GitHub Pages link.", grade: 90, feedback: "Clean layout and good use of semantic HTML. Consider adding media queries for mobile responsiveness.", xpReward: 0),
+            Assignment(id: UUID(), title: "Genetics Problem Set", courseId: UUID(), courseName: "AP Biology", instructions: "Complete Punnett square problems for monohybrid and dihybrid crosses. Include phenotype and genotype ratios for each cross. Show all work.", dueDate: cal.date(byAdding: .day, value: 6, to: Date()) ?? Date(), points: 60, isSubmitted: false, submission: nil, grade: nil, feedback: nil, xpReward: 0),
+            Assignment(id: UUID(), title: "Industrial Revolution Essay", courseId: UUID(), courseName: "World History", instructions: "Write an 800-word essay analyzing how the Industrial Revolution changed social class structures in 19th-century England. Use at least 3 primary sources.", dueDate: cal.date(byAdding: .day, value: 12, to: Date()) ?? Date(), points: 100, isSubmitted: false, submission: nil, grade: nil, feedback: nil, xpReward: 0),
         ]
     }
 
@@ -59,6 +66,8 @@ struct MockDataService {
             Quiz(id: UUID(), title: "Chapter 5: Quadratics", courseId: UUID(), courseName: "Algebra II", questions: makeQuizQuestions(), timeLimit: 30, dueDate: cal.date(byAdding: .day, value: 3, to: Date()) ?? Date(), isCompleted: false, score: nil, xpReward: 0),
             Quiz(id: UUID(), title: "Cellular Respiration", courseId: UUID(), courseName: "AP Biology", questions: makeQuizQuestions(), timeLimit: 25, dueDate: cal.date(byAdding: .day, value: 1, to: Date()) ?? Date(), isCompleted: true, score: 88, xpReward: 0),
             Quiz(id: UUID(), title: "Ancient Civilizations", courseId: UUID(), courseName: "World History", questions: makeQuizQuestions(), timeLimit: 20, dueDate: cal.date(byAdding: .day, value: -3, to: Date()) ?? Date(), isCompleted: true, score: 95, xpReward: 0),
+            Quiz(id: UUID(), title: "Literary Devices", courseId: UUID(), courseName: "English Literature", questions: makeQuizQuestions(), timeLimit: 20, dueDate: cal.date(byAdding: .day, value: 4, to: Date()) ?? Date(), isCompleted: false, score: nil, xpReward: 0),
+            Quiz(id: UUID(), title: "Python Basics", courseId: UUID(), courseName: "Intro to Computer Science", questions: makeQuizQuestions(), timeLimit: 25, dueDate: cal.date(byAdding: .day, value: 6, to: Date()) ?? Date(), isCompleted: false, score: nil, xpReward: 0),
         ]
     }
 
@@ -101,6 +110,15 @@ struct MockDataService {
                 AssignmentGrade(id: UUID(), title: "Midterm: Poetry & Drama", score: 91, maxScore: 100, date: Date().addingTimeInterval(-86400 * 4), type: "Exam"),
                 AssignmentGrade(id: UUID(), title: "Seminar Participation", score: 92, maxScore: 100, date: Date().addingTimeInterval(-86400 * 6), type: "Participation"),
                 AssignmentGrade(id: UUID(), title: "Attendance: January-February", score: 36, maxScore: 40, date: Date().addingTimeInterval(-86400 * 2), type: "Attendance"),
+            ]),
+            GradeEntry(id: UUID(), courseId: UUID(), courseName: "Intro to Computer Science", courseIcon: "chevron.left.forwardslash.chevron.right", courseColor: "teal", letterGrade: "A", numericGrade: 93.5, assignmentGrades: [
+                AssignmentGrade(id: UUID(), title: "Hello World Assignment", score: 100, maxScore: 100, date: Date().addingTimeInterval(-86400 * 30), type: "Homework"),
+                AssignmentGrade(id: UUID(), title: "Variables & Data Types Quiz", score: 92, maxScore: 100, date: Date().addingTimeInterval(-86400 * 22), type: "Quiz"),
+                AssignmentGrade(id: UUID(), title: "Control Flow Exercises", score: 88, maxScore: 100, date: Date().addingTimeInterval(-86400 * 15), type: "Homework"),
+                AssignmentGrade(id: UUID(), title: "HTML Portfolio Page", score: 72, maxScore: 80, date: Date().addingTimeInterval(-86400 * 6), type: "Project"),
+                AssignmentGrade(id: UUID(), title: "Functions & Modules Quiz", score: 95, maxScore: 100, date: Date().addingTimeInterval(-86400 * 8), type: "Quiz"),
+                AssignmentGrade(id: UUID(), title: "Lab Participation", score: 94, maxScore: 100, date: Date().addingTimeInterval(-86400 * 4), type: "Participation"),
+                AssignmentGrade(id: UUID(), title: "Attendance: January-February", score: 39, maxScore: 40, date: Date().addingTimeInterval(-86400 * 2), type: "Attendance"),
             ]),
         ]
     }
@@ -147,6 +165,10 @@ struct MockDataService {
             Achievement(id: UUID(), title: "Hot Streak", description: "Maintain a 10-day login streak", iconSystemName: "flame.fill", isUnlocked: true, unlockedDate: Date().addingTimeInterval(-86400 * 2), xpReward: 0, rarity: .rare),
             Achievement(id: UUID(), title: "Quiz Master", description: "Score 100% on 5 quizzes", iconSystemName: "checkmark.seal.fill", isUnlocked: false, unlockedDate: nil, xpReward: 0, rarity: .epic),
             Achievement(id: UUID(), title: "Streak Legend", description: "Maintain a 30-day streak", iconSystemName: "bolt.fill", isUnlocked: false, unlockedDate: nil, xpReward: 0, rarity: .legendary),
+            Achievement(id: UUID(), title: "Early Bird", description: "Submit 3 assignments before the deadline", iconSystemName: "sunrise.fill", isUnlocked: true, unlockedDate: Date().addingTimeInterval(-86400 * 10), xpReward: 0, rarity: .common),
+            Achievement(id: UUID(), title: "Perfect Score", description: "Score 100% on any assignment", iconSystemName: "star.circle.fill", isUnlocked: true, unlockedDate: Date().addingTimeInterval(-86400 * 25), xpReward: 0, rarity: .rare),
+            Achievement(id: UUID(), title: "Team Player", description: "Participate in 5 group discussions", iconSystemName: "hands.sparkles.fill", isUnlocked: false, unlockedDate: nil, xpReward: 0, rarity: .epic),
+            Achievement(id: UUID(), title: "Code Ninja", description: "Complete all programming exercises", iconSystemName: "terminal.fill", isUnlocked: false, unlockedDate: nil, xpReward: 0, rarity: .legendary),
         ]
     }
 
@@ -159,6 +181,11 @@ struct MockDataService {
             LeaderboardEntry(id: UUID(), userName: "Sam Patel", xp: 0, level: 1, rank: 3, avatarSystemName: "person.crop.circle.fill"),
             LeaderboardEntry(id: UUID(), userName: "Taylor Brooks", xp: 0, level: 1, rank: 4, avatarSystemName: "person.crop.circle.fill"),
             LeaderboardEntry(id: UUID(), userName: "Casey Nguyen", xp: 0, level: 1, rank: 5, avatarSystemName: "person.crop.circle.fill"),
+            LeaderboardEntry(id: UUID(), userName: "Morgan Lee", xp: 0, level: 1, rank: 6, avatarSystemName: "person.crop.circle.fill"),
+            LeaderboardEntry(id: UUID(), userName: "Avery Wilson", xp: 0, level: 1, rank: 7, avatarSystemName: "person.crop.circle.fill"),
+            LeaderboardEntry(id: UUID(), userName: "Riley Thompson", xp: 0, level: 1, rank: 8, avatarSystemName: "person.crop.circle.fill"),
+            LeaderboardEntry(id: UUID(), userName: "Jamie Garcia", xp: 0, level: 1, rank: 9, avatarSystemName: "person.crop.circle.fill"),
+            LeaderboardEntry(id: UUID(), userName: "Drew Martinez", xp: 0, level: 1, rank: 10, avatarSystemName: "person.crop.circle.fill"),
         ]
     }
 
@@ -198,6 +225,27 @@ struct MockDataService {
                 ChatMessage(id: UUID(), senderName: "Alex Rivera", content: "Thanks! I'm planning to discuss the irony in his comparisons and how the final couplet redefines beauty.", timestamp: cal.date(byAdding: .hour, value: -52, to: now) ?? now, isFromCurrentUser: true),
                 ChatMessage(id: UUID(), senderName: "Mrs. Lisa Johnson", content: "That sounds like a thoughtful approach. Make sure to include specific line references. See you in class tomorrow!", timestamp: cal.date(byAdding: .day, value: -2, to: now) ?? now, isFromCurrentUser: false),
             ], avatarSystemName: "person.crop.circle.fill"),
+
+            Conversation(id: UUID(), participantNames: ["Mr. Jason Lee"], title: "Mr. Jason Lee", lastMessage: "Keep experimenting, that's how you learn!", lastMessageDate: cal.date(byAdding: .hour, value: -6, to: now) ?? now, unreadCount: 1, messages: [
+                ChatMessage(id: UUID(), senderName: "Alex Rivera", content: "Hi Mr. Lee, I'm working on the Python calculator but I'm getting an error when I try to handle division by zero. Can you help?", timestamp: cal.date(byAdding: .hour, value: -10, to: now) ?? now, isFromCurrentUser: true),
+                ChatMessage(id: UUID(), senderName: "Mr. Jason Lee", content: "Sure! You'll want to use a try-except block. Wrap your division operation in a try block and catch ZeroDivisionError in the except block.", timestamp: cal.date(byAdding: .hour, value: -9, to: now) ?? now, isFromCurrentUser: false),
+                ChatMessage(id: UUID(), senderName: "Alex Rivera", content: "That worked! I also added input validation to make sure the user enters a number.", timestamp: cal.date(byAdding: .hour, value: -7, to: now) ?? now, isFromCurrentUser: true),
+                ChatMessage(id: UUID(), senderName: "Mr. Jason Lee", content: "Excellent thinking! Input validation is a great habit. Keep experimenting, that's how you learn!", timestamp: cal.date(byAdding: .hour, value: -6, to: now) ?? now, isFromCurrentUser: false),
+            ], avatarSystemName: "person.crop.circle.fill"),
+
+            Conversation(id: UUID(), participantNames: ["School Counselor"], title: "Ms. Rachel Adams", lastMessage: "My door is always open if you need anything.", lastMessageDate: cal.date(byAdding: .day, value: -3, to: now) ?? now, unreadCount: 0, messages: [
+                ChatMessage(id: UUID(), senderName: "Ms. Rachel Adams", content: "Hi Alex! Just checking in — how are you feeling about your course load this semester? Five courses can be a lot.", timestamp: cal.date(byAdding: .day, value: -5, to: now) ?? now, isFromCurrentUser: false),
+                ChatMessage(id: UUID(), senderName: "Alex Rivera", content: "It's busy but I'm managing! I really like the new CS class. History is my favorite though.", timestamp: cal.date(byAdding: .day, value: -4, to: now) ?? now, isFromCurrentUser: true),
+                ChatMessage(id: UUID(), senderName: "Ms. Rachel Adams", content: "That's great to hear! Your teachers say you're doing well. Remember, my door is always open if you need anything.", timestamp: cal.date(byAdding: .day, value: -3, to: now) ?? now, isFromCurrentUser: false),
+            ], avatarSystemName: "person.crop.circle.fill"),
+
+            Conversation(id: UUID(), participantNames: ["History Study Group"], title: "History Study Group", lastMessage: "See you all at the library tomorrow!", lastMessageDate: cal.date(byAdding: .hour, value: -12, to: now) ?? now, unreadCount: 0, messages: [
+                ChatMessage(id: UUID(), senderName: "Casey Nguyen", content: "Anyone want to study for the Roman Empire test together?", timestamp: cal.date(byAdding: .hour, value: -20, to: now) ?? now, isFromCurrentUser: false),
+                ChatMessage(id: UUID(), senderName: "Alex Rivera", content: "I'm in! I made flashcards for all the key dates and figures.", timestamp: cal.date(byAdding: .hour, value: -18, to: now) ?? now, isFromCurrentUser: true),
+                ChatMessage(id: UUID(), senderName: "Taylor Brooks", content: "Can I join? I'm struggling with the Punic Wars section.", timestamp: cal.date(byAdding: .hour, value: -16, to: now) ?? now, isFromCurrentUser: false),
+                ChatMessage(id: UUID(), senderName: "Alex Rivera", content: "Of course! I'll bring my notes on Hannibal's campaign.", timestamp: cal.date(byAdding: .hour, value: -14, to: now) ?? now, isFromCurrentUser: true),
+                ChatMessage(id: UUID(), senderName: "Casey Nguyen", content: "See you all at the library tomorrow!", timestamp: cal.date(byAdding: .hour, value: -12, to: now) ?? now, isFromCurrentUser: false),
+            ], avatarSystemName: "person.3.fill"),
         ]
     }
 
@@ -210,6 +258,10 @@ struct MockDataService {
             Announcement(id: UUID(), title: "Parent-Teacher Conference Sign-Up", content: "Parent-teacher conferences will be held on March 5-6 from 4:00 PM to 8:00 PM. Parents can sign up for 15-minute slots through the school portal. If you need accommodations or language interpretation services, please contact the front office by February 28.", authorName: "James Wilson", date: Date().addingTimeInterval(-86400 * 5), isPinned: false),
             Announcement(id: UUID(), title: "Library Extended Hours for Midterms", content: "The school library will have extended hours during midterm week (February 24-28). The library will remain open until 7:00 PM Monday through Thursday. Quiet study rooms can be reserved through the library's online booking system. Snacks and water are now permitted in the study room area.", authorName: "Mrs. Patterson", date: Date().addingTimeInterval(-86400 * 7), isPinned: false),
             Announcement(id: UUID(), title: "New AR Learning Lab Now Open", content: "We are excited to announce that the new Augmented Reality Learning Lab in room 312 is now open for student use! The lab features AR stations for biology, chemistry, and history courses. Students can book 30-minute sessions during study hall or after school. Training sessions will be held this week during lunch periods.", authorName: "James Wilson", date: Date().addingTimeInterval(-86400 * 10), isPinned: false),
+            Announcement(id: UUID(), title: "Varsity Basketball Championship", content: "Come support the WolfWhale Sharks at the regional championship game this Saturday at 3:00 PM in the main gymnasium! Student admission is free with valid school ID. Concessions will be available. Wear your school colors!", authorName: "Coach Martinez", date: Date().addingTimeInterval(-86400 * 2), isPinned: true),
+            Announcement(id: UUID(), title: "Spring Club Fair", content: "The annual Spring Club Fair will be held next Wednesday during lunch in the student commons. Over 30 clubs will be represented, including Robotics, Debate, Art, Environmental Action, and more. It's a great opportunity to explore new interests and meet new people!", authorName: "Student Council", date: Date().addingTimeInterval(-86400 * 4), isPinned: false),
+            Announcement(id: UUID(), title: "Coding Competition Sign-Up", content: "WolfWhale Academy is entering a team in the regional CodeJam competition on April 5th. Students interested in competitive programming should sign up with Mr. Lee in the CS lab (Room 218) by March 12. No prior competition experience needed — just enthusiasm for problem-solving!", authorName: "Mr. Jason Lee", date: Date().addingTimeInterval(-86400 * 6), isPinned: false),
+            Announcement(id: UUID(), title: "Campus Wi-Fi Upgrade", content: "The IT department will be performing network upgrades this weekend to improve campus Wi-Fi speed and coverage. There may be brief connectivity interruptions on Saturday between 6:00 AM and 10:00 AM. All offline features of the WolfWhale LMS will remain fully functional during this time.", authorName: "IT Department", date: Date().addingTimeInterval(-86400 * 8), isPinned: false),
         ]
     }
 
@@ -218,11 +270,28 @@ struct MockDataService {
     func sampleChildren() -> [ChildInfo] {
         [
             ChildInfo(id: UUID(), name: "Alex Rivera", grade: "10th Grade", avatarSystemName: "person.crop.circle.fill", gpa: 3.7, attendanceRate: 0.96, courses: sampleGrades(), recentAssignments: Array(sampleAssignments().prefix(3))),
+            ChildInfo(id: UUID(), name: "Sofia Rivera", grade: "7th Grade", avatarSystemName: "person.crop.circle.fill", gpa: 3.9, attendanceRate: 0.98, courses: [
+                GradeEntry(id: UUID(), courseId: UUID(), courseName: "Pre-Algebra", courseIcon: "x.squareroot", courseColor: "blue", letterGrade: "A", numericGrade: 95.0, assignmentGrades: [
+                    AssignmentGrade(id: UUID(), title: "Fractions Review", score: 96, maxScore: 100, date: Date().addingTimeInterval(-86400 * 14), type: "Homework"),
+                    AssignmentGrade(id: UUID(), title: "Quiz: Decimals", score: 94, maxScore: 100, date: Date().addingTimeInterval(-86400 * 7), type: "Quiz"),
+                ]),
+                GradeEntry(id: UUID(), courseId: UUID(), courseName: "Life Science", courseIcon: "tortoise.fill", courseColor: "green", letterGrade: "A-", numericGrade: 92.0, assignmentGrades: [
+                    AssignmentGrade(id: UUID(), title: "Ecosystems Poster", score: 90, maxScore: 100, date: Date().addingTimeInterval(-86400 * 10), type: "Project"),
+                    AssignmentGrade(id: UUID(), title: "Quiz: Food Chains", score: 94, maxScore: 100, date: Date().addingTimeInterval(-86400 * 5), type: "Quiz"),
+                ]),
+                GradeEntry(id: UUID(), courseId: UUID(), courseName: "English 7", courseIcon: "text.book.closed.fill", courseColor: "purple", letterGrade: "A+", numericGrade: 97.5, assignmentGrades: [
+                    AssignmentGrade(id: UUID(), title: "Book Report: The Giver", score: 98, maxScore: 100, date: Date().addingTimeInterval(-86400 * 8), type: "Essay"),
+                    AssignmentGrade(id: UUID(), title: "Vocabulary Quiz 3", score: 97, maxScore: 100, date: Date().addingTimeInterval(-86400 * 3), type: "Quiz"),
+                ]),
+            ], recentAssignments: [
+                Assignment(id: UUID(), title: "Fraction Word Problems", courseId: UUID(), courseName: "Pre-Algebra", instructions: "Complete worksheet problems 1-15.", dueDate: Date().addingTimeInterval(-86400 * 2), points: 50, isSubmitted: true, submission: "Completed.", grade: 48, feedback: "Excellent work!", xpReward: 0),
+                Assignment(id: UUID(), title: "Habitat Diorama", courseId: UUID(), courseName: "Life Science", instructions: "Build a diorama of an assigned biome.", dueDate: Date().addingTimeInterval(86400 * 5), points: 100, isSubmitted: false, submission: nil, grade: nil, feedback: nil, xpReward: 0),
+            ]),
         ]
     }
 
     func sampleSchoolMetrics() -> SchoolMetrics {
-        SchoolMetrics(totalStudents: 1247, totalTeachers: 68, totalCourses: 142, averageAttendance: 0.94, averageGPA: 3.2, activeUsers: 1089)
+        SchoolMetrics(totalStudents: 1247, totalTeachers: 68, totalCourses: 142, averageAttendance: 0.94, averageGPA: 3.2, activeUsers: 1182)
     }
 
     // MARK: - Math Modules (Algebra II)
@@ -540,6 +609,84 @@ At the paragraph level, check that each body paragraph has a clear topic sentenc
 
 At the sentence level, aim for clarity and precision. Eliminate unnecessary words and phrases ("it is important to note that" can usually be cut entirely). Vary sentence length and structure to create a pleasing rhythm. Replace vague words with specific ones: instead of "Shakespeare uses a lot of imagery," write "Shakespeare saturates the opening scene with images of rot and decay." Read your essay aloud — your ear will catch awkward phrasing, repetition, and unclear passages that your eye might miss. Finally, proofread carefully for grammar, punctuation, and formatting according to the required style guide (MLA, APA, or Chicago).
 """, duration: 18, isCompleted: false, type: .reading, xpReward: 0),
+            ], orderIndex: 2),
+        ]
+    }
+
+    // MARK: - Computer Science Modules (Intro to CS)
+
+    private func makeCSModules() -> [Module] {
+        [
+            Module(id: UUID(), title: "Introduction to Programming", lessons: [
+                Lesson(id: UUID(), title: "What is Programming?", content: """
+Programming is the process of creating instructions that a computer can follow to perform specific tasks. These instructions, written in a programming language, are called code. Just as humans communicate using natural languages like English or Spanish, programmers communicate with computers using languages like Python, Java, and JavaScript. Each language has its own syntax (rules for writing code) and semantics (meaning of the code).
+
+At its core, programming is about problem-solving. Before writing any code, a programmer must understand the problem, break it down into smaller steps, and design a solution. This process is called computational thinking. It involves four key skills: decomposition (breaking a complex problem into smaller parts), pattern recognition (finding similarities among problems), abstraction (focusing on important details while ignoring irrelevant ones), and algorithm design (creating step-by-step instructions to solve each part).
+
+Python is an excellent language for beginners because its syntax is clean and readable, closely resembling plain English. A simple Python program to display a greeting looks like this: print("Hello, World!"). This single line of code calls the print function and passes it a string of text. Python is used in web development, data science, artificial intelligence, and automation, making it one of the most versatile and in-demand programming languages in the world.
+""", duration: 15, isCompleted: true, type: .reading, xpReward: 0),
+                Lesson(id: UUID(), title: "Variables and Data Types", content: """
+Variables are named containers that store data in a program. Think of a variable as a labeled box — the label is the variable name, and the contents are the value. In Python, you create a variable by assigning a value to a name using the equals sign: age = 16, name = "Alex", gpa = 3.7. Unlike some languages, Python does not require you to declare the type of a variable — it figures out the type automatically based on the value you assign.
+
+Python has several built-in data types. Integers (int) are whole numbers like 42, -7, or 0. Floating-point numbers (float) have decimal points, like 3.14 or -0.5. Strings (str) are sequences of characters enclosed in quotes, like "Hello" or 'WolfWhale Academy'. Booleans (bool) represent truth values and can only be True or False. Lists are ordered collections that can hold multiple values: grades = [92, 88, 95, 91].
+
+Type conversion lets you change a value from one type to another. The int() function converts to an integer, float() converts to a float, and str() converts to a string. This is important when combining different types — for example, you cannot directly concatenate a string and a number. Instead, you would write: "Your age is " + str(age). Understanding data types helps you avoid common errors and write more reliable code.
+""", duration: 18, isCompleted: true, type: .reading, xpReward: 0),
+                Lesson(id: UUID(), title: "Control Flow: Conditionals and Loops", content: """
+Control flow determines the order in which statements are executed in a program. By default, Python executes code line by line from top to bottom. Conditional statements (if, elif, else) allow your program to make decisions based on conditions. For example: if grade >= 90: print("A") elif grade >= 80: print("B") else: print("Below B"). The condition is evaluated as True or False, and only the corresponding block of code runs.
+
+Comparison operators are used in conditions: == (equal to), != (not equal to), > (greater than), < (less than), >= (greater than or equal to), and <= (less than or equal to). Logical operators combine multiple conditions: and (both must be true), or (at least one must be true), and not (reverses the truth value). For example: if age >= 13 and has_permission: print("Access granted").
+
+Loops allow you to repeat code multiple times. A for loop iterates over a sequence: for student in students: print(student). A while loop repeats as long as a condition is true: while attempts < 3: get_password(). The break statement exits a loop early, and continue skips to the next iteration. Loops are essential for processing lists, reading files, and any task that involves repetition. Be careful with while loops — if the condition never becomes False, you create an infinite loop that will freeze your program.
+""", duration: 20, isCompleted: true, type: .reading, xpReward: 0),
+            ], orderIndex: 0),
+
+            Module(id: UUID(), title: "Functions and Data Structures", lessons: [
+                Lesson(id: UUID(), title: "Writing Functions", content: """
+Functions are reusable blocks of code that perform a specific task. They help you organize your code, avoid repetition, and make your programs easier to read and debug. In Python, you define a function using the def keyword, followed by the function name and parentheses containing any parameters: def calculate_average(scores): total = sum(scores) return total / len(scores).
+
+Parameters are the variables listed in the function definition — they act as placeholders for the actual values (arguments) that will be passed when the function is called. Functions can have default parameter values: def greet(name, greeting="Hello"): return f"{greeting}, {name}!". When you call greet("Alex"), it uses the default greeting. When you call greet("Alex", "Hey"), it uses the custom greeting.
+
+The return statement sends a value back to the code that called the function. A function can return any type of value — a number, string, list, or even another function. If a function has no return statement, it returns None by default. Good functions follow the single responsibility principle: each function should do one thing and do it well. Breaking your code into small, focused functions makes it modular and testable. You can even write functions that call other functions, building complex behavior from simple pieces.
+""", duration: 20, isCompleted: false, type: .reading, xpReward: 0),
+                Lesson(id: UUID(), title: "Lists and Dictionaries", content: """
+Lists and dictionaries are Python's most commonly used data structures. A list is an ordered, mutable collection of items: fruits = ["apple", "banana", "cherry"]. You access items by their index (starting at 0): fruits[0] returns "apple". Lists support operations like append() to add items, remove() to delete items, sort() to arrange items, and len() to count items. List slicing lets you extract portions: fruits[1:3] returns ["banana", "cherry"].
+
+Dictionaries store data as key-value pairs, like a real dictionary maps words to definitions. Create a dictionary with curly braces: student = {"name": "Alex", "grade": 10, "gpa": 3.7}. Access values by their keys: student["name"] returns "Alex". Dictionaries are incredibly useful for organizing related data. You can add new entries (student["email"] = "alex@school.edu"), update existing ones, or remove them with del.
+
+List comprehensions provide a concise way to create lists: squares = [x**2 for x in range(10)] creates a list of squares from 0 to 81. You can add conditions: passing = [s for s in scores if s >= 60]. Nested data structures — like lists of dictionaries — are common in real-world programming. For example, a classroom might be represented as: students = [{"name": "Alex", "grade": 95}, {"name": "Jordan", "grade": 88}]. Understanding when to use lists versus dictionaries is a key skill in writing clean, efficient Python code.
+""", duration: 22, isCompleted: false, type: .reading, xpReward: 0),
+                Lesson(id: UUID(), title: "File I/O and Error Handling", content: """
+File input and output (I/O) allows your program to read from and write to files on disk, enabling data persistence beyond a single program run. In Python, the open() function creates a file object. The recommended way to work with files is using the with statement, which automatically closes the file when done: with open("data.txt", "r") as file: content = file.read(). The mode parameter specifies the operation: "r" for reading, "w" for writing (overwrites), and "a" for appending.
+
+Reading a file line by line is common for processing large datasets: with open("grades.csv") as file: for line in file: process(line). Writing to a file uses the write() method: with open("output.txt", "w") as file: file.write("Hello, World!"). For structured data, Python's csv module simplifies reading and writing CSV files, and the json module handles JSON data — a format widely used in web applications and APIs.
+
+Error handling with try-except blocks prevents your program from crashing when something goes wrong. Common errors include FileNotFoundError (file does not exist), ValueError (wrong type of input), and ZeroDivisionError. Structure: try: result = 10 / number except ZeroDivisionError: print("Cannot divide by zero"). You can catch multiple exceptions, use else for code that runs only if no exception occurred, and finally for cleanup code that always runs. Good error handling makes your programs robust and user-friendly.
+""", duration: 22, isCompleted: false, type: .reading, xpReward: 0),
+            ], orderIndex: 1),
+
+            Module(id: UUID(), title: "Web Development Basics", lessons: [
+                Lesson(id: UUID(), title: "HTML: Structure of the Web", content: """
+HTML (HyperText Markup Language) is the standard language for creating web pages. It defines the structure and content of a page using elements represented by tags. An HTML document starts with <!DOCTYPE html> to declare the document type, followed by the <html> element containing <head> (metadata, title, linked stylesheets) and <body> (visible content). Every HTML page follows this basic skeleton.
+
+HTML elements are defined by opening and closing tags: <p>This is a paragraph.</p>. Common elements include headings (<h1> through <h6>), paragraphs (<p>), links (<a href="url">), images (<img src="image.jpg" alt="description">), and lists (<ul> for unordered, <ol> for ordered, with <li> for items). Semantic elements like <header>, <nav>, <main>, <article>, <section>, and <footer> describe the meaning of their content, improving accessibility and SEO.
+
+Attributes provide additional information about elements. The id attribute gives an element a unique identifier, class assigns one or more CSS classes, and aria attributes improve accessibility for screen readers. Forms collect user input using <form>, <input>, <textarea>, <select>, and <button> elements. Understanding HTML is the first step in web development — it provides the foundation upon which CSS adds visual styling and JavaScript adds interactivity.
+""", duration: 18, isCompleted: false, type: .reading, xpReward: 0),
+                Lesson(id: UUID(), title: "CSS: Styling Your Pages", content: """
+CSS (Cascading Style Sheets) controls the visual presentation of HTML elements. While HTML defines what content appears on a page, CSS determines how that content looks — colors, fonts, spacing, layout, and animations. CSS rules consist of a selector (which elements to style) and declarations (what styles to apply): h1 { color: navy; font-size: 24px; }.
+
+Selectors target elements in different ways. Element selectors (p, h1, div) style all instances of a tag. Class selectors (.highlight) target elements with a specific class attribute. ID selectors (#header) target a single unique element. You can combine selectors and use pseudo-classes (:hover, :first-child) for interactive states. The cascade determines which styles take precedence when multiple rules apply — specificity and source order both play a role.
+
+Modern CSS layout is powered by Flexbox and Grid. Flexbox excels at one-dimensional layouts (rows or columns): display: flex arranges child elements along a main axis, with properties like justify-content and align-items controlling alignment. CSS Grid handles two-dimensional layouts: display: grid lets you define rows and columns simultaneously. Responsive design uses media queries to adapt layouts for different screen sizes: @media (max-width: 768px) { ... } applies styles only on smaller screens. These tools let you create professional, responsive websites that look great on any device.
+""", duration: 20, isCompleted: false, type: .reading, xpReward: 0),
+                Lesson(id: UUID(), title: "Introduction to JavaScript", content: """
+JavaScript is the programming language of the web, enabling interactive and dynamic behavior in web pages. While HTML provides structure and CSS provides styling, JavaScript brings pages to life — handling user clicks, validating forms, fetching data, creating animations, and much more. Every modern web browser includes a JavaScript engine that runs code directly in the browser.
+
+JavaScript shares many concepts with Python — variables (declared with let or const), data types (numbers, strings, booleans, arrays, objects), conditionals (if/else), loops (for, while), and functions. However, the syntax differs: JavaScript uses curly braces for code blocks instead of indentation, semicolons to end statements, and === for strict equality comparison. Functions can be written as declarations: function add(a, b) { return a + b; } or as arrow functions: const add = (a, b) => a + b;
+
+The Document Object Model (DOM) connects JavaScript to the web page. Using methods like document.getElementById() and document.querySelector(), you can select HTML elements and modify their content, attributes, and styles. Event listeners respond to user actions: button.addEventListener('click', function() { alert('Clicked!'); }). JavaScript can also fetch data from servers using the fetch API, enabling your pages to update without reloading. This is the foundation of modern single-page applications built with frameworks like React, Vue, and Angular.
+""", duration: 22, isCompleted: false, type: .reading, xpReward: 0),
             ], orderIndex: 2),
         ]
     }

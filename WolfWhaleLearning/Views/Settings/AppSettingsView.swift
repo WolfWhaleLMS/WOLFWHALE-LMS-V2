@@ -302,13 +302,40 @@ struct AppSettingsView: View {
 
     private var dataAndStorageSection: some View {
         Section {
+            HStack {
+                Label {
+                    Text("Offline Mode")
+                } icon: {
+                    Image(systemName: "arrow.down.circle.fill")
+                        .foregroundStyle(.cyan)
+                        .symbolRenderingMode(.hierarchical)
+                }
+                Spacer()
+                if viewModel.isSyncingOffline {
+                    ProgressView()
+                        .controlSize(.small)
+                }
+                Toggle("Offline Mode", isOn: Binding(
+                    get: { viewModel.offlineModeEnabled },
+                    set: { newValue in
+                        if newValue {
+                            Task { await viewModel.syncForOfflineUse() }
+                        } else {
+                            viewModel.offlineModeEnabled = false
+                        }
+                    }
+                ))
+                .labelsHidden()
+                .sensoryFeedback(.selection, trigger: viewModel.offlineModeEnabled)
+            }
+
             NavigationLink {
                 OfflineSyncView(viewModel: viewModel)
             } label: {
                 Label {
-                    Text("Offline & Sync")
+                    Text("Offline & Sync Settings")
                 } icon: {
-                    Image(systemName: "arrow.down.circle.fill")
+                    Image(systemName: "gearshape.fill")
                         .foregroundStyle(.cyan)
                         .symbolRenderingMode(.hierarchical)
                 }

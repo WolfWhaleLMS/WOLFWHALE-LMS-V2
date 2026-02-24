@@ -256,8 +256,8 @@ struct TermsOfServiceView: View {
             legalParagraph("If you have questions or concerns about these Terms of Service, please contact your school administrator or reach out to us at:")
 
             VStack(alignment: .leading, spacing: 6) {
-                contactRow(icon: "envelope", text: "legal@wolfwhalelms.com")
-                contactRow(icon: "globe", text: "www.wolfwhalelms.com/terms")
+                contactRow(icon: "envelope", text: "info@wolfwhale.ca")
+                contactRow(icon: "globe", text: "www.wolfwhale.ca")
             }
         }
         .padding(20)

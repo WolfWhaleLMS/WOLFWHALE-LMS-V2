@@ -55,6 +55,70 @@ struct ParentSettingsView: View {
                     Text("When enabled, you will receive an immediate notification when your child is marked absent.")
                 }
 
+                Section {
+                    HStack {
+                        Label {
+                            Text("Offline Mode")
+                        } icon: {
+                            Image(systemName: "arrow.down.circle.fill")
+                                .foregroundStyle(.cyan)
+                                .symbolRenderingMode(.hierarchical)
+                        }
+                        Spacer()
+                        Toggle("Offline Mode", isOn: Binding(
+                            get: { viewModel.offlineModeEnabled },
+                            set: { newValue in
+                                if newValue {
+                                    Task { await viewModel.syncForOfflineUse() }
+                                } else {
+                                    viewModel.offlineModeEnabled = false
+                                }
+                            }
+                        ))
+                        .labelsHidden()
+                        .sensoryFeedback(.selection, trigger: viewModel.offlineModeEnabled)
+                    }
+
+                    if viewModel.isSyncingOffline {
+                        HStack(spacing: 8) {
+                            ProgressView()
+                                .controlSize(.small)
+                            Text("Downloading content for offline use...")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    } else if viewModel.offlineModeEnabled {
+                        HStack(spacing: 8) {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(.green)
+                                .symbolRenderingMode(.hierarchical)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("All content available offline")
+                                    .font(.caption.bold())
+                                if let lastSync = viewModel.offlineStorage.lastSyncDate {
+                                    Text("Last synced \(lastSync, style: .relative) ago")
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            Spacer()
+                            Button {
+                                Task { await viewModel.syncForOfflineUse() }
+                            } label: {
+                                Image(systemName: "arrow.clockwise")
+                                    .font(.caption.bold())
+                                    .foregroundStyle(.cyan)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Sync now")
+                        }
+                    }
+                } header: {
+                    Text("Offline Access")
+                } footer: {
+                    Text("When enabled, all your children's reports and messages are downloaded for offline viewing.")
+                }
+
                 if viewModel.biometricService.isBiometricAvailable {
                     Section {
                         HStack {

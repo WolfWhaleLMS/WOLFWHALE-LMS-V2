@@ -257,7 +257,7 @@ struct PrivacyPolicyView: View {
                 bulletPoint("School administrators may request deletion of student, teacher, or staff data for their institution.")
 
                 subsectionTitle("Deletion Process")
-                bulletPoint("Deletion requests should be submitted to the school administrator, who will coordinate with WolfWhale, or directly to WolfWhale support at privacy@wolfwhalelms.com.")
+                bulletPoint("Deletion requests should be submitted to the school administrator, who will coordinate with WolfWhale, or directly to WolfWhale support at info@wolfwhale.ca.")
                 bulletPoint("We will process deletion requests within thirty (30) business days of receipt.")
                 bulletPoint("Upon deletion, the user's personal information, educational records, gamification data, and communication logs will be permanently removed from active systems.")
 
@@ -358,8 +358,8 @@ struct PrivacyPolicyView: View {
             legalParagraph("If you have questions, concerns, or requests regarding this Privacy Policy or your data, please contact:")
 
             VStack(alignment: .leading, spacing: 6) {
-                contactRow(icon: "envelope", text: "privacy@wolfwhalelms.com")
-                contactRow(icon: "globe", text: "www.wolfwhalelms.com/privacy")
+                contactRow(icon: "envelope", text: "info@wolfwhale.ca")
+                contactRow(icon: "globe", text: "www.wolfwhale.ca")
                 contactRow(icon: "building.2", text: "Your school administrator")
             }
 
