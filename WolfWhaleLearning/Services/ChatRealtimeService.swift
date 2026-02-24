@@ -79,6 +79,7 @@ final class ChatRealtimeService {
 
         let insertions = ch.postgresChange(
             InsertAction.self,
+            schema: "public",
             table: "messages",
             filter: "conversation_id=eq.\(key)"
         )
@@ -159,6 +160,7 @@ final class ChatRealtimeService {
 
             let insertions = ch.postgresChange(
                 InsertAction.self,
+                schema: "public",
                 table: "messages",
                 filter: "conversation_id=eq.\(conversationId.uuidString)"
             )

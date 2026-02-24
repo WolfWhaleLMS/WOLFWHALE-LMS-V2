@@ -76,51 +76,42 @@ final class ClassroomFinderViewModel: NSObject, CLLocationManagerDelegate {
     func calculateRoute() {
         guard let target = targetLocation else { return }
 
-        let source: CLLocationCoordinate2D
-        if let userCoord = userLocation {
-            source = userCoord
-        } else {
-            // Fallback to campus center
-            source = CampusLocation.campusCenter
-        }
-
         isLoadingRoute = true
         routeError = nil
         route = nil
 
         let request = MKDirections.Request()
         request.source = MKMapItem.forCurrentLocation()
-        request.destination = MKMapItem(placemark: MKPlacemark(coordinate: target.coordinate))
+        request.destination = MKMapItem(location: CLLocation(latitude: target.coordinate.latitude, longitude: target.coordinate.longitude))
         request.transportType = .walking
 
         let directions = MKDirections(request: request)
-        directions.calculate { [weak self] response, error in
-            Task { @MainActor in
-                guard let self else { return }
+        Task {
+            do {
+                let response = try await directions.calculate()
                 self.isLoadingRoute = false
-                if let error {
-                    self.routeError = error.localizedDescription
-                    // Fallback: set camera to target anyway
-                    self.cameraPosition = .region(
-                        MKCoordinateRegion(
-                            center: target.coordinate,
-                            span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
-                        )
-                    )
-                    return
-                }
-                if let route = response?.routes.first {
+                if let route = response.routes.first {
                     self.route = route
                     // Zoom to show the full route
                     self.cameraPosition = .automatic
                 }
+            } catch {
+                self.isLoadingRoute = false
+                self.routeError = error.localizedDescription
+                // Fallback: set camera to target anyway
+                self.cameraPosition = .region(
+                    MKCoordinateRegion(
+                        center: target.coordinate,
+                        span: MKCoordinateSpan(latitudeDelta: 0.005, longitudeDelta: 0.005)
+                    )
+                )
             }
         }
     }
 
     func openInMaps() {
         guard let target = targetLocation else { return }
-        let destination = MKMapItem(placemark: MKPlacemark(coordinate: target.coordinate))
+        let destination = MKMapItem(location: CLLocation(latitude: target.coordinate.latitude, longitude: target.coordinate.longitude))
         destination.name = target.name
         destination.openInMaps(launchOptions: [
             MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeWalking

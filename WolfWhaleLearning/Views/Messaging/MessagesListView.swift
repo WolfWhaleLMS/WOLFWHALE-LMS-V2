@@ -149,7 +149,7 @@ struct NewConversationSheet: View {
         case .teacher:
             // Teachers can message: other teachers, students in their courses, parents.
             let teacherFullName = currentUser.fullName
-            let taughtCourseNames = Set(
+            let _ = Set(
                 viewModel.courses
                     .filter { $0.teacherName == teacherFullName }
                     .map(\.title)

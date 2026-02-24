@@ -58,7 +58,7 @@ final class CampusMapViewModel: NSObject, CLLocationManagerDelegate {
     }
 
     func openInMaps(_ location: CampusLocation) {
-        let destination = MKMapItem(placemark: MKPlacemark(coordinate: location.coordinate))
+        let destination = MKMapItem(location: CLLocation(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude))
         destination.name = location.name
         destination.openInMaps(launchOptions: [
             MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeWalking

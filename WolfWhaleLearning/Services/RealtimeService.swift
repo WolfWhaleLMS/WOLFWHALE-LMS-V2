@@ -61,6 +61,7 @@ final class RealtimeService {
 
         let insertions = ch.postgresChange(
             InsertAction.self,
+            schema: "public",
             table: "messages",
             filter: "conversation_id=eq.\(conversationId.uuidString)"
         )
