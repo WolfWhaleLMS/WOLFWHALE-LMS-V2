@@ -6,6 +6,7 @@ import Observation
 @MainActor
 @Observable
 final class CallService: NSObject {
+    static let shared = CallService()
 
     var activeCallUUID: UUID?
     var isCallActive: Bool = false
