@@ -14,11 +14,9 @@ struct LoginView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 0) {
-                Spacer().frame(height: 20)
-
                 logoSection
 
-                Spacer().frame(height: 20)
+                Spacer().frame(height: 16)
 
                 loginSection
 
@@ -55,8 +53,8 @@ struct LoginView: View {
             ZStack {
                 Circle()
                     .fill(Theme.brandPurple.opacity(glowPulse ? 0.25 : 0.08))
-                    .frame(width: 260, height: 260)
-                    .blur(radius: 60)
+                    .frame(width: 200, height: 200)
+                    .blur(radius: 50)
 
                 RoundedRectangle(cornerRadius: 32)
                     .fill(.black)
@@ -69,6 +67,7 @@ struct LoginView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 32))
                     .shadow(color: Theme.brandPurple.opacity(glowPulse ? 0.6 : 0.25), radius: 20, y: 0)
             }
+            .frame(height: 180)
             .accessibilityHidden(true)
             .onAppear {
                 withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) {
