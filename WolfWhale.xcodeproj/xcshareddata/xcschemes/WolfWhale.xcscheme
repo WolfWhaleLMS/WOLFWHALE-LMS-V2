@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "105FC5792E9EAD3100EA8BCF"
-               BuildableName = "WolfWhaleLearning.app"
-               BlueprintName = "WolfWhaleLearning"
-               ReferencedContainer = "container:WolfWhaleLearning.xcodeproj">
+               BuildableName = "WolfWhale.app"
+               BlueprintName = "WolfWhale"
+               ReferencedContainer = "container:WolfWhale.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -35,9 +35,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "105FC5882E9EAD3200EA8BCF"
-               BuildableName = "WolfWhaleLearningTests.xctest"
-               BlueprintName = "WolfWhaleLearning"
-               ReferencedContainer = "container:WolfWhaleLearning.xcodeproj">
+               BuildableName = "WolfWhaleTests.xctest"
+               BlueprintName = "WolfWhale"
+               ReferencedContainer = "container:WolfWhale.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -57,9 +57,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "105FC5792E9EAD3100EA8BCF"
-            BuildableName = "WolfWhaleLearning.app"
-            BlueprintName = "WolfWhaleLearning"
-            ReferencedContainer = "container:WolfWhaleLearning.xcodeproj">
+            BuildableName = "WolfWhale.app"
+            BlueprintName = "WolfWhale"
+            ReferencedContainer = "container:WolfWhale.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -74,9 +74,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "105FC5792E9EAD3100EA8BCF"
-            BuildableName = "WolfWhaleLearning.app"
-            BlueprintName = "WolfWhaleLearning"
-            ReferencedContainer = "container:WolfWhaleLearning.xcodeproj">
+            BuildableName = "WolfWhale.app"
+            BlueprintName = "WolfWhale"
+            ReferencedContainer = "container:WolfWhale.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
