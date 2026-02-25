@@ -43,21 +43,46 @@ nonisolated enum InputValidator {
 
     // MARK: - Password Validation
 
+    /// Characters considered special for password strength requirements.
+    private static let specialCharacters = CharacterSet(charactersIn: "!@#$%^&*()_+-=[]{}|;':\",./<>?`~")
+
+    /// Returns an array of specific error messages describing which password
+    /// strength requirements are not met.  An empty array means the password
+    /// satisfies all requirements.
+    ///
+    /// Requirements:
+    /// - Minimum 8 characters
+    /// - At least one uppercase letter
+    /// - At least one lowercase letter
+    /// - At least one digit
+    /// - At least one special character (!@#$%^&*()_+-=[]{}|;':\",./<>?`~)
+    static func passwordStrengthErrors(for password: String) -> [String] {
+        var errors: [String] = []
+        if password.count < 8 {
+            errors.append("Password must be at least 8 characters long.")
+        }
+        if password.rangeOfCharacter(from: .uppercaseLetters) == nil {
+            errors.append("Password must contain at least one uppercase letter.")
+        }
+        if password.rangeOfCharacter(from: .lowercaseLetters) == nil {
+            errors.append("Password must contain at least one lowercase letter.")
+        }
+        if password.rangeOfCharacter(from: .decimalDigits) == nil {
+            errors.append("Password must contain at least one number.")
+        }
+        if password.unicodeScalars.first(where: { specialCharacters.contains($0) }) == nil {
+            errors.append("Password must contain at least one special character.")
+        }
+        return errors
+    }
+
     /// Validates password strength. Requires minimum 8 characters, at least one uppercase letter,
-    /// one lowercase letter, and one digit.
+    /// one lowercase letter, one digit, and one special character.
     /// Returns a tuple with the validation result and a user-friendly message.
     static func validatePassword(_ password: String) -> (valid: Bool, message: String) {
-        guard password.count >= 8 else {
-            return (false, "Password must be at least 8 characters long.")
-        }
-        guard password.rangeOfCharacter(from: .uppercaseLetters) != nil else {
-            return (false, "Password must contain at least one uppercase letter.")
-        }
-        guard password.rangeOfCharacter(from: .lowercaseLetters) != nil else {
-            return (false, "Password must contain at least one lowercase letter.")
-        }
-        guard password.rangeOfCharacter(from: .decimalDigits) != nil else {
-            return (false, "Password must contain at least one number.")
+        let errors = passwordStrengthErrors(for: password)
+        if let first = errors.first {
+            return (false, first)
         }
         return (true, "")
     }
@@ -115,38 +140,99 @@ nonisolated enum InputValidator {
 
     // MARK: - HTML Sanitization
 
-    /// Strips all HTML tags from the input to prevent XSS attacks.
-    /// This is a defence-in-depth measure for content that may be rendered in web views.
+    /// Tags allowed through the sanitizer (safe formatting-only tags).
+    private static let allowedTags: Set<String> = ["b", "i", "em", "strong", "p", "br", "ul", "ol", "li"]
+
+    /// Decode common HTML entities so encoded payloads become visible.
+    private static func decodeHTMLEntities(_ input: String) -> String {
+        input
+            .replacingOccurrences(of: "&#39;", with: "'")
+            .replacingOccurrences(of: "&quot;", with: "\"")
+            .replacingOccurrences(of: "&lt;", with: "<")
+            .replacingOccurrences(of: "&gt;", with: ">")
+            .replacingOccurrences(of: "&nbsp;", with: " ")
+            .replacingOccurrences(of: "&amp;", with: "&")
+    }
+
+    /// Sanitizes HTML using a whitelist approach. Only the tags listed in
+    /// ``allowedTags`` are preserved, and **all** attributes are stripped from
+    /// those tags (preventing `onclick`, `onerror`, `style`, etc.).
     ///
-    /// Decodes HTML entities first, then strips tags, and repeats in a loop
-    /// (up to 3 iterations) to catch multi-layer encoded payloads such as
-    /// `&lt;script&gt;` which would become `<script>` after a single decode.
+    /// Additionally:
+    /// - `<script>` and `<style>` tags are removed **with their content**.
+    /// - Encoded HTML entities are decoded iteratively (up to 3 passes) to
+    ///   catch multi-layer encoded payloads such as `&lt;script&gt;`.
+    /// - Any tag not on the whitelist is removed entirely.
     static func sanitizeHTML(_ input: String) -> String {
         var result = input
 
         for _ in 0..<3 {
-            // 1. Decode common HTML entities so encoded tags become visible
-            let decoded = result
-                .replacingOccurrences(of: "&#39;", with: "'")
-                .replacingOccurrences(of: "&quot;", with: "\"")
-                .replacingOccurrences(of: "&lt;", with: "<")
-                .replacingOccurrences(of: "&gt;", with: ">")
-                .replacingOccurrences(of: "&nbsp;", with: " ")
-                .replacingOccurrences(of: "&amp;", with: "&")
+            // 1. Decode HTML entities so encoded tags become visible
+            let decoded = decodeHTMLEntities(result)
 
-            // 2. Strip HTML/XML tags
-            let pattern = "<[^>]+>"
-            guard let regex = try? NSRegularExpression(pattern: pattern, options: .caseInsensitive) else {
-                return decoded
+            // 2. Strip <script>...</script> and <style>...</style> with content
+            var working = decoded
+            if let scriptRegex = try? NSRegularExpression(
+                pattern: "<script[^>]*>[\\s\\S]*?</script\\s*>",
+                options: .caseInsensitive
+            ) {
+                let range = NSRange(working.startIndex..., in: working)
+                working = scriptRegex.stringByReplacingMatches(in: working, options: [], range: range, withTemplate: "")
             }
-            let range = NSRange(decoded.startIndex..., in: decoded)
-            let stripped = regex.stringByReplacingMatches(in: decoded, options: [], range: range, withTemplate: "")
+            if let styleRegex = try? NSRegularExpression(
+                pattern: "<style[^>]*>[\\s\\S]*?</style\\s*>",
+                options: .caseInsensitive
+            ) {
+                let range = NSRange(working.startIndex..., in: working)
+                working = styleRegex.stringByReplacingMatches(in: working, options: [], range: range, withTemplate: "")
+            }
+
+            // 3. Process remaining tags: keep whitelisted tags (without
+            //    attributes), remove everything else.
+            guard let tagRegex = try? NSRegularExpression(
+                pattern: "<(/?)\\s*([a-zA-Z][a-zA-Z0-9]*)([^>]*)>",
+                options: .caseInsensitive
+            ) else {
+                return working
+            }
+
+            let fullRange = NSRange(working.startIndex..., in: working)
+            let nsWorking = working as NSString
+            var output = ""
+            var lastEnd = 0
+
+            tagRegex.enumerateMatches(in: working, options: [], range: fullRange) { match, _, _ in
+                guard let match = match else { return }
+                let matchRange = match.range
+                // Append text before this match
+                output += nsWorking.substring(with: NSRange(location: lastEnd, length: matchRange.location - lastEnd))
+                lastEnd = matchRange.location + matchRange.length
+
+                // Extract tag name
+                let closingSlash = nsWorking.substring(with: match.range(at: 1))
+                let tagName = nsWorking.substring(with: match.range(at: 2)).lowercased()
+
+                if allowedTags.contains(tagName) {
+                    // Re-emit tag without any attributes
+                    if tagName == "br" {
+                        output += "<br>"
+                    } else {
+                        output += "<\(closingSlash)\(tagName)>"
+                    }
+                }
+                // else: tag is not whitelisted -- drop it entirely
+            }
+
+            // Append any remaining text after the last match
+            if lastEnd < nsWorking.length {
+                output += nsWorking.substring(from: lastEnd)
+            }
 
             // If nothing changed this iteration, we are done
-            if stripped == result {
-                return stripped
+            if output == result {
+                return output
             }
-            result = stripped
+            result = output
         }
 
         return result

@@ -113,7 +113,7 @@ extension AppViewModel {
                         assignments[idx].resubmissionHistory = previousResubmissionHistory
                         assignments[idx].resubmissionCount = previousResubmissionCount
                     }
-                    submissionError = "Failed to resubmit assignment: \(error.localizedDescription)"
+                    submissionError = UserFacingError.sanitize(error).localizedDescription
                     #if DEBUG
                     print("[AppViewModel] resubmitAssignment failed: \(error)")
                     #endif

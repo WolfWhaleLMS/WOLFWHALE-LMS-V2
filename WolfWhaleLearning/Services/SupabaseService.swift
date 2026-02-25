@@ -1,6 +1,18 @@
 import Foundation
 import Supabase
 
+// MARK: - Timeout Configuration
+
+/// URLSession with timeout configuration for Supabase API calls.
+/// - Request timeout: 15 seconds for standard API calls
+/// - Resource timeout: 60 seconds for file uploads/downloads
+private let supabaseURLSession: URLSession = {
+    let config = URLSessionConfiguration.default
+    config.timeoutIntervalForRequest = 15   // 15s for API calls
+    config.timeoutIntervalForResource = 60  // 60s for file uploads/downloads
+    return URLSession(configuration: config)
+}()
+
 let supabaseClient: SupabaseClient = {
     let urlString = Config.SUPABASE_URL
     let anonKey = Config.SUPABASE_ANON_KEY
@@ -10,11 +22,23 @@ let supabaseClient: SupabaseClient = {
     return SupabaseClient(supabaseURL: url, supabaseKey: anonKey)
 }()
 
-private func withRetry<T>(maxAttempts: Int = 3, delay: Duration = .seconds(1), _ operation: () async throws -> T) async throws -> T {
+private func withRetry<T>(maxAttempts: Int = 3, delay: Duration = .seconds(1), timeout: Duration = .seconds(15), _ operation: @escaping () async throws -> T) async throws -> T {
     var lastError: Error?
     for attempt in 0..<maxAttempts {
         do {
-            return try await operation()
+            return try await withThrowingTaskGroup(of: T.self) { group in
+                group.addTask {
+                    try await operation()
+                }
+                group.addTask {
+                    try await Task.sleep(for: timeout)
+                    throw URLError(.timedOut)
+                }
+                // Return whichever finishes first; cancel the other
+                let result = try await group.next()!
+                group.cancelAll()
+                return result
+            }
         } catch {
             lastError = error
             if attempt < maxAttempts - 1 {
@@ -25,8 +49,46 @@ private func withRetry<T>(maxAttempts: Int = 3, delay: Duration = .seconds(1), _
     throw lastError ?? URLError(.unknown)
 }
 
+// MARK: - Request Deduplication
+
+/// Actor that tracks in-flight requests to prevent duplicate concurrent calls.
+/// When the same endpoint/key is requested concurrently, only one actual network
+/// request is made and the result is shared with all callers.
+private actor RequestDeduplicator {
+    private var inFlightRequests: [String: Task<Any, Error>] = [:]
+
+    /// Deduplicates concurrent requests to the same endpoint.
+    /// If a request with the same key is already in-flight, the caller awaits
+    /// the existing task instead of starting a new one.
+    func deduplicated<T>(key: String, operation: @escaping @Sendable () async throws -> T) async throws -> T {
+        if let existing = inFlightRequests[key] {
+            #if DEBUG
+            print("[SupabaseService] Deduplicating request: \(key)")
+            #endif
+            return try await existing.value as! T
+        }
+        let task = Task<Any, Error> {
+            try await operation()
+        }
+        inFlightRequests[key] = task
+        defer { inFlightRequests.removeValue(forKey: key) }
+        return try await task.value as! T
+    }
+}
+
+/// Shared deduplicator instance used by DataService to coalesce concurrent identical requests.
+private let requestDeduplicator = RequestDeduplicator()
+
 struct DataService: Sendable {
     static let shared = DataService()
+
+    // MARK: - Request Deduplication
+
+    /// Convenience wrapper that deduplicates concurrent requests with the same key.
+    /// Only one actual network request is made; all concurrent callers share the result.
+    func deduplicated<T: Sendable>(key: String, operation: @escaping @Sendable () async throws -> T) async throws -> T {
+        try await requestDeduplicator.deduplicated(key: key, operation: operation)
+    }
 
     // MARK: - Date Parsing
     //
@@ -72,6 +134,13 @@ struct DataService: Sendable {
     // MARK: - Courses
 
     func fetchCourses(for userId: UUID, role: UserRole, schoolId: String? = nil, offset: Int = 0, limit: Int = 100) async throws -> [Course] {
+        let dedupeKey = "courses-\(userId)-\(role.rawValue)-\(schoolId ?? "nil")-\(offset)-\(limit)"
+        return try await deduplicated(key: dedupeKey) { [self] in
+            try await _fetchCoursesImpl(for: userId, role: role, schoolId: schoolId, offset: offset, limit: limit)
+        }
+    }
+
+    private func _fetchCoursesImpl(for userId: UUID, role: UserRole, schoolId: String? = nil, offset: Int = 0, limit: Int = 100) async throws -> [Course] {
         let courseDTOs: [CourseDTO] = try await withRetry {
             switch role {
             case .student:
@@ -370,10 +439,15 @@ struct DataService: Sendable {
     // MARK: - Assignments
 
     func fetchAssignments(for userId: UUID, role: UserRole, courseIds: [UUID], offset: Int = 0, limit: Int = 50) async throws -> [Assignment] {
-        if courseIds.isEmpty {
-            return []
+        if courseIds.isEmpty { return [] }
+        let sortedIds = courseIds.map(\.uuidString).sorted().joined(separator: ",")
+        let dedupeKey = "assignments-\(userId)-\(role.rawValue)-\(sortedIds)-\(offset)-\(limit)"
+        return try await deduplicated(key: dedupeKey) { [self] in
+            try await _fetchAssignmentsImpl(for: userId, role: role, courseIds: courseIds, offset: offset, limit: limit)
         }
+    }
 
+    private func _fetchAssignmentsImpl(for userId: UUID, role: UserRole, courseIds: [UUID], offset: Int = 0, limit: Int = 50) async throws -> [Assignment] {
         let assignmentDTOs: [AssignmentDTO] = try await withRetry {
             try await supabaseClient
                 .from("assignments")
@@ -757,7 +831,14 @@ struct DataService: Sendable {
 
     func fetchGrades(for studentId: UUID, courseIds: [UUID]) async throws -> [GradeEntry] {
         if courseIds.isEmpty { return [] }
+        let sortedIds = courseIds.map(\.uuidString).sorted().joined(separator: ",")
+        let dedupeKey = "grades-\(studentId)-\(sortedIds)"
+        return try await deduplicated(key: dedupeKey) { [self] in
+            try await _fetchGradesImpl(for: studentId, courseIds: courseIds)
+        }
+    }
 
+    private func _fetchGradesImpl(for studentId: UUID, courseIds: [UUID]) async throws -> [GradeEntry] {
         let allGradeDTOs: [GradeDTO] = try await supabaseClient
             .from("grades")
             .select()
@@ -859,6 +940,13 @@ struct DataService: Sendable {
     // MARK: - Announcements
 
     func fetchAnnouncements(tenantId: UUID? = nil) async throws -> [Announcement] {
+        let dedupeKey = "announcements-\(tenantId?.uuidString ?? "all")"
+        return try await deduplicated(key: dedupeKey) { [self] in
+            try await _fetchAnnouncementsImpl(tenantId: tenantId)
+        }
+    }
+
+    private func _fetchAnnouncementsImpl(tenantId: UUID? = nil) async throws -> [Announcement] {
         let dtos: [AnnouncementDTO]
         if let tenantId {
             dtos = try await supabaseClient
@@ -917,6 +1005,13 @@ struct DataService: Sendable {
     // MARK: - Conversations & Messages
 
     func fetchConversations(for userId: UUID, offset: Int = 0, limit: Int = 50) async throws -> [Conversation] {
+        let dedupeKey = "conversations-\(userId)-\(offset)-\(limit)"
+        return try await deduplicated(key: dedupeKey) { [self] in
+            try await _fetchConversationsImpl(for: userId, offset: offset, limit: limit)
+        }
+    }
+
+    private func _fetchConversationsImpl(for userId: UUID, offset: Int = 0, limit: Int = 50) async throws -> [Conversation] {
         let convDTOs: [ConversationDTO] = try await withRetry {
             let members: [ConversationMemberDTO] = try await supabaseClient
                 .from("conversation_members")

@@ -51,7 +51,7 @@ extension AppViewModel {
                     for j in assignments.indices where previousGrades[assignments[j].id] != nil {
                         assignments[j].grade = previousGrades[assignments[j].id] ?? nil
                     }
-                    gradeError = "Failed to apply flat curve: \(error.localizedDescription)"
+                    gradeError = "Failed to apply flat curve: \(UserFacingError.sanitize(error).localizedDescription ?? "")"
                     return
                 }
             }
@@ -94,7 +94,7 @@ extension AppViewModel {
                     for j in assignments.indices where previousGrades[assignments[j].id] != nil {
                         assignments[j].grade = previousGrades[assignments[j].id] ?? nil
                     }
-                    gradeError = "Failed to apply percentage boost: \(error.localizedDescription)"
+                    gradeError = "Failed to apply percentage boost: \(UserFacingError.sanitize(error).localizedDescription ?? "")"
                     return
                 }
             }
@@ -137,7 +137,7 @@ extension AppViewModel {
                     for j in assignments.indices where previousGrades[assignments[j].id] != nil {
                         assignments[j].grade = previousGrades[assignments[j].id] ?? nil
                     }
-                    gradeError = "Failed to apply square root curve: \(error.localizedDescription)"
+                    gradeError = "Failed to apply square root curve: \(UserFacingError.sanitize(error).localizedDescription ?? "")"
                     return
                 }
             }
@@ -181,7 +181,7 @@ extension AppViewModel {
                     for j in assignments.indices where previousGrades[assignments[j].id] != nil {
                         assignments[j].grade = previousGrades[assignments[j].id] ?? nil
                     }
-                    gradeError = "Failed to apply bell curve: \(error.localizedDescription)"
+                    gradeError = "Failed to apply bell curve: \(UserFacingError.sanitize(error).localizedDescription ?? "")"
                     return
                 }
             }

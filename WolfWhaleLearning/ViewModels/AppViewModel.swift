@@ -120,6 +120,20 @@ class AppViewModel {
     private let autoRefreshInterval: TimeInterval = 300
     let networkMonitor = NetworkMonitor()
 
+    // MARK: - Active Task Cancellation
+    /// Tracks in-flight async tasks by key so they can be cancelled on logout
+    /// or when a newer request supersedes the previous one.
+    private var activeTasks: [String: Task<Void, Never>] = [:]
+
+    /// Cancels all tracked active tasks. Called during logout/cleanup
+    /// to prevent stale network responses from writing to cleared state.
+    func cancelAllTasks() {
+        for (_, task) in activeTasks {
+            task.cancel()
+        }
+        activeTasks.removeAll()
+    }
+
     // MARK: - Audit Logging (FERPA/GDPR Compliance)
     private let auditLog = AuditLogService()
 
@@ -593,11 +607,12 @@ class AppViewModel {
             Task { await auditLog.clearUser() }
         }
 
-        // 1. Cancel any pending background refresh to prevent network storms
+        // 1. Cancel any pending background refresh and all active data tasks to prevent network storms
         refreshTask?.cancel()
         refreshTask = nil
         autoRefreshTask?.cancel()
         autoRefreshTask = nil
+        cancelAllTasks()
 
         if !isDemoMode {
             Task {
@@ -963,115 +978,163 @@ class AppViewModel {
     // MARK: - Lazy "If Needed" Loaders
 
     /// Called when user opens the Assignments tab. Loads assignments only if not already loaded.
-    func loadAssignmentsIfNeeded() async {
+    /// Cancels any prior in-flight assignments fetch before starting a new one.
+    func loadAssignmentsIfNeeded() {
         guard !assignmentsLoaded, !isDemoMode, let user = currentUser else { return }
-        let courseIds = courses.map(\.id)
-        assignmentPagination.reset()
-        do {
-            let newAssignments = try await dataService.fetchAssignments(
-                for: user.id,
-                role: user.role,
-                courseIds: courseIds,
-                offset: assignmentPagination.offset,
-                limit: assignmentPagination.pageSize
-            )
-            assignments = newAssignments
-            assignmentPagination.offset = newAssignments.count
-            assignmentPagination.hasMore = newAssignments.count >= assignmentPagination.pageSize
-            assignmentsLoaded = true
+        activeTasks["assignments"]?.cancel()
+        activeTasks["assignments"] = Task {
+            let courseIds = courses.map(\.id)
+            assignmentPagination.reset()
+            do {
+                try Task.checkCancellation()
+                let newAssignments = try await dataService.fetchAssignments(
+                    for: user.id,
+                    role: user.role,
+                    courseIds: courseIds,
+                    offset: assignmentPagination.offset,
+                    limit: assignmentPagination.pageSize
+                )
+                try Task.checkCancellation()
+                assignments = newAssignments
+                assignmentPagination.offset = newAssignments.count
+                assignmentPagination.hasMore = newAssignments.count >= assignmentPagination.pageSize
+                assignmentsLoaded = true
 
-            // Schedule due-date reminders for newly loaded assignments
-            notificationService.scheduleDueDateRemindersIfEnabled(assignments: newAssignments)
-            await dueDateReminderService.refreshReminders(assignments: newAssignments)
-        } catch {
-            dataError = "Unable to load assignments. Please try again."
-            #if DEBUG
-            print("[AppViewModel] Fetch assignments error: \(error)")
-            #endif
-            assignmentsLoaded = true
+                // Schedule due-date reminders for newly loaded assignments
+                notificationService.scheduleDueDateRemindersIfEnabled(assignments: newAssignments)
+                await dueDateReminderService.refreshReminders(assignments: newAssignments)
+            } catch is CancellationError {
+                // Expected when task is cancelled during logout or superseded — no action needed
+            } catch {
+                dataError = "Unable to load assignments. Please try again."
+                #if DEBUG
+                print("[AppViewModel] Fetch assignments error: \(error)")
+                #endif
+                assignmentsLoaded = true
+            }
         }
     }
 
     /// Called when user opens the Messages tab. Loads conversations only if not already loaded.
-    func loadConversationsIfNeeded() async {
+    /// Cancels any prior in-flight conversations fetch before starting a new one.
+    func loadConversationsIfNeeded() {
         guard !conversationsLoaded, !isDemoMode, let user = currentUser else { return }
-        conversationPagination.reset()
-        do {
-            let newConversations = try await dataService.fetchConversations(
-                for: user.id,
-                offset: conversationPagination.offset,
-                limit: conversationPagination.pageSize
-            )
-            conversations = newConversations
-            conversationPagination.offset = newConversations.count
-            conversationPagination.hasMore = newConversations.count >= conversationPagination.pageSize
-        } catch {
-            dataError = "Unable to load conversations. Please try again."
-            #if DEBUG
-            print("[AppViewModel] Fetch conversations error: \(error)")
-            #endif
+        activeTasks["conversations"]?.cancel()
+        activeTasks["conversations"] = Task {
+            conversationPagination.reset()
+            do {
+                try Task.checkCancellation()
+                let newConversations = try await dataService.fetchConversations(
+                    for: user.id,
+                    offset: conversationPagination.offset,
+                    limit: conversationPagination.pageSize
+                )
+                try Task.checkCancellation()
+                conversations = newConversations
+                conversationPagination.offset = newConversations.count
+                conversationPagination.hasMore = newConversations.count >= conversationPagination.pageSize
+            } catch is CancellationError {
+                // Expected — no action needed
+            } catch {
+                dataError = "Unable to load conversations. Please try again."
+                #if DEBUG
+                print("[AppViewModel] Fetch conversations error: \(error)")
+                #endif
+            }
+            conversationsLoaded = true
         }
-        conversationsLoaded = true
     }
 
     /// Called when user opens the Grades tab. Loads grades only if not already loaded.
-    func loadGradesIfNeeded() async {
+    /// Cancels any prior in-flight grades fetch before starting a new one.
+    func loadGradesIfNeeded() {
         guard !gradesLoaded, !isDemoMode, let user = currentUser else { return }
-        let courseIds = courses.map(\.id)
-        do {
-            grades = try await dataService.fetchGrades(for: user.id, courseIds: courseIds)
-        } catch {
-            gradeError = "Unable to load grades. Please try again."
-            #if DEBUG
-            print("[AppViewModel] Fetch grades error: \(error)")
-            #endif
+        activeTasks["grades"]?.cancel()
+        activeTasks["grades"] = Task {
+            let courseIds = courses.map(\.id)
+            do {
+                try Task.checkCancellation()
+                grades = try await dataService.fetchGrades(for: user.id, courseIds: courseIds)
+                try Task.checkCancellation()
+            } catch is CancellationError {
+                // Expected — no action needed
+            } catch {
+                gradeError = "Unable to load grades. Please try again."
+                #if DEBUG
+                print("[AppViewModel] Fetch grades error: \(error)")
+                #endif
+            }
+            gradesLoaded = true
         }
-        gradesLoaded = true
     }
 
     // loadLeaderboardIfNeeded removed — XP system disabled
 
     /// Called when user opens the Quizzes section. Loads quizzes only if not already loaded.
-    func loadQuizzesIfNeeded() async {
+    /// Cancels any prior in-flight quizzes fetch before starting a new one.
+    func loadQuizzesIfNeeded() {
         guard !quizzesLoaded, !isDemoMode, let user = currentUser else { return }
-        let courseIds = courses.map(\.id)
-        do {
-            quizzes = try await dataService.fetchQuizzes(for: user.id, courseIds: courseIds)
-        } catch {
-            dataError = "Unable to load quizzes. Please try again."
-            #if DEBUG
-            print("[AppViewModel] Fetch quizzes error: \(error)")
-            #endif
+        activeTasks["quizzes"]?.cancel()
+        activeTasks["quizzes"] = Task {
+            let courseIds = courses.map(\.id)
+            do {
+                try Task.checkCancellation()
+                quizzes = try await dataService.fetchQuizzes(for: user.id, courseIds: courseIds)
+                try Task.checkCancellation()
+            } catch is CancellationError {
+                // Expected — no action needed
+            } catch {
+                dataError = "Unable to load quizzes. Please try again."
+                #if DEBUG
+                print("[AppViewModel] Fetch quizzes error: \(error)")
+                #endif
+            }
+            quizzesLoaded = true
         }
-        quizzesLoaded = true
     }
 
     /// Called when user opens the Attendance section. Loads attendance only if not already loaded.
-    func loadAttendanceIfNeeded() async {
+    /// Cancels any prior in-flight attendance fetch before starting a new one.
+    func loadAttendanceIfNeeded() {
         guard !attendanceLoaded, !isDemoMode, let user = currentUser else { return }
-        do {
-            attendance = try await dataService.fetchAttendance(for: user.id)
-        } catch {
-            dataError = "Unable to load attendance records. Please try again."
-            #if DEBUG
-            print("[AppViewModel] Fetch attendance error: \(error)")
-            #endif
+        activeTasks["attendance"]?.cancel()
+        activeTasks["attendance"] = Task {
+            do {
+                try Task.checkCancellation()
+                attendance = try await dataService.fetchAttendance(for: user.id)
+                try Task.checkCancellation()
+            } catch is CancellationError {
+                // Expected — no action needed
+            } catch {
+                dataError = "Unable to load attendance records. Please try again."
+                #if DEBUG
+                print("[AppViewModel] Fetch attendance error: \(error)")
+                #endif
+            }
+            attendanceLoaded = true
         }
-        attendanceLoaded = true
     }
 
     /// Called when user opens the Achievements section. Loads achievements only if not already loaded.
-    func loadAchievementsIfNeeded() async {
+    /// Cancels any prior in-flight achievements fetch before starting a new one.
+    func loadAchievementsIfNeeded() {
         guard !achievementsLoaded, !isDemoMode, let user = currentUser else { return }
-        do {
-            achievements = try await dataService.fetchAchievements(for: user.id)
-        } catch {
-            dataError = "Unable to load achievements. Please try again."
-            #if DEBUG
-            print("[AppViewModel] Fetch achievements error: \(error)")
-            #endif
+        activeTasks["achievements"]?.cancel()
+        activeTasks["achievements"] = Task {
+            do {
+                try Task.checkCancellation()
+                achievements = try await dataService.fetchAchievements(for: user.id)
+                try Task.checkCancellation()
+            } catch is CancellationError {
+                // Expected — no action needed
+            } catch {
+                dataError = "Unable to load achievements. Please try again."
+                #if DEBUG
+                print("[AppViewModel] Fetch achievements error: \(error)")
+                #endif
+            }
+            achievementsLoaded = true
         }
-        achievementsLoaded = true
     }
 
 
@@ -1944,7 +2007,7 @@ class AppViewModel {
                         } catch {
                             // Revert optimistic update — lesson completion was not persisted
                             courses[ci].modules[mi].lessons[li].isCompleted = false
-                            dataError = "Failed to save lesson completion: \(error.localizedDescription)"
+                            dataError = UserFacingError.sanitize(error).localizedDescription
                             #if DEBUG
                             print("[AppViewModel] completeLesson failed: \(error)")
                             #endif
@@ -1999,7 +2062,7 @@ class AppViewModel {
                         assignments[idx].submission = previousSubmission
                         assignments[idx].attachmentURLs = previousAttachmentURLs
                     }
-                    submissionError = "Failed to submit assignment: \(error.localizedDescription)"
+                    submissionError = UserFacingError.sanitize(error).localizedDescription
                     #if DEBUG
                     print("[AppViewModel] submitAssignment failed: \(error)")
                     #endif
@@ -2039,7 +2102,7 @@ class AppViewModel {
                         quizzes[idx].isCompleted = false
                         quizzes[idx].score = nil
                     }
-                    submissionError = "Failed to save quiz submission: \(error.localizedDescription)"
+                    submissionError = UserFacingError.sanitize(error).localizedDescription
                     #if DEBUG
                     print("[AppViewModel] submitQuiz failed: \(error)")
                     #endif
@@ -2123,7 +2186,7 @@ class AppViewModel {
                         quizzes[idx].isCompleted = false
                         quizzes[idx].score = nil
                     }
-                    submissionError = "Failed to save quiz submission: \(error.localizedDescription)"
+                    submissionError = UserFacingError.sanitize(error).localizedDescription
                     #if DEBUG
                     print("[AppViewModel] submitAdvancedQuiz failed: \(error)")
                     #endif
@@ -2428,7 +2491,7 @@ class AppViewModel {
                 ]
             )
         } catch {
-            gradeError = "Failed to grade submission: \(error.localizedDescription)"
+            gradeError = UserFacingError.sanitize(error).localizedDescription
             throw error
         }
     }
@@ -2486,7 +2549,7 @@ class AppViewModel {
 
             refreshData()
         } catch {
-            dataError = "Failed to create quiz: \(error.localizedDescription)"
+            dataError = UserFacingError.sanitize(error).localizedDescription
             throw error
         }
     }
@@ -2531,7 +2594,7 @@ class AppViewModel {
             )
             refreshData()
         } catch {
-            dataError = "Failed to create lesson: \(error.localizedDescription)"
+            dataError = UserFacingError.sanitize(error).localizedDescription
             throw error
         }
     }
@@ -2564,7 +2627,7 @@ class AppViewModel {
             )
             refreshData()
         } catch {
-            dataError = "Failed to create module: \(error.localizedDescription)"
+            dataError = UserFacingError.sanitize(error).localizedDescription
             throw error
         }
     }
@@ -2592,7 +2655,7 @@ class AppViewModel {
             try await dataService.takeAttendance(records: records)
             refreshData()
         } catch {
-            dataError = "Failed to record attendance: \(error.localizedDescription)"
+            dataError = UserFacingError.sanitize(error).localizedDescription
         }
     }
 
@@ -2626,7 +2689,7 @@ class AppViewModel {
                 conversations = try await dataService.fetchConversations(for: user.id)
             }
         } catch {
-            dataError = "Failed to create conversation: \(error.localizedDescription)"
+            dataError = UserFacingError.sanitize(error).localizedDescription
         }
     }
 
@@ -2656,7 +2719,7 @@ class AppViewModel {
             try await dataService.deleteAnnouncement(announcementId: id)
             announcements.removeAll { $0.id == id }
         } catch {
-            dataError = "Failed to delete announcement: \(error.localizedDescription)"
+            dataError = UserFacingError.sanitize(error).localizedDescription
         }
     }
 
@@ -2674,7 +2737,7 @@ class AppViewModel {
             let profileDTOs = try await dataService.fetchStudentsInCourse(courseId: courseId)
             return profileDTOs.map { $0.toUser() }
         } catch {
-            dataError = "Failed to fetch students: \(error.localizedDescription)"
+            dataError = UserFacingError.sanitize(error).localizedDescription
             return []
         }
     }
