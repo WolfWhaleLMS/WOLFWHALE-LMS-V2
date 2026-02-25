@@ -105,7 +105,7 @@ struct AdaptiveGrid<Content: View>: View {
 
 /// A view modifier that provides a Boolean binding indicating
 /// whether the current horizontal size class is `.regular` (iPad-like).
-struct iPadAware: ViewModifier {
+struct iPadAwareModifier: ViewModifier {
     @Environment(\.horizontalSizeClass) private var sizeClass
 
     func body(content: Content) -> some View {
@@ -131,6 +131,6 @@ extension EnvironmentValues {
 extension View {
     /// Makes the view iPad-aware by injecting `isRegularWidth` into the environment.
     func iPadAware() -> some View {
-        modifier(WolfWhaleLearning.iPadAware())
+        modifier(iPadAwareModifier())
     }
 }
