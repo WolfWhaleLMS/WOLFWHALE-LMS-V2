@@ -396,7 +396,7 @@ struct SharePlayView: View {
                                 .font(.caption.bold())
                                 .foregroundStyle(.white)
                         } else {
-                            Text("\(Character(UnicodeScalar(65 + index)!))")
+                            Text(String(Character(UnicodeScalar(65 + index) ?? Unicode.Scalar("A"))))
                                 .font(.caption.bold())
                                 .foregroundStyle(.secondary)
                         }

@@ -77,7 +77,9 @@ struct DebouncedSearchField: View {
                 placeholder: "Search courses...",
                 text: $searchText,
                 onSearch: { query in
+                    #if DEBUG
                     print("Searching: \(query)")
+                    #endif
                 }
             )
 

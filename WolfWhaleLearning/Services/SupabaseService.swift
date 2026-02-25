@@ -17,7 +17,7 @@ let supabaseClient: SupabaseClient = {
     let urlString = Config.SUPABASE_URL
     let anonKey = Config.SUPABASE_ANON_KEY
     guard let url = URL(string: urlString) else {
-        fatalError("[SupabaseService] Invalid SUPABASE_URL: \(urlString)")
+        preconditionFailure("[SupabaseService] Invalid SUPABASE_URL: \(urlString)")
     }
     return SupabaseClient(supabaseURL: url, supabaseKey: anonKey)
 }()
@@ -35,7 +35,9 @@ private func withRetry<T>(maxAttempts: Int = 3, delay: Duration = .seconds(1), t
                     throw URLError(.timedOut)
                 }
                 // Return whichever finishes first; cancel the other
-                let result = try await group.next()!
+                guard let result = try await group.next() else {
+                    throw URLError(.unknown)
+                }
                 group.cancelAll()
                 return result
             }
@@ -65,14 +67,20 @@ private actor RequestDeduplicator {
             #if DEBUG
             print("[SupabaseService] Deduplicating request: \(key)")
             #endif
-            return try await existing.value as! T
+            guard let result = try await existing.value as? T else {
+                throw URLError(.cannotParseResponse)
+            }
+            return result
         }
         let task = Task<Any, Error> {
             try await operation()
         }
         inFlightRequests[key] = task
         defer { inFlightRequests.removeValue(forKey: key) }
-        return try await task.value as! T
+        guard let result = try await task.value as? T else {
+            throw URLError(.cannotParseResponse)
+        }
+        return result
     }
 }
 

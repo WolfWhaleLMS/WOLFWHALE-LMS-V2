@@ -62,20 +62,16 @@ final class HealthService {
             return
         }
 
-        let readTypes: Set<HKObjectType> = [
-            HKQuantityType.quantityType(forIdentifier: .stepCount)!,
-            HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning)!,
-            HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)!,
-            HKQuantityType.quantityType(forIdentifier: .heartRate)!,
-            HKQuantityType.quantityType(forIdentifier: .restingHeartRate)!,
-            HKObjectType.categoryType(forIdentifier: .sleepAnalysis)!,
-            HKObjectType.workoutType()
-        ]
+        var readTypes: Set<HKObjectType> = [HKObjectType.workoutType()]
+        if let stepCount = HKQuantityType.quantityType(forIdentifier: .stepCount) { readTypes.insert(stepCount) }
+        if let distance = HKQuantityType.quantityType(forIdentifier: .distanceWalkingRunning) { readTypes.insert(distance) }
+        if let energy = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned) { readTypes.insert(energy) }
+        if let heartRate = HKQuantityType.quantityType(forIdentifier: .heartRate) { readTypes.insert(heartRate) }
+        if let restingHR = HKQuantityType.quantityType(forIdentifier: .restingHeartRate) { readTypes.insert(restingHR) }
+        if let sleep = HKObjectType.categoryType(forIdentifier: .sleepAnalysis) { readTypes.insert(sleep) }
 
-        let writeTypes: Set<HKSampleType> = [
-            HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned)!,
-            HKObjectType.workoutType()
-        ]
+        var writeTypes: Set<HKSampleType> = [HKObjectType.workoutType()]
+        if let energy = HKQuantityType.quantityType(forIdentifier: .activeEnergyBurned) { writeTypes.insert(energy) }
 
         do {
             try await healthStore.requestAuthorization(toShare: writeTypes, read: readTypes)
@@ -224,7 +220,8 @@ final class HealthService {
 
         let calendar = Calendar.current
         let now = Date()
-        let startOfYesterday = calendar.startOfDay(for: calendar.date(byAdding: .day, value: -1, to: now)!)
+        guard let yesterday = calendar.date(byAdding: .day, value: -1, to: now) else { return nil }
+        let startOfYesterday = calendar.startOfDay(for: yesterday)
         let predicate = HKQuery.predicateForSamples(withStart: startOfYesterday, end: now, options: .strictStartDate)
         let sortDescriptor = NSSortDescriptor(key: HKSampleSortIdentifierStartDate, ascending: false)
 

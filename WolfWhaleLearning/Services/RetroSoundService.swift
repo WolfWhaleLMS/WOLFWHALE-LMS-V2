@@ -35,7 +35,7 @@ final class RetroSoundService: @unchecked Sendable {
     private let queue = DispatchQueue(label: "com.wolfwhale.retrosound", qos: .userInteractive)
 
     private init() {
-        let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)!
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1) else { return }
         engine.attach(playerNode)
         engine.connect(playerNode, to: engine.mainMixerNode, format: format)
 
@@ -103,7 +103,7 @@ final class RetroSoundService: @unchecked Sendable {
     private func makeBuffer(tones: [(hz: Double, duration: Double)], volume: Float) -> AVAudioPCMBuffer? {
         let totalDuration = tones.reduce(0.0) { $0 + $1.duration }
         let totalFrames = AVAudioFrameCount(sampleRate * totalDuration)
-        let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1)!
+        guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 1) else { return nil }
         guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: totalFrames) else { return nil }
         buffer.frameLength = totalFrames
 

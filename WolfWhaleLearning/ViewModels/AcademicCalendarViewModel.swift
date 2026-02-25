@@ -267,10 +267,10 @@ class AcademicCalendarViewModel {
         let fallTermId = UUID()
         let springTermId = UUID()
 
-        let fallStart = calendar.date(from: DateComponents(year: academicYearStart, month: 9, day: 3))!
-        let fallEnd = calendar.date(from: DateComponents(year: academicYearStart, month: 12, day: 20))!
-        let springStart = calendar.date(from: DateComponents(year: academicYearEnd, month: 1, day: 8))!
-        let springEnd = calendar.date(from: DateComponents(year: academicYearEnd, month: 6, day: 15))!
+        let fallStart = calendar.date(from: DateComponents(year: academicYearStart, month: 9, day: 3)) ?? Date()
+        let fallEnd = calendar.date(from: DateComponents(year: academicYearStart, month: 12, day: 20)) ?? Date()
+        let springStart = calendar.date(from: DateComponents(year: academicYearEnd, month: 1, day: 8)) ?? Date()
+        let springEnd = calendar.date(from: DateComponents(year: academicYearEnd, month: 6, day: 15)) ?? Date()
 
         let terms = [
             AcademicTerm(id: fallTermId, name: "Fall \(academicYearStart)", startDate: fallStart, endDate: fallEnd, type: .semester),
@@ -278,26 +278,26 @@ class AcademicCalendarViewModel {
         ]
 
         let events: [AcademicEvent] = [
-            AcademicEvent(title: "Labour Day", date: calendar.date(from: DateComponents(year: academicYearStart, month: 9, day: 2))!, type: .holiday, description: "School closed"),
-            AcademicEvent(title: "Thanksgiving", date: calendar.date(from: DateComponents(year: academicYearStart, month: 10, day: 14))!, type: .holiday, description: "School closed for Thanksgiving"),
-            AcademicEvent(title: "Fall Midterm Exams", date: calendar.date(from: DateComponents(year: academicYearStart, month: 10, day: 21))!, endDate: calendar.date(from: DateComponents(year: academicYearStart, month: 10, day: 25))!, type: .examPeriod, description: "Midterm examination period"),
-            AcademicEvent(title: "Midterm Grades Due", date: calendar.date(from: DateComponents(year: academicYearStart, month: 10, day: 30))!, type: .gradeDeadline, description: "All midterm grades must be submitted"),
-            AcademicEvent(title: "Parent-Teacher Conferences", date: calendar.date(from: DateComponents(year: academicYearStart, month: 11, day: 7))!, endDate: calendar.date(from: DateComponents(year: academicYearStart, month: 11, day: 8))!, type: .parentConference, description: "Fall parent-teacher conference days"),
-            AcademicEvent(title: "Winter Break", date: calendar.date(from: DateComponents(year: academicYearStart, month: 12, day: 21))!, endDate: calendar.date(from: DateComponents(year: academicYearEnd, month: 1, day: 7))!, type: .noSchool, description: "Winter holiday break"),
-            AcademicEvent(title: "Fall Final Exams", date: calendar.date(from: DateComponents(year: academicYearStart, month: 12, day: 13))!, endDate: calendar.date(from: DateComponents(year: academicYearStart, month: 12, day: 19))!, type: .examPeriod, description: "Fall semester final exams"),
-            AcademicEvent(title: "Fall Final Grades Due", date: calendar.date(from: DateComponents(year: academicYearStart, month: 12, day: 23))!, type: .gradeDeadline, description: "All fall final grades must be submitted"),
-            AcademicEvent(title: "Science Fair", date: calendar.date(from: DateComponents(year: academicYearEnd, month: 3, day: 15))!, type: .schoolEvent, description: "Annual school science fair"),
-            AcademicEvent(title: "Spring Break", date: calendar.date(from: DateComponents(year: academicYearEnd, month: 3, day: 17))!, endDate: calendar.date(from: DateComponents(year: academicYearEnd, month: 3, day: 21))!, type: .noSchool, description: "Spring break week"),
-            AcademicEvent(title: "Spring Midterm Exams", date: calendar.date(from: DateComponents(year: academicYearEnd, month: 3, day: 24))!, endDate: calendar.date(from: DateComponents(year: academicYearEnd, month: 3, day: 28))!, type: .examPeriod, description: "Spring midterm exams"),
-            AcademicEvent(title: "Spring Final Exams", date: calendar.date(from: DateComponents(year: academicYearEnd, month: 6, day: 9))!, endDate: calendar.date(from: DateComponents(year: academicYearEnd, month: 6, day: 13))!, type: .examPeriod, description: "Spring semester final exams"),
-            AcademicEvent(title: "Spring Final Grades Due", date: calendar.date(from: DateComponents(year: academicYearEnd, month: 6, day: 18))!, type: .gradeDeadline, description: "All spring final grades must be submitted"),
+            AcademicEvent(title: "Labour Day", date: calendar.date(from: DateComponents(year: academicYearStart, month: 9, day: 2)) ?? Date(), type: .holiday, description: "School closed"),
+            AcademicEvent(title: "Thanksgiving", date: calendar.date(from: DateComponents(year: academicYearStart, month: 10, day: 14)) ?? Date(), type: .holiday, description: "School closed for Thanksgiving"),
+            AcademicEvent(title: "Fall Midterm Exams", date: calendar.date(from: DateComponents(year: academicYearStart, month: 10, day: 21)) ?? Date(), endDate: calendar.date(from: DateComponents(year: academicYearStart, month: 10, day: 25)) ?? Date(), type: .examPeriod, description: "Midterm examination period"),
+            AcademicEvent(title: "Midterm Grades Due", date: calendar.date(from: DateComponents(year: academicYearStart, month: 10, day: 30)) ?? Date(), type: .gradeDeadline, description: "All midterm grades must be submitted"),
+            AcademicEvent(title: "Parent-Teacher Conferences", date: calendar.date(from: DateComponents(year: academicYearStart, month: 11, day: 7)) ?? Date(), endDate: calendar.date(from: DateComponents(year: academicYearStart, month: 11, day: 8)) ?? Date(), type: .parentConference, description: "Fall parent-teacher conference days"),
+            AcademicEvent(title: "Winter Break", date: calendar.date(from: DateComponents(year: academicYearStart, month: 12, day: 21)) ?? Date(), endDate: calendar.date(from: DateComponents(year: academicYearEnd, month: 1, day: 7)) ?? Date(), type: .noSchool, description: "Winter holiday break"),
+            AcademicEvent(title: "Fall Final Exams", date: calendar.date(from: DateComponents(year: academicYearStart, month: 12, day: 13)) ?? Date(), endDate: calendar.date(from: DateComponents(year: academicYearStart, month: 12, day: 19)) ?? Date(), type: .examPeriod, description: "Fall semester final exams"),
+            AcademicEvent(title: "Fall Final Grades Due", date: calendar.date(from: DateComponents(year: academicYearStart, month: 12, day: 23)) ?? Date(), type: .gradeDeadline, description: "All fall final grades must be submitted"),
+            AcademicEvent(title: "Science Fair", date: calendar.date(from: DateComponents(year: academicYearEnd, month: 3, day: 15)) ?? Date(), type: .schoolEvent, description: "Annual school science fair"),
+            AcademicEvent(title: "Spring Break", date: calendar.date(from: DateComponents(year: academicYearEnd, month: 3, day: 17)) ?? Date(), endDate: calendar.date(from: DateComponents(year: academicYearEnd, month: 3, day: 21)) ?? Date(), type: .noSchool, description: "Spring break week"),
+            AcademicEvent(title: "Spring Midterm Exams", date: calendar.date(from: DateComponents(year: academicYearEnd, month: 3, day: 24)) ?? Date(), endDate: calendar.date(from: DateComponents(year: academicYearEnd, month: 3, day: 28)) ?? Date(), type: .examPeriod, description: "Spring midterm exams"),
+            AcademicEvent(title: "Spring Final Exams", date: calendar.date(from: DateComponents(year: academicYearEnd, month: 6, day: 9)) ?? Date(), endDate: calendar.date(from: DateComponents(year: academicYearEnd, month: 6, day: 13)) ?? Date(), type: .examPeriod, description: "Spring semester final exams"),
+            AcademicEvent(title: "Spring Final Grades Due", date: calendar.date(from: DateComponents(year: academicYearEnd, month: 6, day: 18)) ?? Date(), type: .gradeDeadline, description: "All spring final grades must be submitted"),
         ]
 
         let gradingPeriods: [GradingPeriod] = [
-            GradingPeriod(name: "Fall Midterm", termId: fallTermId, startDate: fallStart, endDate: calendar.date(from: DateComponents(year: academicYearStart, month: 10, day: 25))!, gradeSubmissionDeadline: calendar.date(from: DateComponents(year: academicYearStart, month: 10, day: 30))!),
-            GradingPeriod(name: "Fall Final", termId: fallTermId, startDate: calendar.date(from: DateComponents(year: academicYearStart, month: 10, day: 26))!, endDate: fallEnd, gradeSubmissionDeadline: calendar.date(from: DateComponents(year: academicYearStart, month: 12, day: 23))!),
-            GradingPeriod(name: "Spring Midterm", termId: springTermId, startDate: springStart, endDate: calendar.date(from: DateComponents(year: academicYearEnd, month: 3, day: 28))!, gradeSubmissionDeadline: calendar.date(from: DateComponents(year: academicYearEnd, month: 4, day: 2))!),
-            GradingPeriod(name: "Spring Final", termId: springTermId, startDate: calendar.date(from: DateComponents(year: academicYearEnd, month: 3, day: 29))!, endDate: springEnd, gradeSubmissionDeadline: calendar.date(from: DateComponents(year: academicYearEnd, month: 6, day: 18))!),
+            GradingPeriod(name: "Fall Midterm", termId: fallTermId, startDate: fallStart, endDate: calendar.date(from: DateComponents(year: academicYearStart, month: 10, day: 25)) ?? Date(), gradeSubmissionDeadline: calendar.date(from: DateComponents(year: academicYearStart, month: 10, day: 30)) ?? Date()),
+            GradingPeriod(name: "Fall Final", termId: fallTermId, startDate: calendar.date(from: DateComponents(year: academicYearStart, month: 10, day: 26)) ?? Date(), endDate: fallEnd, gradeSubmissionDeadline: calendar.date(from: DateComponents(year: academicYearStart, month: 12, day: 23)) ?? Date()),
+            GradingPeriod(name: "Spring Midterm", termId: springTermId, startDate: springStart, endDate: calendar.date(from: DateComponents(year: academicYearEnd, month: 3, day: 28)) ?? Date(), gradeSubmissionDeadline: calendar.date(from: DateComponents(year: academicYearEnd, month: 4, day: 2)) ?? Date()),
+            GradingPeriod(name: "Spring Final", termId: springTermId, startDate: calendar.date(from: DateComponents(year: academicYearEnd, month: 3, day: 29)) ?? Date(), endDate: springEnd, gradeSubmissionDeadline: calendar.date(from: DateComponents(year: academicYearEnd, month: 6, day: 18)) ?? Date()),
         ]
 
         return AcademicCalendarConfig(terms: terms, events: events, gradingPeriods: gradingPeriods)

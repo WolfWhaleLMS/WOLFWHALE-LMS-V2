@@ -272,7 +272,7 @@ final class DocumentScannerService {
         guard !images.isEmpty else { return nil }
 
         let pdfData = NSMutableData()
-        let pdfConsumer = CGDataConsumer(data: pdfData as CFMutableData)!
+        guard let pdfConsumer = CGDataConsumer(data: pdfData as CFMutableData) else { return nil }
         var mediaBox = CGRect.zero
 
         guard let pdfContext = CGContext(consumer: pdfConsumer, mediaBox: &mediaBox, nil) else {

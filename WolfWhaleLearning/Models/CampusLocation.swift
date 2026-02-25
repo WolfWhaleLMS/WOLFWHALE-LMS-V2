@@ -84,7 +84,7 @@ nonisolated struct CampusLocation: Identifiable, Codable, Hashable, Sendable {
 extension CampusLocation {
     static let mockLocations: [CampusLocation] = [
         CampusLocation(
-            id: UUID(uuidString: "A0000001-0001-0001-0001-000000000001")!,
+            id: UUID(uuidString: "A0000001-0001-0001-0001-000000000001") ?? UUID(),
             name: "Canadian History Lecture Hall",
             buildingName: "Heritage Hall",
             roomNumber: "HH-101",
@@ -94,7 +94,7 @@ extension CampusLocation {
             floor: 1
         ),
         CampusLocation(
-            id: UUID(uuidString: "A0000001-0001-0001-0001-000000000002")!,
+            id: UUID(uuidString: "A0000001-0001-0001-0001-000000000002") ?? UUID(),
             name: "Main Library",
             buildingName: "Wolfe Learning Centre",
             roomNumber: "WLC-200",
@@ -104,7 +104,7 @@ extension CampusLocation {
             floor: 2
         ),
         CampusLocation(
-            id: UUID(uuidString: "A0000001-0001-0001-0001-000000000003")!,
+            id: UUID(uuidString: "A0000001-0001-0001-0001-000000000003") ?? UUID(),
             name: "Whale Fitness Centre",
             buildingName: "Athletics Complex",
             roomNumber: "AC-G01",
@@ -114,7 +114,7 @@ extension CampusLocation {
             floor: 0
         ),
         CampusLocation(
-            id: UUID(uuidString: "A0000001-0001-0001-0001-000000000004")!,
+            id: UUID(uuidString: "A0000001-0001-0001-0001-000000000004") ?? UUID(),
             name: "The Orca Cafe",
             buildingName: "Student Commons",
             roomNumber: "SC-100",
@@ -124,7 +124,7 @@ extension CampusLocation {
             floor: 1
         ),
         CampusLocation(
-            id: UUID(uuidString: "A0000001-0001-0001-0001-000000000005")!,
+            id: UUID(uuidString: "A0000001-0001-0001-0001-000000000005") ?? UUID(),
             name: "Science Lab",
             buildingName: "Newton Building",
             roomNumber: "NB-305",
@@ -134,7 +134,7 @@ extension CampusLocation {
             floor: 3
         ),
         CampusLocation(
-            id: UUID(uuidString: "A0000001-0001-0001-0001-000000000006")!,
+            id: UUID(uuidString: "A0000001-0001-0001-0001-000000000006") ?? UUID(),
             name: "Math & Computing Room",
             buildingName: "Euler Centre",
             roomNumber: "EC-210",
@@ -144,7 +144,7 @@ extension CampusLocation {
             floor: 2
         ),
         CampusLocation(
-            id: UUID(uuidString: "A0000001-0001-0001-0001-000000000007")!,
+            id: UUID(uuidString: "A0000001-0001-0001-0001-000000000007") ?? UUID(),
             name: "Guidance Office",
             buildingName: "Admin Building",
             roomNumber: "AB-102",
@@ -154,7 +154,7 @@ extension CampusLocation {
             floor: 1
         ),
         CampusLocation(
-            id: UUID(uuidString: "A0000001-0001-0001-0001-000000000008")!,
+            id: UUID(uuidString: "A0000001-0001-0001-0001-000000000008") ?? UUID(),
             name: "Art Studio",
             buildingName: "Creative Arts Wing",
             roomNumber: "CA-115",
@@ -164,7 +164,7 @@ extension CampusLocation {
             floor: 1
         ),
         CampusLocation(
-            id: UUID(uuidString: "A0000001-0001-0001-0001-000000000009")!,
+            id: UUID(uuidString: "A0000001-0001-0001-0001-000000000009") ?? UUID(),
             name: "Chemistry Lab",
             buildingName: "Newton Building",
             roomNumber: "NB-310",
@@ -174,7 +174,7 @@ extension CampusLocation {
             floor: 3
         ),
         CampusLocation(
-            id: UUID(uuidString: "A0000001-0001-0001-0001-00000000000A")!,
+            id: UUID(uuidString: "A0000001-0001-0001-0001-00000000000A") ?? UUID(),
             name: "Principal's Office",
             buildingName: "Admin Building",
             roomNumber: "AB-001",

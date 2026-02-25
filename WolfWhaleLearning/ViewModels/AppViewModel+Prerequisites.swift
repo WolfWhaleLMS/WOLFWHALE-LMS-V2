@@ -41,7 +41,7 @@ extension AppViewModel {
         var missing: [String] = []
         for prereqId in target.prerequisiteIds {
             let enrolled = courses.first(where: { $0.id == prereqId })
-            if enrolled == nil || enrolled!.progress < 1.0 {
+            if enrolled == nil || (enrolled?.progress ?? 0) < 1.0 {
                 // Try to find the course name from any known source
                 let name = courses.first(where: { $0.id == prereqId })?.title
                     ?? allAvailableCourses.first(where: { $0.id == prereqId })?.title

@@ -29,7 +29,7 @@ extension AppViewModel {
     internal var storedLearningStandards: [LearningStandard] {
         get {
             let key = ObjectIdentifier(self)
-            if NotesStorage.learningStandards[key] == nil || NotesStorage.learningStandards[key]!.isEmpty {
+            if NotesStorage.learningStandards[key]?.isEmpty ?? true {
                 NotesStorage.learningStandards[key] = MockStandards.allStandards
             }
             return NotesStorage.learningStandards[key] ?? MockStandards.allStandards

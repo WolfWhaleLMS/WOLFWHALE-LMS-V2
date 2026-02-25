@@ -1999,7 +1999,7 @@ class AppViewModel {
                 courses[courseIndex].modules[moduleIndex].lessons[lessonIndex].isCompleted = true
 
                 if !isDemoMode, let user = currentUser {
-                    let tenantUUID = user.schoolId.flatMap { UUID(uuidString: $0) } ?? UUID(uuidString: "00000000-0000-0000-0000-000000000000")!
+                    let tenantUUID = user.schoolId.flatMap { UUID(uuidString: $0) } ?? UUID()
                     let ci = courseIndex, mi = moduleIndex, li = lessonIndex
                     Task {
                         do {

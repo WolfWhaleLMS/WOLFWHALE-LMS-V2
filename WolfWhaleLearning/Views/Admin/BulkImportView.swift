@@ -688,9 +688,9 @@ struct BulkImportView: View {
         let letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
         let digits = "0123456789"
         let specials = "!@#$%"
-        var password = String((0..<6).map { _ in letters.randomElement()! })
-        password += String((0..<2).map { _ in digits.randomElement()! })
-        password += String(specials.randomElement()!)
+        var password = String((0..<6).compactMap { _ in letters.randomElement() })
+        password += String((0..<2).compactMap { _ in digits.randomElement() })
+        password += String(specials.randomElement() ?? "!")
         return password
     }
 

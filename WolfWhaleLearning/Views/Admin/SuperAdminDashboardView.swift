@@ -450,7 +450,7 @@ struct SuperAdminDashboardView: View {
 
         // Generate a random 6-char invite code
         let chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-        let inviteCode = String((0..<6).map { _ in chars.randomElement()! })
+        let inviteCode = String((0..<6).compactMap { _ in chars.randomElement() })
 
         isAddingTenant = true
         addTenantError = nil

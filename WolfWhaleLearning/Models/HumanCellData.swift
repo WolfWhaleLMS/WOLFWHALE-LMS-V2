@@ -3,7 +3,7 @@ import Foundation
 nonisolated enum HumanCellData {
     static let organelles: [CellOrganelle] = [
         CellOrganelle(
-            id: UUID(uuidString: "00000001-0000-0000-0000-000000000001")!,
+            id: UUID(uuidString: "00000001-0000-0000-0000-000000000001") ?? UUID(),
             name: "Nucleus",
             description: "The control center of the cell. Contains DNA organized into chromosomes and directs all cellular activities including growth, metabolism, and reproduction through gene expression.",
             funFact: "If you stretched out all the DNA in a single human cell, it would be about 6 feet long!",
@@ -13,7 +13,7 @@ nonisolated enum HumanCellData {
             shape: .sphere
         ),
         CellOrganelle(
-            id: UUID(uuidString: "00000001-0000-0000-0000-000000000010")!,
+            id: UUID(uuidString: "00000001-0000-0000-0000-000000000010") ?? UUID(),
             name: "Nucleolus",
             description: "A dense region inside the nucleus responsible for producing ribosomal RNA (rRNA) and assembling ribosome subunits before they are exported to the cytoplasm.",
             funFact: "The nucleolus is the largest structure in the nucleus and can make up to 25% of its volume!",
@@ -23,7 +23,7 @@ nonisolated enum HumanCellData {
             shape: .sphere
         ),
         CellOrganelle(
-            id: UUID(uuidString: "00000001-0000-0000-0000-000000000011")!,
+            id: UUID(uuidString: "00000001-0000-0000-0000-000000000011") ?? UUID(),
             name: "Nuclear Envelope",
             description: "A double-membrane structure that surrounds the nucleus, separating nuclear contents from the cytoplasm. Contains nuclear pores that regulate transport of molecules.",
             funFact: "The nuclear envelope has about 3,000-4,000 nuclear pores, each made of over 30 different proteins!",
@@ -33,7 +33,7 @@ nonisolated enum HumanCellData {
             shape: .sphere
         ),
         CellOrganelle(
-            id: UUID(uuidString: "00000001-0000-0000-0000-000000000002")!,
+            id: UUID(uuidString: "00000001-0000-0000-0000-000000000002") ?? UUID(),
             name: "Mitochondria",
             description: "The powerhouse of the cell. Converts nutrients into ATP (adenosine triphosphate) through cellular respiration. Has a double membrane with inner folds called cristae.",
             funFact: "Mitochondria have their own DNA, separate from the cell's nucleus. Scientists believe they were once independent bacteria!",
@@ -43,7 +43,7 @@ nonisolated enum HumanCellData {
             shape: .ellipsoid
         ),
         CellOrganelle(
-            id: UUID(uuidString: "00000001-0000-0000-0000-000000000003")!,
+            id: UUID(uuidString: "00000001-0000-0000-0000-000000000003") ?? UUID(),
             name: "Rough Endoplasmic Reticulum",
             description: "A network of flattened membrane sacs (cisternae) studded with ribosomes. Synthesizes and processes proteins destined for secretion, the cell membrane, or lysosomes.",
             funFact: "The rough ER makes up more than half of the total membrane in many cells and is continuous with the nuclear envelope!",
@@ -53,7 +53,7 @@ nonisolated enum HumanCellData {
             shape: .flatDisc
         ),
         CellOrganelle(
-            id: UUID(uuidString: "00000001-0000-0000-0000-000000000012")!,
+            id: UUID(uuidString: "00000001-0000-0000-0000-000000000012") ?? UUID(),
             name: "Smooth Endoplasmic Reticulum",
             description: "A tubular membrane network without ribosomes. Synthesizes lipids, metabolizes carbohydrates, detoxifies drugs and poisons, and stores calcium ions.",
             funFact: "Liver cells have extensive smooth ER because they detoxify many harmful substances in the blood!",
@@ -63,7 +63,7 @@ nonisolated enum HumanCellData {
             shape: .ellipsoid
         ),
         CellOrganelle(
-            id: UUID(uuidString: "00000001-0000-0000-0000-000000000004")!,
+            id: UUID(uuidString: "00000001-0000-0000-0000-000000000004") ?? UUID(),
             name: "Golgi Apparatus",
             description: "A stack of flattened membrane sacs that modifies, sorts, and packages proteins and lipids for transport to their final destinations inside or outside the cell.",
             funFact: "The Golgi apparatus was one of the first organelles ever observed, discovered by Camillo Golgi in 1898!",
@@ -73,7 +73,7 @@ nonisolated enum HumanCellData {
             shape: .flatDisc
         ),
         CellOrganelle(
-            id: UUID(uuidString: "00000001-0000-0000-0000-000000000005")!,
+            id: UUID(uuidString: "00000001-0000-0000-0000-000000000005") ?? UUID(),
             name: "Cell Membrane",
             description: "The outer phospholipid bilayer boundary of the cell. A selectively permeable barrier that controls what enters and leaves, protecting the cell's contents.",
             funFact: "The cell membrane is only about 7-8 nanometers thick — 10,000 times thinner than a sheet of paper!",
@@ -83,7 +83,7 @@ nonisolated enum HumanCellData {
             shape: .sphere
         ),
         CellOrganelle(
-            id: UUID(uuidString: "00000001-0000-0000-0000-000000000006")!,
+            id: UUID(uuidString: "00000001-0000-0000-0000-000000000006") ?? UUID(),
             name: "Ribosomes",
             description: "Tiny molecular machines made of rRNA and protein. They read mRNA instructions to synthesize proteins. Found free in cytoplasm or attached to rough ER.",
             funFact: "A single cell can contain up to 10 million ribosomes, and each one can add about 20 amino acids per second!",
@@ -93,7 +93,7 @@ nonisolated enum HumanCellData {
             shape: .tinyDots
         ),
         CellOrganelle(
-            id: UUID(uuidString: "00000001-0000-0000-0000-000000000007")!,
+            id: UUID(uuidString: "00000001-0000-0000-0000-000000000007") ?? UUID(),
             name: "Lysosomes",
             description: "Membrane-bound organelles containing hydrolytic enzymes that digest worn-out organelles, food particles, viruses, and bacteria. Essential for cellular cleanup.",
             funFact: "Lysosomes maintain an internal pH of about 4.5-5.0, almost as acidic as vinegar, to activate their enzymes!",
@@ -103,7 +103,7 @@ nonisolated enum HumanCellData {
             shape: .sphere
         ),
         CellOrganelle(
-            id: UUID(uuidString: "00000001-0000-0000-0000-000000000008")!,
+            id: UUID(uuidString: "00000001-0000-0000-0000-000000000008") ?? UUID(),
             name: "Vacuoles",
             description: "Membrane-enclosed storage compartments that hold water, nutrients, waste products, or other materials. Animal cell vacuoles are small and numerous.",
             funFact: "In plant cells, the central vacuole can take up to 90% of the cell's volume and helps maintain turgor pressure!",
@@ -113,7 +113,7 @@ nonisolated enum HumanCellData {
             shape: .sphere
         ),
         CellOrganelle(
-            id: UUID(uuidString: "00000001-0000-0000-0000-000000000009")!,
+            id: UUID(uuidString: "00000001-0000-0000-0000-000000000009") ?? UUID(),
             name: "Centrioles",
             description: "A pair of cylindrical structures composed of microtubule triplets arranged at right angles. Organize the mitotic spindle during cell division and help form cilia and flagella.",
             funFact: "Centrioles duplicate themselves before a cell divides, with each copy moving to opposite poles of the cell!",
@@ -123,7 +123,7 @@ nonisolated enum HumanCellData {
             shape: .cylinder
         ),
         CellOrganelle(
-            id: UUID(uuidString: "00000001-0000-0000-0000-000000000013")!,
+            id: UUID(uuidString: "00000001-0000-0000-0000-000000000013") ?? UUID(),
             name: "Peroxisomes",
             description: "Small membrane-bound organelles containing oxidative enzymes. Break down fatty acids and amino acids, and detoxify harmful substances like hydrogen peroxide.",
             funFact: "Peroxisomes can replicate by simply dividing in two, similar to how bacteria reproduce!",
@@ -133,7 +133,7 @@ nonisolated enum HumanCellData {
             shape: .sphere
         ),
         CellOrganelle(
-            id: UUID(uuidString: "00000001-0000-0000-0000-000000000014")!,
+            id: UUID(uuidString: "00000001-0000-0000-0000-000000000014") ?? UUID(),
             name: "Cytoplasm",
             description: "The gel-like fluid (cytosol) filling the cell interior. Contains water, salts, organic molecules, and enzymes. All organelles are suspended within it.",
             funFact: "Cytoplasm is about 80% water and constantly streams within the cell, helping transport materials!",
