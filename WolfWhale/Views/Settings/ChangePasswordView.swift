@@ -1,5 +1,4 @@
 import SwiftUI
-import Supabase
 
 struct ChangePasswordView: View {
     let viewModel: AppViewModel
@@ -358,32 +357,7 @@ struct ChangePasswordView: View {
 
         Task {
             do {
-                // Verify current password by signing in
-                let session = try await supabaseClient.auth.session
-                guard let email = session.user.email else {
-                    await MainActor.run {
-                        isLoading = false
-                        withAnimation(.smooth) {
-                            errorMessage = "Unable to determine your email address."
-                        }
-                    }
-                    return
-                }
-
-                do {
-                    _ = try await supabaseClient.auth.signIn(email: email, password: currentPassword)
-                } catch {
-                    await MainActor.run {
-                        isLoading = false
-                        withAnimation(.smooth) {
-                            errorMessage = "Current password is incorrect."
-                        }
-                    }
-                    return
-                }
-
-                // Current password verified, now update
-                try await supabaseClient.auth.update(user: .init(password: newPassword))
+                try await viewModel.changePassword(currentPassword: currentPassword, newPassword: newPassword)
                 await MainActor.run {
                     isLoading = false
                     withAnimation(.spring(duration: 0.4)) {
@@ -394,7 +368,14 @@ struct ChangePasswordView: View {
                 await MainActor.run {
                     isLoading = false
                     withAnimation(.smooth) {
-                        errorMessage = mapPasswordError(error)
+                        let message = String(describing: error).lowercased()
+                        if message.contains("unable to determine") {
+                            errorMessage = "Unable to determine your email address."
+                        } else if message.contains("invalid") || message.contains("credentials") || message.contains("wrong") {
+                            errorMessage = "Current password is incorrect."
+                        } else {
+                            errorMessage = mapPasswordError(error)
+                        }
                     }
                 }
             }
@@ -402,7 +383,7 @@ struct ChangePasswordView: View {
     }
 
     private func mapPasswordError(_ error: Error) -> String {
-        let message = error.localizedDescription.lowercased()
+        let message = String(describing: error).lowercased()
         if message.contains("weak") || message.contains("short") {
             return "Password is too weak. Please choose a stronger password."
         } else if message.contains("same") || message.contains("reuse") {

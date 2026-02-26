@@ -124,6 +124,10 @@ class AppViewModel {
     /// Cached at-risk students to avoid O(C×A×S) recomputation on every view render.
     var cachedAtRiskStudents: [AtRiskStudent] = []
 
+    /// Cached weighted grade results for every course.
+    /// Updated by `refreshDerivedProperties()` instead of recomputing on every access.
+    var cachedCourseGradeResults: [CourseGradeResult] = []
+
     // MARK: - Search Debouncing
     private var searchTask: Task<Void, Never>?
 
@@ -185,10 +189,15 @@ class AppViewModel {
     var gradeService = GradeCalculationService()
 
     /// Weighted grade results for every course the student is enrolled in.
-    /// Each result includes per-category breakdowns, letter grade, and GPA points
-    /// computed using the teacher-configured weights (or defaults).
+    /// Returns the cached value populated by `refreshDerivedProperties()`.
+    /// Call `computeCourseGradeResults()` directly only when you need a fresh snapshot.
     var courseGradeResults: [CourseGradeResult] {
-        // Group grades by courseId in a single pass (O(n) instead of O(n×m))
+        cachedCourseGradeResults
+    }
+
+    /// Recomputes weighted grade results from scratch. O(n) grouping pass.
+    /// The result is stored in `cachedCourseGradeResults` by `refreshDerivedProperties()`.
+    func computeCourseGradeResults() -> [CourseGradeResult] {
         let grouped = Dictionary(grouping: grades, by: \.courseId)
         return grouped.compactMap { courseId, courseGrades -> CourseGradeResult? in
             guard let first = courseGrades.first else { return nil }
@@ -425,13 +434,10 @@ class AppViewModel {
     }
 
     /// Forces a recalculation of weighted grades (called after teacher saves new weights).
-    /// Because `courseGradeResults` is a computed property reading from `grades`,
-    /// we trigger an observation update by toggling a flag the view model publishes.
+    /// Recomputes `cachedCourseGradeResults` so that `gpa`, `weightedAveragePercent`,
+    /// and `overallLetterGrade` all reflect the new weights immediately.
     func invalidateGradeCalculations() {
-        // Touch the grades array to trigger @Observable recalculation
-        // This is a lightweight operation that notifies observers
-        let current = grades
-        grades = current
+        cachedCourseGradeResults = computeCourseGradeResults()
     }
 
     private(set) var upcomingAssignments: [Assignment] = []
@@ -439,13 +445,32 @@ class AppViewModel {
     private(set) var totalUnreadMessages: Int = 0
     private(set) var pendingGradingCount: Int = 0
 
-    /// Recomputes cached derived properties. Call after assignments or conversations change.
+    /// Recomputes cached derived properties. Call after assignments, conversations, or grades change.
+    /// Uses a single pass over `assignments` instead of 4 separate filter passes.
     func refreshDerivedProperties() {
-        upcomingAssignments = assignments.filter { !$0.isSubmitted && !$0.isOverdue }
-            .sorted { $0.dueDate < $1.dueDate }
-        overdueAssignments = assignments.filter { $0.isOverdue }
+        // Single-pass over assignments: bucket into upcoming, overdue, and pending-grading
+        var upcoming: [Assignment] = []
+        var overdue: [Assignment] = []
+        var pendingGrading = 0
+
+        for assignment in assignments {
+            if assignment.isOverdue {
+                overdue.append(assignment)
+            } else if !assignment.isSubmitted {
+                upcoming.append(assignment)
+            }
+            if assignment.isSubmitted && assignment.grade == nil {
+                pendingGrading += 1
+            }
+        }
+
+        upcomingAssignments = upcoming.sorted { $0.dueDate < $1.dueDate }
+        overdueAssignments = overdue
+        pendingGradingCount = pendingGrading
         totalUnreadMessages = conversations.reduce(0) { $0 + $1.unreadCount }
-        pendingGradingCount = assignments.filter { $0.isSubmitted && $0.grade == nil }.count
+
+        // Refresh cached grade computations so gpa/weightedAveragePercent stay current
+        cachedCourseGradeResults = computeCourseGradeResults()
     }
 
     var pendingEnrollmentCount: Int {
@@ -882,6 +907,177 @@ class AppViewModel {
         enrollmentRequests = []
         loginError = nil
         isDataLoading = false
+    }
+
+    // MARK: - Auth Wrappers (used by Views instead of touching supabaseClient directly)
+
+    /// Re-authenticates the user by signing in with the given credentials.
+    /// Used by BiometricLockView and DeleteAccountView for password fallback / re-auth.
+    func reAuthenticate(email: String, password: String) async throws {
+        _ = try await supabaseClient.auth.signIn(email: email, password: password)
+    }
+
+    /// Changes the user's password after verifying the current one.
+    /// Used by ChangePasswordView instead of calling supabaseClient directly.
+    func changePassword(currentPassword: String, newPassword: String) async throws {
+        let session = try await supabaseClient.auth.session
+        guard let email = session.user.email else {
+            throw NSError(domain: "AppViewModel", code: -1, userInfo: [NSLocalizedDescriptionKey: "Unable to determine your email address."])
+        }
+        // Verify current password
+        _ = try await supabaseClient.auth.signIn(email: email, password: currentPassword)
+        // Update to new password
+        try await supabaseClient.auth.update(user: .init(password: newPassword))
+    }
+
+    /// Signs up a new user, creates their profile and tenant membership.
+    /// Used by SignUpView instead of calling supabaseClient directly.
+    func signUpNewUser(
+        email: String,
+        password: String,
+        firstName: String,
+        lastName: String,
+        role: UserRole,
+        tenantCode: String
+    ) async throws -> UUID {
+        // Look up tenant by invite code
+        struct TenantLookup: Decodable { let id: UUID }
+        let tenantResponse: [TenantLookup] = try await supabaseClient
+            .from("tenants")
+            .select("id")
+            .eq("invite_code", value: tenantCode)
+            .limit(1)
+            .execute()
+            .value
+
+        guard let tenant = tenantResponse.first else {
+            throw NSError(domain: "AppViewModel", code: -2, userInfo: [NSLocalizedDescriptionKey: "Invalid school code. Please check with your administrator."])
+        }
+
+        let result = try await supabaseClient.auth.signUp(
+            email: email,
+            password: password,
+            data: [
+                "first_name": .string(firstName),
+                "last_name": .string(lastName),
+                "role": .string(role.rawValue)
+            ]
+        )
+
+        let newProfile = InsertProfileDTO(
+            id: result.user.id,
+            firstName: firstName,
+            lastName: lastName,
+            avatarUrl: nil,
+            phone: nil,
+            dateOfBirth: nil,
+            bio: nil,
+            timezone: nil,
+            language: nil,
+            gradeLevel: nil,
+            fullName: "\(firstName) \(lastName)"
+        )
+        try await supabaseClient
+            .from("profiles")
+            .insert(newProfile)
+            .execute()
+
+        let membership = InsertTenantMembershipDTO(
+            userId: result.user.id,
+            tenantId: tenant.id,
+            role: role.rawValue,
+            status: "active",
+            joinedAt: ISO8601DateFormatter().string(from: Date()),
+            invitedAt: nil,
+            invitedBy: nil
+        )
+        try await supabaseClient
+            .from("tenant_memberships")
+            .insert(membership)
+            .execute()
+
+        return result.user.id
+    }
+
+    /// Sends a parent consent email for an under-13 student.
+    /// Used by SignUpView after sign-up completes.
+    func sendParentConsentEmail(childUserId: UUID, parentEmail: String) async {
+        _ = try? await supabaseClient.rpc(
+            "send_parent_consent_email",
+            params: [
+                "child_user_id": childUserId.uuidString,
+                "parent_email": parentEmail
+            ]
+        ).execute()
+    }
+
+    /// Creates a new school (tenant), admin auth account, profile, and membership.
+    /// Used by AdminSetupView instead of calling supabaseClient directly.
+    func createSchool(
+        schoolName: String,
+        schoolCode: String,
+        adminEmail: String,
+        adminPassword: String,
+        firstName: String,
+        lastName: String
+    ) async throws {
+        // 1. Sign up admin with Supabase Auth
+        let result = try await supabaseClient.auth.signUp(
+            email: adminEmail,
+            password: adminPassword,
+            data: [
+                "first_name": .string(firstName),
+                "last_name": .string(lastName),
+                "role": .string(UserRole.admin.rawValue)
+            ]
+        )
+
+        // 2. Create tenant record
+        let tenantId = UUID()
+        let tenantRecord = InsertTenantDTO(
+            id: tenantId,
+            name: schoolName,
+            slug: schoolCode,
+            status: "active"
+        )
+        try await supabaseClient
+            .from("tenants")
+            .insert(tenantRecord)
+            .execute()
+
+        // 3. Create admin profile
+        let newProfile = InsertProfileDTO(
+            id: result.user.id,
+            firstName: firstName,
+            lastName: lastName,
+            avatarUrl: nil,
+            phone: nil,
+            dateOfBirth: nil,
+            bio: nil,
+            timezone: nil,
+            language: nil,
+            gradeLevel: nil,
+            fullName: "\(firstName) \(lastName)"
+        )
+        try await supabaseClient
+            .from("profiles")
+            .insert(newProfile)
+            .execute()
+
+        // 4. Create tenant membership
+        let membership = InsertTenantMembershipDTO(
+            userId: result.user.id,
+            tenantId: tenantId,
+            role: UserRole.admin.rawValue,
+            status: "active",
+            joinedAt: ISO8601DateFormatter().string(from: Date()),
+            invitedAt: nil,
+            invitedBy: nil
+        )
+        try await supabaseClient
+            .from("tenant_memberships")
+            .insert(membership)
+            .execute()
     }
 
     // MARK: - Fetch Profile
@@ -3272,7 +3468,7 @@ class AppViewModel {
     }
 
     private func mapAuthError(_ error: Error) -> String {
-        let message = error.localizedDescription.lowercased()
+        let message = String(describing: error).lowercased()
         if message.contains("invalid login") || message.contains("invalid credentials") || message.contains("invalid_credentials") {
             return "Invalid email or password"
         } else if message.contains("email not confirmed") {

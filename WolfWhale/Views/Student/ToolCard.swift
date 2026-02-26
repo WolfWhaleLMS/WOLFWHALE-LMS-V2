@@ -3,11 +3,18 @@ import SwiftUI
 /// A reusable card component for the Learning Tools grid.
 /// Displays an SF Symbol icon inside a tinted circle, a title, and a brief subtitle,
 /// styled with the app's indigo/purple glass-material theme.
-struct ToolCard: View {
+struct ToolCard: View, Equatable {
     let title: String
     let subtitle: String
     let icon: String
     let gradientColors: [Color]
+
+    static func == (lhs: ToolCard, rhs: ToolCard) -> Bool {
+        lhs.title == rhs.title &&
+        lhs.subtitle == rhs.subtitle &&
+        lhs.icon == rhs.icon &&
+        lhs.gradientColors == rhs.gradientColors
+    }
 
     var body: some View {
         VStack(spacing: 12) {

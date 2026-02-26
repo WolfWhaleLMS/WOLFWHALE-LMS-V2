@@ -74,9 +74,30 @@ final class CloudSyncService {
     private var container: CKContainer { CKContainer.default() }
     private var privateDB: CKDatabase { container.privateCloudDatabase }
 
+    // MARK: - Notification Observer
+
+    /// Holds the observer token so it can be removed in `deinit`.
+    /// `nonisolated(unsafe)` because deinit is nonisolated and must remove the observer.
+    /// Safe because init (MainActor) is the only writer and deinit is the only other accessor.
+    nonisolated(unsafe) private var accountChangeObserver: NSObjectProtocol?
+
     // MARK: - Init
 
     init() {
+        // Always observe iCloud account changes so we detect when the user
+        // signs in/out of iCloud while the app is running -- even if iCloud
+        // is initially unavailable.
+        accountChangeObserver = NotificationCenter.default.addObserver(
+            forName: Notification.Name.CKAccountChanged,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            guard let self else { return }
+            Task { @MainActor in
+                self.iCloudAvailable = await self.checkiCloudAvailability()
+            }
+        }
+
         // Guard: if no iCloud identity token, iCloud is not available.
         // This avoids calling CKContainer.accountStatus() which can crash
         // when the iCloud/CloudKit capability is not enabled.
@@ -84,8 +105,15 @@ final class CloudSyncService {
             iCloudAvailable = false
             return
         }
+
         Task {
             iCloudAvailable = await checkiCloudAvailability()
+        }
+    }
+
+    deinit {
+        if let observer = accountChangeObserver {
+            NotificationCenter.default.removeObserver(observer)
         }
     }
 
@@ -142,7 +170,11 @@ final class CloudSyncService {
 
             let encoder = JSONEncoder()
             let jsonData = try encoder.encode(prefs)
-            record["preferencesJSON"] = String(data: jsonData, encoding: .utf8) as CKRecordValue?
+            guard let jsonString = String(data: jsonData, encoding: .utf8) else {
+                syncError = "Failed to encode preferences as UTF-8 string."
+                return
+            }
+            record["preferencesJSON"] = jsonString as CKRecordValue
             record["lastModified"] = Date() as CKRecordValue
 
             try await privateDB.save(record)
@@ -152,7 +184,7 @@ final class CloudSyncService {
             print("[CloudSync] Successfully synced preferences to iCloud")
             #endif
         } catch {
-            syncError = "Failed to sync to iCloud: \(error.localizedDescription)"
+            syncError = "Failed to sync to iCloud: \(UserFacingError.message(from: error))"
             #if DEBUG
             print("[CloudSync] Sync to cloud failed: \(error)")
             #endif
@@ -191,7 +223,7 @@ final class CloudSyncService {
             // CKError.unknownItem means no record exists yet, which is fine
             let ckError = error as? CKError
             if ckError?.code != .unknownItem {
-                syncError = "Failed to fetch from iCloud: \(error.localizedDescription)"
+                syncError = "Failed to fetch from iCloud: \(UserFacingError.message(from: error))"
                 #if DEBUG
                 print("[CloudSync] Fetch from cloud failed: \(error)")
                 #endif

@@ -111,7 +111,7 @@ final class EnrollmentService {
                 )
             }
         } catch {
-            self.error = "Failed to load course catalog: \(error.localizedDescription)"
+            self.error = "Failed to load course catalog: \(UserFacingError.message(from: error))"
         }
     }
 
@@ -215,7 +215,7 @@ final class EnrollmentService {
 
             return true
         } catch {
-            self.error = "Failed to request enrollment: \(error.localizedDescription)"
+            self.error = "Failed to request enrollment: \(UserFacingError.message(from: error))"
             return false
         }
     }
@@ -268,7 +268,7 @@ final class EnrollmentService {
 
             return true
         } catch {
-            self.error = "Failed to drop course: \(error.localizedDescription)"
+            self.error = "Failed to drop course: \(UserFacingError.message(from: error))"
             return false
         }
     }
@@ -326,7 +326,7 @@ final class EnrollmentService {
 
             return true
         } catch {
-            self.error = "Failed to join waitlist: \(error.localizedDescription)"
+            self.error = "Failed to join waitlist: \(UserFacingError.message(from: error))"
             return false
         }
     }
@@ -397,7 +397,7 @@ final class EnrollmentService {
                 )
             }
         } catch {
-            self.error = "Failed to load enrollments: \(error.localizedDescription)"
+            self.error = "Failed to load enrollments: \(UserFacingError.message(from: error))"
         }
     }
 
@@ -471,7 +471,7 @@ final class EnrollmentService {
                 )
             }
         } catch {
-            self.error = "Failed to load pending requests: \(error.localizedDescription)"
+            self.error = "Failed to load pending requests: \(UserFacingError.message(from: error))"
         }
     }
 
@@ -494,7 +494,7 @@ final class EnrollmentService {
             pendingRequests.removeAll { $0.id == requestId }
             return true
         } catch {
-            self.error = "Failed to approve enrollment: \(error.localizedDescription)"
+            self.error = "Failed to approve enrollment: \(UserFacingError.message(from: error))"
             return false
         }
     }
@@ -518,7 +518,7 @@ final class EnrollmentService {
             pendingRequests.removeAll { $0.id == requestId }
             return true
         } catch {
-            self.error = "Failed to deny enrollment: \(error.localizedDescription)"
+            self.error = "Failed to deny enrollment: \(UserFacingError.message(from: error))"
             return false
         }
     }

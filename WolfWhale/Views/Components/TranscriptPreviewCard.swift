@@ -132,6 +132,7 @@ struct TranscriptPreviewCard: View {
 
             Text(String(format: "%.1f", cumulativeGPA))
                 .font(.system(size: 11, weight: .bold, design: .rounded))
+                .contentTransition(.numericText())
         }
         .frame(width: 44, height: 44)
         .accessibilityLabel("GPA \(String(format: "%.2f", cumulativeGPA))")
@@ -153,6 +154,7 @@ struct TranscriptPreviewCard: View {
         VStack(spacing: 4) {
             Text(value)
                 .font(.subheadline.bold())
+                .contentTransition(.numericText())
             Text(label)
                 .font(.caption2)
                 .foregroundStyle(.secondary)

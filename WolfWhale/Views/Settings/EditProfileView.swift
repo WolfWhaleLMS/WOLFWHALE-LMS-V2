@@ -521,7 +521,7 @@ struct EditProfileView: View {
                 await MainActor.run {
                     isLoading = false
                     withAnimation(.smooth) {
-                        errorMessage = "Failed to save profile: \(error.localizedDescription)"
+                        errorMessage = UserFacingError.message(from: error)
                     }
                 }
             }

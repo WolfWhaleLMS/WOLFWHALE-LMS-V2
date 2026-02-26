@@ -6,33 +6,33 @@ struct TeacherTabView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            Tab("Home", systemImage: "house.fill", value: 0) {
+            Tab(L10n.tabHome, systemImage: "house.fill", value: 0) {
                 TeacherDashboardView(viewModel: viewModel)
             }
-            .accessibilityLabel("Home")
+            .accessibilityLabel(L10n.tabHome)
             .accessibilityHint("Double tap to view your dashboard")
-            Tab("Courses", systemImage: "text.book.closed.fill", value: 1) {
+            Tab(L10n.courses, systemImage: "text.book.closed.fill", value: 1) {
                 TeacherCoursesView(viewModel: viewModel)
                     .task { viewModel.loadAssignmentsIfNeeded() }
             }
-            .accessibilityLabel("Courses")
+            .accessibilityLabel(L10n.courses)
             .accessibilityHint("Double tap to view your courses")
-            Tab("Resources", systemImage: "books.vertical.fill", value: 2) {
+            Tab(L10n.tabResources, systemImage: "books.vertical.fill", value: 2) {
                 ResourceLibraryView(viewModel: viewModel)
             }
-            .accessibilityLabel("Resources")
+            .accessibilityLabel(L10n.tabResources)
             .accessibilityHint("Double tap to explore learning resources")
-            Tab("Messages", systemImage: "message.fill", value: 3) {
+            Tab(L10n.messages, systemImage: "message.fill", value: 3) {
                 MessagesListView(viewModel: viewModel)
                     .task { viewModel.loadConversationsIfNeeded() }
             }
             .badge(viewModel.totalUnreadMessages)
-            .accessibilityLabel("Messages")
+            .accessibilityLabel(L10n.messages)
             .accessibilityHint("Double tap to view your messages")
-            Tab("Profile", systemImage: "person.crop.circle.fill", value: 4) {
+            Tab(L10n.tabProfile, systemImage: "person.crop.circle.fill", value: 4) {
                 TeacherProfileView(viewModel: viewModel)
             }
-            .accessibilityLabel("Profile")
+            .accessibilityLabel(L10n.tabProfile)
             .accessibilityHint("Double tap to view your profile")
         }
         .sensoryFeedback(.impact(weight: .light), trigger: selectedTab)

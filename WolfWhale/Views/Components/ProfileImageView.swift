@@ -28,7 +28,7 @@ struct ProfileImageView: View {
     var body: some View {
         Group {
             if let url {
-                CachedAsyncImage(url: url) {
+                CachedAsyncImage(url: url, maxDimension: 100) {
                     initialsView
                 }
                 .frame(width: size, height: size)

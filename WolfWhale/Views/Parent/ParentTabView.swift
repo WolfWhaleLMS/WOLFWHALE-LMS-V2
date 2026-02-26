@@ -6,22 +6,22 @@ struct ParentTabView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            Tab("Home", systemImage: "house.fill", value: 0) {
+            Tab(L10n.tabHome, systemImage: "house.fill", value: 0) {
                 ParentDashboardView(viewModel: viewModel)
             }
-            .accessibilityLabel("Home")
+            .accessibilityLabel(L10n.tabHome)
             .accessibilityHint("Double tap to view your children's overview")
-            Tab("Messages", systemImage: "message.fill", value: 1) {
+            Tab(L10n.messages, systemImage: "message.fill", value: 1) {
                 MessagesListView(viewModel: viewModel)
                     .task { viewModel.loadConversationsIfNeeded() }
             }
             .badge(viewModel.totalUnreadMessages)
-            .accessibilityLabel("Messages")
+            .accessibilityLabel(L10n.messages)
             .accessibilityHint("Double tap to view your messages")
-            Tab("Settings", systemImage: "gearshape.fill", value: 2) {
+            Tab(L10n.settings, systemImage: "gearshape.fill", value: 2) {
                 ParentSettingsView(viewModel: viewModel)
             }
-            .accessibilityLabel("Settings")
+            .accessibilityLabel(L10n.settings)
             .accessibilityHint("Double tap to view settings")
         }
         .sensoryFeedback(.impact(weight: .light), trigger: selectedTab)

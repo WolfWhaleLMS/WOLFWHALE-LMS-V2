@@ -20,6 +20,7 @@ struct AuroraNightSkyBackground: View {
 
             // Stars
             TwinklingStarsView()
+                .drawingGroup()
 
             // Northern lights
             AuroraView()
@@ -46,7 +47,7 @@ private struct Star: Identifiable {
 private struct TwinklingStarsView: View {
     let stars: [Star]
 
-    init(count: Int = 120) {
+    init(count: Int = 60) {
         var rng = SeededRNG(seed: 42)
         stars = (0..<count).map { i in
             Star(

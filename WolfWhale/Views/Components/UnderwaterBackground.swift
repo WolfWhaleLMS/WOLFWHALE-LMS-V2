@@ -7,7 +7,7 @@ struct UnderwaterBackground: View {
     @State private var phase: Double = 0
 
     var body: some View {
-        TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: false)) { timeline in
+        TimelineView(.animation(minimumInterval: 1.0 / 15.0, paused: false)) { timeline in
             let t = timeline.date.timeIntervalSinceReferenceDate
             Canvas { context, size in
                 // Deep ocean gradient
@@ -29,6 +29,7 @@ struct UnderwaterBackground: View {
                 // Caustic light patterns
                 drawCaustics(context: context, size: size, time: t)
             }
+            .drawingGroup()
             .overlay {
                 // Bubbles layer
                 BubblesView(time: t)
@@ -100,7 +101,7 @@ private struct BubblesView: View {
         let wobblePhase: Double
     }
 
-    private let bubbles: [Bubble] = (0..<25).map { i in
+    private let bubbles: [Bubble] = (0..<15).map { i in
         let seed = Double(i) * 2.3
         return Bubble(
             id: i,
@@ -169,7 +170,7 @@ private struct FishSwimmingView: View {
         let verticalWobble: Double
     }
 
-    private static let fishData: [Fish] = (0..<8).map { i in
+    private static let fishData: [Fish] = (0..<5).map { i in
         let seed = Double(i) * 3.1
         return Fish(
             id: i,

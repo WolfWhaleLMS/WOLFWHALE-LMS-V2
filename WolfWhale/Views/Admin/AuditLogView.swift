@@ -340,7 +340,7 @@ struct AuditLogView: View {
             offset += results.count
             hasMore = results.count >= pageSize
         } catch {
-            loadError = error.localizedDescription
+            loadError = UserFacingError.message(from: error)
             #if DEBUG
             print("[AuditLogView] Failed to load logs: \(error)")
             #endif

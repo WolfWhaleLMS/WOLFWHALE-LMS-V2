@@ -966,7 +966,7 @@ struct GradebookView: View {
                 resetAssignmentForm()
                 showAddAssignment = false
             } catch {
-                createError = "Failed to create assignment: \(error.localizedDescription)"
+                createError = UserFacingError.message(from: error)
             }
             isCreating = false
         }

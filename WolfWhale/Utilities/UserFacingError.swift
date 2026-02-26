@@ -79,4 +79,9 @@ enum UserFacingError: LocalizedError {
 
         return .generic
     }
+
+    /// Convenience: returns a sanitized user-facing message string directly.
+    static func message(from error: Error) -> String {
+        sanitize(error).errorDescription ?? "Something went wrong. Please try again."
+    }
 }

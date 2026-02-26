@@ -1,12 +1,7 @@
 import SwiftUI
-import Supabase
-
-/// Used to decode the tenant ID from an invite_code lookup.
-private struct TenantLookupResult: Decodable {
-    let id: UUID
-}
 
 struct SignUpView: View {
+    let viewModel: AppViewModel
     @Environment(\.dismiss) private var dismiss
     @State private var fullName = ""
     @State private var email = ""
@@ -709,80 +704,23 @@ struct SignUpView: View {
                 let firstName = String(nameComponents.first ?? "")
                 let lastName = nameComponents.count > 1 ? String(nameComponents.last ?? "") : ""
                 let tenantCode = schoolCode.uppercased().trimmingCharacters(in: .whitespaces)
+                let trimmedEmail = email.trimmingCharacters(in: .whitespaces).lowercased()
 
-                // Look up tenant by invite code
-                let tenantResponse: [TenantLookupResult] = try await supabaseClient
-                    .from("tenants")
-                    .select("id")
-                    .eq("invite_code", value: tenantCode)
-                    .limit(1)
-                    .execute()
-                    .value
-
-                guard let tenant = tenantResponse.first else {
-                    withAnimation(.smooth) {
-                        errorMessage = "Invalid school code. Please check with your administrator."
-                    }
-                    isLoading = false
-                    return
-                }
-                let tenantId = tenant.id
-
-                // Sign up with Supabase Auth
-                let result = try await supabaseClient.auth.signUp(
-                    email: email.trimmingCharacters(in: .whitespaces).lowercased(),
+                let newUserId = try await viewModel.signUpNewUser(
+                    email: trimmedEmail,
                     password: password,
-                    data: [
-                        "first_name": .string(firstName),
-                        "last_name": .string(lastName),
-                        "role": .string(selectedRole.rawValue)
-                    ]
-                )
-
-                // Create profile in profiles table (email/role/schoolId are NOT profile columns)
-                let newProfile = InsertProfileDTO(
-                    id: result.user.id,
                     firstName: firstName,
                     lastName: lastName,
-                    avatarUrl: nil,
-                    phone: nil,
-                    dateOfBirth: nil,
-                    bio: nil,
-                    timezone: nil,
-                    language: nil,
-                    gradeLevel: nil,
-                    fullName: "\(firstName) \(lastName)"
+                    role: selectedRole,
+                    tenantCode: tenantCode
                 )
-                try await supabaseClient
-                    .from("profiles")
-                    .insert(newProfile)
-                    .execute()
-
-                // Create tenant membership for ALL roles (student, teacher, parent, admin)
-                let membership = InsertTenantMembershipDTO(
-                    userId: result.user.id,
-                    tenantId: tenantId,
-                    role: selectedRole.rawValue,
-                    status: "active",
-                    joinedAt: ISO8601DateFormatter().string(from: Date()),
-                    invitedAt: nil,
-                    invitedBy: nil
-                )
-                try await supabaseClient
-                    .from("tenant_memberships")
-                    .insert(membership)
-                    .execute()
 
                 // If under 13, send parental consent email and show pending screen
                 if selectedRole == .student && isUnder13 {
-                    // Call RPC to send parent consent verification email
-                    _ = try? await supabaseClient.rpc(
-                        "send_parent_consent_email",
-                        params: [
-                            "child_user_id": result.user.id.uuidString,
-                            "parent_email": parentGuardianEmail.trimmingCharacters(in: .whitespaces).lowercased()
-                        ]
-                    ).execute()
+                    await viewModel.sendParentConsentEmail(
+                        childUserId: newUserId,
+                        parentEmail: parentGuardianEmail.trimmingCharacters(in: .whitespaces).lowercased()
+                    )
 
                     withAnimation(.smooth) {
                         parentConsentPending = true
@@ -805,7 +743,7 @@ struct SignUpView: View {
     }
 
     private func mapSignUpError(_ error: Error) -> String {
-        let message = error.localizedDescription.lowercased()
+        let message = String(describing: error).lowercased()
         if message.contains("already registered") || message.contains("already been registered") || message.contains("user_already_exists") {
             return "An account with this email already exists"
         } else if message.contains("invalid email") || message.contains("valid email") {

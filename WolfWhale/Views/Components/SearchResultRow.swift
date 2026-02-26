@@ -2,9 +2,13 @@ import SwiftUI
 
 // MARK: - SearchResultRow
 
-struct SearchResultRow: View {
+struct SearchResultRow: View, Equatable {
     let result: SearchResult
     let query: String
+
+    static func == (lhs: SearchResultRow, rhs: SearchResultRow) -> Bool {
+        lhs.result == rhs.result && lhs.query == rhs.query
+    }
 
     var body: some View {
         HStack(spacing: 14) {

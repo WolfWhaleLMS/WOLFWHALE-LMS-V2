@@ -107,7 +107,7 @@ final class ChatRealtimeService {
             } catch {
                 await MainActor.run {
                     self.isConnected = false
-                    self.error = "Failed to connect to realtime: \(error.localizedDescription)"
+                    self.error = "Failed to connect to realtime: \(UserFacingError.message(from: error))"
                 }
                 #if DEBUG
                 print("[ChatRealtimeService] subscription failed: \(error)")
@@ -356,7 +356,7 @@ final class ChatRealtimeService {
             sent.status = .sent
             return sent
         } catch {
-            self.error = "Failed to send message: \(error.localizedDescription)"
+            self.error = "Failed to send message: \(UserFacingError.message(from: error))"
             #if DEBUG
             print("[ChatRealtimeService] sendMessage failed: \(error)")
             #endif

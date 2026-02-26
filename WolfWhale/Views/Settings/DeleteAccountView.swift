@@ -1,5 +1,4 @@
 import SwiftUI
-import Supabase
 
 struct DeleteAccountView: View {
     let viewModel: AppViewModel
@@ -323,7 +322,7 @@ struct DeleteAccountView: View {
             // Re-authenticate before deletion
             reAuthError = nil
             do {
-                _ = try await supabaseClient.auth.signIn(email: email, password: reAuthPassword)
+                try await viewModel.reAuthenticate(email: email, password: reAuthPassword)
             } catch {
                 reAuthError = "Incorrect password. Please try again."
                 errorHapticTrigger.toggle()

@@ -89,6 +89,7 @@ struct AdminDashboardView: View {
             }
         }
         .requireRole(.admin, .superAdmin, currentRole: viewModel.currentUser?.role)
+        .iPadAware()
     }
 
     // MARK: - iPad Admin Layout (Two-Column Grid)
@@ -261,8 +262,7 @@ struct AdminDashboardView: View {
     }
 
     private var metricsGrid: some View {
-        let columns = [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]
-        return LazyVGrid(columns: columns, spacing: 12) {
+        AdaptiveGrid(compactColumns: 3, regularColumns: 6, spacing: 12) {
             metricCard(icon: "person.fill", value: "\(metrics.totalStudents)", label: "Students", color: .purple)
             metricCard(icon: "person.crop.rectangle.fill", value: "\(metrics.totalTeachers)", label: "Teachers", color: .orange)
             metricCard(icon: "book.fill", value: "\(metrics.totalCourses)", label: "Courses", color: .blue)
@@ -584,6 +584,7 @@ struct AdminDashboardView: View {
             Text(value)
                 .font(.headline)
                 .foregroundStyle(Color(.label))
+                .contentTransition(.numericText())
             Text(label)
                 .font(.caption2)
                 .foregroundStyle(Color(.secondaryLabel))
@@ -653,6 +654,7 @@ struct AdminDashboardView: View {
                                 Text("\(Int(rate * 100))%")
                                     .font(.caption2.bold())
                                     .foregroundStyle(.secondary)
+                                    .contentTransition(.numericText())
                             }
                             ZStack(alignment: .bottom) {
                                 RoundedRectangle(cornerRadius: 4)

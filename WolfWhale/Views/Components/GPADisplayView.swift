@@ -1,8 +1,12 @@
 import SwiftUI
 
-struct GPADisplayView: View {
+struct GPADisplayView: View, Equatable {
     let gpa: Double
     let size: CGFloat
+
+    static func == (lhs: GPADisplayView, rhs: GPADisplayView) -> Bool {
+        lhs.gpa == rhs.gpa && lhs.size == rhs.size
+    }
 
     init(gpa: Double, size: CGFloat = 120) {
         self.gpa = gpa
@@ -78,10 +82,12 @@ struct GPADisplayView: View {
                     Text(String(format: "%.2f", gpa))
                         .font(.system(size: size * 0.22, weight: .bold, design: .rounded))
                         .foregroundStyle(.primary)
+                        .contentTransition(.numericText())
 
                     Text(letterGrade)
                         .font(.system(size: size * 0.12, weight: .semibold, design: .rounded))
                         .foregroundStyle(gpaColor)
+                        .contentTransition(.numericText())
                 }
             }
             .frame(width: size, height: size)
@@ -92,13 +98,18 @@ struct GPADisplayView: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("GPA \(String(format: "%.2f", gpa)), \(letterGrade), \(standingText)")
+        .accessibilityValue("\(Int(progress * 100)) percent of 4.0")
     }
 }
 
 // MARK: - Compact Variant
 
-struct GPADisplayCompactView: View {
+struct GPADisplayCompactView: View, Equatable {
     let gpa: Double
+
+    static func == (lhs: GPADisplayCompactView, rhs: GPADisplayCompactView) -> Bool {
+        lhs.gpa == rhs.gpa
+    }
 
     private var gpaColor: Color {
         switch gpa {
@@ -129,6 +140,7 @@ struct GPADisplayCompactView: View {
 
                 Text(String(format: "%.1f", gpa))
                     .font(.caption.bold())
+                    .contentTransition(.numericText())
             }
             .frame(width: 40, height: 40)
 
@@ -138,9 +150,11 @@ struct GPADisplayCompactView: View {
                     .foregroundStyle(.secondary)
                 Text(String(format: "%.2f", gpa))
                     .font(.subheadline.bold())
+                    .contentTransition(.numericText())
             }
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("GPA \(String(format: "%.2f", gpa))")
+        .accessibilityValue("\(Int(progress * 100)) percent of 4.0")
     }
 }

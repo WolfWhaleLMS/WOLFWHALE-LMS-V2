@@ -405,7 +405,7 @@ struct RubricBuilderView: View {
                 withAnimation { showSuccess = false }
                 dismiss()
             } catch {
-                errorMessage = "Failed to save rubric: \(error.localizedDescription)"
+                errorMessage = UserFacingError.message(from: error)
                 isLoading = false
             }
         }

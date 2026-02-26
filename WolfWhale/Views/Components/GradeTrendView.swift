@@ -1,8 +1,12 @@
 import SwiftUI
 
-struct GradeTrendView: View {
+struct GradeTrendView: View, Equatable {
     let dataPoints: [Double]
     let trend: GradeTrend
+
+    static func == (lhs: GradeTrendView, rhs: GradeTrendView) -> Bool {
+        lhs.dataPoints == rhs.dataPoints && lhs.trend == rhs.trend
+    }
 
     private var trendColor: Color {
         switch trend {
@@ -114,8 +118,12 @@ struct GradeTrendView: View {
 // MARK: - Inline Badge Variant
 
 /// A small inline trend badge showing arrow + label, used inside list rows.
-struct GradeTrendBadge: View {
+struct GradeTrendBadge: View, Equatable {
     let trend: GradeTrend
+
+    static func == (lhs: GradeTrendBadge, rhs: GradeTrendBadge) -> Bool {
+        lhs.trend == rhs.trend
+    }
 
     private var trendColor: Color {
         switch trend {

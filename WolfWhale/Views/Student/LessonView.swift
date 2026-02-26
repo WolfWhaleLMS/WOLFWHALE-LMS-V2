@@ -1,5 +1,4 @@
 import SwiftUI
-import Combine
 
 struct LessonView: View {
     let lesson: Lesson
@@ -108,17 +107,20 @@ struct LessonView: View {
                 videoProgress = progressService.getCompletionPercentage(lessonId: lesson.id)
             }
         }
-        .onReceive(
-            Timer.publish(every: 1.0, on: .main, in: .common).autoconnect()
-        ) { _ in
-            guard isVideoLesson, !isCompleted else { return }
-            let updatedProgress = progressService.getCompletionPercentage(lessonId: lesson.id)
-            withAnimation(.easeInOut(duration: 0.3)) {
-                videoProgress = updatedProgress
-            }
-            if updatedProgress >= 0.9, !videoCompletionTriggered {
-                videoCompletionTriggered = true
-                triggerCompletion()
+        .task(id: isVideoLesson) {
+            // Only poll video progress for video lessons; exits when completed.
+            guard isVideoLesson else { return }
+            while !Task.isCancelled && !isCompleted {
+                try? await Task.sleep(for: .seconds(1))
+                guard !Task.isCancelled else { break }
+                let updatedProgress = progressService.getCompletionPercentage(lessonId: lesson.id)
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    videoProgress = updatedProgress
+                }
+                if updatedProgress >= 0.9, !videoCompletionTriggered {
+                    videoCompletionTriggered = true
+                    triggerCompletion()
+                }
             }
         }
         #if canImport(UIKit)
@@ -367,6 +369,7 @@ struct LessonView: View {
                 Text("\(Int(videoProgress * 100))%")
                     .font(.caption.bold().monospacedDigit())
                     .foregroundStyle(videoProgress >= 0.9 ? .green : Theme.courseColor(course.colorName))
+                    .contentTransition(.numericText())
             }
 
             GeometryReader { geometry in

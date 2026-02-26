@@ -39,6 +39,7 @@ struct StudentDashboardView: View {
                 NotificationsSheet(viewModel: viewModel)
             }
         }
+        .iPadAware()
     }
 
     // MARK: - iPad Content (Two-Column)
@@ -450,6 +451,7 @@ struct StudentDashboardView: View {
             Text(value)
                 .font(.title2.bold())
                 .foregroundStyle(Color(.label))
+                .contentTransition(.numericText())
             Text(label)
                 .font(.caption)
                 .foregroundStyle(Color(.secondaryLabel))
@@ -655,10 +657,7 @@ struct StudentDashboardView: View {
         VStack(alignment: .leading, spacing: 12) {
             sectionHeader("Quick Links", icon: "sparkles", effect: .variableColor)
 
-            LazyVGrid(columns: [
-                GridItem(.flexible(), spacing: 12),
-                GridItem(.flexible(), spacing: 12)
-            ], spacing: 12) {
+            AdaptiveGrid(compactColumns: 2, regularColumns: 3, spacing: 12) {
                 exploreLink(icon: "chart.bar.doc.horizontal.fill", title: "Grades", color: .green) {
                     GradesView(viewModel: viewModel)
                 }

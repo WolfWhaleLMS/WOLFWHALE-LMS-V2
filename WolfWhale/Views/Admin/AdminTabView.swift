@@ -6,34 +6,34 @@ struct AdminTabView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            Tab("Dashboard", systemImage: "chart.bar.fill", value: 0) {
+            Tab(L10n.dashboard, systemImage: "chart.bar.fill", value: 0) {
                 AdminDashboardView(viewModel: viewModel)
             }
-            .accessibilityLabel("Dashboard")
+            .accessibilityLabel(L10n.dashboard)
             .accessibilityHint("Double tap to view school overview")
-            Tab("Users", systemImage: "person.3.fill", value: 1) {
+            Tab(L10n.tabUsers, systemImage: "person.3.fill", value: 1) {
                 UserManagementView(viewModel: viewModel)
             }
-            .accessibilityLabel("Users")
+            .accessibilityLabel(L10n.tabUsers)
             .accessibilityHint("Double tap to manage users")
-            Tab("Announce", systemImage: "megaphone.fill", value: 2) {
+            Tab(L10n.tabAnnounce, systemImage: "megaphone.fill", value: 2) {
                 AnnouncementsView(viewModel: viewModel)
             }
-            .accessibilityLabel("Announcements")
+            .accessibilityLabel(L10n.tabAnnounce)
             .accessibilityHint("Double tap to view announcements")
-            Tab("Messages", systemImage: "message.fill", value: 3) {
+            Tab(L10n.messages, systemImage: "message.fill", value: 3) {
                 MessagesListView(viewModel: viewModel)
                     .task { viewModel.loadConversationsIfNeeded() }
             }
             .badge(viewModel.totalUnreadMessages)
-            .accessibilityLabel("Messages")
+            .accessibilityLabel(L10n.messages)
             .accessibilityHint("Double tap to view your messages")
-            Tab("Settings", systemImage: "gearshape.fill", value: 4) {
+            Tab(L10n.settings, systemImage: "gearshape.fill", value: 4) {
                 NavigationStack {
                     AppSettingsView(viewModel: viewModel)
                 }
             }
-            .accessibilityLabel("Settings")
+            .accessibilityLabel(L10n.settings)
             .accessibilityHint("Double tap to view settings and sign out")
         }
         .sensoryFeedback(.impact(weight: .light), trigger: selectedTab)

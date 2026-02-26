@@ -1,9 +1,19 @@
 import Foundation
+import CryptoKit
+import Security
 
 // MARK: - OfflineStorageService
 // All model types (Course, Module, Lesson, Assignment, GradeEntry, AssignmentGrade,
 // Conversation, ChatMessage, User) now conform to Codable directly,
 // so no Codable wrapper types are needed.
+
+// MARK: - Offline Storage Errors
+
+enum OfflineStorageError: Error {
+    case encryptionFailed
+    case decryptionFailed
+    case keyGenerationFailed
+}
 
 @Observable
 @MainActor
@@ -79,6 +89,59 @@ final class OfflineStorageService {
         cachedDataSize = 0
     }
 
+    // MARK: - Encryption (FERPA Compliance)
+
+    /// Retrieves or generates an AES-256 encryption key stored in Keychain, scoped per user.
+    nonisolated private static func encryptionKey(for userId: UUID) throws -> SymmetricKey {
+        let keychainKey = "com.wolfwhale.offline.\(userId.uuidString)"
+
+        // Try to load existing key from Keychain
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: keychainKey,
+            kSecReturnData as String: true
+        ]
+
+        var result: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &result)
+
+        if status == errSecSuccess, let data = result as? Data {
+            return SymmetricKey(data: data)
+        }
+
+        // Generate and store new key
+        let key = SymmetricKey(size: .bits256)
+        let keyData = key.withUnsafeBytes { Data($0) }
+
+        let addQuery: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: keychainKey,
+            kSecValueData as String: keyData,
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+        ]
+
+        let addStatus = SecItemAdd(addQuery as CFDictionary, nil)
+        guard addStatus == errSecSuccess else {
+            throw OfflineStorageError.keyGenerationFailed
+        }
+        return key
+    }
+
+    /// Encrypts data using AES-GCM.
+    nonisolated private static func encrypt(_ data: Data, key: SymmetricKey) throws -> Data {
+        let sealedBox = try AES.GCM.seal(data, using: key)
+        guard let combined = sealedBox.combined else {
+            throw OfflineStorageError.encryptionFailed
+        }
+        return combined
+    }
+
+    /// Decrypts AES-GCM encrypted data.
+    nonisolated private static func decrypt(_ data: Data, key: SymmetricKey) throws -> Data {
+        let sealedBox = try AES.GCM.SealedBox(combined: data)
+        return try AES.GCM.open(sealedBox, using: key)
+    }
+
     /// Delete the current user's entire cache directory.
     func clearCache() {
         guard currentUserId != nil else { return }
@@ -91,14 +154,24 @@ final class OfflineStorageService {
     // MARK: - Generic Helpers
 
     private func save<T: Encodable>(_ data: T, filename: String) {
-        // Capture the URL on the main actor, then perform file I/O off the main thread
+        // Capture the URL and userId on the main actor, then perform file I/O off the main thread
         let url = cacheDirectory.appendingPathComponent(filename)
+        let userId = currentUserId.flatMap { UUID(uuidString: $0) }
         Task.detached(priority: .utility) {
             do {
                 let encoder = JSONEncoder()
                 encoder.dateEncodingStrategy = .iso8601
                 let jsonData = try encoder.encode(data)
-                try jsonData.write(to: url, options: .atomic)
+
+                // Encrypt before writing to disk (FERPA compliance)
+                let dataToWrite: Data
+                if let userId {
+                    let key = try Self.encryptionKey(for: userId)
+                    dataToWrite = try Self.encrypt(jsonData, key: key)
+                } else {
+                    dataToWrite = jsonData
+                }
+                try dataToWrite.write(to: url, options: [.atomic, .completeFileProtection])
             } catch {
                 #if DEBUG
                 print("[OfflineStorage] Failed to save \(filename): \(error)")
@@ -108,16 +181,27 @@ final class OfflineStorageService {
     }
 
     private func load<T: Decodable>(filename: String) async -> T? {
-        // Capture the file URL on the MainActor, then perform file I/O off the main thread
+        // Capture the file URL and userId on the MainActor, then perform file I/O off the main thread
         let url = cacheDirectory.appendingPathComponent(filename)
+        let userId = currentUserId.flatMap { UUID(uuidString: $0) }
         return await Task.detached(priority: .utility) {
             let fm = FileManager.default
             guard fm.fileExists(atPath: url.path) else { return nil as T? }
             do {
-                let data = try Data(contentsOf: url)
+                let rawData = try Data(contentsOf: url)
+
+                // Decrypt after reading from disk (FERPA compliance)
+                let jsonData: Data
+                if let userId {
+                    let key = try Self.encryptionKey(for: userId)
+                    jsonData = try Self.decrypt(rawData, key: key)
+                } else {
+                    jsonData = rawData
+                }
+
                 let decoder = JSONDecoder()
                 decoder.dateDecodingStrategy = .iso8601
-                return try decoder.decode(T.self, from: data)
+                return try decoder.decode(T.self, from: jsonData)
             } catch {
                 #if DEBUG
                 print("[OfflineStorage] Failed to load \(filename): \(error)")

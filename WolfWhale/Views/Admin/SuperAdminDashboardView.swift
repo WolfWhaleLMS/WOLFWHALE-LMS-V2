@@ -479,7 +479,7 @@ struct SuperAdminDashboardView: View {
                 showAddTenant = false
             } catch {
                 isAddingTenant = false
-                addTenantError = "Failed to create tenant: \(error.localizedDescription)"
+                addTenantError = UserFacingError.message(from: error)
             }
         }
     }
@@ -548,7 +548,7 @@ struct SuperAdminDashboardView: View {
                                         createdAt: tenant.createdAt
                                     )
                                 }
-                                updateLimitError = "Failed to update user limit: \(error.localizedDescription)"
+                                updateLimitError = UserFacingError.message(from: error)
                                 showUpdateLimitError = true
                                 #if DEBUG
                                 print("[SuperAdminDashboard] Failed to update user limit: \(error)")

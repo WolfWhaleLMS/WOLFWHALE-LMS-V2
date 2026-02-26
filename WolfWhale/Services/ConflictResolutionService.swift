@@ -92,16 +92,35 @@ final class ConflictResolutionService {
         let errors: [String] = []
         var itemsSynced = 0
 
+        // --- Helper: look up cached modifiedAt for an entity so we can avoid
+        // false-positive conflicts when the server model lacks a real `updatedAt`.
+        // When no metadata exists for an entity we fall back to `.distantPast` so
+        // that the server is considered newer (safe default for server-wins).
+        let metadataLookup: [String: Date] = {
+            var map: [String: Date] = [:]
+            for m in metadata {
+                let compositeKey = "\(m.entityType)_\(m.id.uuidString)"
+                map[compositeKey] = m.modifiedAt
+            }
+            return map
+        }()
+
         // --- Courses ---
-        // TODO: Use actual server `updated_at` timestamps instead of Date() for accurate conflict detection.
-        // This requires adding `updatedAt` fields to Course, Assignment, and GradeEntry models.
+        // Course, Assignment, and GradeEntry models do not carry `updatedAt` from
+        // the server yet. Using `Date()` (i.e. "now") would always be newer than
+        // the cached timestamp, generating a spurious conflict on every sync.
+        // Instead, fall back to the cached metadata timestamp so equal timestamps
+        // produce no conflict, and only real server changes (via Conversations'
+        // `lastMessageDate`) trigger conflict detection.
         let courseConflicts = detectConflicts(
             metadata: metadata,
             entityType: "course",
             serverItems: serverCourses,
             serverIdKeyPath: \.id,
             serverNameKeyPath: \.title,
-            serverModifiedAt: { _ in Date() } // Courses rarely have user edits; use server time
+            serverModifiedAt: { course in
+                metadataLookup["course_\(course.id.uuidString)"] ?? .distantPast
+            }
         )
         conflicts.append(contentsOf: courseConflicts)
         itemsSynced += serverCourses.count
@@ -113,7 +132,9 @@ final class ConflictResolutionService {
             serverItems: serverAssignments,
             serverIdKeyPath: \.id,
             serverNameKeyPath: \.title,
-            serverModifiedAt: { _ in Date() }
+            serverModifiedAt: { assignment in
+                metadataLookup["assignment_\(assignment.id.uuidString)"] ?? .distantPast
+            }
         )
         conflicts.append(contentsOf: assignmentConflicts)
         itemsSynced += serverAssignments.count
@@ -125,7 +146,9 @@ final class ConflictResolutionService {
             serverItems: serverGrades,
             serverIdKeyPath: \.id,
             serverNameKeyPath: \.courseName,
-            serverModifiedAt: { _ in Date() }
+            serverModifiedAt: { grade in
+                metadataLookup["grade_\(grade.id.uuidString)"] ?? .distantPast
+            }
         )
         conflicts.append(contentsOf: gradeConflicts)
         itemsSynced += serverGrades.count
@@ -218,14 +241,15 @@ final class ConflictResolutionService {
 
         for meta in locallyModified {
             guard let serverItem = serverLookup[meta.id] else {
-                // Item exists locally but not on server — server deleted it.
-                // Server-wins: discard local version.
+                // Item exists locally but not on server -- server deleted it.
+                // Server-wins: discard local version. Use the local timestamp
+                // as the server's "deletion time" since we have no real value.
                 let conflict = SyncConflict(
                     entityType: entityType,
                     entityId: meta.id.uuidString,
                     entityName: meta.entityName,
                     localModifiedAt: meta.modifiedAt,
-                    serverModifiedAt: Date(),
+                    serverModifiedAt: meta.modifiedAt,
                     resolution: .serverWins
                 )
                 conflicts.append(conflict)
@@ -235,7 +259,12 @@ final class ConflictResolutionService {
             let serverDate = serverModifiedAt(serverItem)
             let localDate = meta.modifiedAt
 
-            if serverDate > localDate {
+            // Compare using timeIntervalSince1970 to avoid floating-point
+            // precision issues with direct Date comparison.
+            let serverTimestamp = serverDate.timeIntervalSince1970
+            let localTimestamp = localDate.timeIntervalSince1970
+
+            if serverTimestamp > localTimestamp + 0.001 {
                 // Server is newer -> server wins
                 let conflict = SyncConflict(
                     entityType: entityType,
@@ -246,7 +275,7 @@ final class ConflictResolutionService {
                     resolution: .serverWins
                 )
                 conflicts.append(conflict)
-            } else if localDate > serverDate {
+            } else if localTimestamp > serverTimestamp + 0.001 {
                 // Local is newer -> in a server-wins strategy we still take the server version
                 // but flag it so the user knows their local changes were discarded.
                 // For an LMS this is the safest approach.
@@ -260,7 +289,7 @@ final class ConflictResolutionService {
                 )
                 conflicts.append(conflict)
             }
-            // If timestamps are equal -> no conflict, nothing to report.
+            // If timestamps are within 1ms of each other -> no conflict.
         }
 
         return conflicts

@@ -161,10 +161,16 @@ struct DataService: Sendable {
     // MARK: - Courses
 
     func fetchCourses(for userId: UUID, role: UserRole, schoolId: String? = nil, offset: Int = 0, limit: Int = 100) async throws -> [Course] {
+        let cacheKey = "courses_\(userId)_\(role.rawValue)_\(schoolId ?? "nil")_\(offset)_\(limit)"
+        if let cached: [Course] = await CacheService.shared.get(cacheKey) {
+            return cached
+        }
         let dedupeKey = "courses-\(userId)-\(role.rawValue)-\(schoolId ?? "nil")-\(offset)-\(limit)"
-        return try await deduplicated(key: dedupeKey) { [self] in
+        let result = try await deduplicated(key: dedupeKey) { [self] in
             try await _fetchCoursesImpl(for: userId, role: role, schoolId: schoolId, offset: offset, limit: limit)
         }
+        await CacheService.shared.set(cacheKey, value: result, ttl: 300)
+        return result
     }
 
     private func _fetchCoursesImpl(for userId: UUID, role: UserRole, schoolId: String? = nil, offset: Int = 0, limit: Int = 100) async throws -> [Course] {
@@ -461,6 +467,7 @@ struct DataService: Sendable {
             .single()
             .execute()
             .value
+        await CacheService.shared.invalidateByPrefix("courses_")
         return result
     }
 
@@ -469,10 +476,16 @@ struct DataService: Sendable {
     func fetchAssignments(for userId: UUID, role: UserRole, courseIds: [UUID], offset: Int = 0, limit: Int = 50) async throws -> [Assignment] {
         if courseIds.isEmpty { return [] }
         let sortedIds = courseIds.map(\.uuidString).sorted().joined(separator: ",")
+        let cacheKey = "assignments_\(userId)_\(role.rawValue)_\(sortedIds)_\(offset)_\(limit)"
+        if let cached: [Assignment] = await CacheService.shared.get(cacheKey) {
+            return cached
+        }
         let dedupeKey = "assignments-\(userId)-\(role.rawValue)-\(sortedIds)-\(offset)-\(limit)"
-        return try await deduplicated(key: dedupeKey) { [self] in
+        let result = try await deduplicated(key: dedupeKey) { [self] in
             try await _fetchAssignmentsImpl(for: userId, role: role, courseIds: courseIds, offset: offset, limit: limit)
         }
+        await CacheService.shared.set(cacheKey, value: result, ttl: 180)
+        return result
     }
 
     private func _fetchAssignmentsImpl(for userId: UUID, role: UserRole, courseIds: [UUID], offset: Int = 0, limit: Int = 50) async throws -> [Assignment] {
@@ -635,6 +648,7 @@ struct DataService: Sendable {
             .from("assignments")
             .insert(dto)
             .execute()
+        await CacheService.shared.invalidateByPrefix("assignments_")
     }
 
     func submitAssignment(assignmentId: UUID, studentId: UUID, content: String) async throws {
@@ -643,6 +657,8 @@ struct DataService: Sendable {
             .from("submissions")
             .insert(dto)
             .execute()
+        await CacheService.shared.invalidateByPrefix("assignments_")
+        await CacheService.shared.invalidateByPrefix("grades_")
     }
 
     // MARK: - Quizzes
@@ -860,10 +876,16 @@ struct DataService: Sendable {
     func fetchGrades(for studentId: UUID, courseIds: [UUID]) async throws -> [GradeEntry] {
         if courseIds.isEmpty { return [] }
         let sortedIds = courseIds.map(\.uuidString).sorted().joined(separator: ",")
+        let cacheKey = "grades_\(studentId)_\(sortedIds)"
+        if let cached: [GradeEntry] = await CacheService.shared.get(cacheKey) {
+            return cached
+        }
         let dedupeKey = "grades-\(studentId)-\(sortedIds)"
-        return try await deduplicated(key: dedupeKey) { [self] in
+        let result = try await deduplicated(key: dedupeKey) { [self] in
             try await _fetchGradesImpl(for: studentId, courseIds: courseIds)
         }
+        await CacheService.shared.set(cacheKey, value: result, ttl: 120)
+        return result
     }
 
     private func _fetchGradesImpl(for studentId: UUID, courseIds: [UUID]) async throws -> [GradeEntry] {
@@ -968,10 +990,16 @@ struct DataService: Sendable {
     // MARK: - Announcements
 
     func fetchAnnouncements(tenantId: UUID? = nil) async throws -> [Announcement] {
+        let cacheKey = "announcements_\(tenantId?.uuidString ?? "all")"
+        if let cached: [Announcement] = await CacheService.shared.get(cacheKey) {
+            return cached
+        }
         let dedupeKey = "announcements-\(tenantId?.uuidString ?? "all")"
-        return try await deduplicated(key: dedupeKey) { [self] in
+        let result = try await deduplicated(key: dedupeKey) { [self] in
             try await _fetchAnnouncementsImpl(tenantId: tenantId)
         }
+        await CacheService.shared.set(cacheKey, value: result, ttl: 120)
+        return result
     }
 
     private func _fetchAnnouncementsImpl(tenantId: UUID? = nil) async throws -> [Announcement] {
@@ -1035,15 +1063,22 @@ struct DataService: Sendable {
             .from("announcements")
             .insert(dto)
             .execute()
+        await CacheService.shared.invalidateByPrefix("announcements_")
     }
 
     // MARK: - Conversations & Messages
 
     func fetchConversations(for userId: UUID, offset: Int = 0, limit: Int = 50) async throws -> [Conversation] {
+        let cacheKey = "conversations_\(userId)_\(offset)_\(limit)"
+        if let cached: [Conversation] = await CacheService.shared.get(cacheKey) {
+            return cached
+        }
         let dedupeKey = "conversations-\(userId)-\(offset)-\(limit)"
-        return try await deduplicated(key: dedupeKey) { [self] in
+        let result = try await deduplicated(key: dedupeKey) { [self] in
             try await _fetchConversationsImpl(for: userId, offset: offset, limit: limit)
         }
+        await CacheService.shared.set(cacheKey, value: result, ttl: 60)
+        return result
     }
 
     private func _fetchConversationsImpl(for userId: UUID, offset: Int = 0, limit: Int = 50) async throws -> [Conversation] {
@@ -1154,6 +1189,7 @@ struct DataService: Sendable {
             .from("messages")
             .insert(dto)
             .execute()
+        await CacheService.shared.invalidateByPrefix("conversations_")
     }
 
     // TODO: Migrate callers to use fetchMessages(conversationId:before:limit:) below instead.
@@ -2141,6 +2177,7 @@ struct DataService: Sendable {
             .update(dto)
             .eq("id", value: courseId.uuidString)
             .execute()
+        await CacheService.shared.invalidateByPrefix("courses_")
     }
 
     func deleteCourse(courseId: UUID) async throws {
@@ -2149,6 +2186,7 @@ struct DataService: Sendable {
             .delete()
             .eq("id", value: courseId.uuidString)
             .execute()
+        await CacheService.shared.invalidateByPrefix("courses_")
     }
 
     // MARK: - Assignments (Update / Delete)
@@ -2160,6 +2198,7 @@ struct DataService: Sendable {
             .update(dto)
             .eq("id", value: assignmentId.uuidString)
             .execute()
+        await CacheService.shared.invalidateByPrefix("assignments_")
     }
 
     func deleteAssignment(assignmentId: UUID) async throws {
@@ -2168,6 +2207,7 @@ struct DataService: Sendable {
             .delete()
             .eq("id", value: assignmentId.uuidString)
             .execute()
+        await CacheService.shared.invalidateByPrefix("assignments_")
     }
 
     // MARK: - Announcements (Delete)
@@ -2178,6 +2218,7 @@ struct DataService: Sendable {
             .delete()
             .eq("id", value: announcementId.uuidString)
             .execute()
+        await CacheService.shared.invalidateByPrefix("announcements_")
     }
 
     // MARK: - Conversations (Create)
@@ -2203,6 +2244,7 @@ struct DataService: Sendable {
             .insert(memberDTOs)
             .execute()
 
+        await CacheService.shared.invalidateByPrefix("conversations_")
         return conversation
     }
 

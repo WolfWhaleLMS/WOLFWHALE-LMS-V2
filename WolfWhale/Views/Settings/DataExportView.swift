@@ -225,7 +225,7 @@ struct DataExportView: View {
             exportedFileURL = tempURL
             showShareSheet = true
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = UserFacingError.message(from: error)
             showErrorAlert = true
         }
     }

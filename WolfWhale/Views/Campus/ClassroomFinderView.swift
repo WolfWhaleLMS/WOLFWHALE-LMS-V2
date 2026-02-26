@@ -92,7 +92,7 @@ final class ClassroomFinderViewModel: NSObject, CLLocationManagerDelegate {
                 guard let self else { return }
                 self.isLoadingRoute = false
                 if let error {
-                    self.routeError = error.localizedDescription
+                    self.routeError = UserFacingError.message(from: error)
                     // Fallback: set camera to target anyway
                     self.cameraPosition = .region(
                         MKCoordinateRegion(

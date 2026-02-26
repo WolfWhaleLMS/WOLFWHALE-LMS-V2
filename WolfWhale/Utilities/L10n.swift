@@ -79,6 +79,13 @@ import Foundation
     static var settings: String { localized("tabs.settings") }
     static var attendance: String { localized("tabs.attendance") }
     static var tools: String { localized("tabs.tools") }
+    static var tabHome: String { localized("tabs.home") }
+    static var tabProfile: String { localized("tabs.profile") }
+    static var tabResources: String { localized("tabs.resources") }
+    static var tabConsole: String { localized("tabs.console") }
+    static var tabTenants: String { localized("tabs.tenants") }
+    static var tabUsers: String { localized("tabs.users") }
+    static var tabAnnounce: String { localized("tabs.announce") }
 
     // MARK: - Dashboard
 

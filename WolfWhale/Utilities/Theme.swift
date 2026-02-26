@@ -3,14 +3,26 @@ import SwiftUI
 struct Theme {
     // MARK: - Brand Colors
 
-    /// Primary brand blue (#1E6EF4)
-    static let brandBlue = Color(red: 30 / 255, green: 110 / 255, blue: 244 / 255)
+    /// Primary brand blue – adaptive for light/dark mode
+    static let brandBlue = Color(UIColor { traitCollection in
+        traitCollection.userInterfaceStyle == .dark
+            ? UIColor(red: 0.4, green: 0.6, blue: 1.0, alpha: 1.0)   // Lighter blue for dark mode
+            : UIColor(red: 30 / 255, green: 110 / 255, blue: 244 / 255, alpha: 1.0) // #1E6EF4
+    })
 
-    /// Secondary brand green (#34C759)
-    static let brandGreen = Color(red: 52 / 255, green: 199 / 255, blue: 89 / 255)
+    /// Secondary brand green – adaptive for light/dark mode
+    static let brandGreen = Color(UIColor { traitCollection in
+        traitCollection.userInterfaceStyle == .dark
+            ? UIColor(red: 0.3, green: 0.8, blue: 0.5, alpha: 1.0)   // Lighter green for dark mode
+            : UIColor(red: 52 / 255, green: 199 / 255, blue: 89 / 255, alpha: 1.0)  // #34C759
+    })
 
-    /// Tertiary brand purple (#564ADE)
-    static let brandPurple = Color(red: 86 / 255, green: 74 / 255, blue: 222 / 255)
+    /// Tertiary brand purple – adaptive for light/dark mode
+    static let brandPurple = Color(UIColor { traitCollection in
+        traitCollection.userInterfaceStyle == .dark
+            ? UIColor(red: 0.7, green: 0.5, blue: 1.0, alpha: 1.0)   // Lighter purple for dark mode
+            : UIColor(red: 86 / 255, green: 74 / 255, blue: 222 / 255, alpha: 1.0)  // #564ADE
+    })
 
     /// Standard brand gradient: purple to blue, top-leading to bottom-trailing
     static let brandGradient = LinearGradient(
@@ -102,5 +114,6 @@ struct StatRing: View {
                 .rotationEffect(.degrees(-90))
         }
         .frame(width: size, height: size)
+        .accessibilityValue("\(Int(progress * 100)) percent")
     }
 }

@@ -49,6 +49,7 @@ struct CourseProgressCard: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(progress.courseName), \(completionText), \(percentageText) complete")
+        .accessibilityValue("\(Int(progress.overallPercentage * 100)) percent")
         .accessibilityHint(progress.nextUncompletedLesson != nil ? "Double tap to continue learning" : "")
     }
 
@@ -76,6 +77,7 @@ struct CourseProgressCard: View {
                 Text(percentageText)
                     .font(.system(size: 16, weight: .bold, design: .rounded))
                     .foregroundStyle(courseColor)
+                    .contentTransition(.numericText())
             }
         }
         .frame(width: 64, height: 64)
@@ -196,10 +198,12 @@ struct CourseProgressCard: View {
                 Text(letter)
                     .font(.caption.bold())
                     .foregroundStyle(Theme.gradeColor(grade))
+                    .contentTransition(.numericText())
             }
             Text("\(Int(grade))%")
                 .font(.caption.monospacedDigit())
                 .foregroundStyle(.secondary)
+                .contentTransition(.numericText())
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)

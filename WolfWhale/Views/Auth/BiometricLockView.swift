@@ -1,5 +1,4 @@
 import SwiftUI
-import Supabase
 
 struct BiometricLockView: View {
     let viewModel: AppViewModel
@@ -172,7 +171,7 @@ struct BiometricLockView: View {
         passwordError = nil
 
         do {
-            _ = try await supabaseClient.auth.signIn(email: email, password: passwordText)
+            try await viewModel.reAuthenticate(email: email, password: passwordText)
             passwordAttempts = 0
             onPasswordFallback()
             viewModel.unlockApp()
@@ -206,11 +205,11 @@ struct BiometricLockView: View {
                 // User cancelled or chose password — do nothing
                 break
             default:
-                authError = error.localizedDescription
+                authError = UserFacingError.message(from: error)
                 showError = true
             }
         } catch {
-            authError = error.localizedDescription
+            authError = UserFacingError.message(from: error)
             showError = true
         }
     }

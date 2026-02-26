@@ -124,7 +124,7 @@ final class FileManagerService {
 
             files = items
         } catch {
-            self.error = "Failed to load files: \(error.localizedDescription)"
+            self.error = "Failed to load files: \(UserFacingError.message(from: error))"
         }
 
         isLoading = false
@@ -222,7 +222,7 @@ final class FileManagerService {
 
             files = items
         } catch {
-            self.error = "Failed to load submission files: \(error.localizedDescription)"
+            self.error = "Failed to load submission files: \(UserFacingError.message(from: error))"
         }
 
         isLoading = false
@@ -241,7 +241,7 @@ final class FileManagerService {
             let (data, _) = try await URLSession.shared.data(from: fileURL)
             return data
         } catch {
-            self.error = "Download failed: \(error.localizedDescription)"
+            self.error = "Download failed: \(UserFacingError.message(from: error))"
             return nil
         }
     }
@@ -258,7 +258,7 @@ final class FileManagerService {
             files.removeAll { $0.id == fileId }
             return true
         } catch {
-            self.error = "Failed to delete file: \(error.localizedDescription)"
+            self.error = "Failed to delete file: \(UserFacingError.message(from: error))"
             return false
         }
     }

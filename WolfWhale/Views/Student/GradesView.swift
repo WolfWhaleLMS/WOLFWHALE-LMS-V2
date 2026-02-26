@@ -112,6 +112,7 @@ struct GradesView: View {
                 VStack(spacing: 2) {
                     Text(String(format: "%.2f", gpa))
                         .font(.title2.bold())
+                        .contentTransition(.numericText())
                     Text("GPA")
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -138,6 +139,7 @@ struct GradesView: View {
                 Text(String(format: "%.1f%% weighted average", averagePercent))
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .contentTransition(.numericText())
             }
             Spacer()
         }
@@ -196,16 +198,20 @@ struct GradesView: View {
                                 Text(result.letterGrade)
                                     .font(.title3.bold())
                                     .foregroundStyle(gradeService.gradeColor(from: result.overallPercentage))
+                                    .contentTransition(.numericText())
                                 Text(String(format: "%.1f%%", result.overallPercentage))
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
+                                    .contentTransition(.numericText())
                             } else {
                                 Text(grade.letterGrade)
                                     .font(.title3.bold())
                                     .foregroundStyle(Theme.gradeColor(grade.numericGrade))
+                                    .contentTransition(.numericText())
                                 Text(String(format: "%.1f%%", grade.numericGrade))
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
+                                    .contentTransition(.numericText())
                             }
                         }
 

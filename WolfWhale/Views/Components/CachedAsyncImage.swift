@@ -27,11 +27,16 @@ struct CachedAsyncImage<Placeholder: View>: View {
     let url: URL?
     let placeholder: () -> Placeholder
 
+    /// Maximum pixel dimension for downsampled images.
+    /// Avatars typically use 100; general images use 400.
+    let maxDimension: CGFloat
+
     @State private var image: Image?
     @State private var isLoading = false
 
-    init(url: URL?, @ViewBuilder placeholder: @escaping () -> Placeholder) {
+    init(url: URL?, maxDimension: CGFloat = 400, @ViewBuilder placeholder: @escaping () -> Placeholder) {
         self.url = url
+        self.maxDimension = maxDimension
         self.placeholder = placeholder
     }
 
@@ -75,7 +80,11 @@ struct CachedAsyncImage<Placeholder: View>: View {
             }
 
             #if canImport(UIKit)
-            if let uiImage = UIImage(data: data) {
+            if let downsampledImage = ImageCacheService.shared.setDownsampledImage(
+                data: data, for: url, maxDimension: maxDimension
+            ) {
+                self.image = downsampledImage
+            } else if let uiImage = UIImage(data: data) {
                 let swiftUIImage = Image(uiImage: uiImage)
                 ImageCacheService.shared.setImage(swiftUIImage, data: data, for: url)
                 self.image = swiftUIImage
@@ -91,8 +100,8 @@ struct CachedAsyncImage<Placeholder: View>: View {
 
 extension CachedAsyncImage where Placeholder == Color {
     /// Creates a `CachedAsyncImage` with a subtle gray placeholder.
-    init(url: URL?) {
-        self.init(url: url) {
+    init(url: URL?, maxDimension: CGFloat = 400) {
+        self.init(url: url, maxDimension: maxDimension) {
             Color.gray.opacity(0.2)
         }
     }

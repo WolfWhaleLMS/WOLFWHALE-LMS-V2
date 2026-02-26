@@ -45,6 +45,13 @@ extension L10n {
         "tabs.settings": "Settings",
         "tabs.attendance": "Attendance",
         "tabs.tools": "Tools",
+        "tabs.home": "Home",
+        "tabs.profile": "Profile",
+        "tabs.resources": "Resources",
+        "tabs.console": "Console",
+        "tabs.tenants": "Tenants",
+        "tabs.users": "Users",
+        "tabs.announce": "Announce",
 
         // Dashboard
         "dashboard.welcome_student": "Welcome, Student",
@@ -140,6 +147,13 @@ extension L10n {
         "tabs.settings": "R\u{00E9}glages",
         "tabs.attendance": "Pr\u{00E9}sence",
         "tabs.tools": "Outils",
+        "tabs.home": "Accueil",
+        "tabs.profile": "Profil",
+        "tabs.resources": "Ressources",
+        "tabs.console": "Console",
+        "tabs.tenants": "Locataires",
+        "tabs.users": "Utilisateurs",
+        "tabs.announce": "Annonces",
 
         // Dashboard
         "dashboard.welcome_student": "Bienvenue, \u{00E9}tudiant",

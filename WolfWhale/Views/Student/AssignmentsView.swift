@@ -684,7 +684,7 @@ struct ResubmitAssignmentView: View {
                 )
                 uploadedURLs.append(publicURL)
             } catch {
-                errorMessage = "Failed to upload \(file.name): \(error.localizedDescription)"
+                errorMessage = "Failed to upload \(file.name): \(UserFacingError.message(from: error))"
                 showError = true
                 return
             }

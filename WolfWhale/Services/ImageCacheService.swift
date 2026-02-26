@@ -1,5 +1,6 @@
 import SwiftUI
 import CryptoKit
+import ImageIO
 
 #if canImport(UIKit)
 import UIKit
@@ -132,6 +133,29 @@ final class ImageCacheService: @unchecked Sendable {
         }
     }
 
+    /// Stores a downsampled image in both memory and disk caches.
+    ///
+    /// Uses `CGImageSource` thumbnail APIs to decode the image at a reduced
+    /// resolution, significantly lowering memory usage for large images.
+    /// - Parameters:
+    ///   - data: The raw image data (JPEG, PNG, etc.).
+    ///   - url: The original URL used as the cache key.
+    ///   - maxDimension: The maximum width or height in points (e.g. 400 for general images, 100 for avatars).
+    /// - Returns: The cached `Image`, or `nil` if decoding fails.
+    @discardableResult
+    func setDownsampledImage(data: Data, for url: URL, maxDimension: CGFloat) -> Image? {
+        #if canImport(UIKit)
+        guard let uiImage = downsampledImage(data: data, maxDimension: maxDimension) else {
+            return nil
+        }
+        let image = Image(uiImage: uiImage)
+        setImage(image, data: data, for: url)
+        return image
+        #else
+        return nil
+        #endif
+    }
+
     /// Removes all entries from both memory and disk caches.
     func clearCache() {
         memoryCache.removeAllObjects()
@@ -160,6 +184,26 @@ final class ImageCacheService: @unchecked Sendable {
             let size = (try? fileURL.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
             return total + size
         }
+    }
+
+    // MARK: - Image Downsampling
+
+    /// Decodes image data at a reduced resolution using `CGImageSource` thumbnail APIs.
+    ///
+    /// This avoids loading the full-resolution bitmap into memory, which is critical
+    /// for large photos (e.g. 4000x3000 camera images that would otherwise consume ~48 MB).
+    private func downsampledImage(data: Data, maxDimension: CGFloat) -> UIImage? {
+        let options: [CFString: Any] = [
+            kCGImageSourceShouldCache: false,
+            kCGImageSourceCreateThumbnailFromImageAlways: true,
+            kCGImageSourceCreateThumbnailWithTransform: true,
+            kCGImageSourceThumbnailMaxPixelSize: maxDimension
+        ]
+        guard let source = CGImageSourceCreateWithData(data as CFData, nil),
+              let cgImage = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else {
+            return UIImage(data: data)
+        }
+        return UIImage(cgImage: cgImage)
     }
 
     // MARK: - Private Helpers

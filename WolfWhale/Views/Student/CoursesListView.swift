@@ -182,12 +182,7 @@ struct CoursesListView: View {
             } catch let error as EnrollmentError {
                 enrollmentError = error.errorDescription
             } catch {
-                let message = error.localizedDescription.lowercased()
-                if message.contains("network") || message.contains("connection") || message.contains("not connected") {
-                    enrollmentError = "Network error. Please check your connection."
-                } else {
-                    enrollmentError = "Something went wrong. Please try again."
-                }
+                enrollmentError = UserFacingError.message(from: error)
             }
             isEnrolling = false
         }

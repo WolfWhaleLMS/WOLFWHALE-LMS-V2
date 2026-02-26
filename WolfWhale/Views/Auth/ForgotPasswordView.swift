@@ -196,7 +196,7 @@ struct ForgotPasswordView: View {
     }
 
     private func mapResetError(_ error: Error) -> String {
-        let message = error.localizedDescription.lowercased()
+        let message = String(describing: error).lowercased()
         if message.contains("invalid") || message.contains("email") {
             return "Please check your email address and try again"
         } else if message.contains("rate") || message.contains("limit") {

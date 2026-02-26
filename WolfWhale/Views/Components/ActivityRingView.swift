@@ -20,6 +20,9 @@ struct ActivityRingView: View {
             }
         }
         .frame(width: 140, height: 140)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Activity rings")
+        .accessibilityValue("Lessons \(Int(lessonsProgress * 100)) percent, Assignments \(Int(assignmentsProgress * 100)) percent")
         .onAppear {
             withAnimation(.spring(duration: 1.2, bounce: 0.2).delay(0.2)) {
                 animatedProgress = [lessonsProgress, assignmentsProgress]
@@ -48,10 +51,14 @@ struct ActivityRingView: View {
     }
 }
 
-struct ActivityRingLabel: View {
+struct ActivityRingLabel: View, Equatable {
     let title: String
     let value: String
     let color: Color
+
+    static func == (lhs: ActivityRingLabel, rhs: ActivityRingLabel) -> Bool {
+        lhs.title == rhs.title && lhs.value == rhs.value && lhs.color == rhs.color
+    }
 
     var body: some View {
         HStack(spacing: 8) {

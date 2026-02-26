@@ -249,7 +249,7 @@ struct AddUserView: View {
                 showSuccess = true
             } catch {
                 isLoading = false
-                errorMessage = error.localizedDescription
+                errorMessage = UserFacingError.message(from: error)
             }
         }
     }

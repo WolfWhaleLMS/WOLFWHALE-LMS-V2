@@ -711,7 +711,7 @@ struct EnhancedQuizBuilderView: View {
                 withAnimation { showSuccess = false }
                 dismiss()
             } catch {
-                errorMessage = "Failed to publish quiz: \(error.localizedDescription)"
+                errorMessage = UserFacingError.message(from: error)
                 isLoading = false
             }
         }

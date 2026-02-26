@@ -510,10 +510,10 @@ struct BulkImportView: View {
                 let csvString = try String(contentsOf: url, encoding: .utf8)
                 parseCSVText(csvString)
             } catch {
-                validationErrors = [CSVValidationError(row: 0, message: "Could not read file: \(error.localizedDescription)")]
+                validationErrors = [CSVValidationError(row: 0, message: "Could not read file: \(UserFacingError.message(from: error))")]
             }
         case .failure(let error):
-            validationErrors = [CSVValidationError(row: 0, message: "File picker error: \(error.localizedDescription)")]
+            validationErrors = [CSVValidationError(row: 0, message: "File picker error: \(UserFacingError.message(from: error))")]
         }
     }
 
@@ -695,7 +695,7 @@ struct BulkImportView: View {
     }
 
     private func mapImportError(_ error: Error) -> String {
-        let message = error.localizedDescription.lowercased()
+        let message = String(describing: error).lowercased()
         if message.contains("duplicate") || message.contains("already registered") || message.contains("already been registered") {
             return "Email already exists (duplicate)"
         } else if message.contains("slot") || message.contains("seats") {
@@ -703,7 +703,7 @@ struct BulkImportView: View {
         } else if message.contains("unauthorized") {
             return "Unauthorized"
         }
-        return error.localizedDescription
+        return UserFacingError.message(from: error)
     }
 
     private func buildSummaryText(_ results: ImportResults) -> String {

@@ -52,6 +52,7 @@ struct TeacherDashboardView: View {
                 viewModel.refreshAtRiskStudentsCache()
             }
         }
+        .iPadAware()
     }
 
     // MARK: - iPad Teacher Layout (Sidebar + Main)
@@ -698,8 +699,7 @@ struct TeacherDashboardView: View {
     }
 
     private var overviewCards: some View {
-        let columns = [GridItem(.flexible()), GridItem(.flexible())]
-        return LazyVGrid(columns: columns, spacing: 12) {
+        AdaptiveGrid(compactColumns: 2, regularColumns: 2, spacing: 12) {
             dashCard(icon: "book.fill", value: "\(viewModel.courses.count)", label: "Courses", color: .orange)
             dashCard(icon: "person.3.fill", value: "\(viewModel.courses.reduce(0) { $0 + $1.enrolledStudentCount })", label: "Students", color: .blue)
             dashCard(icon: "doc.text.fill", value: "\(viewModel.pendingGradingCount)", label: "Needs Grading", color: .orange)
@@ -717,6 +717,7 @@ struct TeacherDashboardView: View {
             Text(value)
                 .font(.title2.bold())
                 .foregroundStyle(Color(.label))
+                .contentTransition(.numericText())
             Text(label)
                 .font(.caption)
                 .foregroundStyle(Color(.secondaryLabel))

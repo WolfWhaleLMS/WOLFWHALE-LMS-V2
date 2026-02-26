@@ -477,18 +477,23 @@ serve(async (req: Request) => {
 
   // --- Webhook Authentication ---
   // Verify the caller knows the shared secret. This replaces --no-verify-jwt.
+  // SECURITY: Always require authentication — reject if secret is missing or mismatched.
   const webhookSecret = Deno.env.get("WEBHOOK_SECRET");
-  if (webhookSecret) {
-    const authHeader = req.headers.get("Authorization");
-    if (authHeader !== `Bearer ${webhookSecret}`) {
-      console.warn("[send-push] Unauthorized request rejected");
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        { status: 401, headers: { "Content-Type": "application/json" } }
-      );
-    }
-  } else {
-    console.warn("[send-push] WEBHOOK_SECRET not set — running without auth verification");
+  if (!webhookSecret) {
+    console.error("[send-push] WEBHOOK_SECRET not set — rejecting request for security");
+    return new Response(
+      JSON.stringify({ error: "Server misconfiguration: authentication not available" }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  const authHeader = req.headers.get("Authorization");
+  if (authHeader !== `Bearer ${webhookSecret}`) {
+    console.warn("[send-push] Unauthorized request rejected");
+    return new Response(
+      JSON.stringify({ error: "Unauthorized" }),
+      { status: 401, headers: { "Content-Type": "application/json" } }
+    );
   }
 
   try {
