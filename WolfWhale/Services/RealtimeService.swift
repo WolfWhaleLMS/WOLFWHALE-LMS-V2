@@ -62,7 +62,7 @@ final class RealtimeService {
         let insertions = ch.postgresChange(
             InsertAction.self,
             table: "messages",
-            filter: "conversation_id=eq.\(conversationId.uuidString)"
+            filter: .eq("conversation_id", value: conversationId.uuidString)
         )
 
         listenTask = Task { [weak self] in

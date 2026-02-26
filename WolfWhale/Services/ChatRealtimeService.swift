@@ -80,7 +80,7 @@ final class ChatRealtimeService {
         let insertions = ch.postgresChange(
             InsertAction.self,
             table: "messages",
-            filter: "conversation_id=eq.\(key)"
+            filter: .eq("conversation_id", value: key)
         )
 
         let listenTask = Task { [weak self] in
@@ -160,7 +160,7 @@ final class ChatRealtimeService {
             let insertions = ch.postgresChange(
                 InsertAction.self,
                 table: "messages",
-                filter: "conversation_id=eq.\(conversationId.uuidString)"
+                filter: .eq("conversation_id", value: conversationId.uuidString)
             )
 
             let listenTask = Task { [weak self] in
