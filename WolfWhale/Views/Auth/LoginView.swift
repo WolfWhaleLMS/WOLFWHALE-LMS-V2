@@ -22,13 +22,11 @@ struct LoginView: View {
 
                 Spacer().frame(height: 24)
 
-                #if DEBUG
                 dividerSection
 
                 Spacer().frame(height: 20)
 
                 demoSection
-                #endif
 
                 Spacer().frame(height: 32)
             }

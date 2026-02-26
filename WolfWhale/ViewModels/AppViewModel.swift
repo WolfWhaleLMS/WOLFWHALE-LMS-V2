@@ -542,7 +542,7 @@ class AppViewModel {
             data: [
                 "first_name": .string(firstName),
                 "last_name": .string(lastName),
-                "role": .string(role.rawValue)
+                "role": .string(role.rawValue.lowercased())
             ]
         )
 
@@ -569,7 +569,7 @@ class AppViewModel {
         let membershipDTO = InsertTenantMembershipDTO(
             userId: result.user.id,
             tenantId: tenantId,
-            role: role.rawValue,
+            role: role.rawValue.lowercased(),
             status: "active",
             joinedAt: nil,
             invitedAt: nil,
@@ -601,16 +601,12 @@ class AppViewModel {
     }
 
     func loginAsDemo(role: UserRole) {
-        #if DEBUG
         isDemoMode = true
         currentUser = mockService.sampleUser(role: role)
         loadMockData()
         withAnimation(.smooth) {
             isAuthenticated = true
         }
-        #else
-        fatalError("Demo mode must not be available in release builds")
-        #endif
     }
 
     func logout() {
@@ -1730,7 +1726,7 @@ class AppViewModel {
             data: [
                 "first_name": .string(trimFirst),
                 "last_name": .string(trimLast),
-                "role": .string(role.rawValue)
+                "role": .string(role.rawValue.lowercased())
             ]
         )
 
@@ -1758,7 +1754,7 @@ class AppViewModel {
         let membershipDTO = InsertTenantMembershipDTO(
             userId: result.user.id,
             tenantId: adminTenantId,
-            role: role.rawValue,
+            role: role.rawValue.lowercased(),
             status: "active",
             joinedAt: nil,
             invitedAt: nil,

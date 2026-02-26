@@ -271,6 +271,39 @@ nonisolated struct AssignmentDTO: Codable, Sendable {
         case createdAt = "created_at"
         case updatedAt = "updated_at"
     }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        tenantId = try c.decodeIfPresent(UUID.self, forKey: .tenantId)
+        courseId = try c.decode(UUID.self, forKey: .courseId)
+        title = try c.decode(String.self, forKey: .title)
+        description = try c.decodeIfPresent(String.self, forKey: .description)
+        instructions = try c.decodeIfPresent(String.self, forKey: .instructions)
+        type = try c.decodeIfPresent(String.self, forKey: .type)
+        createdBy = try c.decodeIfPresent(UUID.self, forKey: .createdBy)
+        dueDate = try c.decodeIfPresent(String.self, forKey: .dueDate)
+        availableDate = try c.decodeIfPresent(String.self, forKey: .availableDate)
+        maxPoints = try c.decodeIfPresent(Int.self, forKey: .maxPoints)
+        submissionType = try c.decodeIfPresent(String.self, forKey: .submissionType)
+        allowLateSubmission = try c.decodeIfPresent(Bool.self, forKey: .allowLateSubmission)
+        lateSubmissionDays = try c.decodeIfPresent(Int.self, forKey: .lateSubmissionDays)
+        status = try c.decodeIfPresent(String.self, forKey: .status)
+        createdAt = try c.decodeIfPresent(String.self, forKey: .createdAt)
+        updatedAt = try c.decodeIfPresent(String.self, forKey: .updatedAt)
+        // attachments is JSONB in Supabase; may arrive as a JSON array/object instead of a string.
+        do {
+            attachments = try c.decodeIfPresent(String.self, forKey: .attachments)
+        } catch {
+            attachments = nil
+        }
+        // questions is JSONB in Supabase; may arrive as a JSON array/object instead of a string.
+        do {
+            questions = try c.decodeIfPresent(String.self, forKey: .questions)
+        } catch {
+            questions = nil
+        }
+    }
 }
 
 nonisolated struct InsertAssignmentDTO: Encodable, Sendable {
@@ -871,6 +904,24 @@ nonisolated struct MessageDTO: Codable, Sendable {
         case deletedAt = "deleted_at"
         case createdAt = "created_at"
     }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        tenantId = try c.decodeIfPresent(UUID.self, forKey: .tenantId)
+        conversationId = try c.decode(UUID.self, forKey: .conversationId)
+        senderId = try c.decode(UUID.self, forKey: .senderId)
+        content = try c.decode(String.self, forKey: .content)
+        // attachments is JSONB in Supabase; may arrive as a JSON array/object instead of a string.
+        do {
+            attachments = try c.decodeIfPresent(String.self, forKey: .attachments)
+        } catch {
+            attachments = nil
+        }
+        editedAt = try c.decodeIfPresent(String.self, forKey: .editedAt)
+        deletedAt = try c.decodeIfPresent(String.self, forKey: .deletedAt)
+        createdAt = try c.decodeIfPresent(String.self, forKey: .createdAt)
+    }
 }
 
 nonisolated struct InsertMessageDTO: Encodable, Sendable {
@@ -946,6 +997,28 @@ nonisolated struct AchievementDTO: Codable, Sendable {
         case isGlobal = "is_global"
         case createdBy = "created_by"
         case createdAt = "created_at"
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        tenantId = try c.decodeIfPresent(UUID.self, forKey: .tenantId)
+        name = try c.decode(String.self, forKey: .name)
+        description = try c.decodeIfPresent(String.self, forKey: .description)
+        icon = try c.decodeIfPresent(String.self, forKey: .icon)
+        category = try c.decodeIfPresent(String.self, forKey: .category)
+        tier = try c.decodeIfPresent(String.self, forKey: .tier)
+        // criteria is JSONB in Supabase; may arrive as a JSON object instead of a string.
+        do {
+            criteria = try c.decodeIfPresent(String.self, forKey: .criteria)
+        } catch {
+            criteria = nil
+        }
+        xpReward = try c.decodeIfPresent(Int.self, forKey: .xpReward)
+        coinReward = try c.decodeIfPresent(Int.self, forKey: .coinReward)
+        isGlobal = try c.decodeIfPresent(Bool.self, forKey: .isGlobal)
+        createdBy = try c.decodeIfPresent(UUID.self, forKey: .createdBy)
+        createdAt = try c.decodeIfPresent(String.self, forKey: .createdAt)
     }
 }
 
