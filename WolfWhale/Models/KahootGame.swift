@@ -351,8 +351,8 @@ extension KahootQuizPack {
 
 // MARK: - Kahoot Game Engine
 
-@Observable
-final class KahootGameEngine: @unchecked Sendable {
+@MainActor @Observable
+final class KahootGameEngine {
     // Game state
     var phase: KahootGamePhase = .lobby
     var currentQuestionIndex: Int = 0
@@ -404,13 +404,14 @@ final class KahootGameEngine: @unchecked Sendable {
         countdownValue = 3
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            let engine = self
             Task { @MainActor in
-                guard let self else { return }
-                if self.countdownValue > 1 {
-                    self.countdownValue -= 1
+                guard let engine else { return }
+                if engine.countdownValue > 1 {
+                    engine.countdownValue -= 1
                 } else {
-                    self.timer?.invalidate()
-                    self.startQuestion()
+                    engine.timer?.invalidate()
+                    engine.startQuestion()
                 }
             }
         }
@@ -427,14 +428,15 @@ final class KahootGameEngine: @unchecked Sendable {
 
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            let engine = self
             Task { @MainActor in
-                guard let self else { return }
-                if self.timeRemaining > 0 {
-                    self.timeRemaining -= 1
+                guard let engine else { return }
+                if engine.timeRemaining > 0 {
+                    engine.timeRemaining -= 1
                 } else {
                     // Time's up — treat as wrong answer
-                    self.timer?.invalidate()
-                    self.handleTimeout()
+                    engine.timer?.invalidate()
+                    engine.handleTimeout()
                 }
             }
         }
