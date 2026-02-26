@@ -384,7 +384,7 @@ final class KahootGameEngine {
         return Double(timeRemaining) / Double(q.timeLimit)
     }
 
-    nonisolated private var timer: Timer?
+    private var timerTask: Task<Void, Never>?
     private var questionStartTime: Date?
 
     // MARK: - Start Game
@@ -402,18 +402,16 @@ final class KahootGameEngine {
     func startCountdown() {
         phase = .countdown
         countdownValue = 3
-        timer?.invalidate()
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            let engine = self
-            Task { @MainActor in
-                guard let engine else { return }
-                if engine.countdownValue > 1 {
-                    engine.countdownValue -= 1
-                } else {
-                    engine.timer?.invalidate()
-                    engine.startQuestion()
-                }
+        timerTask?.cancel()
+        timerTask = Task {
+            while countdownValue > 1 {
+                try? await Task.sleep(for: .seconds(1))
+                guard !Task.isCancelled else { return }
+                countdownValue -= 1
             }
+            try? await Task.sleep(for: .seconds(1))
+            guard !Task.isCancelled else { return }
+            startQuestion()
         }
     }
 
@@ -426,19 +424,15 @@ final class KahootGameEngine {
         selectedAnswerId = nil
         questionStartTime = Date()
 
-        timer?.invalidate()
-        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            let engine = self
-            Task { @MainActor in
-                guard let engine else { return }
-                if engine.timeRemaining > 0 {
-                    engine.timeRemaining -= 1
-                } else {
-                    // Time's up — treat as wrong answer
-                    engine.timer?.invalidate()
-                    engine.handleTimeout()
-                }
+        timerTask?.cancel()
+        timerTask = Task {
+            while timeRemaining > 0 {
+                try? await Task.sleep(for: .seconds(1))
+                guard !Task.isCancelled else { return }
+                timeRemaining -= 1
             }
+            guard !Task.isCancelled else { return }
+            handleTimeout()
         }
     }
 
@@ -446,7 +440,7 @@ final class KahootGameEngine {
 
     func submitAnswer(_ answerId: UUID) {
         guard phase == .question, selectedAnswerId == nil else { return }
-        timer?.invalidate()
+        timerTask?.cancel()
         selectedAnswerId = answerId
 
         let timeTaken = questionStartTime.map { Date().timeIntervalSince($0) } ?? Double(currentQuestion?.timeLimit ?? 20)
@@ -521,7 +515,7 @@ final class KahootGameEngine {
     // MARK: - Reset
 
     func reset() {
-        timer?.invalidate()
+        timerTask?.cancel()
         phase = .lobby
         currentQuestionIndex = 0
         timeRemaining = 20
@@ -532,6 +526,6 @@ final class KahootGameEngine {
     }
 
     deinit {
-        timer?.invalidate()
+        timerTask?.cancel()
     }
 }
