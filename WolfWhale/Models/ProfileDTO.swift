@@ -42,7 +42,13 @@ nonisolated struct ProfileDTO: Codable, Sendable, Identifiable {
         bio = try c.decodeIfPresent(String.self, forKey: .bio)
         timezone = try c.decodeIfPresent(String.self, forKey: .timezone)
         language = try c.decodeIfPresent(String.self, forKey: .language)
-        preferences = try c.decodeIfPresent(String.self, forKey: .preferences)
+        // preferences can be a String or JSON object (JSONB) in Supabase.
+        // Handle both gracefully to prevent decoding failures.
+        do {
+            preferences = try c.decodeIfPresent(String.self, forKey: .preferences)
+        } catch {
+            preferences = nil
+        }
         createdAt = try c.decodeIfPresent(String.self, forKey: .createdAt)
         updatedAt = try c.decodeIfPresent(String.self, forKey: .updatedAt)
         gradeLevel = try c.decodeIfPresent(String.self, forKey: .gradeLevel)
