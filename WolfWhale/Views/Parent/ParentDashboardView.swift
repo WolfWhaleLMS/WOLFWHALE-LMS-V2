@@ -18,9 +18,12 @@ struct ParentDashboardView: View {
         NavigationStack {
             Group {
                 if viewModel.isLoading || verifiedChildIds == nil {
-                    ProgressView()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .accessibilityLabel("Loading children data")
+                    LoadingStateView(
+                        icon: "person.2.fill",
+                        title: "Loading Dashboard",
+                        message: "Fetching your children's data..."
+                    )
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     ScrollView {
                             LazyVStack(spacing: 16) {
@@ -33,6 +36,13 @@ struct ParentDashboardView: View {
                                         .font(.subheadline)
                                         .foregroundStyle(.secondary)
                                     Spacer()
+                                    Button {
+                                        Task { await viewModel.loadData() }
+                                    } label: {
+                                        Image(systemName: "arrow.clockwise")
+                                            .font(.caption)
+                                            .foregroundStyle(.white)
+                                    }
                                     Button {
                                         viewModel.dataError = nil
                                     } label: {
@@ -386,7 +396,7 @@ struct ParentDashboardView: View {
 
                     if !viewModel.upcomingConferences.isEmpty {
                         Text("\(viewModel.upcomingConferences.count) upcoming")
-                            .font(.system(size: 9))
+                            .font(.caption2)
                             .foregroundStyle(.indigo)
                     }
                 }
@@ -417,7 +427,7 @@ struct ParentDashboardView: View {
                         .foregroundStyle(Color(.label))
 
                     Text("View report")
-                        .font(.system(size: 9))
+                        .font(.caption2)
                         .foregroundStyle(.teal)
                 }
                 .frame(maxWidth: .infinity)

@@ -40,7 +40,7 @@ struct CourseDetailView: View {
                 .overlay {
                     VStack(spacing: 8) {
                         Image(systemName: course.iconSystemName)
-                            .font(.system(size: 36))
+                            .font(.largeTitle)
                             .foregroundStyle(.white)
                             .symbolEffect(.breathe)
                         Text(course.title)
@@ -118,22 +118,11 @@ struct CourseDetailView: View {
                 .padding(.horizontal)
 
             if course.modules.isEmpty {
-                VStack(spacing: 10) {
-                    Image(systemName: "folder")
-                        .font(.title2)
-                        .foregroundStyle(.secondary)
-                        .symbolEffect(.bounce)
-                    Text("No modules yet")
-                        .font(.subheadline.bold())
-                        .foregroundStyle(.secondary)
-                    Text("Course content will appear here once the teacher adds modules.")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-                        .multilineTextAlignment(.center)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 24)
-                .glassCard(cornerRadius: 16)
+                EmptyStateView(
+                    icon: "folder.fill",
+                    title: "No Modules Yet",
+                    message: "Course content will appear here once your teacher adds modules."
+                )
                 .padding(.horizontal)
             }
 

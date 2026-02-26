@@ -24,106 +24,114 @@ class DiscussionViewModel {
 
     func loadThreads(courseId: UUID, isDemoMode: Bool, currentUser: User?) {
         if isDemoMode {
-            if !discussionThreads.contains(where: { $0.courseId == courseId }) {
-                let now = Date()
-                let t1Id = UUID()
-                let sampleThreads: [DiscussionThread] = [
-                    DiscussionThread(
-                        id: t1Id, courseId: courseId,
-                        authorId: UUID(), authorName: "Ms. Thompson",
-                        title: "Welcome to the Discussion Board",
-                        content: "Use this space to ask questions and share ideas about the course material. Be respectful and constructive in your posts.",
-                        createdDate: now.addingTimeInterval(-86400 * 3),
-                        replyCount: 2, isPinned: true
-                    ),
-                    DiscussionThread(
-                        id: UUID(), courseId: courseId,
-                        authorId: UUID(), authorName: "Alex Rivera",
-                        title: "Study group for upcoming quiz?",
-                        content: "Anyone want to form a study group for the quiz next week? I was thinking we could meet in the library after school on Wednesday.",
-                        createdDate: now.addingTimeInterval(-86400),
-                        replyCount: 4, isPinned: false
-                    ),
-                    DiscussionThread(
-                        id: UUID(), courseId: courseId,
-                        authorId: UUID(), authorName: "Jordan Chen",
-                        title: "Question about Module 2 reading",
-                        content: "I'm confused about the concept in the second reading. Can someone explain how this works in simpler terms?",
-                        createdDate: now.addingTimeInterval(-3600 * 5),
-                        replyCount: 1, isPinned: false
-                    )
-                ]
-                discussionThreads.append(contentsOf: sampleThreads)
-                discussionReplies.append(contentsOf: [
-                    DiscussionReply(
-                        id: UUID(), threadId: t1Id,
-                        authorId: UUID(), authorName: "Sam Wilson",
-                        content: "Thanks for setting this up! Looking forward to great discussions.",
-                        createdDate: now.addingTimeInterval(-86400 * 2)
-                    ),
-                    DiscussionReply(
-                        id: UUID(), threadId: t1Id,
-                        authorId: UUID(), authorName: "Taylor Kim",
-                        content: "Excited to use this! Quick question -- can we share links to helpful resources here?",
-                        createdDate: now.addingTimeInterval(-86400)
-                    )
-                ])
-            }
+            loadDemoThreads(courseId: courseId)
             return
         }
-
         Task {
-            do {
-                struct ThreadDTO: Decodable {
-                    let id: UUID
-                    let courseId: UUID
-                    let authorId: UUID
-                    let authorName: String
-                    let title: String
-                    let content: String
-                    let createdAt: String
-                    let replyCount: Int
-                    let isPinned: Bool
+            await fetchThreads(courseId: courseId)
+        }
+    }
 
-                    enum CodingKeys: String, CodingKey {
-                        case id
-                        case courseId = "course_id"
-                        case authorId = "author_id"
-                        case authorName = "author_name"
-                        case title, content
-                        case createdAt = "created_at"
-                        case replyCount = "reply_count"
-                        case isPinned = "is_pinned"
-                    }
+    /// Async version that callers can await to avoid race conditions.
+    func fetchThreads(courseId: UUID) async {
+        do {
+            struct ThreadDTO: Decodable {
+                let id: UUID
+                let courseId: UUID
+                let authorId: UUID
+                let authorName: String
+                let title: String
+                let content: String
+                let createdAt: String
+                let replyCount: Int
+                let isPinned: Bool
+
+                enum CodingKeys: String, CodingKey {
+                    case id
+                    case courseId = "course_id"
+                    case authorId = "author_id"
+                    case authorName = "author_name"
+                    case title, content
+                    case createdAt = "created_at"
+                    case replyCount = "reply_count"
+                    case isPinned = "is_pinned"
                 }
-
-                let dtos: [ThreadDTO] = try await supabaseClient
-                    .from("discussion_threads")
-                    .select()
-                    .eq("course_id", value: courseId.uuidString)
-                    .order("is_pinned", ascending: false)
-                    .order("created_at", ascending: false)
-                    .execute()
-                    .value
-
-                let formatter = ISO8601DateFormatter()
-                let threads = dtos.map { dto in
-                    DiscussionThread(
-                        id: dto.id, courseId: dto.courseId,
-                        authorId: dto.authorId, authorName: dto.authorName,
-                        title: dto.title, content: dto.content,
-                        createdDate: formatter.date(from: dto.createdAt) ?? Date(),
-                        replyCount: dto.replyCount, isPinned: dto.isPinned
-                    )
-                }
-
-                discussionThreads.removeAll { $0.courseId == courseId }
-                discussionThreads.append(contentsOf: threads)
-            } catch {
-                #if DEBUG
-                print("[DiscussionViewModel] loadThreads failed: \(error)")
-                #endif
             }
+
+            let dtos: [ThreadDTO] = try await supabaseClient
+                .from("discussion_threads")
+                .select()
+                .eq("course_id", value: courseId.uuidString)
+                .order("is_pinned", ascending: false)
+                .order("created_at", ascending: false)
+                .execute()
+                .value
+
+            let formatter = ISO8601DateFormatter()
+            let threads = dtos.map { dto in
+                DiscussionThread(
+                    id: dto.id, courseId: dto.courseId,
+                    authorId: dto.authorId, authorName: dto.authorName,
+                    title: dto.title, content: dto.content,
+                    createdDate: formatter.date(from: dto.createdAt) ?? Date(),
+                    replyCount: dto.replyCount, isPinned: dto.isPinned
+                )
+            }
+
+            discussionThreads.removeAll { $0.courseId == courseId }
+            discussionThreads.append(contentsOf: threads)
+        } catch {
+            #if DEBUG
+            print("[DiscussionViewModel] loadThreads failed: \(error)")
+            #endif
+        }
+    }
+
+    private func loadDemoThreads(courseId: UUID) {
+        if !discussionThreads.contains(where: { $0.courseId == courseId }) {
+            let now = Date()
+            let t1Id = UUID()
+            let sampleThreads: [DiscussionThread] = [
+                DiscussionThread(
+                    id: t1Id, courseId: courseId,
+                    authorId: UUID(), authorName: "Ms. Thompson",
+                    title: "Welcome to the Discussion Board",
+                    content: "Use this space to ask questions and share ideas about the course material. Be respectful and constructive in your posts.",
+                    createdDate: now.addingTimeInterval(-86400 * 3),
+                    replyCount: 2, isPinned: true
+                ),
+                DiscussionThread(
+                    id: UUID(), courseId: courseId,
+                    authorId: UUID(), authorName: "Alex Rivera",
+                    title: "Study group for upcoming quiz?",
+                    content: "Anyone want to form a study group for the quiz next week? I was thinking we could meet in the library after school on Wednesday.",
+                    createdDate: now.addingTimeInterval(-86400),
+                    replyCount: 4, isPinned: false
+                ),
+                DiscussionThread(
+                    id: UUID(), courseId: courseId,
+                    authorId: UUID(), authorName: "Jordan Chen",
+                    title: "Question about Module 2 reading",
+                    content: "I'm confused about the concept in the second reading. Can someone explain how this works in simpler terms?",
+                    createdDate: now.addingTimeInterval(-3600 * 5),
+                    replyCount: 1, isPinned: false
+                )
+            ]
+            discussionThreads.append(contentsOf: sampleThreads)
+            discussionReplies.append(contentsOf: [
+                DiscussionReply(
+                    id: UUID(), threadId: t1Id,
+                    authorId: UUID(), authorName: "Sam Wilson",
+                    content: "Thanks for setting this up! Looking forward to great discussions.",
+                    createdDate: now.addingTimeInterval(-86400 * 2)
+                ),
+                DiscussionReply(
+                    id: UUID(), threadId: t1Id,
+                    authorId: UUID(), authorName: "Taylor Kim",
+                    content: "Excited to use this! Quick question -- can we share links to helpful resources here?",
+                    createdDate: now.addingTimeInterval(-86400)
+                )
+            ])
         }
     }
 
@@ -235,52 +243,56 @@ class DiscussionViewModel {
 
     func loadReplies(threadId: UUID, isDemoMode: Bool) {
         if isDemoMode { return }
-
         Task {
-            do {
-                struct ReplyDTO: Decodable {
-                    let id: UUID
-                    let threadId: UUID
-                    let authorId: UUID
-                    let authorName: String
-                    let content: String
-                    let createdAt: String
+            await fetchReplies(threadId: threadId)
+        }
+    }
 
-                    enum CodingKeys: String, CodingKey {
-                        case id
-                        case threadId = "thread_id"
-                        case authorId = "author_id"
-                        case authorName = "author_name"
-                        case content
-                        case createdAt = "created_at"
-                    }
+    /// Async version that callers can await to avoid race conditions.
+    func fetchReplies(threadId: UUID) async {
+        do {
+            struct ReplyDTO: Decodable {
+                let id: UUID
+                let threadId: UUID
+                let authorId: UUID
+                let authorName: String
+                let content: String
+                let createdAt: String
+
+                enum CodingKeys: String, CodingKey {
+                    case id
+                    case threadId = "thread_id"
+                    case authorId = "author_id"
+                    case authorName = "author_name"
+                    case content
+                    case createdAt = "created_at"
                 }
-
-                let dtos: [ReplyDTO] = try await supabaseClient
-                    .from("discussion_replies")
-                    .select()
-                    .eq("thread_id", value: threadId.uuidString)
-                    .order("created_at", ascending: true)
-                    .execute()
-                    .value
-
-                let formatter = ISO8601DateFormatter()
-                let replies = dtos.map { dto in
-                    DiscussionReply(
-                        id: dto.id, threadId: dto.threadId,
-                        authorId: dto.authorId, authorName: dto.authorName,
-                        content: dto.content,
-                        createdDate: formatter.date(from: dto.createdAt) ?? Date()
-                    )
-                }
-
-                discussionReplies.removeAll { $0.threadId == threadId }
-                discussionReplies.append(contentsOf: replies)
-            } catch {
-                #if DEBUG
-                print("[DiscussionViewModel] loadReplies failed: \(error)")
-                #endif
             }
+
+            let dtos: [ReplyDTO] = try await supabaseClient
+                .from("discussion_replies")
+                .select()
+                .eq("thread_id", value: threadId.uuidString)
+                .order("created_at", ascending: true)
+                .execute()
+                .value
+
+            let formatter = ISO8601DateFormatter()
+            let replies = dtos.map { dto in
+                DiscussionReply(
+                    id: dto.id, threadId: dto.threadId,
+                    authorId: dto.authorId, authorName: dto.authorName,
+                    content: dto.content,
+                    createdDate: formatter.date(from: dto.createdAt) ?? Date()
+                )
+            }
+
+            discussionReplies.removeAll { $0.threadId == threadId }
+            discussionReplies.append(contentsOf: replies)
+        } catch {
+            #if DEBUG
+            print("[DiscussionViewModel] loadReplies failed: \(error)")
+            #endif
         }
     }
 

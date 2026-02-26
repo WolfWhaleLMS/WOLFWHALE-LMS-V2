@@ -44,10 +44,12 @@ struct TeacherDashboardView: View {
                     liveActivityService = LiveActivityService()
                 }
                 await viewModel.loadEnrollmentRequests()
+                viewModel.refreshAtRiskStudentsCache()
             }
             .refreshable {
                 await viewModel.loadData()
                 await viewModel.loadEnrollmentRequests()
+                viewModel.refreshAtRiskStudentsCache()
             }
         }
     }
@@ -78,6 +80,7 @@ struct TeacherDashboardView: View {
                             .background(Color(.secondarySystemGroupedBackground))
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                         } else {
+                            LazyVStack(spacing: 8) {
                             ForEach(viewModel.courses) { course in
                                 Button {
                                     withAnimation(.smooth) {
@@ -110,7 +113,7 @@ struct TeacherDashboardView: View {
                                         if atRiskCount > 0 {
                                             HStack(spacing: 3) {
                                                 Image(systemName: "exclamationmark.triangle.fill")
-                                                    .font(.system(size: 9))
+                                                    .font(.caption2)
                                                 Text("\(atRiskCount)")
                                                     .font(.caption2.bold())
                                             }
@@ -130,6 +133,7 @@ struct TeacherDashboardView: View {
                                     .clipShape(RoundedRectangle(cornerRadius: 12))
                                 }
                                 .buttonStyle(.plain)
+                            }
                             }
                         }
                     }
@@ -157,6 +161,13 @@ struct TeacherDashboardView: View {
                                 .foregroundStyle(.secondary)
                             Spacer()
                             Button {
+                                Task { await viewModel.loadData() }
+                            } label: {
+                                Image(systemName: "arrow.clockwise")
+                                    .font(.caption)
+                                    .foregroundStyle(.white)
+                            }
+                            Button {
                                 viewModel.dataError = nil
                             } label: {
                                 Image(systemName: "xmark.circle.fill")
@@ -171,6 +182,9 @@ struct TeacherDashboardView: View {
                             RoundedRectangle(cornerRadius: 12)
                                 .strokeBorder(Color.orange.opacity(0.3), lineWidth: 1)
                         )
+                        .accessibilityElement(children: .combine)
+                        .accessibilityLabel("Error: \(dataError)")
+                        .accessibilityAddTraits(.isStaticText)
                     }
 
                     if let course = selectedIPadCourse {
@@ -263,7 +277,7 @@ struct TeacherDashboardView: View {
                                 .foregroundStyle(Theme.gradeColor(student.currentGrade))
 
                             Text(student.riskLevel.rawValue)
-                                .font(.system(size: 10, weight: .bold))
+                                .font(.caption2.bold())
                                 .foregroundStyle(.white)
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 3)
@@ -356,6 +370,13 @@ struct TeacherDashboardView: View {
                                 .foregroundStyle(.secondary)
                             Spacer()
                             Button {
+                                Task { await viewModel.loadData() }
+                            } label: {
+                                Image(systemName: "arrow.clockwise")
+                                    .font(.caption)
+                                    .foregroundStyle(.white)
+                            }
+                            Button {
                                 viewModel.dataError = nil
                             } label: {
                                 Image(systemName: "xmark.circle.fill")
@@ -371,7 +392,8 @@ struct TeacherDashboardView: View {
                                 .strokeBorder(Color.orange.opacity(0.3), lineWidth: 1)
                         )
                         .accessibilityElement(children: .combine)
-                        .accessibilityLabel("Warning: \(dataError)")
+                        .accessibilityLabel("Error: \(dataError)")
+                        .accessibilityAddTraits(.isStaticText)
                     }
                     overviewCards
                     enrollmentRequestsBanner
@@ -518,7 +540,7 @@ struct TeacherDashboardView: View {
 
     @ViewBuilder
     private var atRiskStudentsBanner: some View {
-        let atRiskStudents = viewModel.allAtRiskStudents()
+        let atRiskStudents = viewModel.cachedAtRiskStudents
         if !atRiskStudents.isEmpty {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(spacing: 12) {
@@ -574,7 +596,7 @@ struct TeacherDashboardView: View {
                             .foregroundStyle(Theme.gradeColor(student.currentGrade))
 
                         Text(student.riskLevel.rawValue)
-                            .font(.system(size: 9, weight: .bold))
+                            .font(.caption2.bold())
                             .foregroundStyle(.white)
                             .padding(.horizontal, 6)
                             .padding(.vertical, 2)
@@ -634,7 +656,7 @@ struct TeacherDashboardView: View {
                             if atRiskCount > 0 {
                                 HStack(spacing: 3) {
                                     Image(systemName: "exclamationmark.triangle.fill")
-                                        .font(.system(size: 9))
+                                        .font(.caption2)
                                     Text("\(atRiskCount)")
                                         .font(.caption2.bold())
                                 }

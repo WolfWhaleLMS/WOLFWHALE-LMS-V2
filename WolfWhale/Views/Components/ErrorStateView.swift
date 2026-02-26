@@ -4,6 +4,8 @@ struct ErrorStateView: View {
     let message: String
     var retryAction: (() async -> Void)? = nil
 
+    @ScaledMetric(relativeTo: .largeTitle) private var iconSize: CGFloat = 40
+
     @State private var appeared = false
     @State private var hapticTrigger = false
     @State private var isRetrying = false
@@ -19,7 +21,7 @@ struct ErrorStateView: View {
                     .scaleEffect(appeared ? 1 : 0.5)
 
                 Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.system(size: 40))
+                    .font(.system(size: iconSize))
                     .foregroundStyle(.red)
                     .symbolEffect(.bounce, value: iconShake)
             }

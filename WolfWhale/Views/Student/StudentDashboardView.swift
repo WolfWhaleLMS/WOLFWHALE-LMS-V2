@@ -114,6 +114,7 @@ struct StudentDashboardView: View {
                 }
                 .buttonStyle(.plain)
             } else {
+                LazyVStack(spacing: 10) {
                 ForEach(viewModel.courses) { course in
                     Button {
                         withAnimation(.smooth) {
@@ -126,7 +127,7 @@ struct StudentDashboardView: View {
                                     .fill(Theme.courseColor(course.colorName).opacity(0.15))
                                     .frame(width: 40, height: 40)
                                 Image(systemName: course.iconSystemName)
-                                    .font(.system(size: 18, weight: .semibold))
+                                    .font(.headline)
                                     .foregroundStyle(Theme.courseColor(course.colorName))
                             }
 
@@ -157,6 +158,8 @@ struct StudentDashboardView: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("\(course.title), \(course.teacherName), \(Int(course.progress * 100)) percent complete")
+                    .accessibilityHint("Double tap to select this course")
+                }
                 }
             }
         }
@@ -337,6 +340,8 @@ struct StudentDashboardView: View {
                         .glassCard(cornerRadius: 14)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("\(assignment.title), \(assignment.courseName), \(assignment.points) points")
+                    .accessibilityHint("Double tap to view assignments")
                 }
             }
         }
@@ -489,7 +494,7 @@ struct StudentDashboardView: View {
                 .padding(.horizontal)
             } else {
                 ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 14) {
+                    LazyHStack(spacing: 14) {
                         ForEach(viewModel.courses) { course in
                             NavigationLink(value: course) {
                                 courseCard(course)
@@ -513,7 +518,7 @@ struct StudentDashboardView: View {
                     .fill(Theme.courseColor(course.colorName).opacity(0.15))
                     .frame(width: 40, height: 40)
                 Image(systemName: course.iconSystemName)
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.headline)
                     .foregroundStyle(Theme.courseColor(course.colorName))
                     .symbolRenderingMode(.hierarchical)
                     .symbolEffect(.variableColor.iterative, options: .repeat(.periodic(delay: 4)))
@@ -599,6 +604,7 @@ struct StudentDashboardView: View {
                             }
                             .buttonStyle(.plain)
                             .accessibilityLabel("\(assignment.title), \(assignment.courseName), \(assignment.points) points")
+                            .accessibilityHint("Double tap to view assignments")
                         }
                     }
                     .padding(.horizontal)
@@ -760,6 +766,13 @@ struct StudentDashboardView: View {
                 .foregroundStyle(.secondary)
             Spacer()
             Button {
+                Task { await viewModel.loadData() }
+            } label: {
+                Image(systemName: "arrow.clockwise")
+                    .font(.caption)
+                    .foregroundStyle(.white)
+            }
+            Button {
                 viewModel.dataError = nil
             } label: {
                 Image(systemName: "xmark.circle.fill")
@@ -770,6 +783,9 @@ struct StudentDashboardView: View {
         .padding(12)
         .background(Color.orange.opacity(0.1))
         .clipShape(RoundedRectangle(cornerRadius: 12))
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Error: \(message)")
+        .accessibilityAddTraits(.isStaticText)
     }
 
     private var notificationButton: some ToolbarContent {

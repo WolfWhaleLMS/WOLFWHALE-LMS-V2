@@ -7,6 +7,8 @@ struct EmptyStateView: View {
     var actionLabel: String? = nil
     var action: (() -> Void)? = nil
 
+    @ScaledMetric(relativeTo: .largeTitle) private var iconSize: CGFloat = 56
+
     @State private var appeared = false
     @State private var iconBounce = false
     @State private var hapticTrigger = false
@@ -15,7 +17,7 @@ struct EmptyStateView: View {
         VStack(spacing: 20) {
             // Animated SF Symbol icon
             Image(systemName: icon)
-                .font(.system(size: 56))
+                .font(.system(size: iconSize))
                 .foregroundStyle(
                     LinearGradient(
                         colors: [.indigo, .purple],

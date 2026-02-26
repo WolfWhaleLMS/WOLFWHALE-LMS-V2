@@ -75,12 +75,12 @@ struct LoginView: View {
             }
 
             Text("WOLFWHALE")
-                .font(.system(size: 32, weight: .thin, design: .serif))
+                .font(.largeTitle.weight(.thin))
                 .tracking(4)
                 .foregroundStyle(.primary)
 
             Text("LEARNING MANAGEMENT SYSTEM")
-                .font(.system(size: 11, weight: .medium, design: .serif))
+                .font(.caption.weight(.medium))
                 .foregroundStyle(.secondary)
                 .tracking(2)
                 .lineLimit(1)
@@ -221,7 +221,7 @@ struct LoginView: View {
                 .fill(Color.secondary.opacity(0.3))
                 .frame(height: 1)
             Text("OR TRY A DEMO")
-                .font(.system(size: 11, weight: .semibold, design: .serif))
+                .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
                 .tracking(1.5)
             Rectangle()
@@ -292,7 +292,7 @@ struct DemoRoleButton: View {
                         .frame(width: 44, height: 44)
 
                     Image(systemName: role.iconName)
-                        .font(.system(size: 20))
+                        .font(.headline)
                         .foregroundStyle(
                             LinearGradient(
                                 colors: roleGradient,

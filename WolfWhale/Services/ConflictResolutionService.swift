@@ -93,6 +93,8 @@ final class ConflictResolutionService {
         var itemsSynced = 0
 
         // --- Courses ---
+        // TODO: Use actual server `updated_at` timestamps instead of Date() for accurate conflict detection.
+        // This requires adding `updatedAt` fields to Course, Assignment, and GradeEntry models.
         let courseConflicts = detectConflicts(
             metadata: metadata,
             entityType: "course",

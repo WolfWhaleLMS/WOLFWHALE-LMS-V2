@@ -1,6 +1,7 @@
 import SwiftUI
 import Supabase
 import UserNotifications
+import os
 
 @Observable
 @MainActor
@@ -108,6 +109,21 @@ class AppViewModel {
     private var attendanceLoaded = false
     private var achievementsLoaded = false
 
+    /// Resets lazy loading flags so data will be re-fetched on next access.
+    /// Called periodically by auto-refresh to prevent stale data.
+    private func resetLazyLoadingFlags() {
+        assignmentsLoaded = false
+        conversationsLoaded = false
+        gradesLoaded = false
+        quizzesLoaded = false
+        attendanceLoaded = false
+        achievementsLoaded = false
+    }
+
+    // MARK: - Cached Derived Data
+    /// Cached at-risk students to avoid O(C×A×S) recomputation on every view render.
+    var cachedAtRiskStudents: [AtRiskStudent] = []
+
     // MARK: - Search Debouncing
     private var searchTask: Task<Void, Never>?
 
@@ -132,6 +148,34 @@ class AppViewModel {
             task.cancel()
         }
         activeTasks.removeAll()
+    }
+
+    // MARK: - Logging
+    /// Centralized logger that works in both debug and release builds.
+    /// In release, only errors are logged (via os.Logger). In debug, all levels print.
+    private func log(_ message: String, level: LogLevel = .info) {
+        #if DEBUG
+        print("[AppViewModel] \(message)")
+        #else
+        if level == .error {
+            // In production, use os.Logger for error tracking
+            os_log(.error, "[AppViewModel] %{public}@", message)
+        }
+        #endif
+    }
+
+    private enum LogLevel { case info, error }
+
+    // MARK: - Session Expiry Detection
+
+    /// Checks if an error indicates an expired/invalid session and logs the user out if so.
+    private func handlePotentialAuthError(_ error: Error) {
+        let errorString = String(describing: error)
+        if errorString.contains("401") || errorString.contains("JWT") || errorString.contains("token") || errorString.contains("session_not_found") {
+            log("Session expired — logging out", level: .error)
+            logout()
+            loginError = "Your session has expired. Please sign in again."
+        }
     }
 
     // MARK: - Audit Logging (FERPA/GDPR Compliance)
@@ -390,21 +434,18 @@ class AppViewModel {
         grades = current
     }
 
-    var upcomingAssignments: [Assignment] {
-        assignments.filter { !$0.isSubmitted && !$0.isOverdue }
+    private(set) var upcomingAssignments: [Assignment] = []
+    private(set) var overdueAssignments: [Assignment] = []
+    private(set) var totalUnreadMessages: Int = 0
+    private(set) var pendingGradingCount: Int = 0
+
+    /// Recomputes cached derived properties. Call after assignments or conversations change.
+    func refreshDerivedProperties() {
+        upcomingAssignments = assignments.filter { !$0.isSubmitted && !$0.isOverdue }
             .sorted { $0.dueDate < $1.dueDate }
-    }
-
-    var overdueAssignments: [Assignment] {
-        assignments.filter { $0.isOverdue }
-    }
-
-    var totalUnreadMessages: Int {
-        conversations.reduce(0) { $0 + $1.unreadCount }
-    }
-
-    var pendingGradingCount: Int {
-        assignments.filter { $0.isSubmitted && $0.grade == nil }.count
+        overdueAssignments = assignments.filter { $0.isOverdue }
+        totalUnreadMessages = conversations.reduce(0) { $0 + $1.unreadCount }
+        pendingGradingCount = assignments.filter { $0.isSubmitted && $0.grade == nil }.count
     }
 
     var pendingEnrollmentCount: Int {
@@ -455,7 +496,9 @@ class AppViewModel {
                         try await Task.sleep(nanoseconds: 10_000_000_000) // 10 seconds
                         throw CancellationError()
                     }
-                    let result = try await group.next()!
+                    guard let result = try await group.next() else {
+                        throw URLError(.timedOut)
+                    }
                     group.cancelAll()
                     return result
                 }
@@ -463,6 +506,7 @@ class AppViewModel {
                 await loadData()
                 isAuthenticated = true
                 startAutoRefresh()
+                startNetworkObserver()
 
                 // Re-register push token on session restore
                 pushService.registerForRemoteNotifications()
@@ -493,7 +537,9 @@ class AppViewModel {
                         try await Task.sleep(nanoseconds: 10_000_000_000) // 10 seconds
                         throw CancellationError()
                     }
-                    let result = try await group.next()!
+                    guard let result = try await group.next() else {
+                        throw URLError(.timedOut)
+                    }
                     group.cancelAll()
                     return result
                 }
@@ -502,6 +548,7 @@ class AppViewModel {
                 isAuthenticated = true
                 showBiometricPrompt = false
                 startAutoRefresh()
+                startNetworkObserver()
 
                 // Re-register push token on session restore
                 pushService.registerForRemoteNotifications()
@@ -540,6 +587,7 @@ class AppViewModel {
                 await loadData()
                 isAuthenticated = true
                 startAutoRefresh()
+                startNetworkObserver()
 
                 // Save session flag so Face ID auto-login works on next launch
                 hasSavedSession = true
@@ -694,9 +742,7 @@ class AppViewModel {
                 do {
                     try await supabaseClient.auth.signOut()
                 } catch {
-                    #if DEBUG
-                    print("[AppViewModel] Sign out error: \(error)")
-                    #endif
+                    self.log("Sign out error: \(error)", level: .error)
                     // Still clear local state even on sign-out error
                 }
             }
@@ -932,9 +978,7 @@ class AppViewModel {
             do {
                 announcements = try await dataService.fetchAnnouncements()
             } catch {
-                #if DEBUG
-                print("[AppViewModel] Fetch announcements error: \(error)")
-                #endif
+                log("Fetch announcements error: \(error)", level: .error)
                 // Non-blocking: announcements are supplementary
             }
 
@@ -947,9 +991,7 @@ class AppViewModel {
                     grades = try await dataService.fetchGrades(for: user.id, courseIds: courseIds)
                 } catch {
                     gradeError = "Unable to load grades. Please try again."
-                    #if DEBUG
-                    print("[AppViewModel] Fetch grades error: \(error)")
-                    #endif
+                    log("Fetch grades error: \(error)", level: .error)
                 }
                 gradesLoaded = true
 
@@ -962,9 +1004,7 @@ class AppViewModel {
                     children = try await dataService.fetchChildren(for: user.id)
                 } catch {
                     dataError = "Unable to load children data. Please try again."
-                    #if DEBUG
-                    print("[AppViewModel] Fetch children error: \(error)")
-                    #endif
+                    log("Fetch children error: \(error)", level: .error)
                 }
                 scheduleParentAlerts()
 
@@ -984,29 +1024,25 @@ class AppViewModel {
                             self.userPagination.hasMore = newUsers.count >= self.userPagination.pageSize
                         } catch {
                             self.dataError = "Unable to load users. Please try again."
-                            #if DEBUG
-                            print("[AppViewModel] Fetch all users error: \(error)")
-                            #endif
+                            self.log("Fetch all users error: \(error)", level: .error)
                         }
                     }
                     group.addTask { @MainActor in
                         do {
                             self.schoolMetrics = try await self.dataService.fetchSchoolMetrics(schoolId: user.schoolId)
                         } catch {
-                            #if DEBUG
-                            print("[AppViewModel] Fetch school metrics error: \(error)")
-                            #endif
+                            self.log("Fetch school metrics error: \(error)", level: .error)
                         }
                     }
                 }
             }
             isDataLoading = false
+            refreshDerivedProperties()
 
             // Move expensive I/O operations off the main thread
             let assignmentsForReminders = assignments
             Task.detached(priority: .utility) { @MainActor [weak self] in
-                self?.cacheDataForSiri()
-                self?.cacheDataForWidgets()
+                self?.cacheDataForExtensions()
                 self?.saveDataToOfflineStorage()
                 self?.notificationService.scheduleAllAssignmentReminders(assignments: assignmentsForReminders)
 
@@ -1037,6 +1073,8 @@ class AppViewModel {
             }
         } catch {
             isDataLoading = false
+            log("loadData failed: \(error)", level: .error)
+            handlePotentialAuthError(error)
             if offlineStorage.hasOfflineData {
                 dataError = "Could not load data. Using offline data."
                 await loadOfflineData()
@@ -1071,6 +1109,8 @@ class AppViewModel {
                 assignmentPagination.offset = newAssignments.count
                 assignmentPagination.hasMore = newAssignments.count >= assignmentPagination.pageSize
                 assignmentsLoaded = true
+                refreshDerivedProperties()
+                saveDataToOfflineStorage()
 
                 // Schedule due-date reminders for newly loaded assignments
                 notificationService.scheduleDueDateRemindersIfEnabled(assignments: newAssignments)
@@ -1105,6 +1145,8 @@ class AppViewModel {
                 conversations = newConversations
                 conversationPagination.offset = newConversations.count
                 conversationPagination.hasMore = newConversations.count >= conversationPagination.pageSize
+                refreshDerivedProperties()
+                saveDataToOfflineStorage()
             } catch is CancellationError {
                 // Expected — no action needed
             } catch {
@@ -1153,6 +1195,7 @@ class AppViewModel {
                 try Task.checkCancellation()
                 quizzes = try await dataService.fetchQuizzes(for: user.id, courseIds: courseIds)
                 try Task.checkCancellation()
+                saveDataToOfflineStorage()
             } catch is CancellationError {
                 // Expected — no action needed
             } catch {
@@ -1254,6 +1297,7 @@ class AppViewModel {
             assignments.append(contentsOf: newAssignments)
             assignmentPagination.offset += newAssignments.count
             assignmentPagination.hasMore = newAssignments.count >= assignmentPagination.pageSize
+            refreshDerivedProperties()
         } catch {
             #if DEBUG
             print("[AppViewModel] Failed to load more assignments: \(error)")
@@ -1275,6 +1319,7 @@ class AppViewModel {
             conversations.append(contentsOf: newConversations)
             conversationPagination.offset += newConversations.count
             conversationPagination.hasMore = newConversations.count >= conversationPagination.pageSize
+            refreshDerivedProperties()
         } catch {
             #if DEBUG
             print("[AppViewModel] Failed to load more conversations: \(error)")
@@ -1372,8 +1417,9 @@ class AppViewModel {
         // Populate conference scheduling demo data
         loadDemoConferenceData()
 
+        refreshDerivedProperties()
 
-        cacheDataForSiri()
+        cacheDataForExtensions()
     }
 
     /// Builds a realistic weekly timetable from the enrolled courses.
@@ -1489,7 +1535,8 @@ class AppViewModel {
         if currentUser == nil {
             currentUser = await offlineStorage.loadUserProfile()
         }
-        cacheDataForSiri()
+        refreshDerivedProperties()
+        cacheDataForExtensions()
     }
 
     func refreshData() {
@@ -1506,7 +1553,11 @@ class AppViewModel {
 
     /// Re-fetches only courses from the data service. Used by pull-to-refresh on course list views.
     func refreshCourses() async {
-        guard let user = currentUser, !isDemoMode, networkMonitor.isConnected else { return }
+        guard let user = currentUser, !isDemoMode else { return }
+        guard networkMonitor.isConnected else {
+            dataError = "You're offline. Pull to refresh when connected."
+            return
+        }
         isDataLoading = true
         dataError = nil
         defer { isDataLoading = false }
@@ -1532,7 +1583,11 @@ class AppViewModel {
 
     /// Re-fetches only assignments from the data service. Used by pull-to-refresh on assignment views.
     func refreshAssignments() async {
-        guard let user = currentUser, !isDemoMode, networkMonitor.isConnected else { return }
+        guard let user = currentUser, !isDemoMode else { return }
+        guard networkMonitor.isConnected else {
+            dataError = "You're offline. Pull to refresh when connected."
+            return
+        }
         isDataLoading = true
         dataError = nil
         defer { isDataLoading = false }
@@ -1550,6 +1605,7 @@ class AppViewModel {
             assignmentPagination.offset = newAssignments.count
             assignmentPagination.hasMore = newAssignments.count >= assignmentPagination.pageSize
             assignmentsLoaded = true
+            refreshDerivedProperties()
         } catch {
             dataError = "Could not refresh assignments."
             #if DEBUG
@@ -1560,7 +1616,11 @@ class AppViewModel {
 
     /// Re-fetches only grades from the data service. Used by pull-to-refresh on the grades view.
     func refreshGrades() async {
-        guard let user = currentUser, !isDemoMode, networkMonitor.isConnected else { return }
+        guard let user = currentUser, !isDemoMode else { return }
+        guard networkMonitor.isConnected else {
+            dataError = "You're offline. Pull to refresh when connected."
+            return
+        }
         isDataLoading = true
         dataError = nil
         defer { isDataLoading = false }
@@ -1578,7 +1638,11 @@ class AppViewModel {
 
     /// Re-fetches only conversations from the data service. Used by pull-to-refresh on the messages view.
     func refreshConversations() async {
-        guard let user = currentUser, !isDemoMode, networkMonitor.isConnected else { return }
+        guard let user = currentUser, !isDemoMode else { return }
+        guard networkMonitor.isConnected else {
+            dataError = "You're offline. Pull to refresh when connected."
+            return
+        }
         isDataLoading = true
         dataError = nil
         defer { isDataLoading = false }
@@ -1593,6 +1657,7 @@ class AppViewModel {
             conversationPagination.offset = newConversations.count
             conversationPagination.hasMore = newConversations.count >= conversationPagination.pageSize
             conversationsLoaded = true
+            refreshDerivedProperties()
         } catch {
             dataError = "Could not refresh conversations."
             #if DEBUG
@@ -1603,7 +1668,11 @@ class AppViewModel {
 
     /// Re-fetches only attendance records from the data service. Used by pull-to-refresh on the attendance view.
     func refreshAttendance() async {
-        guard let user = currentUser, !isDemoMode, networkMonitor.isConnected else { return }
+        guard let user = currentUser, !isDemoMode else { return }
+        guard networkMonitor.isConnected else {
+            dataError = "You're offline. Pull to refresh when connected."
+            return
+        }
         isDataLoading = true
         dataError = nil
         defer { isDataLoading = false }
@@ -1626,9 +1695,35 @@ class AppViewModel {
         autoRefreshTask?.cancel()
         autoRefreshTask = Task {
             while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(autoRefreshInterval))
+                // Reduce refresh frequency on cellular (10 min) or Low Data Mode (15 min).
+                let interval: Double = networkMonitor.isConstrained ? 900 : (networkMonitor.isExpensive ? 600 : autoRefreshInterval)
+                try? await Task.sleep(for: .seconds(interval))
                 guard !Task.isCancelled, isAuthenticated, !isDemoMode, networkMonitor.isConnected else { continue }
+                // Reset lazy-loading flags before refreshing so stale
+                // on-demand data (assignments, conversations, etc.) is
+                // re-fetched when the user next navigates to those screens.
+                resetLazyLoadingFlags()
                 await loadData()
+            }
+        }
+    }
+
+    /// Observes network connectivity changes and triggers a data refresh when coming back online.
+    func startNetworkObserver() {
+        Task { [weak self] in
+            var wasOffline = false
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(3))
+                guard let self else { return }
+                let isOnline = self.networkMonitor.isConnected
+                if wasOffline && isOnline && self.isAuthenticated {
+                    #if DEBUG
+                    print("[AppViewModel] Back online — syncing data")
+                    #endif
+                    await self.loadData()
+                    self.dataError = nil
+                }
+                wasOffline = !isOnline
             }
         }
     }
@@ -1644,6 +1739,7 @@ class AppViewModel {
     func handleForegroundResume() {
         guard isAuthenticated, !isDemoMode, !isAppLocked else { return }
         startAutoRefresh()
+        startNetworkObserver()
 
         // Sync the due-date reminder count from the notification center.
         // This is lightweight (local query only) and keeps the badge accurate
@@ -1655,16 +1751,16 @@ class AppViewModel {
         refreshData()
     }
 
-    // MARK: - Cache Data for Siri Intents
-    /// Writes lightweight JSON summaries to UserDefaults so App Intents can read
-    /// them without needing a live Supabase session.
-    func cacheDataForSiri() {
-        // Write to the App Group suite so Siri intents can read the data
-        let defaults = UserDefaults(suiteName: UserDefaultsKeys.widgetAppGroup) ?? .standard
+    // MARK: - Cache Data for Extensions (Siri Intents + Widgets)
+    /// Writes lightweight JSON summaries to the shared App Group UserDefaults so
+    /// both App Intents (Siri) and WidgetKit widgets can read grades, assignments,
+    /// and schedule without needing a live Supabase session.
+    func cacheDataForExtensions() {
+        guard let defaults = UserDefaults(suiteName: UserDefaultsKeys.widgetAppGroup) else { return }
         let isoFormatter = ISO8601DateFormatter()
         isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
 
-        // FERPA: Set auth flag so intents can verify user is signed in
+        // FERPA: Set auth flag so widgets/intents can verify user is signed in
         defaults.set(isAuthenticated, forKey: "wolfwhale_is_authenticated")
 
         // 1. Upcoming assignments
@@ -1698,51 +1794,6 @@ class AppViewModel {
         }
         if let data = try? JSONEncoder().encode(scheduleEntries) {
             defaults.set(data, forKey: UserDefaultsKeys.scheduleToday)
-        }
-    }
-
-    // MARK: - Cache Data for Widgets (App Group)
-    /// Writes the same cached data to the shared App Group UserDefaults so
-    /// WidgetKit widgets can display grades, assignments, and schedule.
-    func cacheDataForWidgets() {
-        guard let sharedDefaults = UserDefaults(suiteName: UserDefaultsKeys.widgetAppGroup) else { return }
-        let isoFormatter = ISO8601DateFormatter()
-        isoFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-
-        // FERPA: Set auth flag so widgets/intents can verify user is signed in
-        sharedDefaults.set(isAuthenticated, forKey: "wolfwhale_is_authenticated")
-
-        // 1. Upcoming assignments
-        let upcomingItems = upcomingAssignments.prefix(10).map { assignment in
-            CachedAssignment(
-                title: assignment.title,
-                dueDate: isoFormatter.string(from: assignment.dueDate),
-                courseName: assignment.courseName
-            )
-        }
-        if let data = try? JSONEncoder().encode(Array(upcomingItems)) {
-            sharedDefaults.set(data, forKey: UserDefaultsKeys.upcomingAssignments)
-        }
-
-        // 2. Grades summary
-        let courseGrades = grades.map { entry in
-            CachedCourseGrade(
-                courseName: entry.courseName,
-                letterGrade: entry.letterGrade,
-                numericGrade: entry.numericGrade
-            )
-        }
-        let gradesSummary = CachedGradesSummary(gpa: gpa, courseGrades: courseGrades)
-        if let data = try? JSONEncoder().encode(gradesSummary) {
-            sharedDefaults.set(data, forKey: UserDefaultsKeys.gradesSummary)
-        }
-
-        // 3. Today's schedule
-        let scheduleEntries = courses.map { course in
-            CachedScheduleEntry(courseName: course.title, time: nil)
-        }
-        if let data = try? JSONEncoder().encode(scheduleEntries) {
-            sharedDefaults.set(data, forKey: UserDefaultsKeys.scheduleToday)
         }
     }
 
@@ -2013,6 +2064,7 @@ class AppViewModel {
             try await dataService.createAssignment(dto)
             let courseIds = courses.map(\.id)
             assignments = try await dataService.fetchAssignments(for: user.id, role: user.role, courseIds: courseIds)
+            refreshDerivedProperties()
 
             // Audit: record assignment creation
             await auditLog.log(
@@ -2030,6 +2082,7 @@ class AppViewModel {
                 studentId: nil, studentName: nil
             )
             assignments.append(newAssignment)
+            refreshDerivedProperties()
         }
     }
 
@@ -2298,6 +2351,7 @@ class AppViewModel {
 
             // Refresh conversations to pick up the new one
             conversations = try await dataService.fetchConversations(for: user.id)
+            refreshDerivedProperties()
         } else {
             let newConversation = Conversation(
                 id: UUID(),
@@ -2310,6 +2364,7 @@ class AppViewModel {
                 avatarSystemName: recipientNames.count > 1 ? "person.3.fill" : "person.crop.circle.fill"
             )
             conversations.insert(newConversation, at: 0)
+            refreshDerivedProperties()
         }
     }
 
@@ -2382,6 +2437,7 @@ class AppViewModel {
         courses = try await dataService.fetchCourses(for: user.id, role: user.role, schoolId: user.schoolId)
         let courseIds = courses.map(\.id)
         assignments = try await dataService.fetchAssignments(for: user.id, role: user.role, courseIds: courseIds)
+        refreshDerivedProperties()
         return courseName
     }
 
@@ -2749,6 +2805,7 @@ class AppViewModel {
                 avatarSystemName: names.count > 2 ? "person.3.fill" : "person.crop.circle.fill"
             )
             conversations.insert(newConversation, at: 0)
+            refreshDerivedProperties()
             return
         }
 
@@ -2759,6 +2816,7 @@ class AppViewModel {
             )
             if let user = currentUser {
                 conversations = try await dataService.fetchConversations(for: user.id)
+                refreshDerivedProperties()
             }
         } catch {
             dataError = UserFacingError.sanitize(error).localizedDescription
@@ -2962,6 +3020,7 @@ class AppViewModel {
 
     // MARK: - Attendance + Parent
     // Uses attendance_records table (not "attendance") and attendance_date column (not "date")
+    // TODO: Route through DataService for deduplication and retry support
     func fetchAttendanceForCourse(courseId: UUID) async -> [AttendanceRecord] {
         if isDemoMode {
             return attendance.filter { record in
@@ -2999,23 +3058,36 @@ class AppViewModel {
         }
     }
 
-    // Role is not on profiles; need to use tenant_memberships to filter teachers
+    // Role is not on profiles; need to use tenant_memberships to filter teachers.
+    // Optimized: only fetch teachers who teach courses the child is enrolled in,
+    // rather than fetching ALL teachers for the entire tenant.
     func fetchTeachersForChild(childId: UUID) async -> [ProfileDTO] {
         if isDemoMode {
             // In demo mode, return empty since ProfileDTO has no role property
             return []
         }
         do {
-            // Fetch teacher user IDs from tenant_memberships
-            let memberships: [TenantMembershipDTO] = try await supabaseClient
-                .from("tenant_memberships")
+            // 1. Get the child's enrolled course IDs
+            let enrollments: [EnrollmentDTO] = try await supabaseClient
+                .from("course_enrollments")
                 .select()
-                .eq("role", value: "Teacher")
+                .eq("student_id", value: childId.uuidString)
                 .execute()
                 .value
-            let teacherIds = memberships.map(\.userId)
+            let courseIds = enrollments.map(\.courseId)
+            if courseIds.isEmpty { return [] }
+
+            // 2. Get the courses to find their teacher (created_by) IDs
+            let courseDTOs: [CourseDTO] = try await supabaseClient
+                .from("courses")
+                .select()
+                .in("id", values: courseIds.map(\.uuidString))
+                .execute()
+                .value
+            let teacherIds = Array(Set(courseDTOs.compactMap(\.createdBy)))
             if teacherIds.isEmpty { return [] }
 
+            // 3. Fetch only those teacher profiles
             let profiles: [ProfileDTO] = try await supabaseClient
                 .from("profiles")
                 .select()

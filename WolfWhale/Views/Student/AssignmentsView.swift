@@ -7,6 +7,7 @@ struct AssignmentsView: View {
     @State private var selectedAssignment: Assignment?
     @State private var resubmitAssignment: Assignment?
     @State private var hapticTrigger = false
+    @State private var loadError: String?
 
     private var filtered: [Assignment] {
         switch selectedFilter {
@@ -19,8 +20,48 @@ struct AssignmentsView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
+            Group {
+                if let error = loadError {
+                    ErrorStateView(
+                        message: error,
+                        retryAction: {
+                            loadError = nil
+                            await viewModel.refreshAssignments()
+                        }
+                    )
+                } else {
+                    ScrollView {
                 LazyVStack(spacing: 14) {
+                    if let error = viewModel.dataError {
+                        HStack(spacing: 10) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.orange)
+                                .symbolRenderingMode(.hierarchical)
+                            Text(error)
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            Button {
+                                Task { await viewModel.refreshAssignments() }
+                            } label: {
+                                Image(systemName: "arrow.clockwise")
+                                    .font(.caption)
+                                    .foregroundStyle(.orange)
+                            }
+                            Button {
+                                viewModel.dataError = nil
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundStyle(.secondary)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .padding(12)
+                        .background(Color.orange.opacity(0.1))
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .accessibilityElement(children: .combine)
+                        .accessibilityLabel("Error: \(error)")
+                    }
                     filterBar
                     ForEach(filtered) { assignment in
                         assignmentRow(assignment)
@@ -57,6 +98,8 @@ struct AssignmentsView: View {
             .refreshable {
                 await viewModel.refreshAssignments()
             }
+                } // else
+            } // Group
             .navigationTitle("Assignments")
             .task { viewModel.loadAssignmentsIfNeeded() }
             .sheet(item: $selectedAssignment) { assignment in

@@ -651,7 +651,7 @@ struct AdminDashboardView: View {
                             let rate = rates[day]
                             if rate > 0 {
                                 Text("\(Int(rate * 100))%")
-                                    .font(.system(size: 9, weight: .bold))
+                                    .font(.caption2.bold())
                                     .foregroundStyle(.secondary)
                             }
                             ZStack(alignment: .bottom) {

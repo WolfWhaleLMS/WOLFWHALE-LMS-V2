@@ -34,6 +34,15 @@ final class ChatRealtimeService {
     /// Typing indicator debounce tasks keyed by conversation ID string.
     private var typingDebounce: [String: Task<Void, Never>] = [:]
 
+    /// Network monitor used for auto-reconnection after connectivity loss.
+    private let networkMonitor = NetworkMonitor()
+
+    /// The conversation ID of the most recent single-conversation subscription.
+    private var currentConversationId: UUID?
+
+    /// The message handler of the most recent single-conversation subscription.
+    private var currentMessageHandler: ((ChatMessage) -> Void)?
+
     // MARK: - Date Parsing
 
     private let iso8601: ISO8601DateFormatter = {
@@ -70,6 +79,10 @@ final class ChatRealtimeService {
         currentUserId: UUID? = nil,
         onNewMessage: @escaping @MainActor (ChatMessage) -> Void
     ) async {
+        // Store for reconnection.
+        currentConversationId = conversationId
+        currentMessageHandler = onNewMessage
+
         let key = conversationId.uuidString
 
         // Tear down any existing subscription for this conversation.
@@ -407,6 +420,34 @@ final class ChatRealtimeService {
         isConnected = false
         typingUsers.removeAll()
         error = nil
+    }
+
+    // MARK: - Reconnection
+
+    /// Reconnects to the current conversation channel after network recovery.
+    func reconnect() async {
+        guard let conversationId = currentConversationId else { return }
+        #if DEBUG
+        print("[ChatRealtimeService] Reconnecting to conversation \(conversationId)")
+        #endif
+        await unsubscribeFromConversation(conversationId)
+        try? await Task.sleep(for: .seconds(1))
+        await subscribeToConversation(conversationId, onNewMessage: currentMessageHandler ?? { _ in })
+    }
+
+    /// Starts observing network connectivity changes for auto-reconnection.
+    func startNetworkObserver() {
+        Task {
+            var wasOffline = false
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(3))
+                let isOnline = networkMonitor.isConnected
+                if wasOffline && isOnline {
+                    await reconnect()
+                }
+                wasOffline = !isOnline
+            }
+        }
     }
 
     // MARK: - Helpers

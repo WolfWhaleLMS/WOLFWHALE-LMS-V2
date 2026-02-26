@@ -21,7 +21,7 @@ enum WidgetUserDefaultsKeys {
 }
 
 // MARK: - Cached Data Models
-// These mirror the Codable structs used by the main app's `cacheDataForSiri()`.
+// These mirror the Codable structs used by the main app's `cacheDataForExtensions()`.
 // They MUST stay in sync with the main app definitions.
 
 struct CachedAssignment: Codable, Sendable, Identifiable {

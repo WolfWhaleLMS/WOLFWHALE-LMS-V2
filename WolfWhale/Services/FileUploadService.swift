@@ -1,5 +1,6 @@
 import Foundation
 import Supabase
+import UIKit
 
 /// Errors that can occur during file upload operations.
 nonisolated enum FileUploadError: LocalizedError, Sendable {
@@ -60,7 +61,7 @@ struct FileUploadService: Sendable {
         let pathExt = fileURL.pathExtension
 
         // Perform file-system I/O off the main actor to avoid blocking the UI.
-        let (fileData, contentType) = try await Task.detached(priority: .userInitiated) {
+        var (fileData, contentType) = try await Task.detached(priority: .userInitiated) {
             // Verify the file exists
             guard FileManager.default.fileExists(atPath: fileURL.path) else {
                 throw FileUploadError.fileNotFound
@@ -88,6 +89,14 @@ struct FileUploadService: Sendable {
             let mime = FileUploadService.resolvedMimeType(for: pathExt)
             return (data, mime)
         }.value
+
+        // Compress images before upload to save bandwidth
+        if contentType.starts(with: "image/") && contentType != "image/svg+xml" {
+            if let uiImage = UIImage(data: fileData),
+               let compressed = uiImage.jpegData(compressionQuality: 0.8) {
+                fileData = compressed
+            }
+        }
 
         // Upload to Supabase Storage
         do {

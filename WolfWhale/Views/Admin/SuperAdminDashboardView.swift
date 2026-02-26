@@ -242,12 +242,11 @@ struct SuperAdminDashboardView: View {
                 .font(.headline)
 
             if isLoading {
-                HStack {
-                    Spacer()
-                    ProgressView()
-                        .controlSize(.regular)
-                    Spacer()
-                }
+                LoadingStateView(
+                    icon: "building.2.fill",
+                    title: "Loading Tenants",
+                    message: "Fetching tenant data..."
+                )
                 .padding(.vertical, 20)
             } else if tenants.isEmpty {
                 VStack(spacing: 12) {

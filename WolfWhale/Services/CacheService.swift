@@ -1,5 +1,8 @@
 import Foundation
 
+// NOTE: This cache service is available but not yet integrated into the data layer.
+// Consider using it for frequently-accessed, rarely-changing data like course metadata.
+
 actor CacheService {
     static let shared = CacheService()
 

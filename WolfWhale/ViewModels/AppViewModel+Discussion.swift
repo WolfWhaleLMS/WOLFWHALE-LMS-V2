@@ -29,16 +29,12 @@ extension AppViewModel {
 
     func loadThreads(courseId: UUID) {
         syncDiscussionState()
-        discussionsVM.loadThreads(courseId: courseId, isDemoMode: isDemoMode, currentUser: currentUser)
-        // For async operations, we schedule a pull after a short delay
-        // to allow the Task inside the sub-VM to complete.
-        // For demo mode, data is set synchronously.
         if isDemoMode {
+            discussionsVM.loadThreads(courseId: courseId, isDemoMode: isDemoMode, currentUser: currentUser)
             pullDiscussionState()
         } else {
             Task {
-                // Allow the sub-VM's internal Task to run
-                try? await Task.sleep(for: .milliseconds(100))
+                await discussionsVM.fetchThreads(courseId: courseId)
                 pullDiscussionState()
             }
         }
@@ -58,12 +54,12 @@ extension AppViewModel {
 
     func loadReplies(threadId: UUID) {
         syncDiscussionState()
-        discussionsVM.loadReplies(threadId: threadId, isDemoMode: isDemoMode)
         if isDemoMode {
+            discussionsVM.loadReplies(threadId: threadId, isDemoMode: isDemoMode)
             pullDiscussionState()
         } else {
             Task {
-                try? await Task.sleep(for: .milliseconds(100))
+                await discussionsVM.fetchReplies(threadId: threadId)
                 pullDiscussionState()
             }
         }

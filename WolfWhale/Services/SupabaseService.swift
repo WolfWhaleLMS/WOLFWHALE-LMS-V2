@@ -1,23 +1,11 @@
 import Foundation
 import Supabase
 
-// MARK: - Timeout Configuration
-
-/// URLSession with timeout configuration for Supabase API calls.
-/// - Request timeout: 15 seconds for standard API calls
-/// - Resource timeout: 60 seconds for file uploads/downloads
-private let supabaseURLSession: URLSession = {
-    let config = URLSessionConfiguration.default
-    config.timeoutIntervalForRequest = 15   // 15s for API calls
-    config.timeoutIntervalForResource = 60  // 60s for file uploads/downloads
-    return URLSession(configuration: config)
-}()
-
 let supabaseClient: SupabaseClient = {
     let urlString = Config.SUPABASE_URL
     let anonKey = Config.SUPABASE_ANON_KEY
     guard let url = URL(string: urlString) else {
-        preconditionFailure("[SupabaseService] Invalid SUPABASE_URL: \(urlString)")
+        fatalError("[SupabaseService] Invalid SUPABASE_URL: '\(urlString)'. Check Config.swift.")
     }
     return SupabaseClient(supabaseURL: url, supabaseKey: anonKey)
 }()
@@ -43,6 +31,13 @@ private func withRetry<T>(maxAttempts: Int = 3, delay: Duration = .seconds(1), t
             }
         } catch {
             lastError = error
+            // Don't retry authentication or client errors — only transient/server errors
+            if let urlError = error as? URLError, urlError.code == .timedOut || urlError.code == .networkConnectionLost || urlError.code == .notConnectedToInternet {
+                // Transient — retry
+            } else if let httpResponse = (error as NSError).userInfo[NSLocalizedDescriptionKey] as? String,
+                      httpResponse.contains("401") || httpResponse.contains("403") || httpResponse.contains("400") || httpResponse.contains("404") || httpResponse.contains("422") {
+                throw error // Don't retry client/auth errors
+            }
             if attempt < maxAttempts - 1 {
                 try await Task.sleep(for: delay * (attempt + 1))
             }
@@ -137,6 +132,30 @@ struct DataService: Sendable {
 
     private func formatDate(_ date: Date) -> String {
         iso8601.string(from: date)
+    }
+
+    /// Resolves the current authenticated user's tenant ID from `tenant_memberships`.
+    /// Returns nil if the user has no tenant membership (e.g. super-admin).
+    private func resolveCurrentUserTenantId() async throws -> UUID? {
+        let session = try await supabaseClient.auth.session
+        let userId = session.user.id
+
+        struct MembershipDTO: Decodable {
+            let tenantId: UUID?
+            enum CodingKeys: String, CodingKey {
+                case tenantId = "tenant_id"
+            }
+        }
+
+        let memberships: [MembershipDTO] = try await supabaseClient
+            .from("tenant_memberships")
+            .select("tenant_id")
+            .eq("user_id", value: userId.uuidString)
+            .limit(1)
+            .execute()
+            .value
+
+        return memberships.first?.tenantId
     }
 
     // MARK: - Courses
@@ -408,13 +427,14 @@ struct DataService: Sendable {
     }
 
     private func fetchEnrollmentCount(for courseId: UUID) async throws -> Int {
-        let enrollments: [EnrollmentDTO] = try await supabaseClient
+        struct IdOnly: Decodable { let id: UUID }
+        let rows: [IdOnly] = try await supabaseClient
             .from("course_enrollments")
-            .select()
+            .select("id")
             .eq("course_id", value: courseId.uuidString)
             .execute()
             .value
-        return enrollments.count
+        return rows.count
     }
 
     private func fetchTeacherName(for teacherId: UUID?) async throws -> String {
@@ -966,9 +986,16 @@ struct DataService: Sendable {
                 .execute()
                 .value
         } else {
-            dtos = try await supabaseClient
+            // Resolve the authenticated user's tenant to ensure announcements
+            // are scoped to their organization (prevents cross-tenant leakage).
+            let resolvedTenantId = try await resolveCurrentUserTenantId()
+            var query = supabaseClient
                 .from("announcements")
                 .select()
+            if let resolvedTenantId {
+                query = query.eq("tenant_id", value: resolvedTenantId.uuidString)
+            }
+            dtos = try await query
                 .order("created_at", ascending: false)
                 .limit(20)
                 .execute()
@@ -2421,9 +2448,16 @@ struct DataService: Sendable {
                 .execute()
                 .value
         } else {
-            dtos = try await supabaseClient
+            // Resolve the authenticated user's tenant to ensure announcements
+            // are scoped to their organization (prevents cross-tenant leakage).
+            let resolvedTenantId = try await resolveCurrentUserTenantId()
+            var query = supabaseClient
                 .from("announcements")
                 .select()
+            if let resolvedTenantId {
+                query = query.eq("tenant_id", value: resolvedTenantId.uuidString)
+            }
+            dtos = try await query
                 .order("created_at", ascending: false)
                 .range(from: offset, to: offset + limit - 1)
                 .execute()

@@ -85,6 +85,8 @@ struct AquariumView: View {
             collectionButton
         }
         .padding(.vertical, 8)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Stats: \(currentStreak) day streak, \(unlockedFish.count) of \(totalFishCount) fish unlocked")
     }
 
     private var streakBadge: some View {
@@ -170,6 +172,7 @@ struct AquariumView: View {
                 )
         }
         .shadow(color: .cyan.opacity(0.2), radius: 16, y: 8)
+        .accessibilityLabel("Your aquarium tank")
     }
 
     private var oceanBackground: some View {
@@ -568,6 +571,8 @@ private struct SwimmingFishView: View {
             } animation: { phase in
                 .linear(duration: swimDuration).delay(phase ? 0 : staggerDelay)
             }
+            .accessibilityLabel("\(fish.name) fish")
+            .accessibilityHidden(false)
             .onAppear {
                 let bobAmount = CGFloat.random(in: 6...14)
                 withAnimation(

@@ -87,6 +87,11 @@ extension AppViewModel {
         .sorted { $0.riskLevel > $1.riskLevel }
     }
 
+    /// Refreshes the cached at-risk students list. Call after data loads or changes.
+    func refreshAtRiskStudentsCache() {
+        cachedAtRiskStudents = allAtRiskStudents()
+    }
+
     /// Returns all at-risk students across all courses the teacher owns.
     func allAtRiskStudents() -> [AtRiskStudent] {
         var seen = Set<UUID>()

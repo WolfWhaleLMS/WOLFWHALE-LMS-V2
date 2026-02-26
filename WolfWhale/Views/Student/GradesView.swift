@@ -4,6 +4,7 @@ struct GradesView: View {
     @Bindable var viewModel: AppViewModel
 
     @State private var gradeService = GradeCalculationService()
+    @State private var loadError: String?
 
     /// Weighted grade results for each course, sourced from the view model.
     private var courseResults: [CourseGradeResult] {
@@ -22,13 +23,51 @@ struct GradesView: View {
 
     var body: some View {
         Group {
-            if viewModel.isLoading {
+            if let error = loadError {
+                ErrorStateView(
+                    message: error,
+                    retryAction: {
+                        loadError = nil
+                        await viewModel.refreshGrades()
+                    }
+                )
+            } else if viewModel.isLoading {
                 ProgressView()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .accessibilityLabel("Loading grades")
             } else {
                 ScrollView {
                     LazyVStack(spacing: 16) {
+                        if let error = viewModel.gradeError {
+                            HStack(spacing: 10) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(.orange)
+                                    .symbolRenderingMode(.hierarchical)
+                                Text(error)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                                Button {
+                                    Task { await viewModel.refreshGrades() }
+                                } label: {
+                                    Image(systemName: "arrow.clockwise")
+                                        .font(.caption)
+                                        .foregroundStyle(.orange)
+                                }
+                                Button {
+                                    viewModel.gradeError = nil
+                                } label: {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundStyle(.secondary)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            .padding(12)
+                            .background(Color.orange.opacity(0.1))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .accessibilityElement(children: .combine)
+                            .accessibilityLabel("Error: \(error)")
+                        }
                         gpaCard
                         gradesList
                     }
@@ -246,7 +285,7 @@ struct GradesView: View {
                             .fill(colorForCategory(breakdown.category))
                             .frame(width: 6, height: 6)
                         Text("\(breakdown.category.displayName): \(String(format: "%.0f%%", breakdown.percentage))")
-                            .font(.system(size: 9))
+                            .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
                 }
