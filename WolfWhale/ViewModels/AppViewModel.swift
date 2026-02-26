@@ -503,6 +503,10 @@ class AppViewModel {
                     return result
                 }
                 try await fetchProfile(userId: session.user.id)
+
+                // Cache role/tenant in PostgreSQL session vars for faster RLS checks
+                try? await supabaseClient.rpc("set_user_session_vars").execute()
+
                 await loadData()
                 isAuthenticated = true
                 startAutoRefresh()
@@ -544,6 +548,10 @@ class AppViewModel {
                     return result
                 }
                 try await fetchProfile(userId: session.user.id)
+
+                // Cache role/tenant in PostgreSQL session vars for faster RLS checks
+                try? await supabaseClient.rpc("set_user_session_vars").execute()
+
                 await loadData()
                 isAuthenticated = true
                 showBiometricPrompt = false
@@ -584,6 +592,10 @@ class AppViewModel {
                 try await supabaseClient.auth.signIn(email: email, password: password)
                 let session = try await supabaseClient.auth.session
                 try await fetchProfile(userId: session.user.id)
+
+                // Cache role/tenant in PostgreSQL session vars for faster RLS checks
+                try? await supabaseClient.rpc("set_user_session_vars").execute()
+
                 await loadData()
                 isAuthenticated = true
                 startAutoRefresh()
