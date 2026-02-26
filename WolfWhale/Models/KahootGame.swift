@@ -525,7 +525,4 @@ final class KahootGameEngine {
         quizPack = nil
     }
 
-    deinit {
-        timerTask?.cancel()
-    }
 }
