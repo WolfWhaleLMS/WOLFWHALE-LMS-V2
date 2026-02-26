@@ -601,15 +601,16 @@ class AppViewModel {
     }
 
     func loginAsDemo(role: UserRole) {
-        #if !DEBUG
-        fatalError("Demo mode must not be available in release builds")
-        #endif
+        #if DEBUG
         isDemoMode = true
         currentUser = mockService.sampleUser(role: role)
         loadMockData()
         withAnimation(.smooth) {
             isAuthenticated = true
         }
+        #else
+        fatalError("Demo mode must not be available in release builds")
+        #endif
     }
 
     func logout() {
