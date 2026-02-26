@@ -82,7 +82,7 @@ final class ClassroomFinderViewModel: NSObject, CLLocationManagerDelegate {
 
         let request = MKDirections.Request()
         request.source = MKMapItem.forCurrentLocation()
-        request.destination = MKMapItem(placemark: MKPlacemark(coordinate: target.coordinate))
+        request.destination = MKMapItem(location: CLLocation(latitude: target.coordinate.latitude, longitude: target.coordinate.longitude), address: nil)
         request.transportType = .walking
 
         let directions = MKDirections(request: request)
@@ -113,7 +113,7 @@ final class ClassroomFinderViewModel: NSObject, CLLocationManagerDelegate {
 
     func openInMaps() {
         guard let target = targetLocation else { return }
-        let destination = MKMapItem(placemark: MKPlacemark(coordinate: target.coordinate))
+        let destination = MKMapItem(location: CLLocation(latitude: target.coordinate.latitude, longitude: target.coordinate.longitude), address: nil)
         destination.name = target.name
         destination.openInMaps(launchOptions: [
             MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeWalking
