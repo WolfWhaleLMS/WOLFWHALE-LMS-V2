@@ -89,7 +89,7 @@ final class ConflictResolutionService {
 
         let metadata = await storage.loadMetadata()
         var conflicts: [SyncConflict] = []
-        var errors: [String] = []
+        let errors: [String] = []
         var itemsSynced = 0
 
         // --- Courses ---
