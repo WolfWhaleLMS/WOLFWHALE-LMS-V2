@@ -790,7 +790,7 @@ class AppViewModel {
             .limit(1)
             .execute()
             .value
-        let role = memberships.first.flatMap { UserRole(rawValue: $0.role) } ?? .student
+        let role = memberships.first.flatMap { UserRole.from($0.role) } ?? .student
 
         // Derive schoolId from tenant_memberships.tenant_id
         let tenantId = memberships.first?.tenantId?.uuidString

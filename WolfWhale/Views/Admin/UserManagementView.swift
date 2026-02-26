@@ -12,7 +12,7 @@ struct UserManagementView: View {
 
     private var filteredUsers: [ProfileDTO] {
         viewModel.allUsers.filter { user in
-            let role = UserRole(rawValue: user.role)
+            let role = UserRole.from(user.role)
             let matchesRole = selectedRole == nil || role == selectedRole
             let fullName = "\(user.firstName ?? "") \(user.lastName ?? "")"
             let matchesSearch = searchText.isEmpty || fullName.localizedStandardContains(searchText) || user.email.localizedStandardContains(searchText)
@@ -181,7 +181,7 @@ struct UserManagementView: View {
     }
 
     private func userRow(_ user: ProfileDTO) -> some View {
-        let role = UserRole(rawValue: user.role) ?? .student
+        let role = UserRole.from(user.role) ?? .student
         return HStack(spacing: 12) {
             Circle()
                 .fill(Theme.roleColor(role).opacity(0.15))
