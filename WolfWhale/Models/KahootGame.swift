@@ -384,7 +384,7 @@ final class KahootGameEngine {
         return Double(timeRemaining) / Double(q.timeLimit)
     }
 
-    nonisolated(unsafe) private var timer: Timer?
+    nonisolated private var timer: Timer?
     private var questionStartTime: Date?
 
     // MARK: - Start Game
