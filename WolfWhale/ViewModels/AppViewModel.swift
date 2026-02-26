@@ -430,7 +430,19 @@ class AppViewModel {
             }
 
             do {
-                let session = try await supabaseClient.auth.session
+                // Add a timeout so the app doesn't hang on a black screen
+                let session = try await withThrowingTaskGroup(of: Session.self) { group in
+                    group.addTask {
+                        try await supabaseClient.auth.session
+                    }
+                    group.addTask {
+                        try await Task.sleep(nanoseconds: 10_000_000_000) // 10 seconds
+                        throw CancellationError()
+                    }
+                    let result = try await group.next()!
+                    group.cancelAll()
+                    return result
+                }
                 try await fetchProfile(userId: session.user.id)
                 await loadData()
                 isAuthenticated = true
