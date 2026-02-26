@@ -776,7 +776,7 @@ struct SignUpView: View {
                 // If under 13, send parental consent email and show pending screen
                 if selectedRole == .student && isUnder13 {
                     // Call RPC to send parent consent verification email
-                    try? await supabaseClient.rpc(
+                    _ = try? await supabaseClient.rpc(
                         "send_parent_consent_email",
                         params: [
                             "child_user_id": result.user.id.uuidString,

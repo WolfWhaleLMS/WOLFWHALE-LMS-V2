@@ -108,7 +108,7 @@ struct VideoPlayerView: View {
                     .transition(.move(edge: .top).combined(with: .opacity))
                     .onChange(of: playbackSpeed) { _, newSpeed in
                         player?.rate = newSpeed
-                        if !((player?.timeControlStatus == .playing) ?? false) {
+                        if !(player?.timeControlStatus == .playing) {
                             // If we were paused, keep paused but store the rate for next play
                         }
                     }

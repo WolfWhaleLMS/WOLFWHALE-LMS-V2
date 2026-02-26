@@ -58,7 +58,7 @@ struct AssignmentsView: View {
                 await viewModel.refreshAssignments()
             }
             .navigationTitle("Assignments")
-            .task { await viewModel.loadAssignmentsIfNeeded() }
+            .task { viewModel.loadAssignmentsIfNeeded() }
             .sheet(item: $selectedAssignment) { assignment in
                 submitSheet(assignment)
             }

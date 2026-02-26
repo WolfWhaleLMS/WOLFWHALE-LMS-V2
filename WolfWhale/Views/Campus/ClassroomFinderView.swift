@@ -76,14 +76,6 @@ final class ClassroomFinderViewModel: NSObject, CLLocationManagerDelegate {
     func calculateRoute() {
         guard let target = targetLocation else { return }
 
-        let source: CLLocationCoordinate2D
-        if let userCoord = userLocation {
-            source = userCoord
-        } else {
-            // Fallback to campus center
-            source = CampusLocation.campusCenter
-        }
-
         isLoadingRoute = true
         routeError = nil
         route = nil
@@ -95,7 +87,8 @@ final class ClassroomFinderViewModel: NSObject, CLLocationManagerDelegate {
 
         let directions = MKDirections(request: request)
         directions.calculate { [weak self] response, error in
-            Task { @MainActor in
+            guard let self else { return }
+            Task { @MainActor [weak self] in
                 guard let self else { return }
                 self.isLoadingRoute = false
                 if let error {

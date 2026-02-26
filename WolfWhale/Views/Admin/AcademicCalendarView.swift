@@ -681,7 +681,7 @@ struct AcademicCalendarView: View {
 
     private func accessibilityLabelForDay(_ date: Date, events: [AcademicEvent], isToday: Bool) -> String {
         let calendar = Calendar.current
-        let day = calendar.component(.day, from: date)
+        _ = calendar.component(.day, from: date)
         var label = "\(date.formatted(.dateTime.weekday(.wide).month(.wide).day()))"
         if isToday { label += ", today" }
         if !events.isEmpty {

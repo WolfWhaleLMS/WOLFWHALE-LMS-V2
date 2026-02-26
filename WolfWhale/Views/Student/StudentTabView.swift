@@ -16,7 +16,7 @@ struct StudentTabView: View {
             .accessibilityHint("Double tap to view your dashboard")
             Tab("Courses", systemImage: "text.book.closed.fill", value: 1) {
                 CoursesListView(viewModel: viewModel)
-                    .task { await viewModel.loadAssignmentsIfNeeded() }
+                    .task { viewModel.loadAssignmentsIfNeeded() }
             }
             .accessibilityLabel("Courses")
             .accessibilityHint("Double tap to view your courses")
@@ -27,14 +27,14 @@ struct StudentTabView: View {
             .accessibilityHint("Double tap to explore learning resources")
             Tab("Messages", systemImage: "message.fill", value: 3) {
                 MessagesListView(viewModel: viewModel)
-                    .task { await viewModel.loadConversationsIfNeeded() }
+                    .task { viewModel.loadConversationsIfNeeded() }
             }
             .badge(viewModel.totalUnreadMessages)
             .accessibilityLabel("Messages")
             .accessibilityHint("Double tap to view your messages")
             Tab("Profile", systemImage: "person.crop.circle.fill", value: 4) {
                 StudentProfileView(viewModel: viewModel)
-                    .task { await viewModel.loadGradesIfNeeded() }
+                    .task { viewModel.loadGradesIfNeeded() }
             }
             .accessibilityLabel("Profile")
             .accessibilityHint("Double tap to view your profile")

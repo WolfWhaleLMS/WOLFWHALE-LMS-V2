@@ -58,7 +58,7 @@ final class SharePlayService {
         )
 
         do {
-            let activated = try await activity.prepareForActivation()
+            let activated = await activity.prepareForActivation()
             switch activated {
             case .activationPreferred:
                 _ = try await activity.activate()
@@ -92,7 +92,7 @@ final class SharePlayService {
         sessionTask = Task { [weak self] in
             guard let self else { return }
             for await session in StudySessionActivity.sessions() {
-                await self.configureSession(session)
+                self.configureSession(session)
             }
         }
     }
@@ -170,7 +170,7 @@ final class SharePlayService {
         messageTask = Task { [weak self] in
             for await (message, _) in messenger.messages(of: SharePlayMessage.self) {
                 guard let self, !Task.isCancelled else { break }
-                await self.handleMessage(message)
+                self.handleMessage(message)
             }
         }
     }

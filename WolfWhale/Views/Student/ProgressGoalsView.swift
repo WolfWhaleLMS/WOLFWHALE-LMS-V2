@@ -148,7 +148,7 @@ struct ProgressGoalsView: View {
 
                 Spacer()
 
-                if let goal {
+                if goal != nil {
                     statusBadge(status)
                 }
             }

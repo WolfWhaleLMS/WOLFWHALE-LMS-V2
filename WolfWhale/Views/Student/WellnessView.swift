@@ -741,7 +741,7 @@ struct WellnessView: View {
                     workoutOption("Basketball", type: .basketball, icon: "figure.basketball")
                     workoutOption("Soccer", type: .soccer, icon: "figure.soccer")
                     workoutOption("Volleyball", type: .volleyball, icon: "volleyball.fill")
-                    workoutOption("Dance", type: .dance, icon: "figure.dance")
+                    workoutOption("Dance", type: .socialDance, icon: "figure.dance")
                     workoutOption("Yoga", type: .yoga, icon: "figure.yoga")
                     workoutOption("Track & Field", type: .trackAndField, icon: "figure.track.and.field")
                     workoutOption("Jump Rope", type: .jumpRope, icon: "figure.jumprope")

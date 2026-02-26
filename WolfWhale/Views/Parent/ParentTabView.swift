@@ -13,7 +13,7 @@ struct ParentTabView: View {
             .accessibilityHint("Double tap to view your children's overview")
             Tab("Messages", systemImage: "message.fill", value: 1) {
                 MessagesListView(viewModel: viewModel)
-                    .task { await viewModel.loadConversationsIfNeeded() }
+                    .task { viewModel.loadConversationsIfNeeded() }
             }
             .badge(viewModel.totalUnreadMessages)
             .accessibilityLabel("Messages")

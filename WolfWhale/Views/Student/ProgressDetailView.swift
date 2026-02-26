@@ -59,9 +59,9 @@ struct ProgressDetailView: View {
         .navigationTitle("Progress")
         .navigationBarTitleDisplayMode(.large)
         .task {
-            await viewModel.loadAssignmentsIfNeeded()
-            await viewModel.loadQuizzesIfNeeded()
-            await viewModel.loadGradesIfNeeded()
+            viewModel.loadAssignmentsIfNeeded()
+            viewModel.loadQuizzesIfNeeded()
+            viewModel.loadGradesIfNeeded()
         }
     }
 

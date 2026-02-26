@@ -129,7 +129,7 @@ final class PushNotificationService {
         do {
             // Upsert keyed on user_id + device_id so that logging in on a
             // new device does NOT remove push tokens from other devices.
-            let deviceId = await UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
+            let deviceId = UIDevice.current.identifierForVendor?.uuidString ?? UUID().uuidString
 
             try await supabaseClient
                 .from("device_tokens")
@@ -155,7 +155,7 @@ final class PushNotificationService {
     /// Remove the device token from the server on logout so the user no
     /// longer receives push notifications on this device.
     func removeTokenFromServer(userId: UUID) async {
-        let deviceId = await UIDevice.current.identifierForVendor?.uuidString ?? ""
+        let deviceId = UIDevice.current.identifierForVendor?.uuidString ?? ""
 
         do {
             try await supabaseClient

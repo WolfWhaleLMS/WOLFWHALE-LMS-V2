@@ -34,7 +34,7 @@ struct MessagesListView: View {
                 .padding(.bottom, 20)
             }
             .navigationTitle("Messages")
-            .task { await viewModel.loadConversationsIfNeeded() }
+            .task { viewModel.loadConversationsIfNeeded() }
             .overlay {
                 if viewModel.conversations.isEmpty {
                     ContentUnavailableView("No Messages", systemImage: "message", description: Text("Conversations will appear here"))
@@ -151,7 +151,7 @@ struct NewConversationSheet: View {
         case .teacher:
             // Teachers can message: other teachers, students in their courses, parents.
             let teacherFullName = currentUser.fullName
-            let taughtCourseNames = Set(
+            _ = Set(
                 viewModel.courses
                     .filter { $0.teacherName == teacherFullName }
                     .map(\.title)

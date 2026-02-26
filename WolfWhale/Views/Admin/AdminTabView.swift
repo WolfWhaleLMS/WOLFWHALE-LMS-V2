@@ -23,7 +23,7 @@ struct AdminTabView: View {
             .accessibilityHint("Double tap to view announcements")
             Tab("Messages", systemImage: "message.fill", value: 3) {
                 MessagesListView(viewModel: viewModel)
-                    .task { await viewModel.loadConversationsIfNeeded() }
+                    .task { viewModel.loadConversationsIfNeeded() }
             }
             .badge(viewModel.totalUnreadMessages)
             .accessibilityLabel("Messages")

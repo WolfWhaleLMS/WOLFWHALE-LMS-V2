@@ -166,7 +166,7 @@ struct AttendanceHistoryView: View {
             .background(Color(.systemGroupedBackground))
             .navigationTitle("Attendance History")
             .navigationBarTitleDisplayMode(.inline)
-            .task { await viewModel.loadAttendanceIfNeeded() }
+            .task { viewModel.loadAttendanceIfNeeded() }
         }
     }
 
