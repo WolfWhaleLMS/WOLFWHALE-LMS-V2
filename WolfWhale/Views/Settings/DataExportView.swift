@@ -170,45 +170,49 @@ struct DataExportView: View {
             let gradesArray = viewModel.grades.map { grade -> [String: Any] in
                 [
                     "id": grade.id.uuidString,
-                    "assignment_id": grade.assignmentId.uuidString,
-                    "score": grade.score as Any,
-                    "letter_grade": grade.letterGrade ?? "N/A",
-                    "graded_at": grade.gradedAt?.description ?? "N/A",
+                    "course_id": grade.courseId.uuidString,
+                    "course_name": grade.courseName,
+                    "letter_grade": grade.letterGrade,
+                    "numeric_grade": grade.numericGrade,
                 ]
             }
             exportDict["grades"] = gradesArray
 
-            // Submissions
-            let submissionsArray = viewModel.submissions.map { submission -> [String: Any] in
+            // Assignments
+            let assignmentsArray = viewModel.assignments.map { assignment -> [String: Any] in
                 [
-                    "id": submission.id.uuidString,
-                    "assignment_id": submission.assignmentId.uuidString,
-                    "submitted_at": submission.submittedAt?.description ?? "N/A",
-                    "status": submission.status.rawValue,
+                    "id": assignment.id.uuidString,
+                    "title": assignment.title,
+                    "course_name": assignment.courseName,
+                    "due_date": assignment.dueDate.description,
+                    "points": assignment.points,
+                    "is_submitted": assignment.isSubmitted,
                 ]
             }
-            exportDict["submissions"] = submissionsArray
+            exportDict["assignments"] = assignmentsArray
 
             // Attendance
             let attendanceArray = viewModel.attendance.map { record -> [String: Any] in
                 [
                     "id": record.id.uuidString,
-                    "course_id": record.courseId.uuidString,
+                    "course_name": record.courseName,
                     "date": record.date.description,
                     "status": record.status.rawValue,
                 ]
             }
             exportDict["attendance"] = attendanceArray
 
-            // Messages
-            let messagesArray = viewModel.messages.map { message -> [String: Any] in
+            // Conversations
+            let conversationsArray = viewModel.conversations.map { convo -> [String: Any] in
                 [
-                    "id": message.id.uuidString,
-                    "content": message.content,
-                    "sent_at": message.sentAt.description,
+                    "id": convo.id.uuidString,
+                    "title": convo.title,
+                    "participants": convo.participantNames,
+                    "last_message_date": convo.lastMessageDate.description,
+                    "message_count": convo.messages.count,
                 ]
             }
-            exportDict["messages"] = messagesArray
+            exportDict["conversations"] = conversationsArray
 
             // Serialize to JSON
             let jsonData = try JSONSerialization.data(withJSONObject: exportDict, options: [.prettyPrinted, .sortedKeys])
@@ -257,14 +261,4 @@ struct DataExportView: View {
     }
 }
 
-// MARK: - Share Sheet (UIKit Bridge)
-
-private struct ShareSheetView: UIViewControllerRepresentable {
-    let activityItems: [Any]
-
-    func makeUIViewController(context: Context) -> UIActivityViewController {
-        UIActivityViewController(activityItems: activityItems, applicationActivities: nil)
-    }
-
-    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
-}
+// Uses ShareSheetView defined in ReportCardView.swift
