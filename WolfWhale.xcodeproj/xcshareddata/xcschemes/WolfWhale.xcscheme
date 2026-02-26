@@ -35,7 +35,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "105FC5882E9EAD3200EA8BCF"
-               BuildableName = "WolfWhaleTests.xctest"
+               BuildableName = "WolfWhale.xctest"
                BlueprintName = "WolfWhale"
                ReferencedContainer = "container:WolfWhale.xcodeproj">
             </BuildableReference>

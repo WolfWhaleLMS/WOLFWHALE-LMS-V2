@@ -29,8 +29,8 @@
 
 /* Begin PBXFileReference section */
 		105FC57A2E9EAD3100EA8BCF /* WolfWhale.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = WolfWhale.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		105FC5892E9EAD3200EA8BCF /* WolfWhaleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WolfWhaleTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		105FC5932E9EAD3200EA8BCF /* WolfWhaleUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WolfWhaleUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		105FC5892E9EAD3200EA8BCF /* WolfWhaleTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; name = WolfWhaleTests.xctest; path = WolfWhale.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		105FC5932E9EAD3200EA8BCF /* WolfWhaleUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; name = WolfWhaleUITests.xctest; path = WolfWhale.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -201,6 +201,9 @@
 			);
 			mainGroup = 105FC5712E9EAD3100EA8BCF;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				XX20EB7F6EA71E9F2E096CXX /* XCRemoteSwiftPackageReference "supabase-swift" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 105FC57B2E9EAD3100EA8BCF /* Products */;
 			projectDirPath = "";
@@ -209,9 +212,6 @@
 				105FC5792E9EAD3100EA8BCF /* WolfWhale */,
 				105FC5882E9EAD3200EA8BCF /* WolfWhale */,
 				105FC5922E9EAD3200EA8BCF /* WolfWhale */,
-			);
-			packageReferences = (
-				XX20EB7F6EA71E9F2E096CXX /* XCRemoteSwiftPackageReference "supabase-swift" */,
 			);
 		};
 /* End PBXProject section */
@@ -409,31 +409,31 @@
 				CODE_SIGN_ENTITLEMENTS = WolfWhale.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = BFV628Z979;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				INFOPLIST_KEY_CFBundleDisplayName = WolfWhale;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NFCReaderUsageDescription = "WolfWhale uses NFC to check in for attendance.";
-				INFOPLIST_KEY_NSCameraUsageDescription = "WolfWhale uses the camera for AR learning experiences and profile photos.";
+				INFOPLIST_KEY_NSAppleMusicUsageDescription = "WolfWhale uses Apple Music to play focus and study playlists.";
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "WolfWhale syncs your assignment due dates and class schedule to your calendar.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "WolfWhale uses the camera for AR learning experiences and profile photos.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "WolfWhale uses Face ID to securely unlock your account.";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "WolfWhale uses your location to verify campus attendance and show campus maps.";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "WolfWhale uses the microphone for speech-to-text in assignments and language learning exercises.";
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "WolfWhale uses speech recognition to transcribe your voice for assignments and language practice.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "WolfWhale reads your health data to show your wellness stats and support PE class tracking.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "WolfWhale saves PE workout data to Apple Health.";
-				INFOPLIST_KEY_NSAppleMusicUsageDescription = "WolfWhale uses Apple Music to play focus and study playlists.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "WolfWhale uses your location to verify campus attendance and show campus maps.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "WolfWhale uses the microphone for speech-to-text in assignments and language learning exercises.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "WolfWhale uses your photo library to set your profile picture and attach images to assignments.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "WolfWhale uses speech recognition to transcribe your voice for assignments and language practice.";
 				INFOPLIST_KEY_NSUserNotificationsUsageDescription = "WolfWhale sends notifications for assignments, grades, and school announcements.";
+				INFOPLIST_KEY_SUPABASE_ANON_KEY = "$(SUPABASE_ANON_KEY)";
+				INFOPLIST_KEY_SUPABASE_URL = "$(SUPABASE_URL)";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_CFBundleDisplayName = WolfWhale;
-				INFOPLIST_KEY_SUPABASE_URL = "$(SUPABASE_URL)";
-				INFOPLIST_KEY_SUPABASE_ANON_KEY = "$(SUPABASE_ANON_KEY)";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -460,31 +460,31 @@
 				CODE_SIGN_ENTITLEMENTS = WolfWhale.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = BFV628Z979;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				INFOPLIST_KEY_CFBundleDisplayName = WolfWhale;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_NFCReaderUsageDescription = "WolfWhale uses NFC to check in for attendance.";
-				INFOPLIST_KEY_NSCameraUsageDescription = "WolfWhale uses the camera for AR learning experiences and profile photos.";
+				INFOPLIST_KEY_NSAppleMusicUsageDescription = "WolfWhale uses Apple Music to play focus and study playlists.";
 				INFOPLIST_KEY_NSCalendarsFullAccessUsageDescription = "WolfWhale syncs your assignment due dates and class schedule to your calendar.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "WolfWhale uses the camera for AR learning experiences and profile photos.";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "WolfWhale uses Face ID to securely unlock your account.";
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "WolfWhale uses your location to verify campus attendance and show campus maps.";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "WolfWhale uses the microphone for speech-to-text in assignments and language learning exercises.";
-				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "WolfWhale uses speech recognition to transcribe your voice for assignments and language practice.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "WolfWhale reads your health data to show your wellness stats and support PE class tracking.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "WolfWhale saves PE workout data to Apple Health.";
-				INFOPLIST_KEY_NSAppleMusicUsageDescription = "WolfWhale uses Apple Music to play focus and study playlists.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "WolfWhale uses your location to verify campus attendance and show campus maps.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "WolfWhale uses the microphone for speech-to-text in assignments and language learning exercises.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "WolfWhale uses your photo library to set your profile picture and attach images to assignments.";
+				INFOPLIST_KEY_NSSpeechRecognitionUsageDescription = "WolfWhale uses speech recognition to transcribe your voice for assignments and language practice.";
 				INFOPLIST_KEY_NSUserNotificationsUsageDescription = "WolfWhale sends notifications for assignments, grades, and school announcements.";
+				INFOPLIST_KEY_SUPABASE_ANON_KEY = "$(SUPABASE_ANON_KEY)";
+				INFOPLIST_KEY_SUPABASE_URL = "$(SUPABASE_URL)";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_CFBundleDisplayName = WolfWhale;
-				INFOPLIST_KEY_SUPABASE_URL = "$(SUPABASE_URL)";
-				INFOPLIST_KEY_SUPABASE_ANON_KEY = "$(SUPABASE_ANON_KEY)";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
