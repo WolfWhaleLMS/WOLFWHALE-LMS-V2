@@ -6,10 +6,15 @@
 // on table inserts (assignments, grades, messages, announcements).
 //
 // -----------------------------------------------------------------------
-// DEPLOYMENT:
-//   supabase functions deploy send-push --no-verify-jwt
+// DEPLOYMENT (use webhook secret for auth instead of --no-verify-jwt):
+//   1. Set a WEBHOOK_SECRET environment variable in your Supabase dashboard
+//   2. Deploy WITHOUT --no-verify-jwt:
+//      supabase functions deploy send-push
+//   3. Configure Database Webhooks to include the secret as a header:
+//      Authorization: Bearer <your-webhook-secret>
 //
 // ENVIRONMENT VARIABLES (set via Supabase dashboard or CLI):
+//   WEBHOOK_SECRET     - Shared secret for webhook authentication
 //   APNS_KEY_ID        - Your Apple Push Notification key ID
 //   APNS_TEAM_ID       - Your Apple Developer Team ID
 //   APNS_PRIVATE_KEY   - The .p8 private key contents (base64 encoded)
@@ -470,6 +475,22 @@ serve(async (req: Request) => {
     });
   }
 
+  // --- Webhook Authentication ---
+  // Verify the caller knows the shared secret. This replaces --no-verify-jwt.
+  const webhookSecret = Deno.env.get("WEBHOOK_SECRET");
+  if (webhookSecret) {
+    const authHeader = req.headers.get("Authorization");
+    if (authHeader !== `Bearer ${webhookSecret}`) {
+      console.warn("[send-push] Unauthorized request rejected");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
+  } else {
+    console.warn("[send-push] WEBHOOK_SECRET not set — running without auth verification");
+  }
+
   try {
     const body: WebhookPayload = await req.json();
 
@@ -512,9 +533,10 @@ serve(async (req: Request) => {
       headers: { "Content-Type": "application/json" },
     });
   } catch (err) {
+    // Log full error server-side for debugging, but never expose details to caller
     console.error("[send-push] Error processing webhook:", err);
     return new Response(
-      JSON.stringify({ error: "Internal server error", details: String(err) }),
+      JSON.stringify({ error: "Internal server error" }),
       { status: 500, headers: { "Content-Type": "application/json" } }
     );
   }
