@@ -176,7 +176,7 @@ struct ProgressDetailView: View {
                     HStack {
                         Image(systemName: "arrow.right.circle.fill")
                             .foregroundStyle(.orange)
-                            .symbolEffect(.wiggle, options: .repeat(.periodic(delay: 3)))
+                            .symbolEffect(.variableColor.iterative, options: .repeat(.periodic(delay: 3)))
                         Text("Next Up")
                             .font(.headline)
                         Spacer()

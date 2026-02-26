@@ -97,7 +97,7 @@ struct TeacherReportCardView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "exclamationmark.triangle")
                         .foregroundStyle(.orange)
-                        .symbolEffect(.wiggle)
+                        .symbolEffect(.pulse)
                     Text("No terms configured. Ask an administrator to set up the academic calendar.")
                         .font(.subheadline)
                         .foregroundStyle(Color(.secondaryLabel))

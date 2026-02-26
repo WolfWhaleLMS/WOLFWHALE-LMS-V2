@@ -2631,6 +2631,196 @@ struct DataService: Sendable {
             .eq("id", value: slotId.uuidString)
             .execute()
     }
+
+    // MARK: - Academic Calendar: Terms
+
+    /// Fetch academic terms, optionally filtered by tenant.
+    func fetchAcademicTerms(tenantId: UUID? = nil) async throws -> [AcademicTermDTO] {
+        if let tenantId {
+            return try await supabaseClient
+                .from("academic_terms")
+                .select()
+                .eq("tenant_id", value: tenantId.uuidString)
+                .order("start_date", ascending: true)
+                .execute()
+                .value
+        } else {
+            return try await supabaseClient
+                .from("academic_terms")
+                .select()
+                .order("start_date", ascending: true)
+                .execute()
+                .value
+        }
+    }
+
+    /// Create an academic term.
+    func createAcademicTerm(_ dto: InsertAcademicTermDTO) async throws {
+        try await supabaseClient
+            .from("academic_terms")
+            .insert(dto)
+            .execute()
+    }
+
+    /// Delete an academic term.
+    func deleteAcademicTerm(termId: UUID) async throws {
+        try await supabaseClient
+            .from("academic_terms")
+            .delete()
+            .eq("id", value: termId.uuidString)
+            .execute()
+    }
+
+    // MARK: - Academic Calendar: Events
+
+    /// Fetch academic events, optionally filtered by tenant.
+    func fetchAcademicEvents(tenantId: UUID? = nil) async throws -> [AcademicEventDTO] {
+        if let tenantId {
+            return try await supabaseClient
+                .from("academic_events")
+                .select()
+                .eq("tenant_id", value: tenantId.uuidString)
+                .order("event_date", ascending: true)
+                .execute()
+                .value
+        } else {
+            return try await supabaseClient
+                .from("academic_events")
+                .select()
+                .order("event_date", ascending: true)
+                .execute()
+                .value
+        }
+    }
+
+    /// Create an academic event.
+    func createAcademicEvent(_ dto: InsertAcademicEventDTO) async throws {
+        try await supabaseClient
+            .from("academic_events")
+            .insert(dto)
+            .execute()
+    }
+
+    /// Delete an academic event.
+    func deleteAcademicEvent(eventId: UUID) async throws {
+        try await supabaseClient
+            .from("academic_events")
+            .delete()
+            .eq("id", value: eventId.uuidString)
+            .execute()
+    }
+
+    // MARK: - Academic Calendar: Grading Periods
+
+    /// Fetch grading periods, optionally filtered by tenant.
+    func fetchGradingPeriods(tenantId: UUID? = nil) async throws -> [GradingPeriodDTO] {
+        if let tenantId {
+            return try await supabaseClient
+                .from("grading_periods")
+                .select()
+                .eq("tenant_id", value: tenantId.uuidString)
+                .order("start_date", ascending: true)
+                .execute()
+                .value
+        } else {
+            return try await supabaseClient
+                .from("grading_periods")
+                .select()
+                .order("start_date", ascending: true)
+                .execute()
+                .value
+        }
+    }
+
+    /// Create a grading period.
+    func createGradingPeriod(_ dto: InsertGradingPeriodDTO) async throws {
+        try await supabaseClient
+            .from("grading_periods")
+            .insert(dto)
+            .execute()
+    }
+
+    /// Delete a grading period.
+    func deleteGradingPeriod(periodId: UUID) async throws {
+        try await supabaseClient
+            .from("grading_periods")
+            .delete()
+            .eq("id", value: periodId.uuidString)
+            .execute()
+    }
+
+    // MARK: - Course Schedules
+
+    /// Fetch course schedules for the given course IDs, ordered by day and time.
+    func fetchCourseSchedules(courseIds: [UUID]) async throws -> [CourseScheduleDTO] {
+        guard !courseIds.isEmpty else { return [] }
+        return try await supabaseClient
+            .from("course_schedules")
+            .select()
+            .in("course_id", values: courseIds.map(\.uuidString))
+            .order("day_of_week", ascending: true)
+            .order("start_minute", ascending: true)
+            .execute()
+            .value
+    }
+
+    /// Create a course schedule entry.
+    func createCourseSchedule(_ dto: InsertCourseScheduleDTO) async throws {
+        try await supabaseClient
+            .from("course_schedules")
+            .insert(dto)
+            .execute()
+    }
+
+    /// Delete a course schedule entry.
+    func deleteCourseSchedule(scheduleId: UUID) async throws {
+        try await supabaseClient
+            .from("course_schedules")
+            .delete()
+            .eq("id", value: scheduleId.uuidString)
+            .execute()
+    }
+
+    // MARK: - Analytics
+
+    /// Fetch daily analytics snapshots for a tenant over the last N days.
+    func fetchAnalyticsSnapshots(tenantId: UUID, days: Int = 30) async throws -> [AnalyticsDailySnapshotDTO] {
+        let cutoffDate = Calendar.current.date(byAdding: .day, value: -days, to: Date()) ?? Date()
+        let cutoffString = ISO8601DateFormatter().string(from: cutoffDate)
+        return try await supabaseClient
+            .from("analytics_daily_snapshots")
+            .select()
+            .eq("tenant_id", value: tenantId.uuidString)
+            .gte("snapshot_date", value: cutoffString)
+            .order("snapshot_date", ascending: true)
+            .execute()
+            .value
+    }
+
+    /// Fire-and-forget engagement event tracking. Errors are silently caught.
+    func trackEngagementEvent(tenantId: UUID?, userId: UUID, eventType: String) async {
+        do {
+            let dto = InsertEngagementEventDTO(tenantId: tenantId, userId: userId, eventType: eventType)
+            try await supabaseClient
+                .from("engagement_events")
+                .insert(dto)
+                .execute()
+        } catch {
+            #if DEBUG
+            print("[SupabaseService] trackEngagementEvent failed: \(error)")
+            #endif
+        }
+    }
+
+    // MARK: - Data Export
+
+    /// Export all user data by calling the server-side RPC function.
+    func exportUserData(userId: UUID) async throws -> Data {
+        try await supabaseClient
+            .rpc("export_user_data", params: ["target_user_id": userId.uuidString])
+            .execute()
+            .data
+    }
 }
 
 actor EnrollmentRateLimiter {

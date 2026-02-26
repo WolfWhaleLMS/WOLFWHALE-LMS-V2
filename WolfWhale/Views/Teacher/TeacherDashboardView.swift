@@ -151,7 +151,7 @@ struct TeacherDashboardView: View {
                         HStack(spacing: 10) {
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .foregroundStyle(.orange)
-                                .symbolEffect(.wiggle, options: .repeat(.periodic(delay: 2)))
+                                .symbolEffect(.breathe, options: .repeat(.periodic(delay: 2)))
                             Text(dataError)
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
@@ -350,7 +350,7 @@ struct TeacherDashboardView: View {
                         HStack(spacing: 10) {
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .foregroundStyle(.orange)
-                                .symbolEffect(.wiggle, options: .repeat(.periodic(delay: 2)))
+                                .symbolEffect(.pulse, options: .repeat(.periodic(delay: 2)))
                             Text(dataError)
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
@@ -403,7 +403,7 @@ struct TeacherDashboardView: View {
                         Image(systemName: "person.badge.clock.fill")
                             .font(.subheadline)
                             .foregroundStyle(.white)
-                            .symbolEffect(.wiggle, options: .repeat(.periodic(delay: 3)))
+                            .symbolEffect(.bounce, options: .repeat(.periodic(delay: 3)))
                     }
 
                     VStack(alignment: .leading, spacing: 2) {

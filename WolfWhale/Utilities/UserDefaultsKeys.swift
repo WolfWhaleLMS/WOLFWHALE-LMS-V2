@@ -5,6 +5,7 @@ import Foundation
 nonisolated enum UserDefaultsKeys {
     // MARK: - Settings
     static let biometricEnabled = "biometricEnabled"
+    static let hasSavedSession = "wolfwhale_has_saved_session"
     static let colorSchemePreference = "colorSchemePreference"
     static let calendarSyncEnabled = "wolfwhale_calendar_sync_enabled"
 

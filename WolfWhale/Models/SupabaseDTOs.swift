@@ -1302,3 +1302,230 @@ nonisolated struct InsertTeacherSlotDTO: Encodable, Sendable {
         case durationMinutes = "duration_minutes"
     }
 }
+
+// MARK: - Academic Terms
+
+nonisolated struct AcademicTermDTO: Codable, Sendable {
+    let id: UUID
+    let tenantId: UUID?
+    let name: String
+    let startDate: String
+    let endDate: String
+    let type: String
+    let createdBy: UUID?
+    let createdAt: String?
+    let updatedAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, name, type
+        case tenantId = "tenant_id"
+        case startDate = "start_date"
+        case endDate = "end_date"
+        case createdBy = "created_by"
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
+    }
+}
+
+nonisolated struct InsertAcademicTermDTO: Encodable, Sendable {
+    let tenantId: UUID?
+    let name: String
+    let startDate: String
+    let endDate: String
+    let type: String
+    let createdBy: UUID?
+
+    enum CodingKeys: String, CodingKey {
+        case name, type
+        case tenantId = "tenant_id"
+        case startDate = "start_date"
+        case endDate = "end_date"
+        case createdBy = "created_by"
+    }
+}
+
+// MARK: - Academic Events
+
+nonisolated struct AcademicEventDTO: Codable, Sendable {
+    let id: UUID
+    let tenantId: UUID?
+    let title: String
+    let eventDate: String
+    let endDate: String?
+    let type: String
+    let description: String?
+    let createdBy: UUID?
+    let createdAt: String?
+    let updatedAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, title, type, description
+        case tenantId = "tenant_id"
+        case eventDate = "event_date"
+        case endDate = "end_date"
+        case createdBy = "created_by"
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
+    }
+}
+
+nonisolated struct InsertAcademicEventDTO: Encodable, Sendable {
+    let tenantId: UUID?
+    let title: String
+    let eventDate: String
+    let endDate: String?
+    let type: String
+    let description: String?
+    let createdBy: UUID?
+
+    enum CodingKeys: String, CodingKey {
+        case title, type, description
+        case tenantId = "tenant_id"
+        case eventDate = "event_date"
+        case endDate = "end_date"
+        case createdBy = "created_by"
+    }
+}
+
+// MARK: - Grading Periods
+
+nonisolated struct GradingPeriodDTO: Codable, Sendable {
+    let id: UUID
+    let tenantId: UUID?
+    let termId: UUID
+    let name: String
+    let startDate: String
+    let endDate: String
+    let gradeSubmissionDeadline: String
+    let createdBy: UUID?
+    let createdAt: String?
+    let updatedAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id, name
+        case tenantId = "tenant_id"
+        case termId = "term_id"
+        case startDate = "start_date"
+        case endDate = "end_date"
+        case gradeSubmissionDeadline = "grade_submission_deadline"
+        case createdBy = "created_by"
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
+    }
+}
+
+nonisolated struct InsertGradingPeriodDTO: Encodable, Sendable {
+    let tenantId: UUID?
+    let termId: UUID
+    let name: String
+    let startDate: String
+    let endDate: String
+    let gradeSubmissionDeadline: String
+    let createdBy: UUID?
+
+    enum CodingKeys: String, CodingKey {
+        case name
+        case tenantId = "tenant_id"
+        case termId = "term_id"
+        case startDate = "start_date"
+        case endDate = "end_date"
+        case gradeSubmissionDeadline = "grade_submission_deadline"
+        case createdBy = "created_by"
+    }
+}
+
+// MARK: - Course Schedules
+
+nonisolated struct CourseScheduleDTO: Codable, Sendable {
+    let id: UUID
+    let tenantId: UUID?
+    let courseId: UUID
+    let dayOfWeek: Int
+    let startMinute: Int
+    let endMinute: Int
+    let roomNumber: String
+    let createdBy: UUID?
+    let createdAt: String?
+    let updatedAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case tenantId = "tenant_id"
+        case courseId = "course_id"
+        case dayOfWeek = "day_of_week"
+        case startMinute = "start_minute"
+        case endMinute = "end_minute"
+        case roomNumber = "room_number"
+        case createdBy = "created_by"
+        case createdAt = "created_at"
+        case updatedAt = "updated_at"
+    }
+}
+
+nonisolated struct InsertCourseScheduleDTO: Encodable, Sendable {
+    let tenantId: UUID?
+    let courseId: UUID
+    let dayOfWeek: Int
+    let startMinute: Int
+    let endMinute: Int
+    let roomNumber: String
+    let createdBy: UUID?
+
+    enum CodingKeys: String, CodingKey {
+        case tenantId = "tenant_id"
+        case courseId = "course_id"
+        case dayOfWeek = "day_of_week"
+        case startMinute = "start_minute"
+        case endMinute = "end_minute"
+        case roomNumber = "room_number"
+        case createdBy = "created_by"
+    }
+}
+
+// MARK: - Analytics Daily Snapshots
+
+nonisolated struct AnalyticsDailySnapshotDTO: Codable, Sendable {
+    let id: UUID
+    let tenantId: UUID
+    let snapshotDate: String
+    let totalStudents: Int
+    let totalTeachers: Int
+    let totalCourses: Int
+    let activeUsers: Int
+    let averageAttendance: Double?
+    let averageGpa: Double?
+    let assignmentsCreated: Int
+    let submissionsCount: Int
+    let messagesSent: Int
+    let createdAt: String?
+
+    enum CodingKeys: String, CodingKey {
+        case id
+        case tenantId = "tenant_id"
+        case snapshotDate = "snapshot_date"
+        case totalStudents = "total_students"
+        case totalTeachers = "total_teachers"
+        case totalCourses = "total_courses"
+        case activeUsers = "active_users"
+        case averageAttendance = "average_attendance"
+        case averageGpa = "average_gpa"
+        case assignmentsCreated = "assignments_created"
+        case submissionsCount = "submissions_count"
+        case messagesSent = "messages_sent"
+        case createdAt = "created_at"
+    }
+}
+
+// MARK: - Engagement Events
+
+nonisolated struct InsertEngagementEventDTO: Encodable, Sendable {
+    let tenantId: UUID?
+    let userId: UUID
+    let eventType: String
+
+    enum CodingKeys: String, CodingKey {
+        case tenantId = "tenant_id"
+        case userId = "user_id"
+        case eventType = "event_type"
+    }
+}

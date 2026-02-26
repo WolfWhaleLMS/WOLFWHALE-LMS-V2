@@ -314,7 +314,7 @@ struct GradeBreakdownView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundStyle(.orange)
-                        .symbolEffect(.wiggle)
+                        .symbolEffect(.bounce)
                     Text("A \(gradeService.letterGrade(from: targetPct)) (\(String(format: "%.0f%%", targetPct))) may not be achievable based on current grades.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)

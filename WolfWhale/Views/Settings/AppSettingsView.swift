@@ -352,6 +352,18 @@ struct AppSettingsView: View {
                         .symbolRenderingMode(.hierarchical)
                 }
             }
+
+            NavigationLink {
+                DataExportView(viewModel: viewModel)
+            } label: {
+                Label {
+                    Text("Download My Data")
+                } icon: {
+                    Image(systemName: "arrow.down.doc.fill")
+                        .foregroundStyle(.indigo)
+                        .symbolRenderingMode(.hierarchical)
+                }
+            }
         } header: {
             sectionHeader(title: "Data & Storage", icon: "externaldrive.fill")
         }
@@ -464,8 +476,8 @@ struct AppSettingsView: View {
                     Image("Logo")
                         .resizable()
                         .aspectRatio(contentMode: .fit)
-                        .frame(width: 32, height: 32)
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .frame(width: 120, height: 120)
+                        .clipShape(RoundedRectangle(cornerRadius: 26))
                     Text("WolfWhale LMS")
                         .font(.caption.bold())
                     Text("\u{00A9} 2025 WolfWhale. All rights reserved.")

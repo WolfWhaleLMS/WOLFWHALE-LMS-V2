@@ -164,7 +164,7 @@ struct SubmissionReviewView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "clock.badge.exclamationmark.fill")
                         .foregroundStyle(.red)
-                        .symbolEffect(.wiggle, options: .repeat(.periodic(delay: 2)))
+                        .symbolEffect(.pulse, options: .repeat(.periodic(delay: 3)))
                     Text("Past due date")
                         .font(.caption.bold())
                         .foregroundStyle(.red)

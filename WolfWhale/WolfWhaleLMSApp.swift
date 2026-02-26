@@ -75,8 +75,7 @@ struct WolfWhaleLMSApp: App {
                     // Register notification categories (synchronous setup).
                     service.registerNotificationCategories()
 
-                    // TODO: Re-enable when ready to prompt for notifications.
-                    // await service.requestAuthorization()
+                    await service.requestAuthorization()
                 }
         }
     }

@@ -90,7 +90,7 @@ struct StudentDashboardView: View {
 
     private var iPadCoursesList: some View {
         VStack(alignment: .leading, spacing: 12) {
-            sectionHeader("My Courses", icon: "graduationcap.fill", effect: .wiggle)
+            sectionHeader("My Courses", icon: "graduationcap.fill", effect: .bounce)
 
             if viewModel.courses.isEmpty {
                 NavigationLink {
@@ -225,7 +225,7 @@ struct StudentDashboardView: View {
 
             // Assignments for this course
             VStack(alignment: .leading, spacing: 12) {
-                sectionHeader("Assignments", icon: "doc.text.fill", effect: .wiggle)
+                sectionHeader("Assignments", icon: "doc.text.fill", effect: .pulse)
 
                 let courseAssignments = viewModel.upcomingAssignments.filter { $0.courseId == course.id }
                 if courseAssignments.isEmpty {
@@ -276,7 +276,7 @@ struct StudentDashboardView: View {
     private var iPadDueSoonList: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                sectionHeader("Due Soon", icon: "clock.badge.exclamationmark.fill", effect: .wiggle)
+                sectionHeader("Due Soon", icon: "clock.badge.exclamationmark.fill", effect: .breathe)
                 Spacer()
                 NavigationLink {
                     AssignmentsView(viewModel: viewModel)
@@ -346,7 +346,7 @@ struct StudentDashboardView: View {
 
     private var iPadQuickLinksExpanded: some View {
         VStack(alignment: .leading, spacing: 12) {
-            sectionHeader("Quick Links", icon: "sparkles", effect: .wiggle)
+            sectionHeader("Quick Links", icon: "sparkles", effect: .variableColor)
 
             LazyVGrid(columns: [
                 GridItem(.flexible(), spacing: 12),
@@ -441,7 +441,7 @@ struct StudentDashboardView: View {
                 .foregroundStyle(color)
                 .symbolRenderingMode(.hierarchical)
                 .contentTransition(.symbolEffect(.replace))
-                .symbolEffect(.wiggle, options: .repeat(.periodic(delay: 4)))
+                .symbolEffect(.pulse, options: .repeat(.periodic(delay: 4)))
             Text(value)
                 .font(.title2.bold())
                 .foregroundStyle(Color(.label))
@@ -456,7 +456,7 @@ struct StudentDashboardView: View {
 
     private var coursesCarousel: some View {
         VStack(alignment: .leading, spacing: 12) {
-            sectionHeader("My Courses", icon: "graduationcap.fill", effect: .wiggle)
+            sectionHeader("My Courses", icon: "graduationcap.fill", effect: .bounce)
                 .padding(.horizontal)
 
             if viewModel.courses.isEmpty {
@@ -516,7 +516,7 @@ struct StudentDashboardView: View {
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(Theme.courseColor(course.colorName))
                     .symbolRenderingMode(.hierarchical)
-                    .symbolEffect(.wiggle, options: .repeat(.periodic(delay: 4)))
+                    .symbolEffect(.variableColor.iterative, options: .repeat(.periodic(delay: 4)))
             }
 
             VStack(alignment: .leading, spacing: 3) {
@@ -560,7 +560,7 @@ struct StudentDashboardView: View {
     private var dueSoonCarousel: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                sectionHeader("Due Soon", icon: "clock.badge.exclamationmark.fill", effect: .wiggle)
+                sectionHeader("Due Soon", icon: "clock.badge.exclamationmark.fill", effect: .breathe)
                 Spacer()
                 NavigationLink {
                     AssignmentsView(viewModel: viewModel)
@@ -613,7 +613,7 @@ struct StudentDashboardView: View {
                 .font(.title3)
                 .foregroundStyle(.orange)
                 .symbolRenderingMode(.hierarchical)
-                .symbolEffect(.wiggle, options: .repeat(.periodic(delay: 4)))
+                .symbolEffect(.pulse, options: .repeat(.periodic(delay: 3)))
 
             Text(assignment.title)
                 .font(.subheadline.bold())
@@ -647,7 +647,7 @@ struct StudentDashboardView: View {
 
     private var quickLinksGrid: some View {
         VStack(alignment: .leading, spacing: 12) {
-            sectionHeader("Quick Links", icon: "sparkles", effect: .wiggle)
+            sectionHeader("Quick Links", icon: "sparkles", effect: .variableColor)
 
             LazyVGrid(columns: [
                 GridItem(.flexible(), spacing: 12),
@@ -671,6 +671,9 @@ struct StudentDashboardView: View {
                 exploreLink(icon: "map.fill", title: "Campus", color: .blue) {
                     CampusMapView()
                 }
+                exploreLink(icon: "fish.fill", title: "Aquarium", color: .cyan) {
+                    AquariumView(viewModel: viewModel)
+                }
             }
         }
     }
@@ -685,7 +688,7 @@ struct StudentDashboardView: View {
                     .foregroundStyle(color)
                     .symbolRenderingMode(.hierarchical)
                     .contentTransition(.symbolEffect(.replace))
-                    .symbolEffect(.wiggle, options: .repeat(.periodic(delay: 4)))
+                    .symbolEffect(.bounce, options: .repeat(.periodic(delay: 5)))
                     .frame(height: 24)
                 Text(title)
                     .font(.caption2.bold())
@@ -703,7 +706,7 @@ struct StudentDashboardView: View {
     // MARK: - Helpers
 
     private enum SectionEffect {
-        case wiggle, breathe, variableColor, none
+        case bounce, pulse, breathe, variableColor, none
     }
 
     private func sectionHeader(_ title: String, icon: String, effect: SectionEffect = .none) -> some View {
@@ -712,9 +715,12 @@ struct StudentDashboardView: View {
         } icon: {
             Group {
                 switch effect {
-                case .wiggle:
+                case .bounce:
                     Image(systemName: icon)
-                        .symbolEffect(.wiggle, options: .repeat(.periodic(delay: 4)))
+                        .symbolEffect(.bounce, options: .repeat(.periodic(delay: 4)))
+                case .pulse:
+                    Image(systemName: icon)
+                        .symbolEffect(.pulse, options: .repeat(.periodic(delay: 3)))
                 case .breathe:
                     Image(systemName: icon)
                         .symbolEffect(.breathe, options: .repeat(.periodic(delay: 5)))
@@ -748,7 +754,7 @@ struct StudentDashboardView: View {
             Image(systemName: "exclamationmark.triangle.fill")
                 .foregroundStyle(.orange)
                 .symbolRenderingMode(.hierarchical)
-                .symbolEffect(.wiggle, options: .repeat(.periodic(delay: 2)))
+                .symbolEffect(.breathe, options: .repeat(.periodic(delay: 2)))
             Text(message)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
@@ -774,7 +780,6 @@ struct StudentDashboardView: View {
             } label: {
                 Image(systemName: totalUnreadMessages > 0 ? "bell.badge.fill" : "bell.fill")
                     .symbolRenderingMode(.hierarchical)
-                    .symbolEffect(.wiggle, value: totalUnreadMessages)
                     .symbolEffect(.bounce, value: totalUnreadMessages)
             }
             .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)

@@ -474,6 +474,19 @@ struct ResourceLibraryView: View {
 
             LazyVGrid(columns: gridColumns, spacing: 14) {
                 NavigationLink {
+                    KahootGameView()
+                } label: {
+                    resourceCard(
+                        title: "Quiz Game",
+                        description: "Kahoot-style quiz battles",
+                        icon: "questionmark.circle.fill",
+                        color1: Color(red: 0.27, green: 0.09, blue: 0.56),
+                        color2: .purple
+                    )
+                }
+                .buttonStyle(.plain)
+
+                NavigationLink {
                     ChessGameView()
                 } label: {
                     resourceCard(

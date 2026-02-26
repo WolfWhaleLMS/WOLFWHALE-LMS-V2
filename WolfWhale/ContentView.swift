@@ -13,6 +13,8 @@ struct ContentView: View {
                     splashView
                 } else if viewModel.isAuthenticated {
                     authenticatedView
+                } else if viewModel.showBiometricPrompt {
+                    biometricLoginView
                 } else {
                     LoginView(viewModel: viewModel)
                 }
@@ -55,8 +57,18 @@ struct ContentView: View {
                     viewModel.lockApp()
                 }
                 viewModel.stopAutoRefresh()
+
+                // Deauthenticate the UI so the user sees the login/Face ID
+                // screen on next launch, but do NOT call logout() — the
+                // Supabase session stays cached for Face ID re-login.
+                if viewModel.isAuthenticated {
+                    viewModel.isAuthenticated = false
+                }
             case .active:
-                if !viewModel.isAppLocked {
+                if !viewModel.isAuthenticated && viewModel.hasSavedSession && viewModel.biometricService.isBiometricAvailable {
+                    // Returning from background with a saved session — show Face ID prompt
+                    viewModel.showBiometricPrompt = true
+                } else if !viewModel.isAppLocked {
                     viewModel.handleForegroundResume()
                 }
             default:
@@ -105,6 +117,49 @@ struct ContentView: View {
             ProgressView()
                 .tint(.white)
                 .controlSize(.regular)
+        }
+    }
+
+    /// Shows a Face ID / Touch ID prompt screen with a fallback button to the normal login form.
+    private var biometricLoginView: some View {
+        VStack(spacing: 24) {
+            Spacer()
+
+            Image(systemName: viewModel.biometricService.biometricSystemImage)
+                .font(.system(size: 64))
+                .foregroundStyle(.blue)
+
+            Text("Welcome Back")
+                .font(.title.bold())
+
+            Text("Unlock with \(viewModel.biometricService.biometricName)")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
+            Button {
+                viewModel.authenticateWithBiometric()
+            } label: {
+                Label("Unlock with \(viewModel.biometricService.biometricName)", systemImage: viewModel.biometricService.biometricSystemImage)
+                    .font(.headline)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(.blue)
+                    .foregroundStyle(.white)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+            .padding(.horizontal, 40)
+
+            Button("Use Password Instead") {
+                viewModel.showBiometricPrompt = false
+            }
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
+
+            Spacer()
+        }
+        .onAppear {
+            // Automatically trigger Face ID when the view appears
+            viewModel.authenticateWithBiometric()
         }
     }
 

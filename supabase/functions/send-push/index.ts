@@ -217,7 +217,7 @@ async function getEnrolledStudentTokens(
 
   // Get students enrolled in the course
   const { data: enrollments, error } = await supabase
-    .from("enrollments")
+    .from("course_enrollments")
     .select("student_id")
     .eq("course_id", courseId)
     .eq("status", "active");
@@ -236,12 +236,6 @@ async function getEnrolledStudentTokens(
 // ---------------------------------------------------------------------------
 // Event Handlers
 // ---------------------------------------------------------------------------
-
-// TODO: Wire these handlers to Supabase Database Webhooks.
-//
-// In the Supabase dashboard (Database > Webhooks), create webhooks that
-// POST to this edge function URL when rows are inserted in the relevant
-// tables. Each webhook should include the full row in the payload.
 
 /**
  * Triggered when a new assignment is created.

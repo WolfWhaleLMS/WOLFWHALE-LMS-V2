@@ -11,6 +11,7 @@ struct AdminDashboardView: View {
     @State private var showClassSections = false
     @State private var showAcademicCalendar = false
     @State private var showReportCards = false
+    @State private var showAnalytics = false
     @State private var hapticTrigger = false
 
     private var metrics: SchoolMetrics {
@@ -82,6 +83,9 @@ struct AdminDashboardView: View {
             }
             .sheet(isPresented: $showReportCards) {
                 AdminReportCardView(viewModel: viewModel)
+            }
+            .sheet(isPresented: $showAnalytics) {
+                AnalyticsDashboardView(viewModel: viewModel)
             }
         }
         .requireRole(.admin, .superAdmin, currentRole: viewModel.currentUser?.role)
@@ -170,6 +174,9 @@ struct AdminDashboardView: View {
                 iPadActionCard(icon: "doc.richtext.fill", title: "Report Cards", subtitle: "Generate & export", color: .orange) {
                     showReportCards = true
                 }
+                iPadActionCard(icon: "chart.xyaxis.line", title: "Analytics", subtitle: "Usage & trends", color: .pink) {
+                    showAnalytics = true
+                }
             }
         }
     }
@@ -211,7 +218,7 @@ struct AdminDashboardView: View {
         HStack(spacing: 10) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .foregroundStyle(.orange)
-                .symbolEffect(.wiggle, options: .repeat(.periodic(delay: 2)))
+                .symbolEffect(.pulse, options: .repeat(.periodic(delay: 2)))
             Text(dataError)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
@@ -526,6 +533,43 @@ struct AdminDashboardView: View {
                 .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
                 .accessibilityLabel("Report Cards")
                 .accessibilityHint("Opens report card generation with PDF export for all students")
+            }
+
+            HStack(spacing: 12) {
+                Button {
+                    hapticTrigger.toggle()
+                    showAnalytics = true
+                } label: {
+                    HStack(spacing: 10) {
+                        Image(systemName: "chart.xyaxis.line")
+                            .font(.title3)
+                            .foregroundStyle(.pink)
+                            .symbolRenderingMode(.hierarchical)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Analytics Dashboard")
+                                .font(.subheadline.bold())
+                                .foregroundStyle(Color(.label))
+                            Text("Usage trends, engagement & charts")
+                                .font(.caption2)
+                                .foregroundStyle(Color(.secondaryLabel))
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundStyle(Color(.tertiaryLabel))
+                    }
+                    .padding(14)
+                    .background(Color(.secondarySystemGroupedBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .strokeBorder(Color.pink.opacity(0.2), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+                .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .accessibilityLabel("Analytics Dashboard")
+                .accessibilityHint("Opens the analytics dashboard with usage trends and engagement charts")
             }
         }
     }

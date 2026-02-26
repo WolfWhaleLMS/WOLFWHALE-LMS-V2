@@ -2,6 +2,7 @@ import SwiftUI
 
 struct LoginView: View {
     @Bindable var viewModel: AppViewModel
+    @Environment(\.colorScheme) private var colorScheme
     @State private var appeared = false
     @State private var showDemoSection = false
     @State private var showForgotPassword = false
@@ -34,8 +35,7 @@ struct LoginView: View {
         }
         .scrollIndicators(.hidden)
         .scrollDismissesKeyboard(.interactively)
-        .background(Color.black.ignoresSafeArea())
-        .environment(\.colorScheme, .dark)
+        .background { HolographicBackground() }
         .sheet(isPresented: $showForgotPassword) {
             ForgotPasswordView()
         }
@@ -56,7 +56,7 @@ struct LoginView: View {
                     .blur(radius: 75)
 
                 RoundedRectangle(cornerRadius: 32)
-                    .fill(.black)
+                    .fill(Color(.systemBackground))
                     .frame(width: 160, height: 160)
 
                 Image("Logo")
@@ -150,7 +150,7 @@ struct LoginView: View {
                 HStack(spacing: 4) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .font(.caption2)
-                        .symbolEffect(.wiggle, options: .repeat(2))
+                        .symbolEffect(.bounce, options: .repeat(2))
                     Text(error)
                         .font(.caption2)
                 }
@@ -175,7 +175,7 @@ struct LoginView: View {
                             Image(systemName: "arrow.right")
                                 .font(.caption.bold())
                                 .foregroundStyle(.white)
-                                .symbolEffect(.wiggle.right, options: .repeat(.periodic(delay: 2)))
+                                .symbolEffect(.bounce, options: .repeat(.periodic(delay: 2)))
                         }
                     }
                 }

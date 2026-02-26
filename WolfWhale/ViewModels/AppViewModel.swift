@@ -192,6 +192,15 @@ class AppViewModel {
         set { UserDefaults.standard.set(newValue, forKey: UserDefaultsKeys.biometricEnabled) }
     }
 
+    /// Tracks whether a Supabase session has been saved (for Face ID re-login on next launch).
+    var hasSavedSession: Bool {
+        get { UserDefaults.standard.bool(forKey: UserDefaultsKeys.hasSavedSession) }
+        set { UserDefaults.standard.set(newValue, forKey: UserDefaultsKeys.hasSavedSession) }
+    }
+
+    /// When true, the UI should show a biometric prompt instead of the login form.
+    var showBiometricPrompt: Bool = false
+
     // MARK: - Calendar Sync
     // Lazy: EventKit may require entitlements/permissions that crash without provisioning
     private var _calendarService: CalendarService?
@@ -429,6 +438,13 @@ class AppViewModel {
                 }
             }
 
+            // If a previous session was saved and biometrics are available,
+            // require Face ID / Touch ID before restoring the session.
+            if hasSavedSession && biometricService.isBiometricAvailable {
+                showBiometricPrompt = true
+                return
+            }
+
             do {
                 // Add a timeout so the app doesn't hang on a black screen
                 let session = try await withThrowingTaskGroup(of: Session.self) { group in
@@ -452,8 +468,50 @@ class AppViewModel {
                 pushService.registerForRemoteNotifications()
                 await pushService.sendTokenToServer(userId: session.user.id)
             } catch {
+                // Session is gone or expired — clear saved session flag
+                hasSavedSession = false
                 #if DEBUG
                 print("[AppViewModel] Session check failed: \(error)")
+                #endif
+            }
+        }
+    }
+
+    /// Authenticates with Face ID / Touch ID and restores the cached Supabase session.
+    /// On failure, hides the biometric prompt so the normal login form is shown.
+    func authenticateWithBiometric() {
+        Task {
+            do {
+                try await biometricService.authenticate()
+
+                // Biometric success — restore the Supabase session
+                let session = try await withThrowingTaskGroup(of: Session.self) { group in
+                    group.addTask {
+                        try await supabaseClient.auth.session
+                    }
+                    group.addTask {
+                        try await Task.sleep(nanoseconds: 10_000_000_000) // 10 seconds
+                        throw CancellationError()
+                    }
+                    let result = try await group.next()!
+                    group.cancelAll()
+                    return result
+                }
+                try await fetchProfile(userId: session.user.id)
+                await loadData()
+                isAuthenticated = true
+                showBiometricPrompt = false
+                startAutoRefresh()
+
+                // Re-register push token on session restore
+                pushService.registerForRemoteNotifications()
+                await pushService.sendTokenToServer(userId: session.user.id)
+            } catch {
+                // Biometric failed or session expired — fall back to login form
+                showBiometricPrompt = false
+                hasSavedSession = false
+                #if DEBUG
+                print("[AppViewModel] Biometric auth failed: \(error)")
                 #endif
             }
         }
@@ -482,6 +540,9 @@ class AppViewModel {
                 await loadData()
                 isAuthenticated = true
                 startAutoRefresh()
+
+                // Save session flag so Face ID auto-login works on next launch
+                hasSavedSession = true
 
                 // Register device for remote push notifications
                 pushService.registerForRemoteNotifications()
@@ -674,8 +735,10 @@ class AppViewModel {
         // 5a. Cancel all due-date reminders managed by the integration service
         Task { await dueDateReminderService.cancelAllReminders() }
 
-        // 6. Reset biometric lock state and deep-link navigation so the next login starts clean
+        // 6. Reset biometric lock state, saved session flag, and deep-link navigation so the next login starts clean
         isAppLocked = false
+        hasSavedSession = false
+        showBiometricPrompt = false
         deepLinkCourseId = nil
         deepLinkQuizId = nil
         deepLinkShowTools = false
