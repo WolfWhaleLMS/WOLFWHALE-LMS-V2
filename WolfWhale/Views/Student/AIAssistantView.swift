@@ -109,7 +109,7 @@ struct AIAssistantView: View {
                     )
                 )
                 .symbolRenderingMode(.hierarchical)
-                .symbolEffect(.breathe, options: .repeat(.periodic(delay: 2)))
+                .compatBreathePeriodic(delay: 2)
 
             Text("AI Study Assistant")
                 .font(.title2.bold())
@@ -287,7 +287,7 @@ struct AIAssistantView: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .glassEffect(.regular, in: .rect(cornerRadius: 0))
+        .compatGlassEffect(in: .rect(cornerRadius: 0))
     }
 
     // MARK: - Helpers

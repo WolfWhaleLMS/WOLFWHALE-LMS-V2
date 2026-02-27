@@ -51,6 +51,6 @@ struct CourseColorPicker: View {
         }
         .padding(14)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
+        .compatGlassEffect(in: RoundedRectangle(cornerRadius: 16))
     }
 }

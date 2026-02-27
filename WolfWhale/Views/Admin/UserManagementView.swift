@@ -232,7 +232,7 @@ struct UserManagementView: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
-            .glassEffect(.regular, in: .capsule)
+            .compatGlassEffect(in: .capsule)
         }
         .scrollIndicators(.hidden)
         .contentMargins(.horizontal, 0)

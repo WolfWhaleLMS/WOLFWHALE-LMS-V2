@@ -141,10 +141,7 @@ struct RealtimeConversationView: View {
                                 topTrailingRadius: 16
                             )
                         )
-                        .glassEffect(
-                            message.isFromCurrentUser ? .regular.tint(.indigo) : .identity,
-                            in: RoundedRectangle(cornerRadius: 16)
-                        )
+                        .compatGlassEffectConditional(isActive: message.isFromCurrentUser, tintColor: .indigo, in: RoundedRectangle(cornerRadius: 16))
                         .opacity(message.status == .sending ? 0.7 : 1.0)
                 }
 
@@ -305,7 +302,7 @@ struct RealtimeConversationView: View {
         .padding(.horizontal)
         .padding(.vertical, 8)
         .background(.bar)
-        .glassEffect(.regular, in: .rect(cornerRadius: 0))
+        .compatGlassEffect(in: .rect(cornerRadius: 0))
     }
 
     // MARK: - Connection Indicator

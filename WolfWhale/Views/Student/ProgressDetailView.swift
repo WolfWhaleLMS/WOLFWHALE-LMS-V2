@@ -74,7 +74,7 @@ struct ProgressDetailView: View {
         }
         .padding(20)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20))
+        .compatGlassEffect(in: RoundedRectangle(cornerRadius: 20))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Overall progress: \(Int(overallPercentage * 100)) percent complete, \(streak) day streak, \(viewModel.courses.count) courses")
     }
@@ -121,7 +121,7 @@ struct ProgressDetailView: View {
             HStack(spacing: 8) {
                 Image(systemName: "flame.fill")
                     .foregroundStyle(.orange)
-                    .symbolEffect(.bounce, options: .repeat(.periodic(delay: 2)))
+                    .compatBouncePeriodic(delay: 2)
                 VStack(alignment: .leading, spacing: 1) {
                     Text("\(streak) Day Streak")
                         .font(.subheadline.bold())
@@ -176,7 +176,7 @@ struct ProgressDetailView: View {
                     HStack {
                         Image(systemName: "arrow.right.circle.fill")
                             .foregroundStyle(.orange)
-                            .symbolEffect(.variableColor.iterative, options: .repeat(.periodic(delay: 3)))
+                            .compatVariableColorPeriodic(delay: 3)
                         Text("Next Up")
                             .font(.headline)
                         Spacer()
@@ -188,7 +188,7 @@ struct ProgressDetailView: View {
                 }
                 .padding(16)
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
+                .compatGlassEffect(in: RoundedRectangle(cornerRadius: 16))
             }
         }
     }
@@ -263,7 +263,7 @@ struct ProgressDetailView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 24)
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
+                .compatGlassEffect(in: RoundedRectangle(cornerRadius: 16))
             } else {
                 ForEach(sortedProgress, id: \.courseId) { courseProgress in
                     verticalCourseCard(courseProgress)
@@ -411,7 +411,7 @@ struct ProgressDetailView: View {
         }
         .padding(16)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
+        .compatGlassEffect(in: RoundedRectangle(cornerRadius: 16))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(progress.courseName), \(Int(progress.overallPercentage * 100)) percent complete, \(progress.lessonsCompleted) of \(progress.lessonsTotal) lessons, taught by \(progress.teacherName)")
     }

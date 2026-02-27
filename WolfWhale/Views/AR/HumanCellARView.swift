@@ -383,7 +383,7 @@ struct HumanCellARContainer: UIViewRepresentable {
                 let pz = envelopeRadius * sin(theta) * sin(phi)
 
                 // Pore as a small flattened cylinder (ring approximation)
-                let poreMesh = MeshResource.generateCylinder(height: 0.001, radius: 0.004)
+                let poreMesh = MeshResource.compatGenerateCylinder(height: 0.001, radius: 0.004)
                 var poreMaterial = PhysicallyBasedMaterial()
                 poreMaterial.baseColor = .init(tint: UIColor(red: 0.25, green: 0.3, blue: 0.6, alpha: 0.7))
                 poreMaterial.roughness = .init(floatLiteral: 0.5)
@@ -502,7 +502,7 @@ struct HumanCellARContainer: UIViewRepresentable {
 
             for (pos, axis, angle) in tubeSegments {
                 let tubeLength: Float = Float.random(in: 0.012...0.022)
-                let tubeMesh = MeshResource.generateCylinder(height: tubeLength, radius: 0.0025)
+                let tubeMesh = MeshResource.compatGenerateCylinder(height: tubeLength, radius: 0.0025)
                 let tube = ModelEntity(mesh: tubeMesh, materials: [serMaterial])
                 tube.position = pos
                 tube.orientation = simd_quatf(angle: angle, axis: normalize(axis))
@@ -716,7 +716,7 @@ struct HumanCellARContainer: UIViewRepresentable {
             let centrRadius: Float = 0.004
 
             // First centriole (vertical)
-            let centr1Mesh = MeshResource.generateCylinder(height: centrHeight, radius: centrRadius)
+            let centr1Mesh = MeshResource.compatGenerateCylinder(height: centrHeight, radius: centrRadius)
             let centr1 = ModelEntity(mesh: centr1Mesh, materials: [centrMaterial])
             centr1.position = SIMD3<Float>(0, 0, 0)
             centriolesEntity.addChild(centr1)
@@ -731,7 +731,7 @@ struct HumanCellARContainer: UIViewRepresentable {
             let ringMaterial = SimpleMaterial(color: UIColor(red: 0.13, green: 0.38, blue: 0.15, alpha: 1.0), isMetallic: false)
             for c in [centr1, centr2] {
                 for r in 0..<3 {
-                    let ringMesh = MeshResource.generateCylinder(height: 0.0005, radius: centrRadius + 0.001)
+                    let ringMesh = MeshResource.compatGenerateCylinder(height: 0.0005, radius: centrRadius + 0.001)
                     let ring = ModelEntity(mesh: ringMesh, materials: [ringMaterial])
                     ring.position = SIMD3<Float>(0, Float(r) * 0.005 - 0.005, 0)
                     c.addChild(ring)
@@ -846,7 +846,7 @@ struct HumanCellARContainer: UIViewRepresentable {
 
             // Line connector from label to organelle
             let lineHeight: Float = max(offset.y * 0.5, 0.005)
-            let lineMesh = MeshResource.generateCylinder(height: lineHeight, radius: 0.0003)
+            let lineMesh = MeshResource.compatGenerateCylinder(height: lineHeight, radius: 0.0003)
             var lineMaterial = PhysicallyBasedMaterial()
             lineMaterial.baseColor = .init(tint: UIColor(white: 1.0, alpha: 0.3))
             lineMaterial.roughness = .init(floatLiteral: 1.0)

@@ -32,7 +32,7 @@ struct OnboardingView: View {
                                 .background {
                                     Capsule()
                                         .fill(.clear)
-                                        .glassEffect(.regular, in: .capsule)
+                                        .compatGlassEffect(in: .capsule)
                                 }
                         }
                         .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
@@ -346,7 +346,7 @@ struct OnboardingView: View {
         .background {
             RoundedRectangle(cornerRadius: 16)
                 .fill(.clear)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
+                .compatGlassEffect(in: RoundedRectangle(cornerRadius: 16))
         }
     }
 
@@ -374,7 +374,7 @@ struct OnboardingView: View {
         .background {
             RoundedRectangle(cornerRadius: 14)
                 .fill(.clear)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 14))
+                .compatGlassEffect(in: RoundedRectangle(cornerRadius: 14))
         }
     }
 
@@ -402,7 +402,7 @@ struct OnboardingView: View {
         .background {
             RoundedRectangle(cornerRadius: 14)
                 .fill(.clear)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 14))
+                .compatGlassEffect(in: RoundedRectangle(cornerRadius: 14))
         }
     }
 

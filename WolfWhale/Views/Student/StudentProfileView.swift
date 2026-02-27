@@ -197,7 +197,7 @@ struct StudentProfileView: View {
                                 .font(.title2)
                                 .foregroundStyle(achievement.isUnlocked ? Theme.courseColor(achievement.rarity.colorName) : .secondary.opacity(0.3))
                                 .symbolRenderingMode(.hierarchical)
-                                .symbolEffect(.bounce, options: .repeat(.periodic(delay: 4)), isActive: achievement.isUnlocked)
+                                .compatBouncePeriodicActive(delay: 4, isActive: achievement.isUnlocked)
                                 .frame(width: 48, height: 48)
                                 .background(
                                     achievement.isUnlocked
@@ -230,7 +230,7 @@ struct StudentProfileView: View {
                 Image(systemName: "flame.fill")
                     .foregroundStyle(.orange)
                     .symbolRenderingMode(.hierarchical)
-                    .symbolEffect(.breathe.pulse, options: .repeat(.periodic(delay: 3)))
+                    .compatBreathePulsePeriodic(delay: 3)
                 Text("\(viewModel.currentUser?.streak ?? 0) Day Streak")
                     .font(.headline)
                 Spacer()

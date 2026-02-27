@@ -70,7 +70,7 @@ struct WellnessView: View {
                         )
                     )
                     .symbolRenderingMode(.hierarchical)
-                    .symbolEffect(.breathe.pulse, options: .repeat(.periodic(delay: 2)))
+                    .compatBreathePulsePeriodic(delay: 2)
             }
 
             VStack(spacing: 12) {

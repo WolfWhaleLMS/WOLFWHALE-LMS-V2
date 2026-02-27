@@ -133,7 +133,7 @@ struct AssignmentsView: View {
             }
             .padding(.horizontal, 4)
             .padding(.vertical, 6)
-            .glassEffect(.regular, in: .capsule)
+            .compatGlassEffect(in: .capsule)
         }
         .contentMargins(.horizontal, 0)
         .scrollIndicators(.hidden)
@@ -288,7 +288,7 @@ struct AssignmentsView: View {
             HStack(spacing: 8) {
                 Image(systemName: "arrow.counterclockwise.circle.fill")
                     .foregroundStyle(.indigo)
-                    .symbolEffect(.bounce, options: .repeat(.periodic(delay: 3)))
+                    .compatBouncePeriodic(delay: 3)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Resubmission Available")
                         .font(.caption.bold())

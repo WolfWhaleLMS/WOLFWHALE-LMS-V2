@@ -29,7 +29,7 @@ struct WritingAssistantView: View {
             }
         }
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
-        .glassEffect(.regular.tint(.blue), in: RoundedRectangle(cornerRadius: 14))
+        .compatGlassEffectTinted(.blue, in: RoundedRectangle(cornerRadius: 14))
         .onChange(of: text) {
             refresh()
         }

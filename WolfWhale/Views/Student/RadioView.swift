@@ -225,7 +225,7 @@ struct RadioView: View {
         }
         .padding(24)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20))
+        .compatGlassEffect(in: RoundedRectangle(cornerRadius: 20))
     }
 
     // MARK: - Audio Visualizer
@@ -270,7 +270,7 @@ struct RadioView: View {
                     .foregroundStyle(.primary)
                     .frame(width: 50, height: 50)
                     .background(.ultraThinMaterial, in: Circle())
-                    .glassEffect(.regular, in: .circle)
+                    .compatGlassEffect(in: .circle)
             }
             .disabled(radioService.currentStation == nil)
             .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
@@ -317,7 +317,7 @@ struct RadioView: View {
                     .foregroundStyle(.primary)
                     .frame(width: 50, height: 50)
                     .background(.ultraThinMaterial, in: Circle())
-                    .glassEffect(.regular, in: .circle)
+                    .compatGlassEffect(in: .circle)
             }
             .disabled(radioService.currentStation == nil)
             .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
@@ -360,7 +360,7 @@ struct RadioView: View {
         }
         .padding(16)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
+        .compatGlassEffect(in: RoundedRectangle(cornerRadius: 16))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Volume: \(Int(radioService.volume * 100)) percent")
         .accessibilityAdjustableAction { direction in
@@ -414,7 +414,7 @@ struct RadioView: View {
             }
             .padding(14)
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
+            .compatGlassEffect(in: RoundedRectangle(cornerRadius: 16))
         }
         .buttonStyle(.plain)
     }
@@ -484,7 +484,7 @@ struct RadioView: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
                 .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
-                .glassEffect(.regular.tint(.purple), in: RoundedRectangle(cornerRadius: 20))
+                .compatGlassEffectTinted(.purple, in: RoundedRectangle(cornerRadius: 20))
                 .padding(.horizontal)
                 .padding(.bottom, 4)
                 .shadow(color: .black.opacity(0.1), radius: 8, y: -2)
@@ -597,7 +597,7 @@ struct RadioMiniPlayer: View {
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
             .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
-            .glassEffect(.regular.tint(.purple), in: RoundedRectangle(cornerRadius: 14))
+            .compatGlassEffectTinted(.purple, in: RoundedRectangle(cornerRadius: 14))
             .padding(.horizontal)
         }
     }

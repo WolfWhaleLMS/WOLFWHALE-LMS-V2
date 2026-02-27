@@ -447,7 +447,7 @@ struct StudentDashboardView: View {
                 .foregroundStyle(color)
                 .symbolRenderingMode(.hierarchical)
                 .contentTransition(.symbolEffect(.replace))
-                .symbolEffect(.pulse, options: .repeat(.periodic(delay: 4)))
+                .compatPulsePeriodic(delay: 4)
             Text(value)
                 .font(.title2.bold())
                 .foregroundStyle(Color(.label))
@@ -475,7 +475,7 @@ struct StudentDashboardView: View {
                             .font(.title2)
                             .foregroundStyle(.indigo)
                             .symbolRenderingMode(.hierarchical)
-                            .symbolEffect(.pulse, options: .repeat(.periodic(delay: 2)))
+                            .compatPulsePeriodic(delay: 2)
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Browse Courses")
                                 .font(.subheadline.bold())
@@ -523,7 +523,7 @@ struct StudentDashboardView: View {
                     .font(.headline)
                     .foregroundStyle(Theme.courseColor(course.colorName))
                     .symbolRenderingMode(.hierarchical)
-                    .symbolEffect(.variableColor.iterative, options: .repeat(.periodic(delay: 4)))
+                    .compatVariableColorPeriodic(delay: 4)
             }
 
             VStack(alignment: .leading, spacing: 3) {
@@ -586,7 +586,7 @@ struct StudentDashboardView: View {
                         .font(.title3)
                         .foregroundStyle(.green)
                         .symbolRenderingMode(.hierarchical)
-                        .symbolEffect(.bounce, options: .repeat(.periodic(delay: 3)))
+                        .compatBouncePeriodic(delay: 3)
                     Text("All caught up — nothing due!")
                         .font(.subheadline)
                         .foregroundStyle(Color(.secondaryLabel))
@@ -621,7 +621,7 @@ struct StudentDashboardView: View {
                 .font(.title3)
                 .foregroundStyle(.orange)
                 .symbolRenderingMode(.hierarchical)
-                .symbolEffect(.pulse, options: .repeat(.periodic(delay: 3)))
+                .compatPulsePeriodic(delay: 3)
 
             Text(assignment.title)
                 .font(.subheadline.bold())
@@ -693,7 +693,7 @@ struct StudentDashboardView: View {
                     .foregroundStyle(color)
                     .symbolRenderingMode(.hierarchical)
                     .contentTransition(.symbolEffect(.replace))
-                    .symbolEffect(.bounce, options: .repeat(.periodic(delay: 5)))
+                    .compatBouncePeriodic(delay: 5)
                     .frame(height: 24)
                 Text(title)
                     .font(.caption2.bold())
@@ -722,16 +722,16 @@ struct StudentDashboardView: View {
                 switch effect {
                 case .bounce:
                     Image(systemName: icon)
-                        .symbolEffect(.bounce, options: .repeat(.periodic(delay: 4)))
+                        .compatBouncePeriodic(delay: 4)
                 case .pulse:
                     Image(systemName: icon)
-                        .symbolEffect(.pulse, options: .repeat(.periodic(delay: 3)))
+                        .compatPulsePeriodic(delay: 3)
                 case .breathe:
                     Image(systemName: icon)
-                        .symbolEffect(.breathe, options: .repeat(.periodic(delay: 5)))
+                        .compatBreathePeriodic(delay: 5)
                 case .variableColor:
                     Image(systemName: icon)
-                        .symbolEffect(.variableColor.iterative, options: .repeat(.periodic(delay: 3)))
+                        .compatVariableColorPeriodic(delay: 3)
                 case .none:
                     Image(systemName: icon)
                 }
@@ -760,7 +760,7 @@ struct StudentDashboardView: View {
             Image(systemName: "exclamationmark.triangle.fill")
                 .foregroundStyle(.orange)
                 .symbolRenderingMode(.hierarchical)
-                .symbolEffect(.breathe, options: .repeat(.periodic(delay: 2)))
+                .compatBreathePeriodic(delay: 2)
             Text(message)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)

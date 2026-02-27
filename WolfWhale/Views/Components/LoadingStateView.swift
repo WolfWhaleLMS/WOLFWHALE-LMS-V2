@@ -11,7 +11,7 @@ struct LoadingStateView: View {
                 .font(.system(size: 48))
                 .foregroundStyle(.secondary.opacity(0.6))
                 .symbolRenderingMode(.hierarchical)
-                .symbolEffect(.variableColor.iterative, options: .repeat(.continuous))
+                .compatVariableColorContinuous()
             Text(title)
                 .font(.headline)
                 .foregroundStyle(.secondary)
@@ -25,7 +25,7 @@ struct LoadingStateView: View {
         .background {
             RoundedRectangle(cornerRadius: 16)
                 .fill(.clear)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
+                .compatGlassEffect(in: RoundedRectangle(cornerRadius: 16))
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(title). \(message)")
@@ -68,7 +68,7 @@ struct ShimmerLoadingView: View {
         .background {
             RoundedRectangle(cornerRadius: 12)
                 .fill(.clear)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
+                .compatGlassEffect(in: RoundedRectangle(cornerRadius: 12))
         }
         .opacity(isAnimating ? 0.5 : 1.0)
         .animation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true), value: isAnimating)

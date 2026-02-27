@@ -36,7 +36,7 @@ struct GlassCard: ViewModifier {
     func body(content: Content) -> some View {
         content
             .background(.regularMaterial, in: RoundedRectangle(cornerRadius: cornerRadius))
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: cornerRadius))
+            .compatGlassEffect(in: RoundedRectangle(cornerRadius: cornerRadius))
     }
 }
 
@@ -49,7 +49,7 @@ struct TintedGlassCard: ViewModifier {
     func body(content: Content) -> some View {
         content
             .background(.regularMaterial, in: RoundedRectangle(cornerRadius: cornerRadius))
-            .glassEffect(.regular.tint(tint.opacity(tintOpacity)), in: RoundedRectangle(cornerRadius: cornerRadius))
+            .compatGlassEffectTinted(tint.opacity(tintOpacity), in: RoundedRectangle(cornerRadius: cornerRadius))
     }
 }
 

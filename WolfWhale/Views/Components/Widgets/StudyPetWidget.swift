@@ -82,7 +82,7 @@ struct StudyPetWidget: View {
         }
         .padding()
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 20))
+        .compatGlassEffect(in: RoundedRectangle(cornerRadius: 20))
     }
 
     private var moodMessage: String {

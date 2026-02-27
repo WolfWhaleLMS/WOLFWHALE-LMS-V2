@@ -157,7 +157,7 @@ struct TeacherDashboardView: View {
                         HStack(spacing: 10) {
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .foregroundStyle(.orange)
-                                .symbolEffect(.breathe, options: .repeat(.periodic(delay: 2)))
+                                .compatBreathePeriodic(delay: 2)
                             Text(dataError)
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
@@ -360,13 +360,13 @@ struct TeacherDashboardView: View {
 
     private var iPhoneTeacherContent: some View {
         ScrollView {
-            GlassEffectContainer {
+            CompatGlassEffectContainer {
                 LazyVStack(spacing: 16) {
                     if let dataError = viewModel.dataError {
                         HStack(spacing: 10) {
                             Image(systemName: "exclamationmark.triangle.fill")
                                 .foregroundStyle(.orange)
-                                .symbolEffect(.pulse, options: .repeat(.periodic(delay: 2)))
+                                .compatPulsePeriodic(delay: 2)
                             Text(dataError)
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
@@ -427,7 +427,7 @@ struct TeacherDashboardView: View {
                         Image(systemName: "person.badge.clock.fill")
                             .font(.subheadline)
                             .foregroundStyle(.white)
-                            .symbolEffect(.bounce, options: .repeat(.periodic(delay: 3)))
+                            .compatBouncePeriodic(delay: 3)
                     }
 
                     VStack(alignment: .leading, spacing: 2) {
@@ -553,7 +553,7 @@ struct TeacherDashboardView: View {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .font(.subheadline)
                             .foregroundStyle(.white)
-                            .symbolEffect(.breathe.pulse, options: .repeat(.continuous))
+                            .compatBreathePulseContinuous()
                     }
 
                     VStack(alignment: .leading, spacing: 2) {

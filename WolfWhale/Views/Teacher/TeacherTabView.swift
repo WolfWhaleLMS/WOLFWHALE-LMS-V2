@@ -6,34 +6,43 @@ struct TeacherTabView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            Tab(L10n.tabHome, systemImage: "house.fill", value: 0) {
-                TeacherDashboardView(viewModel: viewModel)
-            }
-            .accessibilityLabel(L10n.tabHome)
-            .accessibilityHint("Double tap to view your dashboard")
-            Tab(L10n.courses, systemImage: "text.book.closed.fill", value: 1) {
-                TeacherCoursesView(viewModel: viewModel)
-                    .task { viewModel.loadAssignmentsIfNeeded() }
-            }
-            .accessibilityLabel(L10n.courses)
-            .accessibilityHint("Double tap to view your courses")
-            Tab(L10n.tabResources, systemImage: "books.vertical.fill", value: 2) {
-                ResourceLibraryView(viewModel: viewModel)
-            }
-            .accessibilityLabel(L10n.tabResources)
-            .accessibilityHint("Double tap to explore learning resources")
-            Tab(L10n.messages, systemImage: "message.fill", value: 3) {
-                MessagesListView(viewModel: viewModel)
-                    .task { viewModel.loadConversationsIfNeeded() }
-            }
-            .badge(viewModel.totalUnreadMessages)
-            .accessibilityLabel(L10n.messages)
-            .accessibilityHint("Double tap to view your messages")
-            Tab(L10n.tabProfile, systemImage: "person.crop.circle.fill", value: 4) {
-                TeacherProfileView(viewModel: viewModel)
-            }
-            .accessibilityLabel(L10n.tabProfile)
-            .accessibilityHint("Double tap to view your profile")
+            TeacherDashboardView(viewModel: viewModel)
+                .tabItem {
+                    Label(L10n.tabHome, systemImage: "house.fill")
+                }
+                .tag(0)
+                .accessibilityLabel(L10n.tabHome)
+
+            TeacherCoursesView(viewModel: viewModel)
+                .task { viewModel.loadAssignmentsIfNeeded() }
+                .tabItem {
+                    Label(L10n.courses, systemImage: "text.book.closed.fill")
+                }
+                .tag(1)
+                .accessibilityLabel(L10n.courses)
+
+            ResourceLibraryView(viewModel: viewModel)
+                .tabItem {
+                    Label(L10n.tabResources, systemImage: "books.vertical.fill")
+                }
+                .tag(2)
+                .accessibilityLabel(L10n.tabResources)
+
+            MessagesListView(viewModel: viewModel)
+                .task { viewModel.loadConversationsIfNeeded() }
+                .tabItem {
+                    Label(L10n.messages, systemImage: "message.fill")
+                }
+                .tag(3)
+                .badge(viewModel.totalUnreadMessages)
+                .accessibilityLabel(L10n.messages)
+
+            TeacherProfileView(viewModel: viewModel)
+                .tabItem {
+                    Label(L10n.tabProfile, systemImage: "person.crop.circle.fill")
+                }
+                .tag(4)
+                .accessibilityLabel(L10n.tabProfile)
         }
         .sensoryFeedback(.impact(weight: .light), trigger: selectedTab)
         .tint(.accentColor)

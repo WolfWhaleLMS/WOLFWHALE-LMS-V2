@@ -62,7 +62,7 @@ struct WeeklySummaryCard: View {
         }
         .padding(16)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
+        .compatGlassEffect(in: RoundedRectangle(cornerRadius: 16))
         .accessibilityElement(children: .combine)
         .accessibilityLabel(accessibilityDescription)
     }

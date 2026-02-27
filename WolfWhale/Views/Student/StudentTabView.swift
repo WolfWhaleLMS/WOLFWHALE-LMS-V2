@@ -9,35 +9,44 @@ struct StudentTabView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            Tab(L10n.tabHome, systemImage: "house.fill", value: 0) {
-                StudentDashboardView(viewModel: viewModel)
-            }
-            .accessibilityLabel(L10n.tabHome)
-            .accessibilityHint("Double tap to view your dashboard")
-            Tab(L10n.courses, systemImage: "text.book.closed.fill", value: 1) {
-                CoursesListView(viewModel: viewModel)
-                    .task { viewModel.loadAssignmentsIfNeeded() }
-            }
-            .accessibilityLabel(L10n.courses)
-            .accessibilityHint("Double tap to view your courses")
-            Tab(L10n.tabResources, systemImage: "books.vertical.fill", value: 2) {
-                ResourceLibraryView(viewModel: viewModel)
-            }
-            .accessibilityLabel(L10n.tabResources)
-            .accessibilityHint("Double tap to explore learning resources")
-            Tab(L10n.messages, systemImage: "message.fill", value: 3) {
-                MessagesListView(viewModel: viewModel)
-                    .task { viewModel.loadConversationsIfNeeded() }
-            }
-            .badge(viewModel.totalUnreadMessages)
-            .accessibilityLabel(L10n.messages)
-            .accessibilityHint("Double tap to view your messages")
-            Tab(L10n.tabProfile, systemImage: "person.crop.circle.fill", value: 4) {
-                StudentProfileView(viewModel: viewModel)
-                    .task { viewModel.loadGradesIfNeeded() }
-            }
-            .accessibilityLabel(L10n.tabProfile)
-            .accessibilityHint("Double tap to view your profile")
+            StudentDashboardView(viewModel: viewModel)
+                .tabItem {
+                    Label(L10n.tabHome, systemImage: "house.fill")
+                }
+                .tag(0)
+                .accessibilityLabel(L10n.tabHome)
+
+            CoursesListView(viewModel: viewModel)
+                .task { viewModel.loadAssignmentsIfNeeded() }
+                .tabItem {
+                    Label(L10n.courses, systemImage: "text.book.closed.fill")
+                }
+                .tag(1)
+                .accessibilityLabel(L10n.courses)
+
+            ResourceLibraryView(viewModel: viewModel)
+                .tabItem {
+                    Label(L10n.tabResources, systemImage: "books.vertical.fill")
+                }
+                .tag(2)
+                .accessibilityLabel(L10n.tabResources)
+
+            MessagesListView(viewModel: viewModel)
+                .task { viewModel.loadConversationsIfNeeded() }
+                .tabItem {
+                    Label(L10n.messages, systemImage: "message.fill")
+                }
+                .tag(3)
+                .badge(viewModel.totalUnreadMessages)
+                .accessibilityLabel(L10n.messages)
+
+            StudentProfileView(viewModel: viewModel)
+                .task { viewModel.loadGradesIfNeeded() }
+                .tabItem {
+                    Label(L10n.tabProfile, systemImage: "person.crop.circle.fill")
+                }
+                .tag(4)
+                .accessibilityLabel(L10n.tabProfile)
         }
         .sensoryFeedback(.impact(weight: .light), trigger: selectedTab)
         .tint(.accentColor)
@@ -156,7 +165,7 @@ struct StudentTabView: View {
                 }
                 .padding(.vertical, 6)
                 .frame(width: 260)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 18))
+                .compatGlassEffect(in: RoundedRectangle(cornerRadius: 18))
                 .shadow(color: .black.opacity(0.15), radius: 12, y: 4)
                 .transition(.asymmetric(
                     insertion: .scale(scale: 0.5, anchor: .bottomTrailing).combined(with: .opacity),
@@ -178,7 +187,7 @@ struct StudentTabView: View {
                         .contentTransition(.symbolEffect(.replace))
                 }
                 .frame(width: 52, height: 52)
-                .glassEffect(.regular, in: Circle())
+                .compatGlassEffect(in: Circle())
                 .shadow(color: radioService.isPlaying ? Theme.brandPurple.opacity(0.4) : .black.opacity(0.1), radius: 8, y: 2)
             }
             .buttonStyle(.plain)

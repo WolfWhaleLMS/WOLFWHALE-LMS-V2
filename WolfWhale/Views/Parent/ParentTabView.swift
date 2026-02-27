@@ -6,23 +6,28 @@ struct ParentTabView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            Tab(L10n.tabHome, systemImage: "house.fill", value: 0) {
-                ParentDashboardView(viewModel: viewModel)
-            }
-            .accessibilityLabel(L10n.tabHome)
-            .accessibilityHint("Double tap to view your children's overview")
-            Tab(L10n.messages, systemImage: "message.fill", value: 1) {
-                MessagesListView(viewModel: viewModel)
-                    .task { viewModel.loadConversationsIfNeeded() }
-            }
-            .badge(viewModel.totalUnreadMessages)
-            .accessibilityLabel(L10n.messages)
-            .accessibilityHint("Double tap to view your messages")
-            Tab(L10n.settings, systemImage: "gearshape.fill", value: 2) {
-                ParentSettingsView(viewModel: viewModel)
-            }
-            .accessibilityLabel(L10n.settings)
-            .accessibilityHint("Double tap to view settings")
+            ParentDashboardView(viewModel: viewModel)
+                .tabItem {
+                    Label(L10n.tabHome, systemImage: "house.fill")
+                }
+                .tag(0)
+                .accessibilityLabel(L10n.tabHome)
+
+            MessagesListView(viewModel: viewModel)
+                .task { viewModel.loadConversationsIfNeeded() }
+                .tabItem {
+                    Label(L10n.messages, systemImage: "message.fill")
+                }
+                .tag(1)
+                .badge(viewModel.totalUnreadMessages)
+                .accessibilityLabel(L10n.messages)
+
+            ParentSettingsView(viewModel: viewModel)
+                .tabItem {
+                    Label(L10n.settings, systemImage: "gearshape.fill")
+                }
+                .tag(2)
+                .accessibilityLabel(L10n.settings)
         }
         .sensoryFeedback(.impact(weight: .light), trigger: selectedTab)
         .tint(.accentColor)

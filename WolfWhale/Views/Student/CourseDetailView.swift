@@ -42,7 +42,7 @@ struct CourseDetailView: View {
                         Image(systemName: course.iconSystemName)
                             .font(.largeTitle)
                             .foregroundStyle(.white)
-                            .symbolEffect(.breathe)
+                            .compatBreatheEffect()
                         Text(course.title)
                             .font(.title3.bold())
                             .foregroundStyle(.white)

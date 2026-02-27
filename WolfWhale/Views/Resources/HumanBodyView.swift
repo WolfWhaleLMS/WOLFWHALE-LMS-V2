@@ -79,7 +79,7 @@ struct HumanBodyView: View {
                     .foregroundStyle(
                         LinearGradient(colors: [.teal, .cyan], startPoint: .topLeading, endPoint: .bottomTrailing)
                     )
-                    .symbolEffect(.breathe, options: .repeating)
+                    .compatBreatheRepeating()
                 VStack(alignment: .leading) {
                     Text("Human Body Systems")
                         .font(.title2.bold())

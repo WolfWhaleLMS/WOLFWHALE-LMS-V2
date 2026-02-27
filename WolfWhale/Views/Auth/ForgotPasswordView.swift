@@ -77,7 +77,7 @@ struct ForgotPasswordView: View {
                     .onSubmit { resetPassword() }
             }
             .padding(14)
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 12))
+            .compatGlassEffect(in: RoundedRectangle(cornerRadius: 12))
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .strokeBorder(isEmailFocused ? Color.purple.opacity(0.5) : Color.gray.opacity(0.3), lineWidth: 1)

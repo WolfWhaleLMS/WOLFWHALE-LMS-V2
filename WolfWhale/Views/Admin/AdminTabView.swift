@@ -6,35 +6,44 @@ struct AdminTabView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            Tab(L10n.dashboard, systemImage: "chart.bar.fill", value: 0) {
-                AdminDashboardView(viewModel: viewModel)
-            }
-            .accessibilityLabel(L10n.dashboard)
-            .accessibilityHint("Double tap to view school overview")
-            Tab(L10n.tabUsers, systemImage: "person.3.fill", value: 1) {
-                UserManagementView(viewModel: viewModel)
-            }
-            .accessibilityLabel(L10n.tabUsers)
-            .accessibilityHint("Double tap to manage users")
-            Tab(L10n.tabAnnounce, systemImage: "megaphone.fill", value: 2) {
-                AnnouncementsView(viewModel: viewModel)
-            }
-            .accessibilityLabel(L10n.tabAnnounce)
-            .accessibilityHint("Double tap to view announcements")
-            Tab(L10n.messages, systemImage: "message.fill", value: 3) {
-                MessagesListView(viewModel: viewModel)
-                    .task { viewModel.loadConversationsIfNeeded() }
-            }
-            .badge(viewModel.totalUnreadMessages)
-            .accessibilityLabel(L10n.messages)
-            .accessibilityHint("Double tap to view your messages")
-            Tab(L10n.settings, systemImage: "gearshape.fill", value: 4) {
-                NavigationStack {
-                    AppSettingsView(viewModel: viewModel)
+            AdminDashboardView(viewModel: viewModel)
+                .tabItem {
+                    Label(L10n.dashboard, systemImage: "chart.bar.fill")
                 }
+                .tag(0)
+                .accessibilityLabel(L10n.dashboard)
+
+            UserManagementView(viewModel: viewModel)
+                .tabItem {
+                    Label(L10n.tabUsers, systemImage: "person.3.fill")
+                }
+                .tag(1)
+                .accessibilityLabel(L10n.tabUsers)
+
+            AnnouncementsView(viewModel: viewModel)
+                .tabItem {
+                    Label(L10n.tabAnnounce, systemImage: "megaphone.fill")
+                }
+                .tag(2)
+                .accessibilityLabel(L10n.tabAnnounce)
+
+            MessagesListView(viewModel: viewModel)
+                .task { viewModel.loadConversationsIfNeeded() }
+                .tabItem {
+                    Label(L10n.messages, systemImage: "message.fill")
+                }
+                .tag(3)
+                .badge(viewModel.totalUnreadMessages)
+                .accessibilityLabel(L10n.messages)
+
+            NavigationStack {
+                AppSettingsView(viewModel: viewModel)
             }
+            .tabItem {
+                Label(L10n.settings, systemImage: "gearshape.fill")
+            }
+            .tag(4)
             .accessibilityLabel(L10n.settings)
-            .accessibilityHint("Double tap to view settings and sign out")
         }
         .sensoryFeedback(.impact(weight: .light), trigger: selectedTab)
         .tint(.accentColor)

@@ -44,7 +44,7 @@ struct TeacherProfileView: View {
                 Image(systemName: "person.fill")
                     .font(.system(size: 36))
                     .foregroundStyle(.white)
-                    .symbolEffect(.breathe)
+                    .compatBreatheEffect()
             }
             Text(viewModel.currentUser?.fullName ?? "Teacher")
                 .font(.title2.bold())

@@ -108,7 +108,7 @@ struct MessagesListView: View {
             }
         }
         .padding(14)
-        .glassEffect(in: .rect(cornerRadius: 16))
+        .compatGlassEffectIdentity(in: .rect(cornerRadius: 16))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(conversation.title), last message: \(conversation.lastMessage)\(conversation.unreadCount > 0 ? ", \(conversation.unreadCount) unread" : "")")
         .accessibilityHint("Double tap to open conversation")

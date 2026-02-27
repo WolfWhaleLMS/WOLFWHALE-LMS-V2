@@ -28,23 +28,21 @@ struct ARLibraryView: View {
     private var heroSection: some View {
         VStack(spacing: 12) {
             ZStack {
-                RoundedRectangle(cornerRadius: 24)
-                    .fill(
-                        MeshGradient(
-                            width: 3, height: 3,
-                            points: [
-                                [0, 0], [0.5, 0], [1, 0],
-                                [0, 0.5], [0.5, 0.5], [1, 0.5],
-                                [0, 1], [0.5, 1], [1, 1]
-                            ],
-                            colors: [
-                                .indigo, .purple, .blue,
-                                .cyan, .mint, .teal,
-                                .blue, .indigo, .purple
-                            ]
-                        )
-                    )
-                    .frame(height: 180)
+                CompatMeshGradient(
+                    width: 3, height: 3,
+                    points: [
+                        [0, 0], [0.5, 0], [1, 0],
+                        [0, 0.5], [0.5, 0.5], [1, 0.5],
+                        [0, 1], [0.5, 1], [1, 1]
+                    ],
+                    colors: [
+                        .indigo, .purple, .blue,
+                        .cyan, .mint, .teal,
+                        .blue, .indigo, .purple
+                    ]
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 24))
+                .frame(height: 180)
 
                 VStack(spacing: 8) {
                     Image(systemName: "arkit")

@@ -104,7 +104,7 @@ struct ChildDetailView: View {
                     Image(systemName: displayChild.avatarSystemName)
                         .font(.title2)
                         .foregroundStyle(.white)
-                        .symbolEffect(.breathe)
+                        .compatBreatheEffect()
                 }
 
             VStack(alignment: .leading, spacing: 4) {

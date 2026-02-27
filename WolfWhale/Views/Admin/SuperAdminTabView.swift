@@ -6,31 +6,38 @@ struct SuperAdminTabView: View {
 
     var body: some View {
         TabView(selection: $selectedTab) {
-            Tab(L10n.tabConsole, systemImage: "shield.lefthalf.filled", value: 0) {
-                SuperAdminDashboardView(viewModel: viewModel)
-            }
-            .accessibilityLabel(L10n.tabConsole)
-            .accessibilityHint("Double tap to view the super admin console")
-            Tab(L10n.tabTenants, systemImage: "building.2.fill", value: 1) {
-                NavigationStack {
-                    UserManagementView(viewModel: viewModel)
+            SuperAdminDashboardView(viewModel: viewModel)
+                .tabItem {
+                    Label(L10n.tabConsole, systemImage: "shield.lefthalf.filled")
                 }
+                .tag(0)
+                .accessibilityLabel(L10n.tabConsole)
+
+            NavigationStack {
+                UserManagementView(viewModel: viewModel)
             }
+            .tabItem {
+                Label(L10n.tabTenants, systemImage: "building.2.fill")
+            }
+            .tag(1)
             .accessibilityLabel(L10n.tabTenants)
-            .accessibilityHint("Double tap to manage tenants and users")
-            Tab(L10n.messages, systemImage: "message.fill", value: 2) {
-                MessagesListView(viewModel: viewModel)
-            }
-            .badge(viewModel.totalUnreadMessages)
-            .accessibilityLabel(L10n.messages)
-            .accessibilityHint("Double tap to view your messages")
-            Tab(L10n.settings, systemImage: "gearshape.fill", value: 3) {
-                NavigationStack {
-                    AppSettingsView(viewModel: viewModel)
+
+            MessagesListView(viewModel: viewModel)
+                .tabItem {
+                    Label(L10n.messages, systemImage: "message.fill")
                 }
+                .tag(2)
+                .badge(viewModel.totalUnreadMessages)
+                .accessibilityLabel(L10n.messages)
+
+            NavigationStack {
+                AppSettingsView(viewModel: viewModel)
             }
+            .tabItem {
+                Label(L10n.settings, systemImage: "gearshape.fill")
+            }
+            .tag(3)
             .accessibilityLabel(L10n.settings)
-            .accessibilityHint("Double tap to view settings and sign out")
         }
         .sensoryFeedback(.impact(weight: .light), trigger: selectedTab)
         .tint(.indigo)

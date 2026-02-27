@@ -59,7 +59,7 @@ struct SearchResultRow: View, Equatable {
         .background {
             RoundedRectangle(cornerRadius: 14)
                 .fill(.clear)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 14))
+                .compatGlassEffect(in: RoundedRectangle(cornerRadius: 14))
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(result.title), \(result.category.displayName). \(result.subtitle)")

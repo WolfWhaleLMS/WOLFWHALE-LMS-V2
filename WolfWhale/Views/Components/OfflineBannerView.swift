@@ -20,7 +20,7 @@ struct OfflineBannerView: View {
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(.pink)
                 .symbolRenderingMode(.hierarchical)
-                .symbolEffect(.variableColor.iterative, options: .repeat(.continuous))
+                .compatVariableColorContinuous()
 
             Text("No internet connection")
                 .font(.subheadline.weight(.medium))
@@ -42,7 +42,7 @@ struct OfflineBannerView: View {
         .background {
             RoundedRectangle(cornerRadius: 12)
                 .fill(.clear)
-                .glassEffect(.regular.tint(.pink), in: RoundedRectangle(cornerRadius: 12))
+                .compatGlassEffectTinted(.pink, in: RoundedRectangle(cornerRadius: 12))
         }
         .padding(.horizontal, 16)
         .padding(.top, 8)

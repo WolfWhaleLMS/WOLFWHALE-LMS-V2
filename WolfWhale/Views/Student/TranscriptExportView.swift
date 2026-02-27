@@ -114,7 +114,7 @@ struct TranscriptExportView: View {
             Image(systemName: "doc.text.fill")
                 .font(.system(size: 36))
                 .foregroundStyle(.indigo)
-                .symbolEffect(.breathe)
+                .compatBreatheEffect()
 
             Text("Academic Transcript")
                 .font(.title2.bold())

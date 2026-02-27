@@ -128,7 +128,7 @@ struct BiometricLockView: View {
                 .background {
                     RoundedRectangle(cornerRadius: 20)
                         .fill(.clear)
-                        .glassEffect(.regular.tint(.purple), in: RoundedRectangle(cornerRadius: 20))
+                        .compatGlassEffectTinted(.purple, in: RoundedRectangle(cornerRadius: 20))
                 }
                 .padding(.horizontal, 32)
                 .padding(.bottom, 48)

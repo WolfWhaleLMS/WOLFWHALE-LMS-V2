@@ -54,7 +54,7 @@ struct SchoolIDView: View {
                     .font(.title3)
                     .foregroundStyle(.white.opacity(0.6))
                     .symbolRenderingMode(.hierarchical)
-                    .symbolEffect(.variableColor.iterative, options: .repeat(.periodic(delay: 3)))
+                    .compatVariableColorPeriodic(delay: 3)
                     .accessibilityLabel("NFC enabled")
             }
             .padding(20)

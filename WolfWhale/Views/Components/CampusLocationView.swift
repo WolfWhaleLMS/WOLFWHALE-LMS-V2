@@ -95,7 +95,7 @@ struct CampusLocationView: View {
         }
         .padding(14)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
+        .compatGlassEffect(in: RoundedRectangle(cornerRadius: 16))
         .task {
             if geoService == nil {
                 geoService = GeoFenceService()
@@ -235,7 +235,7 @@ struct CampusLocationView: View {
         }
         .padding(16)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
+        .compatGlassEffect(in: RoundedRectangle(cornerRadius: 16))
         .accessibilityElement(children: .combine)
     }
 
@@ -272,7 +272,7 @@ struct CampusLocationView: View {
         }
         .padding(16)
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-        .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 16))
+        .compatGlassEffect(in: RoundedRectangle(cornerRadius: 16))
     }
 
     private func distanceStatItem(icon: String, value: String, label: String, color: Color) -> some View {

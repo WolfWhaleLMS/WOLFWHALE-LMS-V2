@@ -132,30 +132,28 @@ struct ResourceLibraryView: View {
 
     private var heroSection: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 24)
-                .fill(
-                    MeshGradient(
-                        width: 3, height: 3,
-                        points: [
-                            [0, 0], [0.5, 0], [1, 0],
-                            [0, 0.5], [0.5, 0.5], [1, 0.5],
-                            [0, 1], [0.5, 1], [1, 1]
-                        ],
-                        colors: [
-                            .purple, .indigo, .blue,
-                            .blue, .purple, .indigo,
-                            .indigo, .blue, .purple
-                        ]
-                    )
-                )
-                .frame(height: 160)
+            CompatMeshGradient(
+                width: 3, height: 3,
+                points: [
+                    [0, 0], [0.5, 0], [1, 0],
+                    [0, 0.5], [0.5, 0.5], [1, 0.5],
+                    [0, 1], [0.5, 1], [1, 1]
+                ],
+                colors: [
+                    .purple, .indigo, .blue,
+                    .blue, .purple, .indigo,
+                    .indigo, .blue, .purple
+                ]
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 24))
+            .frame(height: 160)
 
             VStack(spacing: 8) {
                 Image(systemName: "books.vertical.fill")
                     .font(.system(size: 36, weight: .medium))
                     .foregroundStyle(.white)
                     .symbolRenderingMode(.hierarchical)
-                    .symbolEffect(.breathe, options: .repeat(.periodic(delay: 3)))
+                    .compatBreathePeriodic(delay: 3)
 
                 Text("Resource Library")
                     .font(.title2.bold())
@@ -611,7 +609,7 @@ struct ResourceLibraryView: View {
                         .font(.system(size: 32, weight: .light))
                         .foregroundStyle(.white.opacity(0.9))
                         .symbolRenderingMode(.hierarchical)
-                        .symbolEffect(.breathe, options: .repeat(.periodic(delay: 4)))
+                        .compatBreathePeriodic(delay: 4)
 
                     HStack(spacing: 4) {
                         Image(systemName: "arkit")

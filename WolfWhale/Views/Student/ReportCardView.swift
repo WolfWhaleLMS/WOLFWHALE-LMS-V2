@@ -106,7 +106,7 @@ struct ReportCardView: View {
             Image(systemName: "graduationcap.fill")
                 .font(.system(size: 36))
                 .foregroundStyle(.indigo)
-                .symbolEffect(.breathe)
+                .compatBreatheEffect()
 
             Text("WolfWhale LMS")
                 .font(.title2.bold())

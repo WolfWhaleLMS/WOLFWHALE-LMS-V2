@@ -122,7 +122,7 @@ struct LoginView: View {
                         .accessibilityHint("Enter your school email to sign in")
                 }
                 .padding(10)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 10))
+                .compatGlassEffect(in: RoundedRectangle(cornerRadius: 10))
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
                         .strokeBorder(focusedField == .email ? Color.accentColor.opacity(0.5) : Color.gray.opacity(0.3), lineWidth: 1)
@@ -145,7 +145,7 @@ struct LoginView: View {
                         .accessibilityHint("Enter your password to sign in")
                 }
                 .padding(10)
-                .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 10))
+                .compatGlassEffect(in: RoundedRectangle(cornerRadius: 10))
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
                         .strokeBorder(focusedField == .password ? Color.accentColor.opacity(0.5) : Color.gray.opacity(0.3), lineWidth: 1)
@@ -181,7 +181,7 @@ struct LoginView: View {
                             Image(systemName: "arrow.right")
                                 .font(.caption.bold())
                                 .foregroundStyle(.white)
-                                .symbolEffect(.bounce, options: .repeat(.periodic(delay: 2)))
+                                .compatBouncePeriodic(delay: 2)
                         }
                     }
                 }
@@ -218,7 +218,7 @@ struct LoginView: View {
 
         }
         .padding(14)
-        .glassEffect(in: .rect(cornerRadius: 18))
+        .compatGlassEffectIdentity(in: .rect(cornerRadius: 18))
     }
 
     #if DEBUG
@@ -323,7 +323,7 @@ struct DemoRoleButton: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
-            .glassEffect(.regular, in: RoundedRectangle(cornerRadius: 14))
+            .compatGlassEffect(in: RoundedRectangle(cornerRadius: 14))
         }
         .buttonStyle(.plain)
         .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)

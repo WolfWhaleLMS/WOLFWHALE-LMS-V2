@@ -60,7 +60,7 @@ struct DashboardAnalyticsWidget: View {
         }
         .padding()
         .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 20))
-        .glassEffect(.regular.tint(.purple), in: RoundedRectangle(cornerRadius: 20))
+        .compatGlassEffectTinted(.purple, in: RoundedRectangle(cornerRadius: 20))
     }
 
     private func statItem(icon: String, value: String, label: String, color: Color) -> some View {

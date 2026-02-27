@@ -60,7 +60,7 @@ struct LiveActivityBanner: View {
         .background {
             RoundedRectangle(cornerRadius: 14)
                 .fill(.clear)
-                .glassEffect(.regular.tint(.red), in: RoundedRectangle(cornerRadius: 14))
+                .compatGlassEffectTinted(.red, in: RoundedRectangle(cornerRadius: 14))
         }
         .accessibilityElement(children: .combine)
     }

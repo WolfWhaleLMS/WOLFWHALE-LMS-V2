@@ -139,10 +139,7 @@ struct EnhancedConversationView: View {
                             topTrailingRadius: 16
                         )
                     )
-                    .glassEffect(
-                        message.isFromCurrentUser ? .regular.tint(.orange) : .identity,
-                        in: RoundedRectangle(cornerRadius: 16)
-                    )
+                    .compatGlassEffectConditional(isActive: message.isFromCurrentUser, tintColor: .orange, in: RoundedRectangle(cornerRadius: 16))
 
                 Text(message.timestamp, style: .time)
                     .font(.caption2)
@@ -224,7 +221,7 @@ struct EnhancedConversationView: View {
         .padding(.horizontal)
         .padding(.vertical, 8)
         .background(.bar)
-        .glassEffect(.regular, in: .rect(cornerRadius: 0))
+        .compatGlassEffect(in: .rect(cornerRadius: 0))
     }
 
     // MARK: - Connection Indicator

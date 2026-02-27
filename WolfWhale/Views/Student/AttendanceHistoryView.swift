@@ -219,7 +219,7 @@ struct AttendanceHistoryView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "flame.fill")
                         .foregroundStyle(.orange)
-                        .symbolEffect(.bounce, options: .repeat(.periodic(delay: 2)))
+                        .compatBouncePeriodic(delay: 2)
                     Text("\(currentStreak) Day Streak")
                         .font(.subheadline.bold())
                 }

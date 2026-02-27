@@ -27,35 +27,33 @@ struct ARResourceDetailView: View {
 
     private var heroCard: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 24)
-                .fill(
-                    MeshGradient(
-                        width: 3, height: 3,
-                        points: [
-                            [0, 0], [0.5, 0], [1, 0],
-                            [0, 0.5], [0.5, 0.5], [1, 0.5],
-                            [0, 1], [0.5, 1], [1, 1]
-                        ],
-                        colors: [
-                            Theme.courseColor(resource.colorName),
-                            Theme.courseColor(resource.colorName).opacity(0.8),
-                            .indigo,
-                            Theme.courseColor(resource.colorName).opacity(0.6),
-                            .purple,
-                            Theme.courseColor(resource.colorName).opacity(0.7),
-                            .indigo.opacity(0.8),
-                            Theme.courseColor(resource.colorName).opacity(0.5),
-                            Theme.courseColor(resource.colorName)
-                        ]
-                    )
-                )
-                .frame(height: 220)
+            CompatMeshGradient(
+                width: 3, height: 3,
+                points: [
+                    [0, 0], [0.5, 0], [1, 0],
+                    [0, 0.5], [0.5, 0.5], [1, 0.5],
+                    [0, 1], [0.5, 1], [1, 1]
+                ],
+                colors: [
+                    Theme.courseColor(resource.colorName),
+                    Theme.courseColor(resource.colorName).opacity(0.8),
+                    .indigo,
+                    Theme.courseColor(resource.colorName).opacity(0.6),
+                    .purple,
+                    Theme.courseColor(resource.colorName).opacity(0.7),
+                    .indigo.opacity(0.8),
+                    Theme.courseColor(resource.colorName).opacity(0.5),
+                    Theme.courseColor(resource.colorName)
+                ]
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 24))
+            .frame(height: 220)
 
             VStack(spacing: 16) {
                 Image(systemName: resource.iconSystemName)
                     .font(.system(size: 64, weight: .light))
                     .foregroundStyle(.white)
-                    .symbolEffect(.breathe, options: .repeating)
+                    .compatBreatheRepeating()
 
                 VStack(spacing: 4) {
                     Text(resource.title)

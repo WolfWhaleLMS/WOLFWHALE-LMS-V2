@@ -220,7 +220,7 @@ struct AdminDashboardView: View {
         HStack(spacing: 10) {
             Image(systemName: "exclamationmark.triangle.fill")
                 .foregroundStyle(.orange)
-                .symbolEffect(.pulse, options: .repeat(.periodic(delay: 2)))
+                .compatPulsePeriodic(delay: 2)
             Text(dataError)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
@@ -248,7 +248,7 @@ struct AdminDashboardView: View {
     // MARK: - iPhone Admin Content (Original Layout)
 
     private var iPhoneAdminContent: some View {
-        GlassEffectContainer {
+        CompatGlassEffectContainer {
             LazyVStack(spacing: 16) {
                 if let dataError = viewModel.dataError {
                     adminErrorBanner(dataError)

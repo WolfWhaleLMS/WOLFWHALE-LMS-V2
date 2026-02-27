@@ -31,7 +31,7 @@ struct ParentDashboardView: View {
                                 HStack(spacing: 10) {
                                     Image(systemName: "exclamationmark.triangle.fill")
                                         .foregroundStyle(.orange)
-                                        .symbolEffect(.breathe, options: .repeat(.periodic(delay: 2)))
+                                        .compatBreathePeriodic(delay: 2)
                                     Text(dataError)
                                         .font(.subheadline)
                                         .foregroundStyle(.secondary)
@@ -98,7 +98,7 @@ struct ParentDashboardView: View {
                         Image(systemName: "bell.badge.fill")
                             .foregroundStyle(.red)
                             .symbolRenderingMode(.hierarchical)
-                            .symbolEffect(.pulse, options: .repeat(.periodic(delay: 3)))
+                            .compatPulsePeriodic(delay: 3)
                             .accessibilityLabel("\(viewModel.unreadParentAlertCount) unread alerts")
                     }
                 }

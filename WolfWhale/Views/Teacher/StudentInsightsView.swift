@@ -112,7 +112,7 @@ struct StudentInsightsView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .font(.caption)
-                            .symbolEffect(.breathe, options: .repeat(.periodic(delay: 2)))
+                            .compatBreathePeriodic(delay: 2)
                         Text("\(atRiskCount)")
                             .font(.caption.bold())
                     }
@@ -670,7 +670,7 @@ struct StudentDetailInsightView: View {
             HStack(spacing: 8) {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundStyle(.red)
-                    .symbolEffect(.variableColor.iterative, options: .repeat(.periodic(delay: 3)))
+                    .compatVariableColorPeriodic(delay: 3)
                 Text("Risk Factors")
                     .font(.headline)
                     .foregroundStyle(Color(.label))
