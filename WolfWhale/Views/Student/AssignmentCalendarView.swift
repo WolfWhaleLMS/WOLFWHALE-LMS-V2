@@ -667,6 +667,7 @@ private struct AssignmentCalendarDayCell: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     NavigationStack {
         AssignmentCalendarView(viewModel: {
@@ -676,3 +677,4 @@ private struct AssignmentCalendarDayCell: View {
         }())
     }
 }
+#endif

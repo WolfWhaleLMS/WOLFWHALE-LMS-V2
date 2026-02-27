@@ -2701,6 +2701,7 @@ class AppViewModel {
 
         let trimmedCode = classCode.trimmingCharacters(in: .whitespacesAndNewlines)
 
+        #if DEBUG
         if isDemoMode {
             guard !trimmedCode.isEmpty else {
                 throw EnrollmentError.invalidClassCode
@@ -2715,6 +2716,7 @@ class AppViewModel {
             }
             throw EnrollmentError.invalidClassCode
         }
+        #endif
 
         let courseName = try await dataService.enrollByClassCode(studentId: user.id, classCode: trimmedCode)
         courses = try await dataService.fetchCourses(for: user.id, role: user.role, schoolId: user.schoolId)
@@ -2731,6 +2733,7 @@ class AppViewModel {
     func loadCourseCatalog() async {
         guard let user = currentUser, user.role == .student else { return }
 
+        #if DEBUG
         if isDemoMode {
             let allMock = mockService.sampleCourses()
             let enrolledIds = Set(courses.map(\.id))
@@ -2763,6 +2766,7 @@ class AppViewModel {
             allAvailableCourses = (allMock + extraCourses).filter { !enrolledIds.contains($0.id) }
             return
         }
+        #endif
 
         do {
             let allSchoolCourses = try await dataService.fetchCourses(
