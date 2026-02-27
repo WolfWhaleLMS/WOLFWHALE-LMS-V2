@@ -739,6 +739,7 @@ struct StudentDashboardView: View {
         }
         .font(.headline)
         .symbolRenderingMode(.hierarchical)
+        .accessibilityAddTraits(.isHeader)
     }
 
     private var loadingState: some View {

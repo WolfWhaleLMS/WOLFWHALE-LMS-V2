@@ -562,7 +562,7 @@ struct LessonView: View {
         case "Indigenous Peoples": IndigenousPeoplesView()
         case "World Map Quiz": WorldMapQuizView()
         case "Chess": ChessGameView()
-        default: Text("Coming Soon")
+        default: ContentUnavailableView("Content Not Available", systemImage: "doc.text", description: Text("This lesson type is not yet supported."))
         }
     }
 

@@ -52,7 +52,9 @@ final class ImageCacheService: @unchecked Sendable {
         memoryCache.totalCostLimit = 50 * 1024 * 1024 // 50 MB
 
         // Disk cache directory
-        let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+        guard let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else {
+            fatalError("Unable to locate caches directory")
+        }
         diskCacheURL = caches.appendingPathComponent("ImageCache", isDirectory: true)
         do {
             try FileManager.default.createDirectory(at: diskCacheURL, withIntermediateDirectories: true)

@@ -16,6 +16,8 @@ struct VideoPlayerView: View {
     @State private var showSpeedPicker = false
     @State private var hasError = false
     @State private var timeObserver: Any?
+    @State private var failureObserver: NSObjectProtocol?
+    @State private var completionObserver: NSObjectProtocol?
     @State private var progressService = VideoProgressService()
     @State private var controlsTimer: Timer?
 
@@ -230,7 +232,7 @@ struct VideoPlayerView: View {
         timeObserver = observer
 
         // Observe errors via notification
-        NotificationCenter.default.addObserver(
+        failureObserver = NotificationCenter.default.addObserver(
             forName: .AVPlayerItemFailedToPlayToEndTime,
             object: avPlayer.currentItem,
             queue: .main
@@ -241,7 +243,7 @@ struct VideoPlayerView: View {
         }
 
         // Observe playback status
-        NotificationCenter.default.addObserver(
+        completionObserver = NotificationCenter.default.addObserver(
             forName: .AVPlayerItemDidPlayToEndTime,
             object: avPlayer.currentItem,
             queue: .main
@@ -273,6 +275,12 @@ struct VideoPlayerView: View {
             player.removeTimeObserver(observer)
         }
         timeObserver = nil
+
+        // Remove NotificationCenter observers
+        if let observer = failureObserver { NotificationCenter.default.removeObserver(observer) }
+        if let observer = completionObserver { NotificationCenter.default.removeObserver(observer) }
+        failureObserver = nil
+        completionObserver = nil
 
         player?.pause()
         player = nil

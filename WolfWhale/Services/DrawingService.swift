@@ -412,7 +412,9 @@ final class DrawingService {
     // MARK: - File Paths
 
     private func drawingsDirectory() -> URL {
-        let docs = fileManager.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        guard let docs = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first else {
+            fatalError("Unable to locate document directory")
+        }
         return docs.appendingPathComponent("Drawings", isDirectory: true)
     }
 

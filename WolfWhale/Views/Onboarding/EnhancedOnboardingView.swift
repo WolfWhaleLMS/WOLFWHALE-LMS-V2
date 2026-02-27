@@ -150,6 +150,7 @@ struct EnhancedOnboardingView: View {
 
                 Image(systemName: "graduationcap.fill")
                     .font(.system(size: 72))
+                    .minimumScaleFactor(0.5)
                     .foregroundStyle(
                         LinearGradient(
                             colors: [.indigo, .purple],
@@ -166,7 +167,7 @@ struct EnhancedOnboardingView: View {
                     .foregroundStyle(.white.opacity(0.8))
 
                 Text("WolfWhale LMS")
-                    .font(.system(size: 34, weight: .bold, design: .serif))
+                    .font(.title.bold())
                     .foregroundStyle(.white)
 
                 Text("Your complete learning companion")
@@ -190,7 +191,7 @@ struct EnhancedOnboardingView: View {
 
             VStack(spacing: 16) {
                 Text("Everything You Need")
-                    .font(.system(size: 28, weight: .bold))
+                    .font(.title2.bold())
                     .foregroundStyle(.white)
                 Text("Powerful tools for modern education.")
                     .font(.body)
@@ -249,6 +250,7 @@ struct EnhancedOnboardingView: View {
 
                 Image(systemName: "bell.badge.fill")
                     .font(.system(size: 56))
+                    .minimumScaleFactor(0.5)
                     .foregroundStyle(
                         LinearGradient(
                             colors: [.indigo, .purple],
@@ -261,7 +263,7 @@ struct EnhancedOnboardingView: View {
 
             VStack(spacing: 16) {
                 Text("Stay on Top of\nAssignments & Grades")
-                    .font(.system(size: 28, weight: .bold))
+                    .font(.title2.bold())
                     .foregroundStyle(.white)
                     .multilineTextAlignment(.center)
 
@@ -345,6 +347,7 @@ struct EnhancedOnboardingView: View {
 
                 Image(systemName: biometricIcon)
                     .font(.system(size: 56))
+                    .minimumScaleFactor(0.5)
                     .foregroundStyle(
                         LinearGradient(
                             colors: [.purple, .indigo],
@@ -357,7 +360,7 @@ struct EnhancedOnboardingView: View {
 
             VStack(spacing: 16) {
                 Text("Secure Your Account")
-                    .font(.system(size: 28, weight: .bold))
+                    .font(.title2.bold())
                     .foregroundStyle(.white)
 
                 Text("Protect your data with \(biometricName).\nQuickly unlock the app without\nentering your password every time.")
@@ -464,6 +467,7 @@ struct EnhancedOnboardingView: View {
                 if showCheckmark {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 64))
+                        .minimumScaleFactor(0.5)
                         .foregroundStyle(
                             LinearGradient(
                                 colors: [.green, .cyan],
@@ -488,7 +492,7 @@ struct EnhancedOnboardingView: View {
 
             VStack(spacing: 16) {
                 Text("You're All Set!")
-                    .font(.system(size: 28, weight: .bold))
+                    .font(.title2.bold())
                     .foregroundStyle(.white)
                 Text("Your learning journey starts now.\nSign in with your school credentials\nto get started.")
                     .font(.body)

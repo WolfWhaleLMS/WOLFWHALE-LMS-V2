@@ -137,11 +137,12 @@ struct SignUpView: View {
 
                 Image(systemName: "envelope.badge.shield.half.filled")
                     .font(.system(size: 40))
+                    .minimumScaleFactor(0.5)
                     .foregroundStyle(.orange)
             }
 
             Text("Waiting for Parental Consent")
-                .font(.system(size: 24, weight: .black, design: .serif))
+                .font(.title3.weight(.black))
                 .tracking(1)
                 .multilineTextAlignment(.center)
 

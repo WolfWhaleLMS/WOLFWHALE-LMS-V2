@@ -22,6 +22,9 @@ final class ChatRealtimeService {
 
     // MARK: - Private State
 
+    /// Maximum number of active channels to prevent unbounded memory growth.
+    private let maxActiveChannels = 10
+
     /// Active Supabase Realtime channels keyed by conversation ID string.
     private var activeChannels: [String: RealtimeChannelV2] = [:]
 
@@ -137,6 +140,18 @@ final class ChatRealtimeService {
                     #if DEBUG
                     print("[ChatRealtimeService] Failed to decode message: \(error)")
                     #endif
+                }
+            }
+        }
+
+        // Evict the oldest channel if at capacity to prevent unbounded growth.
+        if activeChannels.count >= maxActiveChannels {
+            if let oldestKey = activeChannels.keys.first {
+                let channel = activeChannels.removeValue(forKey: oldestKey)
+                listenTasks[oldestKey]?.cancel()
+                listenTasks.removeValue(forKey: oldestKey)
+                if let channel {
+                    await supabaseClient.realtimeV2.removeChannel(channel)
                 }
             }
         }

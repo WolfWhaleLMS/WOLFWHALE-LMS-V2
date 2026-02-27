@@ -220,6 +220,7 @@ struct DrawingCanvasView: View {
                     } label: {
                         Image(systemName: "square.and.arrow.down")
                     }
+                    .accessibilityLabel("Save drawing")
                     .sensoryFeedback(.success, trigger: saveTrigger)
                 }
             }
@@ -427,6 +428,7 @@ struct DrawingCanvasView: View {
                     drawingService.recordStroke()
                 }
             )
+            .accessibilityLabel("Drawing canvas")
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .clipped()
@@ -445,6 +447,7 @@ struct DrawingCanvasView: View {
                 Image(systemName: "arrow.uturn.backward")
                     .font(.body.bold())
             }
+            .accessibilityLabel("Undo")
             .disabled(drawingService.undoCount == 0)
             .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
@@ -457,6 +460,7 @@ struct DrawingCanvasView: View {
                 Image(systemName: "arrow.uturn.forward")
                     .font(.body.bold())
             }
+            .accessibilityLabel("Redo")
             .disabled(drawingService.redoCount == 0)
             .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
 
@@ -471,6 +475,7 @@ struct DrawingCanvasView: View {
                 Image(systemName: "trash")
                     .font(.body)
             }
+            .accessibilityLabel("Clear canvas")
             .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
 
             Spacer()

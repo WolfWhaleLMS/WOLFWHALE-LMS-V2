@@ -119,6 +119,7 @@ struct OnboardingView: View {
 
                 Image(systemName: "book.and.wrench.fill")
                     .font(.system(size: 64))
+                    .minimumScaleFactor(0.5)
                     .foregroundStyle(
                         Theme.brandGradient
                     )
@@ -130,7 +131,7 @@ struct OnboardingView: View {
                     .font(.title2)
                     .foregroundStyle(.white.opacity(0.8))
                 Text("WolfWhale LMS")
-                    .font(.system(size: 34, weight: .bold, design: .serif))
+                    .font(.title.bold())
                     .foregroundStyle(.white)
                 Text("A modern learning management system\ndesigned for the next generation of education.")
                     .font(.body)
@@ -153,7 +154,7 @@ struct OnboardingView: View {
 
             VStack(spacing: 16) {
                 Text("Four Experiences")
-                    .font(.system(size: 28, weight: .bold))
+                    .font(.title2.bold())
                     .foregroundStyle(.white)
                 Text("One platform, tailored for everyone.")
                     .font(.body)
@@ -181,7 +182,7 @@ struct OnboardingView: View {
 
             VStack(spacing: 16) {
                 Text("Everything You Need")
-                    .font(.system(size: 28, weight: .bold))
+                    .font(.title2.bold())
                     .foregroundStyle(.white)
                 Text("Powerful tools for modern education.")
                     .font(.body)
@@ -210,7 +211,7 @@ struct OnboardingView: View {
 
             VStack(spacing: 16) {
                 Text("Learn & Level Up")
-                    .font(.system(size: 28, weight: .bold))
+                    .font(.title2.bold())
                     .foregroundStyle(.white)
                 Text("Education meets engagement.")
                     .font(.body)
@@ -252,6 +253,7 @@ struct OnboardingView: View {
 
                 Image(systemName: "sparkles")
                     .font(.system(size: 56))
+                    .minimumScaleFactor(0.5)
                     .foregroundStyle(
                         LinearGradient(
                             colors: [.orange, .cyan],
@@ -264,7 +266,7 @@ struct OnboardingView: View {
 
             VStack(spacing: 16) {
                 Text("Ready to Begin?")
-                    .font(.system(size: 28, weight: .bold))
+                    .font(.title2.bold())
                     .foregroundStyle(.white)
                 Text("Your learning journey starts now.\nSign in with your school credentials\nto get started.")
                     .font(.body)

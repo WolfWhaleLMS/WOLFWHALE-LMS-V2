@@ -102,6 +102,7 @@ struct MessagesListView: View {
                             .foregroundStyle(.white)
                             .frame(width: 20, height: 20)
                             .background(.blue, in: Circle())
+                            .accessibilityHidden(true)
                     }
                 }
             }

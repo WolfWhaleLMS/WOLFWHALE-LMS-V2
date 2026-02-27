@@ -148,6 +148,13 @@ class AppViewModel {
     /// Cancels all tracked active tasks. Called during logout/cleanup
     /// to prevent stale network responses from writing to cleared state.
     func cancelAllTasks() {
+        searchTask?.cancel()
+        searchTask = nil
+        refreshTask?.cancel()
+        refreshTask = nil
+        autoRefreshTask?.cancel()
+        autoRefreshTask = nil
+
         for (_, task) in activeTasks {
             task.cancel()
         }
@@ -3228,7 +3235,6 @@ class AppViewModel {
 
     // MARK: - Attendance + Parent
     // Uses attendance_records table (not "attendance") and attendance_date column (not "date")
-    // TODO: Route through DataService for deduplication and retry support
     func fetchAttendanceForCourse(courseId: UUID) async -> [AttendanceRecord] {
         if isDemoMode {
             return attendance.filter { record in

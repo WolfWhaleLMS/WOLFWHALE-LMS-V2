@@ -101,6 +101,7 @@ struct FrenchVerbView: View {
                 } label: {
                     Image(systemName: "book.fill")
                 }
+                .accessibilityLabel("Conjugation rules")
             }
         }
         .sheet(isPresented: $showRulesSheet) {

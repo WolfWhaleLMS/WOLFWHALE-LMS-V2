@@ -735,6 +735,17 @@ struct DataService: Sendable {
                 let opts = optionsByQuestion[q.id] ?? []
                 let qType = QuizQuestionType(rawValue: q.type ?? "multiple_choice") ?? .multipleChoice
 
+                guard !opts.isEmpty else {
+                    return QuizQuestion(
+                        id: q.id,
+                        text: q.questionText,
+                        questionType: qType,
+                        options: [],
+                        correctIndex: 0,
+                        explanation: q.explanation ?? ""
+                    )
+                }
+
                 switch qType {
                 case .multipleChoice, .trueFalse:
                     let optionTexts = opts.map(\.optionText)
@@ -1192,7 +1203,7 @@ struct DataService: Sendable {
         await CacheService.shared.invalidateByPrefix("conversations_")
     }
 
-    // TODO: Migrate callers to use fetchMessages(conversationId:before:limit:) below instead.
+    // Legacy method maintained for compatibility
     func fetchOlderMessages(conversationId: UUID, before: Date, limit: Int = 30) async throws -> [MessageDTO] {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]

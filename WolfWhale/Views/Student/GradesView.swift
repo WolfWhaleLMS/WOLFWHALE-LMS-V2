@@ -54,6 +54,7 @@ struct GradesView: View {
                                         .font(.caption)
                                         .foregroundStyle(.orange)
                                 }
+                                .accessibilityLabel("Refresh grades")
                                 Button {
                                     viewModel.gradeError = nil
                                 } label: {
@@ -61,6 +62,7 @@ struct GradesView: View {
                                         .foregroundStyle(.secondary)
                                 }
                                 .buttonStyle(.plain)
+                                .accessibilityLabel("Dismiss error")
                             }
                             .padding(12)
                             .background(Color.orange.opacity(0.1))

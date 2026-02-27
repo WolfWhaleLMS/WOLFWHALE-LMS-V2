@@ -40,7 +40,9 @@ final class SharePlayService {
 
     deinit {
         messageTask?.cancel()
+        messageTask = nil
         sessionTask?.cancel()
+        sessionTask = nil
     }
 
     // MARK: - Prepare & Activate

@@ -68,6 +68,7 @@ struct TeacherDashboardView: View {
                     VStack(alignment: .leading, spacing: 10) {
                         Text("My Courses")
                             .font(.headline)
+                            .accessibilityAddTraits(.isHeader)
 
                         if viewModel.courses.isEmpty {
                             HStack {
@@ -738,6 +739,7 @@ struct TeacherDashboardView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Quick Actions")
                 .font(.headline)
+                .accessibilityAddTraits(.isHeader)
 
             HStack(spacing: 12) {
                 quickActionButton(icon: "plus.circle.fill", label: "New Course", color: .orange) {
@@ -824,6 +826,7 @@ struct TeacherDashboardView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Recent Submissions")
                 .font(.headline)
+                .accessibilityAddTraits(.isHeader)
 
             if viewModel.assignments.filter(\.isSubmitted).isEmpty {
                 HStack {
@@ -887,6 +890,7 @@ struct TeacherDashboardView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Announcements")
                 .font(.headline)
+                .accessibilityAddTraits(.isHeader)
 
             if viewModel.announcements.isEmpty {
                 HStack {

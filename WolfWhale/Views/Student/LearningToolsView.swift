@@ -233,9 +233,7 @@ struct LearningToolsView: View {
         case "Chess":
             ChessGameView()
         default:
-            Text("Coming Soon")
-                .font(.title2)
-                .foregroundStyle(.secondary)
+            ContentUnavailableView("Content Not Available", systemImage: "wrench.and.screwdriver", description: Text("This tool is not yet available."))
         }
     }
 }

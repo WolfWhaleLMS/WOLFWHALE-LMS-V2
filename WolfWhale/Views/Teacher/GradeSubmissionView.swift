@@ -353,7 +353,7 @@ struct GradeSubmissionView: View {
                     .foregroundStyle(Color(.label))
                 Spacer()
                 let selected = rubricSelections[criterion.id]
-                Text(selected != nil ? "\(selected!) / \(criterion.maxPoints)" : "-- / \(criterion.maxPoints)")
+                Text(selected.map { "\($0) / \(criterion.maxPoints)" } ?? "-- / \(criterion.maxPoints)")
                     .font(.caption.bold())
                     .foregroundStyle(selected != nil ? .red : .secondary)
             }

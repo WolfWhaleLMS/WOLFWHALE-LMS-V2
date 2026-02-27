@@ -35,7 +35,6 @@ struct ContentView: View {
             // Safe without a developer account: UNUserNotificationCenter
             // works for local notifications. Both methods handle errors internally.
             viewModel.notificationService.registerCategories()
-            // TODO: Re-enable when ready to prompt for notifications.
             // await viewModel.notificationService.requestAuthorization()
 
             viewModel.checkSession()

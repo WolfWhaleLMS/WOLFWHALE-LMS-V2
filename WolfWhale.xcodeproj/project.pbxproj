@@ -421,6 +421,7 @@
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "WolfWhale uses Face ID to securely unlock your account.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "WolfWhale reads your health data to show your wellness stats and support PE class tracking.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "WolfWhale saves PE workout data to Apple Health.";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "WolfWhale uses your local network to connect with nearby students for real-time peer-to-peer study collaborations.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "WolfWhale uses your location to verify campus attendance and show campus maps.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "WolfWhale uses the microphone for speech-to-text in assignments and language learning exercises.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "WolfWhale uses your photo library to set your profile picture and attach images to assignments.";
@@ -472,6 +473,7 @@
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "WolfWhale uses Face ID to securely unlock your account.";
 				INFOPLIST_KEY_NSHealthShareUsageDescription = "WolfWhale reads your health data to show your wellness stats and support PE class tracking.";
 				INFOPLIST_KEY_NSHealthUpdateUsageDescription = "WolfWhale saves PE workout data to Apple Health.";
+				INFOPLIST_KEY_NSLocalNetworkUsageDescription = "WolfWhale uses your local network to connect with nearby students for real-time peer-to-peer study collaborations.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "WolfWhale uses your location to verify campus attendance and show campus maps.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "WolfWhale uses the microphone for speech-to-text in assignments and language learning exercises.";
 				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "WolfWhale uses your photo library to set your profile picture and attach images to assignments.";

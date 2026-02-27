@@ -92,8 +92,7 @@ class BiometricAuthService {
                 // Refresh the Supabase session after biometric success to ensure
                 // the backend token is still valid. This prevents a stale JWT from
                 // causing silent 401s on the next API call.
-                // TODO: Refresh Supabase session after biometric success
-                // Once AuthService is injected, uncomment the following:
+                // Refresh the Supabase session so the backend token stays valid.
                 if let authService {
                     let refreshed = await authService.refreshSession()
                     #if DEBUG

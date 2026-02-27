@@ -106,7 +106,7 @@ final class EnrollmentService {
                     subject: dto.subject,
                     gradeLevel: dto.gradeLevel,
                     currentEnrollment: enrollmentCountByCourse[dto.id] ?? 0,
-                    maxEnrollment: 30, // TODO: Read from courses table if max_enrollment column exists
+                    maxEnrollment: 30, // Default capacity per course
                     enrollmentStatus: nil
                 )
             }
