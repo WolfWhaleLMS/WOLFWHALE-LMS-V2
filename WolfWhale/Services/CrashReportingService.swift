@@ -20,10 +20,10 @@ final class CrashReportingService {
 
     static let shared = CrashReportingService()
 
-    private nonisolated(unsafe) static let logger = Logger(subsystem: "com.wolfwhale.lms", category: "CrashReporting")
+    private static let logger = Logger(subsystem: "com.wolfwhale.lms", category: "CrashReporting")
 
     /// Key for persisting failed crash reports to disk so they survive app restarts.
-    private nonisolated(unsafe) static let failedReportsKey = "com.wolfwhale.failedCrashReports"
+    private static let failedReportsKey = "com.wolfwhale.failedCrashReports"
 
     private var errorBuffer: [(date: Date, error: String, context: String)] = []
     private let maxBufferSize = 50

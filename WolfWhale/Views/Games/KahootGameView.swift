@@ -90,7 +90,7 @@ struct KahootGameView: View {
                     Image(systemName: "gamecontroller.fill")
                         .font(.system(size: 48))
                         .foregroundStyle(Theme.brandGradient)
-                        .symbolEffect(.wiggle, options: .repeating.speed(0.5))
+                        .symbolEffect(.pulse, options: .repeating.speed(0.5))
 
                     Text("Quiz Game")
                         .font(.system(size: 34, weight: .black, design: .rounded))
