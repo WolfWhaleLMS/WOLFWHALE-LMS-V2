@@ -114,6 +114,7 @@ struct QuizView: View {
             HStack {
                 Text("Question \(currentQuestion + 1) of \(quiz.questions.count)")
                     .font(.subheadline.bold())
+                    .accessibilityAddTraits(.isHeader)
                 Spacer()
                 let answered = countAnswered()
                 Text("\(answered) answered")
@@ -159,6 +160,7 @@ struct QuizView: View {
 
             Text(question.text)
                 .font(.title3.bold())
+                .accessibilityAddTraits(.isHeader)
         }
         .padding(20)
         .frame(maxWidth: .infinity, alignment: .leading)

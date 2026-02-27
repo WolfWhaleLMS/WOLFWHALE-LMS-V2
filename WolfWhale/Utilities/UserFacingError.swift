@@ -19,7 +19,7 @@ enum UserFacingError: LocalizedError {
         case .notFound(let msg): return msg
         case .permissionDenied(let msg): return msg
         case .validation(let msg): return msg
-        case .generic: return "Something went wrong. Please try again."
+        case .generic: return "We couldn\u{2019}t complete that action. Please try again or check your connection."
         }
     }
 
@@ -40,7 +40,7 @@ enum UserFacingError: LocalizedError {
             case .cancelled:
                 return .generic // User cancelled, don't show error
             default:
-                return .network("A network error occurred. Please try again.")
+                return .network("A network error occurred. Please check your connection and try again.")
             }
         }
 
@@ -82,6 +82,6 @@ enum UserFacingError: LocalizedError {
 
     /// Convenience: returns a sanitized user-facing message string directly.
     static func message(from error: Error) -> String {
-        sanitize(error).errorDescription ?? "Something went wrong. Please try again."
+        sanitize(error).errorDescription ?? "We couldn\u{2019}t complete that action. Please try again or check your connection."
     }
 }

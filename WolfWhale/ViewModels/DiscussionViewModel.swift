@@ -9,6 +9,14 @@ import Supabase
 @MainActor
 class DiscussionViewModel {
 
+    // MARK: - Limits
+
+    /// Maximum number of threads kept in memory to prevent unbounded growth.
+    private let maxThreads = 200
+
+    /// Maximum number of replies kept in memory to prevent unbounded growth.
+    private let maxReplies = 500
+
     // MARK: - Data
 
     /// All loaded discussion threads across courses.
@@ -19,6 +27,25 @@ class DiscussionViewModel {
 
     /// Error surfaced to the UI.
     var dataError: String?
+
+    // MARK: - Lifecycle
+
+    deinit {
+        // No active subscriptions or timers to clean up.
+        // Arrays are value types and will be released automatically.
+    }
+
+    // MARK: - Array Trimming
+
+    /// Trims arrays to their maximum allowed sizes, keeping the most recent entries.
+    private func trimArraysIfNeeded() {
+        if discussionThreads.count > maxThreads {
+            discussionThreads = Array(discussionThreads.prefix(maxThreads))
+        }
+        if discussionReplies.count > maxReplies {
+            discussionReplies = Array(discussionReplies.suffix(maxReplies))
+        }
+    }
 
     // MARK: - Load Threads
 
@@ -80,6 +107,7 @@ class DiscussionViewModel {
 
             discussionThreads.removeAll { $0.courseId == courseId }
             discussionThreads.append(contentsOf: threads)
+            trimArraysIfNeeded()
         } catch {
             #if DEBUG
             print("[DiscussionViewModel] loadThreads failed: \(error)")
@@ -132,6 +160,7 @@ class DiscussionViewModel {
                     createdDate: now.addingTimeInterval(-86400)
                 )
             ])
+            trimArraysIfNeeded()
         }
     }
 
@@ -199,6 +228,7 @@ class DiscussionViewModel {
             content: trimmedContent, createdDate: Date()
         )
         discussionReplies.append(newReply)
+        trimArraysIfNeeded()
 
         if let idx = discussionThreads.firstIndex(where: { $0.id == threadId }) {
             discussionThreads[idx].replyCount += 1
@@ -289,6 +319,7 @@ class DiscussionViewModel {
 
             discussionReplies.removeAll { $0.threadId == threadId }
             discussionReplies.append(contentsOf: replies)
+            trimArraysIfNeeded()
         } catch {
             #if DEBUG
             print("[DiscussionViewModel] loadReplies failed: \(error)")

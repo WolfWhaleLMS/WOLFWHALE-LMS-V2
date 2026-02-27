@@ -184,7 +184,7 @@ struct AppSettingsView: View {
                         .foregroundStyle(.secondary)
                 } icon: {
                     Image(systemName: "lock.shield")
-                        .foregroundStyle(.gray)
+                        .foregroundStyle(.secondary)
                         .symbolRenderingMode(.hierarchical)
                 }
             }
@@ -461,7 +461,7 @@ struct AppSettingsView: View {
                     Text("Build")
                 } icon: {
                     Image(systemName: "hammer.fill")
-                        .foregroundStyle(.gray)
+                        .foregroundStyle(.secondary)
                         .symbolRenderingMode(.hierarchical)
                 }
                 Spacer()
@@ -565,5 +565,7 @@ struct AppSettingsView: View {
                 .font(.caption2.bold())
         }
         .foregroundStyle(.secondary)
+        .accessibilityAddTraits(.isHeader)
+        .accessibilityLabel(title)
     }
 }

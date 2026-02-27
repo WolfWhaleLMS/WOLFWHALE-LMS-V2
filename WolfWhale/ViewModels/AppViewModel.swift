@@ -140,7 +140,7 @@ class AppViewModel {
     private let autoRefreshInterval: TimeInterval = 300
     let networkMonitor = NetworkMonitor()
 
-    // MARK: - Active Task Cancellation
+    // MARK: - Task Management
     /// Tracks in-flight async tasks by key so they can be cancelled on logout
     /// or when a newer request supersedes the previous one.
     private var activeTasks: [String: Task<Void, Never>] = [:]
@@ -604,6 +604,8 @@ class AppViewModel {
         }
     }
 
+    // MARK: - Authentication
+
     func login() {
         guard !email.isEmpty, !password.isEmpty else {
             loginError = "Please enter your email and password"
@@ -762,6 +764,8 @@ class AppViewModel {
         }
     }
 
+    // MARK: - Cleanup
+
     func logout() {
         // Audit: record logout before clearing state
         if !isDemoMode {
@@ -808,6 +812,17 @@ class AppViewModel {
         defaults.removeObject(forKey: UserDefaultsKeys.upcomingAssignments)
         defaults.removeObject(forKey: UserDefaultsKeys.gradesSummary)
         defaults.removeObject(forKey: UserDefaultsKeys.scheduleToday)
+
+        // FERPA: Clear wellness/health data so the next user doesn't see previous user's data
+        defaults.removeObject(forKey: UserDefaultsKeys.hydrationGlasses)
+        defaults.removeObject(forKey: UserDefaultsKeys.hydrationDate)
+
+        // Clear any residual audit log entries queued in UserDefaults (already flushed above,
+        // but wipe the local queue to prevent data leakage if flush failed)
+        defaults.removeObject(forKey: UserDefaultsKeys.auditLogOfflineQueue)
+
+        // Clear Spotlight index counter
+        defaults.removeObject(forKey: UserDefaultsKeys.spotlightIndexedCount)
 
         // FERPA: Also clear from App Group suite and revoke auth flag
         if let sharedDefaults = UserDefaults(suiteName: UserDefaultsKeys.widgetAppGroup) {
@@ -1142,6 +1157,8 @@ class AppViewModel {
             }
         }
     }
+
+    // MARK: - Data Fetching
 
     func loadData() async {
         guard let user = currentUser else { return }
@@ -1563,7 +1580,7 @@ class AppViewModel {
         }
     }
 
-    // MARK: - Search Debouncing
+    // MARK: - Search
 
     func debouncedSearch(query: String, context: SearchContext) {
         searchTask?.cancel()
@@ -2126,6 +2143,18 @@ class AppViewModel {
         allUsers = freshUsers
         userPagination.offset = freshUsers.count
         userPagination.hasMore = freshUsers.count >= userPagination.pageSize
+
+        // Audit: record user creation (FERPA compliance -- admin actions must be tracked)
+        await auditLog.log(
+            AuditAction.create,
+            entityType: AuditEntityType.user,
+            entityId: result.user.id.uuidString,
+            details: [
+                "email": email,
+                "role": role.rawValue,
+                "created_by": admin.id.uuidString
+            ]
+        )
     }
 
     func deleteUser(userId: UUID) async throws {
@@ -2232,7 +2261,8 @@ class AppViewModel {
         }
     }
 
-    // MARK: - Teacher: Create Assignment
+    // MARK: - Assignment Management
+
     // InsertAssignmentDTO uses 'maxPoints' (via CodingKey mapped to 'max_points')
     func createAssignment(courseId: UUID, title: String, instructions: String, dueDate: Date, points: Int) async throws {
         guard let user = currentUser else { return }
@@ -2537,7 +2567,8 @@ class AppViewModel {
         return AdvancedQuizResult(score: score, hasPendingReview: hasPending)
     }
 
-    // MARK: - Conversations
+    // MARK: - Messaging
+
     func createConversation(title: String, recipientNames: [String]) async throws {
         guard let user = currentUser else { return }
 
@@ -2753,7 +2784,8 @@ class AppViewModel {
         }
     }
 
-    // MARK: - Teacher: Grade Submission
+    // MARK: - Grade Management
+
     func gradeSubmission(assignmentId: UUID, studentId: UUID?, score: Double, letterGrade: String, feedback: String?) async throws {
         isLoading = true
         gradeError = nil
@@ -3145,6 +3177,14 @@ class AppViewModel {
     func deleteAssignmentAndClean(assignmentId: UUID) async throws {
         if !isDemoMode {
             try await dataService.deleteAssignment(assignmentId: assignmentId)
+
+            // Audit: record assignment deletion (FERPA compliance)
+            await auditLog.log(
+                AuditAction.delete,
+                entityType: AuditEntityType.assignment,
+                entityId: assignmentId.uuidString,
+                details: ["deleted_by": currentUser?.id.uuidString ?? "unknown"]
+            )
         }
         assignments.removeAll { $0.id == assignmentId }
     }
@@ -3155,6 +3195,21 @@ class AppViewModel {
         }
         if let courseIndex = courses.firstIndex(where: { $0.id == courseId }) {
             courses[courseIndex].enrolledStudentCount = max(0, courses[courseIndex].enrolledStudentCount - 1)
+        }
+
+        // Audit: record student unenrollment (FERPA compliance -- enrollment changes must be tracked)
+        if !isDemoMode {
+            await auditLog.log(
+                AuditAction.delete,
+                entityType: AuditEntityType.enrollment,
+                entityId: courseId.uuidString,
+                details: [
+                    "student_id": studentId.uuidString,
+                    "course_id": courseId.uuidString,
+                    "action": "unenroll",
+                    "performed_by": currentUser?.id.uuidString ?? "unknown"
+                ]
+            )
         }
     }
 
@@ -3448,12 +3503,12 @@ class AppViewModel {
     func lockApp() {
         guard biometricEnabled, isAuthenticated else { return }
         isAppLocked = true
-        biometricService.isUnlocked = false
+        biometricService.lock()
     }
 
     func unlockApp() {
         isAppLocked = false
-        biometricService.isUnlocked = true
+        biometricService.markUnlockedAfterPasswordVerification()
         // Resume data refresh that was blocked while locked
         handleForegroundResume()
     }

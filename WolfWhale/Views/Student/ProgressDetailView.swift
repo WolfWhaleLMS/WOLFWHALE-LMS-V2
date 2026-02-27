@@ -233,7 +233,7 @@ struct ProgressDetailView: View {
         }
         .padding(.vertical, 4)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(item.type.label): \(item.title) for \(item.courseName)\(item.dueDate != nil ? ", due \(item.dueDate!.formatted(.dateTime.month(.abbreviated).day()))" : "")")
+        .accessibilityLabel("\(item.type.label): \(item.title) for \(item.courseName)\(item.dueDate.map { ", due \($0.formatted(.dateTime.month(.abbreviated).day()))" } ?? "")")
     }
 
     // MARK: - Courses

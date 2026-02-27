@@ -333,7 +333,7 @@ final class AuthService {
         } else if message.contains("invalid") && message.contains("email") {
             return "Please enter a valid email address."
         }
-        return "An error occurred. Please try again."
+        return "Sign-in failed. Please check your credentials and try again."
     }
 
     private func mapPasswordError(_ error: Error) -> String {

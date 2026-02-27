@@ -80,14 +80,24 @@ struct CachedAsyncImage<Placeholder: View>: View {
             }
 
             #if canImport(UIKit)
-            if let downsampledImage = ImageCacheService.shared.setDownsampledImage(
-                data: data, for: url, maxDimension: maxDimension
-            ) {
-                self.image = downsampledImage
-            } else if let uiImage = UIImage(data: data) {
-                let swiftUIImage = Image(uiImage: uiImage)
-                ImageCacheService.shared.setImage(swiftUIImage, data: data, for: url)
-                self.image = swiftUIImage
+            // Perform CPU-heavy downsampling off the main thread to avoid hitches.
+            let maxDim = maxDimension
+            let cachedURL = url
+            let result: Image? = await Task.detached(priority: .userInitiated) {
+                if let downsampledImage = ImageCacheService.shared.setDownsampledImage(
+                    data: data, for: cachedURL, maxDimension: maxDim
+                ) {
+                    return downsampledImage
+                } else if let uiImage = UIImage(data: data) {
+                    let swiftUIImage = Image(uiImage: uiImage)
+                    ImageCacheService.shared.setImage(swiftUIImage, data: data, for: cachedURL)
+                    return swiftUIImage
+                }
+                return nil
+            }.value
+
+            if let result {
+                self.image = result
             }
             #endif
         } catch {

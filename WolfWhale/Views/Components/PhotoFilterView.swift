@@ -121,7 +121,7 @@ struct PhotoFilterView: View {
                     .overlay {
                         Image(systemName: "photo")
                             .font(.largeTitle)
-                            .foregroundStyle(.gray)
+                            .foregroundStyle(.secondary)
                     }
             }
         }

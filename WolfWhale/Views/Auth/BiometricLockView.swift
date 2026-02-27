@@ -137,7 +137,7 @@ struct BiometricLockView: View {
         .alert("Authentication Error", isPresented: $showError) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text(authError ?? "An unknown error occurred.")
+            Text(authError ?? "Authentication failed. Please try again or use your password to sign in.")
         }
         .onAppear {
             withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {

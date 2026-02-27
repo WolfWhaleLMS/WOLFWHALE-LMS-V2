@@ -48,6 +48,7 @@ struct AssignmentsView: View {
                                     .font(.caption)
                                     .foregroundStyle(.orange)
                             }
+                            .accessibilityLabel("Retry loading assignments")
                             Button {
                                 viewModel.dataError = nil
                             } label: {
@@ -55,6 +56,7 @@ struct AssignmentsView: View {
                                     .foregroundStyle(.secondary)
                             }
                             .buttonStyle(.plain)
+                            .accessibilityLabel("Dismiss error")
                         }
                         .padding(12)
                         .background(Color.orange.opacity(0.1))
@@ -334,6 +336,7 @@ struct AssignmentsView: View {
                 Text("Previous Submissions")
                     .font(.caption.bold())
                     .foregroundStyle(.secondary)
+                    .accessibilityAddTraits(.isHeader)
             }
 
             ForEach(assignment.resubmissionHistory) { entry in

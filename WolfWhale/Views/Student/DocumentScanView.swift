@@ -161,7 +161,7 @@ struct DocumentScanView: View {
             .alert("Scan Error", isPresented: $showError) {
                 Button("OK", role: .cancel) {}
             } message: {
-                Text(scannerService.error ?? "An unknown error occurred.")
+                Text(scannerService.error ?? "The document scan failed. Please reposition the document and try again.")
             }
             .alert("Submitted!", isPresented: $showSubmitSuccess) {
                 Button("Done") {

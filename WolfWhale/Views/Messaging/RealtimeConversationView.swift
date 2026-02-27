@@ -255,12 +255,15 @@ struct RealtimeConversationView: View {
                 .font(.caption)
                 .foregroundStyle(.secondary)
             TypingDotsView()
+                .accessibilityHidden(true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal)
         .padding(.vertical, 4)
         .transition(.opacity.combined(with: .move(edge: .bottom)))
         .animation(.easeInOut(duration: 0.2), value: text)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(text)
     }
 
     // MARK: - Input Bar
@@ -309,7 +312,7 @@ struct RealtimeConversationView: View {
 
     private var connectionIndicator: some View {
         Circle()
-            .fill(chatService.isConnected ? .green : .gray)
+            .fill(chatService.isConnected ? .green : .secondary)
             .frame(width: 8, height: 8)
             .help(chatService.isConnected ? "Live" : "Connecting...")
             .accessibilityLabel(chatService.isConnected ? "Connected, live updates active" : "Connecting to server")

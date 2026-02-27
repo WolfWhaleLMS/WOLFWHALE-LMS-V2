@@ -90,18 +90,24 @@ final class DrawingService {
     var currentAssignmentId: UUID?
 
     /// The currently selected drawing tool.
-    var selectedTool: DrawingTool = .pen {
-        didSet { persistToolPreference() }
+    private var _selectedTool: DrawingTool = .pen
+    var selectedTool: DrawingTool {
+        get { _selectedTool }
+        set { _selectedTool = newValue; persistToolPreference() }
     }
 
     /// The currently selected canvas background template.
-    var selectedBackground: CanvasBackground = .blank {
-        didSet { persistBackgroundPreference() }
+    private var _selectedBackground: CanvasBackground = .blank
+    var selectedBackground: CanvasBackground {
+        get { _selectedBackground }
+        set { _selectedBackground = newValue; persistBackgroundPreference() }
     }
 
     /// The current stroke color (persisted as hex string).
-    var strokeColor: UIColor = .label {
-        didSet { persistStrokeColor() }
+    private var _strokeColor: UIColor = .label
+    var strokeColor: UIColor {
+        get { _strokeColor }
+        set { _strokeColor = newValue; persistStrokeColor() }
     }
 
     /// The current stroke width.
@@ -455,16 +461,16 @@ final class DrawingService {
     // MARK: - Preference Persistence
 
     private func persistToolPreference() {
-        defaults.set(selectedTool.rawValue, forKey: Self.toolKey)
+        defaults.set(_selectedTool.rawValue, forKey: Self.toolKey)
     }
 
     private func persistBackgroundPreference() {
-        defaults.set(selectedBackground.rawValue, forKey: Self.backgroundKey)
+        defaults.set(_selectedBackground.rawValue, forKey: Self.backgroundKey)
     }
 
     private func persistStrokeColor() {
         var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
-        strokeColor.getRed(&r, green: &g, blue: &b, alpha: &a)
+        _strokeColor.getRed(&r, green: &g, blue: &b, alpha: &a)
         let hex = String(format: "#%02X%02X%02X", Int(r * 255), Int(g * 255), Int(b * 255))
         defaults.set(hex, forKey: Self.strokeColorKey)
     }
@@ -472,16 +478,16 @@ final class DrawingService {
     private func restorePreferences() {
         if let toolRaw = defaults.string(forKey: Self.toolKey),
            let tool = DrawingTool(rawValue: toolRaw) {
-            selectedTool = tool
+            _selectedTool = tool
         }
 
         if let bgRaw = defaults.string(forKey: Self.backgroundKey),
            let bg = CanvasBackground(rawValue: bgRaw) {
-            selectedBackground = bg
+            _selectedBackground = bg
         }
 
         if let hex = defaults.string(forKey: Self.strokeColorKey) {
-            strokeColor = Self.colorFromHex(hex)
+            _strokeColor = Self.colorFromHex(hex)
         }
     }
 

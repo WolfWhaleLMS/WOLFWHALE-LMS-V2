@@ -405,6 +405,7 @@ struct EnhancedQuizBuilderView: View {
                 }
                 .buttonStyle(.plain)
                 .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .accessibilityLabel("Duplicate question")
 
                 Button {
                     hapticTrigger.toggle()
@@ -416,6 +417,7 @@ struct EnhancedQuizBuilderView: View {
                 }
                 .buttonStyle(.plain)
                 .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .accessibilityLabel("Edit question")
 
                 Button {
                     hapticTrigger.toggle()
@@ -427,6 +429,7 @@ struct EnhancedQuizBuilderView: View {
                 }
                 .buttonStyle(.plain)
                 .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
+                .accessibilityLabel("Delete question")
             }
         }
         .padding(12)

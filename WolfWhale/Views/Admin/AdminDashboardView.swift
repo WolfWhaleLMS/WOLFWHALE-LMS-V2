@@ -152,6 +152,7 @@ struct AdminDashboardView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Quick Actions")
                 .font(.headline)
+                .accessibilityAddTraits(.isHeader)
 
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                 iPadActionCard(icon: "person.3.sequence.fill", title: "Import Users", subtitle: "CSV roster upload", color: .blue) {
@@ -231,6 +232,7 @@ struct AdminDashboardView: View {
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)
+            .accessibilityLabel("Dismiss error")
         }
         .padding(12)
         .background(Color.orange.opacity(0.12))
@@ -276,6 +278,7 @@ struct AdminDashboardView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Quick Actions")
                 .font(.headline)
+                .accessibilityAddTraits(.isHeader)
 
             HStack(spacing: 12) {
                 Button {
@@ -643,6 +646,7 @@ struct AdminDashboardView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Attendance This Week")
                 .font(.headline)
+                .accessibilityAddTraits(.isHeader)
 
             let rates = weeklyAttendanceRates
             ZStack {
@@ -699,6 +703,7 @@ struct AdminDashboardView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Recent Announcements")
                 .font(.headline)
+                .accessibilityAddTraits(.isHeader)
 
             if viewModel.announcements.isEmpty {
                 HStack {
@@ -718,6 +723,7 @@ struct AdminDashboardView: View {
                         Circle()
                             .fill(announcement.isPinned ? .orange : .blue)
                             .frame(width: 8, height: 8)
+                            .accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: 2) {
                             Text(announcement.title)
                                 .font(.subheadline.bold())

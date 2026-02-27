@@ -93,6 +93,11 @@ final class SpeechService {
         checkAuthorizationStatus()
     }
 
+    deinit {
+        // audioLevelTimer is invalidated in stopListening(); cannot
+        // access @MainActor-isolated properties from nonisolated deinit.
+    }
+
     // MARK: - Authorization
 
     func requestAuthorization() async {

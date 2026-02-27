@@ -29,7 +29,7 @@ struct ErrorStateView: View {
             .accessibilityHidden(true)
 
             VStack(spacing: 8) {
-                Text("Something went wrong")
+                Text("Unable to Load")
                     .font(.headline)
                     .fontWeight(.bold)
                     .foregroundStyle(.primary)

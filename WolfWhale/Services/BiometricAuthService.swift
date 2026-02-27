@@ -5,11 +5,29 @@ import LocalAuthentication
 class BiometricAuthService {
     var isBiometricAvailable: Bool = false
     var biometricType: LABiometryType = .none
-    var isUnlocked: Bool = false
+
+    /// Auth state is read-only externally. Only `authenticate()` and `lock()` / `resetUnlockState()` can change it.
+    private(set) var isUnlocked: Bool = false
 
     /// Optional reference to AuthService for refreshing the Supabase session
     /// after a successful biometric unlock. Injected by the caller (e.g. AppViewModel).
     var authService: AuthService?
+
+    // MARK: - App-Level Failed Attempt Tracking
+
+    /// Consecutive failed biometric attempts at the app level (defense-in-depth
+    /// on top of iOS's built-in lockout after 5 failed attempts).
+    private(set) var failedAttemptCount: Int = 0
+
+    /// Maximum failed biometric attempts before the app locks out biometric
+    /// auth and requires the password fallback.
+    private let maxFailedAttempts: Int = 5
+
+    /// When `true`, the app has exceeded its own failed-attempt threshold and
+    /// requires password authentication instead of biometrics.
+    var isAppLevelLockout: Bool {
+        failedAttemptCount >= maxFailedAttempts
+    }
 
     init() {
         checkBiometricAvailability()
@@ -59,10 +77,23 @@ class BiometricAuthService {
     /// Triggers the biometric prompt. Returns `true` on success.
     /// Throws `BiometricError` on failure so callers can react to specific cases.
     /// Automatically times out after 30 seconds to prevent hanging indefinitely.
+    ///
+    /// If the app-level lockout threshold has been exceeded, this method throws
+    /// `.lockout` immediately without prompting biometrics -- callers must use
+    /// the password fallback to unlock and call `resetFailedAttempts()` on success.
     @discardableResult
     func authenticate() async throws -> Bool {
+        // App-level lockout: require password fallback
+        guard !isAppLevelLockout else {
+            throw BiometricError.lockout
+        }
+
         let context = LAContext()
         context.localizedCancelTitle = "Cancel"
+
+        // Disable the system fallback button so the user must use our own
+        // password fallback (which has its own rate limiting).
+        context.localizedFallbackTitle = ""
 
         var evalError: NSError?
         guard context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &evalError) else {
@@ -89,10 +120,10 @@ class BiometricAuthService {
             }
             if success {
                 isUnlocked = true
+                failedAttemptCount = 0
                 // Refresh the Supabase session after biometric success to ensure
                 // the backend token is still valid. This prevents a stale JWT from
                 // causing silent 401s on the next API call.
-                // Refresh the Supabase session so the backend token stays valid.
                 if let authService {
                     let refreshed = await authService.refreshSession()
                     #if DEBUG
@@ -104,12 +135,40 @@ class BiometricAuthService {
             }
             return success
         } catch let error as BiometricError {
+            if case .timeout = error { failedAttemptCount += 1 }
             throw error
         } catch let error as LAError {
+            // Track authentication failures but not user-initiated cancellations
+            if error.code == .authenticationFailed {
+                failedAttemptCount += 1
+            }
             throw mapLAError(error)
         } catch {
+            failedAttemptCount += 1
             throw BiometricError.unknown(error.localizedDescription)
         }
+    }
+
+    // MARK: - State Management
+
+    /// Locks the biometric state. Called when the app enters the background or
+    /// the user explicitly locks the app.
+    func lock() {
+        isUnlocked = false
+    }
+
+    /// Marks the app as unlocked after a successful password verification.
+    /// Only call this after the caller has independently verified the user's
+    /// password against the authentication backend.
+    func markUnlockedAfterPasswordVerification() {
+        isUnlocked = true
+        failedAttemptCount = 0
+    }
+
+    /// Resets the app-level failed attempt counter. Called after a successful
+    /// password-based re-authentication so the user can attempt biometrics again.
+    func resetFailedAttempts() {
+        failedAttemptCount = 0
     }
 
     // MARK: - Error Mapping
@@ -161,7 +220,7 @@ enum BiometricError: LocalizedError, Sendable {
         case .notEnrolled:
             return "No biometric data is enrolled. Please set up Face ID or Touch ID in Settings."
         case .lockout:
-            return "Biometric authentication is locked. Please use your device passcode to unlock."
+            return "Biometric authentication is locked. Please use your password to unlock."
         case .cancelled:
             return "Authentication was cancelled."
         case .userFallback:

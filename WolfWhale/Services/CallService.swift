@@ -35,6 +35,12 @@ final class CallService: NSObject {
         self.callKitAvailable = true
     }
 
+    deinit {
+        // callTimer is invalidated in resetCallState(); deinit is
+        // effectively unreachable for this singleton but kept for
+        // completeness. Cannot access @MainActor properties here.
+    }
+
     // MARK: - Start Call
 
     func startCall(to handle: String, displayName: String) {

@@ -240,6 +240,7 @@ struct ManageStudentsView: View {
             }
             .buttonStyle(.plain)
             .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
+            .accessibilityLabel("Unenroll student")
         }
         .padding(12)
         .background(.ultraThinMaterial, in: .rect(cornerRadius: 12))

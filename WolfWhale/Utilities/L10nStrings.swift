@@ -103,7 +103,7 @@ extension L10n {
         // Errors
         "error.network": "Network error. Check your connection.",
         "error.try_again": "Please try again.",
-        "error.something_wrong": "Something went wrong."
+        "error.something_wrong": "We couldn\u{2019}t complete that action. Please try again."
     ]
 
     // MARK: French
@@ -205,6 +205,6 @@ extension L10n {
         // Errors
         "error.network": "Erreur r\u{00E9}seau. V\u{00E9}rifiez votre connexion.",
         "error.try_again": "Veuillez r\u{00E9}essayer.",
-        "error.something_wrong": "Une erreur est survenue."
+        "error.something_wrong": "L\u{2019}action n\u{2019}a pas pu \u{00EA}tre compl\u{00E9}t\u{00E9}e. Veuillez r\u{00E9}essayer."
     ]
 }

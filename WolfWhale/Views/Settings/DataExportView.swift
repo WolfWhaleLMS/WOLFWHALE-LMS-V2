@@ -33,7 +33,7 @@ struct DataExportView: View {
         .alert("Export Failed", isPresented: $showErrorAlert) {
             Button("OK", role: .cancel) { }
         } message: {
-            Text(errorMessage ?? "An unknown error occurred while exporting your data. Please try again.")
+            Text(errorMessage ?? "Your data export could not be completed. Please check your storage space and try again.")
         }
         .sheet(isPresented: $showShareSheet) {
             if let url = exportedFileURL {

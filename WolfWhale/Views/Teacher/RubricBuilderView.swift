@@ -159,6 +159,7 @@ struct RubricBuilderView: View {
                             .foregroundStyle(.red)
                     }
                     .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
+                    .accessibilityLabel("Delete criterion")
                 }
             }
 
@@ -199,6 +200,7 @@ struct RubricBuilderView: View {
                             .foregroundStyle(.red)
                     }
                     .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .accessibilityLabel("Add performance level")
                 }
 
                 ForEach(criteria[index].levels.indices, id: \.self) { levelIdx in
@@ -254,6 +256,7 @@ struct RubricBuilderView: View {
                 }
                 .buttonStyle(.plain)
                 .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .accessibilityLabel("Remove performance level")
             }
         }
         .padding(8)

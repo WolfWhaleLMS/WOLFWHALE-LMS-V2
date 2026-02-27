@@ -60,6 +60,7 @@ struct CourseDetailView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text("Progress")
                         .font(.subheadline.bold())
+                        .accessibilityAddTraits(.isHeader)
                     Text("\(course.completedLessons) of \(course.totalLessons) lessons")
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -116,6 +117,7 @@ struct CourseDetailView: View {
             Text("Modules")
                 .font(.headline)
                 .padding(.horizontal)
+                .accessibilityAddTraits(.isHeader)
 
             if course.modules.isEmpty {
                 EmptyStateView(
@@ -131,6 +133,7 @@ struct CourseDetailView: View {
                     Text(module.title)
                         .font(.subheadline.bold())
                         .padding(.horizontal, 4)
+                        .accessibilityAddTraits(.isHeader)
 
                     ForEach(module.lessons) { lesson in
                         NavigationLink(value: LessonNav(lesson: lesson, course: course)) {

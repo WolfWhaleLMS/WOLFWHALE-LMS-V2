@@ -82,18 +82,21 @@ final class PhotoService {
             data = image.jpegData(compressionQuality: quality)
         }
 
-        // If still too large, resize the image down
+        // If still too large, resize the image down.
+        // Wrap in autoreleasepool to release intermediate UIImage/CGImage allocations promptly.
         if let currentData = data, currentData.count > maxBytes {
             let scale = sqrt(Double(maxBytes) / Double(currentData.count))
             let newSize = CGSize(
                 width: image.size.width * scale,
                 height: image.size.height * scale
             )
-            let renderer = UIGraphicsImageRenderer(size: newSize)
-            let resized = renderer.image { _ in
-                image.draw(in: CGRect(origin: .zero, size: newSize))
+            data = autoreleasepool {
+                let renderer = UIGraphicsImageRenderer(size: newSize)
+                let resized = renderer.image { _ in
+                    image.draw(in: CGRect(origin: .zero, size: newSize))
+                }
+                return resized.jpegData(compressionQuality: 0.8)
             }
-            data = resized.jpegData(compressionQuality: 0.8)
         }
 
         return data

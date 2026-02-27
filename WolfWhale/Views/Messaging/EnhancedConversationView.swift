@@ -231,7 +231,7 @@ struct EnhancedConversationView: View {
 
     private var connectionIndicator: some View {
         Circle()
-            .fill(realtimeService.isConnected ? .green : .gray)
+            .fill(realtimeService.isConnected ? .green : .secondary)
             .frame(width: 8, height: 8)
             .help(realtimeService.isConnected ? "Live" : "Connecting...")
             .accessibilityLabel(realtimeService.isConnected ? "Connected, live updates active" : "Connecting to server")

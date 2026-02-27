@@ -255,7 +255,7 @@ struct DrawingCanvasView: View {
             .alert("Error", isPresented: $showError) {
                 Button("OK", role: .cancel) {}
             } message: {
-                Text(drawingService.error ?? "An unknown error occurred.")
+                Text(drawingService.error ?? "Your drawing could not be saved. Please try again.")
             }
             .onChange(of: drawingService.error) { _, newValue in
                 if newValue != nil {

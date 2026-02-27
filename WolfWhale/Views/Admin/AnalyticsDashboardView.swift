@@ -95,6 +95,7 @@ struct AnalyticsDashboardView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Time Period")
                 .font(.headline)
+                .accessibilityAddTraits(.isHeader)
             Picker("Time Period", selection: $selectedPeriod) {
                 ForEach(TimePeriod.allCases) { period in
                     Text(period.rawValue).tag(period)
@@ -114,6 +115,7 @@ struct AnalyticsDashboardView: View {
             Label {
                 Text("Active Users")
                     .font(.headline)
+                    .accessibilityAddTraits(.isHeader)
             } icon: {
                 Image(systemName: "person.wave.2.fill")
                     .foregroundStyle(Theme.brandBlue)
@@ -155,7 +157,11 @@ struct AnalyticsDashboardView: View {
         .background(Color(.secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Active users line chart over the selected time period")
+        .accessibilityLabel({
+            let avg = activeUsersData.isEmpty ? 0 : activeUsersData.map(\.count).reduce(0, +) / activeUsersData.count
+            let peak = activeUsersData.map(\.count).max() ?? 0
+            return "Active Users chart over \(selectedPeriod.rawValue). Average \(avg) users per day, peak \(peak) users."
+        }())
     }
 
     // MARK: - Submissions Trend Chart
@@ -165,6 +171,7 @@ struct AnalyticsDashboardView: View {
             Label {
                 Text("Submissions Trend")
                     .font(.headline)
+                    .accessibilityAddTraits(.isHeader)
             } icon: {
                 Image(systemName: "doc.text.fill")
                     .foregroundStyle(Theme.brandPurple)
@@ -198,7 +205,11 @@ struct AnalyticsDashboardView: View {
         .background(Color(.secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Submissions bar chart over the selected time period")
+        .accessibilityLabel({
+            let total = submissionsData.map(\.count).reduce(0, +)
+            let avg = submissionsData.isEmpty ? 0 : total / submissionsData.count
+            return "Submissions Trend chart over \(selectedPeriod.rawValue). Total \(total) submissions, average \(avg) per day."
+        }())
     }
 
     // MARK: - Engagement Summary
@@ -208,6 +219,7 @@ struct AnalyticsDashboardView: View {
             Label {
                 Text("Engagement Summary")
                     .font(.headline)
+                    .accessibilityAddTraits(.isHeader)
             } icon: {
                 Image(systemName: "chart.bar.xaxis.ascending")
                     .foregroundStyle(Theme.brandGreen)
@@ -273,6 +285,7 @@ struct AnalyticsDashboardView: View {
             Label {
                 Text("Attendance Trend")
                     .font(.headline)
+                    .accessibilityAddTraits(.isHeader)
             } icon: {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundStyle(Theme.brandGreen)
@@ -324,7 +337,12 @@ struct AnalyticsDashboardView: View {
         .background(Color(.secondarySystemGroupedBackground))
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Attendance trend line chart with 90 percent target line")
+        .accessibilityLabel({
+            let avg = attendanceData.isEmpty ? 0.0 : attendanceData.map(\.percentage).reduce(0, +) / Double(attendanceData.count)
+            let min = attendanceData.map(\.percentage).min() ?? 0
+            let max = attendanceData.map(\.percentage).max() ?? 0
+            return "Attendance Trend chart over \(selectedPeriod.rawValue). Average \(Int(avg)) percent, range \(Int(min)) to \(Int(max)) percent, with 90 percent target line."
+        }())
     }
 
     // MARK: - Helpers

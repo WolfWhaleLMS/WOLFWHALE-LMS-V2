@@ -21,7 +21,7 @@ struct ErrorBoundaryView<Content: View>: View {
                         .foregroundStyle(.orange)
                         .symbolEffect(.pulse)
 
-                    Text("Something went wrong")
+                    Text("Unable to Load")
                         .font(.title3.bold())
 
                     Text(UserFacingError.message(from: error))

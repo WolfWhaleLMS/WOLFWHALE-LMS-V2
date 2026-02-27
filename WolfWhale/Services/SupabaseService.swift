@@ -160,6 +160,7 @@ struct DataService: Sendable {
 
     // MARK: - Courses
 
+    /// Fetches courses visible to the given user based on their role, with caching and deduplication.
     func fetchCourses(for userId: UUID, role: UserRole, schoolId: String? = nil, offset: Int = 0, limit: Int = 100) async throws -> [Course] {
         let cacheKey = "courses_\(userId)_\(role.rawValue)_\(schoolId ?? "nil")_\(offset)_\(limit)"
         if let cached: [Course] = await CacheService.shared.get(cacheKey) {
@@ -459,6 +460,7 @@ struct DataService: Sendable {
         }
     }
 
+    /// Inserts a new course and invalidates the course cache.
     func createCourse(_ dto: InsertCourseDTO) async throws -> CourseDTO {
         let result: CourseDTO = try await supabaseClient
             .from("courses")
@@ -473,6 +475,7 @@ struct DataService: Sendable {
 
     // MARK: - Assignments
 
+    /// Fetches assignments for the given user and courses, with caching and deduplication.
     func fetchAssignments(for userId: UUID, role: UserRole, courseIds: [UUID], offset: Int = 0, limit: Int = 50) async throws -> [Assignment] {
         if courseIds.isEmpty { return [] }
         let sortedIds = courseIds.map(\.uuidString).sorted().joined(separator: ",")
@@ -643,6 +646,7 @@ struct DataService: Sendable {
         }
     }
 
+    /// Inserts a new assignment and invalidates the assignment cache.
     func createAssignment(_ dto: InsertAssignmentDTO) async throws {
         try await supabaseClient
             .from("assignments")
@@ -651,6 +655,7 @@ struct DataService: Sendable {
         await CacheService.shared.invalidateByPrefix("assignments_")
     }
 
+    /// Submits a student's work for the specified assignment.
     func submitAssignment(assignmentId: UUID, studentId: UUID, content: String) async throws {
         let dto = InsertSubmissionDTO(tenantId: nil, assignmentId: assignmentId, studentId: studentId, submissionText: content, filePath: nil, submissionUrl: nil, status: "submitted")
         try await supabaseClient
@@ -663,6 +668,7 @@ struct DataService: Sendable {
 
     // MARK: - Quizzes
 
+    /// Fetches quizzes for the given courses, including the student's latest attempt scores.
     func fetchQuizzes(for userId: UUID, courseIds: [UUID], offset: Int = 0, limit: Int = 50) async throws -> [Quiz] {
         if courseIds.isEmpty { return [] }
 
@@ -849,6 +855,7 @@ struct DataService: Sendable {
         return quizzes
     }
 
+    /// Records a quiz attempt, enforcing the maximum-attempts limit if configured.
     func submitQuizAttempt(quizId: UUID, studentId: UUID, score: Double) async throws {
         // Check for existing attempts and enforce maxAttempts limit
         let existingAttempts: [QuizAttemptDTO] = try await supabaseClient
@@ -884,6 +891,7 @@ struct DataService: Sendable {
 
     // MARK: - Grades
 
+    /// Fetches all grade entries for a student across the specified courses.
     func fetchGrades(for studentId: UUID, courseIds: [UUID]) async throws -> [GradeEntry] {
         if courseIds.isEmpty { return [] }
         let sortedIds = courseIds.map(\.uuidString).sorted().joined(separator: ",")
@@ -1000,6 +1008,7 @@ struct DataService: Sendable {
 
     // MARK: - Announcements
 
+    /// Fetches announcements, optionally filtered by tenant, with caching.
     func fetchAnnouncements(tenantId: UUID? = nil) async throws -> [Announcement] {
         let cacheKey = "announcements_\(tenantId?.uuidString ?? "all")"
         if let cached: [Announcement] = await CacheService.shared.get(cacheKey) {
@@ -1069,6 +1078,7 @@ struct DataService: Sendable {
         }
     }
 
+    /// Creates a new announcement and invalidates the announcement cache.
     func createAnnouncement(_ dto: InsertAnnouncementDTO) async throws {
         try await supabaseClient
             .from("announcements")
@@ -1079,6 +1089,7 @@ struct DataService: Sendable {
 
     // MARK: - Conversations & Messages
 
+    /// Fetches conversations the user participates in, with caching and deduplication.
     func fetchConversations(for userId: UUID, offset: Int = 0, limit: Int = 50) async throws -> [Conversation] {
         let cacheKey = "conversations_\(userId)_\(offset)_\(limit)"
         if let cached: [Conversation] = await CacheService.shared.get(cacheKey) {
@@ -1194,6 +1205,7 @@ struct DataService: Sendable {
         return conversations.sorted { $0.lastMessageDate > $1.lastMessageDate }
     }
 
+    /// Sends a new message in the specified conversation.
     func sendMessage(conversationId: UUID, senderId: UUID, senderName: String, content: String) async throws {
         let dto = InsertMessageDTO(tenantId: nil, conversationId: conversationId, senderId: senderId, content: content, attachments: nil)
         try await supabaseClient
@@ -1203,7 +1215,7 @@ struct DataService: Sendable {
         await CacheService.shared.invalidateByPrefix("conversations_")
     }
 
-    // Legacy method maintained for compatibility
+    /// Fetches older messages before a given date for backward pagination (legacy compatibility).
     func fetchOlderMessages(conversationId: UUID, before: Date, limit: Int = 30) async throws -> [MessageDTO] {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
@@ -1279,6 +1291,7 @@ struct DataService: Sendable {
 
     // MARK: - Achievements
 
+    /// Fetches all achievements and marks which ones the student has unlocked.
     func fetchAchievements(for studentId: UUID, offset: Int = 0, limit: Int = 100) async throws -> [Achievement] {
         let allAchievements: [AchievementDTO] = try await supabaseClient
             .from("achievements")
@@ -1316,6 +1329,7 @@ struct DataService: Sendable {
 
     // MARK: - Leaderboard
 
+    /// Fetches the XP leaderboard sorted by total XP descending.
     func fetchLeaderboard() async throws -> [LeaderboardEntry] {
         let xpEntries: [StudentXpDTO] = try await supabaseClient
             .from("student_xp")
@@ -1353,6 +1367,7 @@ struct DataService: Sendable {
 
     // MARK: - Attendance
 
+    /// Fetches attendance records for a student, ordered by date descending.
     func fetchAttendance(for studentId: UUID, offset: Int = 0, limit: Int = 50) async throws -> [AttendanceRecord] {
         let dtos: [AttendanceDTO] = try await supabaseClient
             .from("attendance_records")
@@ -1389,6 +1404,7 @@ struct DataService: Sendable {
             .execute()
     }
 
+    /// Fetches lesson completion records for a student within a specific course.
     func fetchLessonCompletions(studentId: UUID, courseId: UUID) async throws -> [LessonCompletionDTO] {
         try await supabaseClient
             .from("lesson_completions")
@@ -1401,6 +1417,7 @@ struct DataService: Sendable {
 
     // MARK: - Admin: Users
 
+    /// Fetches all user profiles, optionally scoped to a school tenant.
     func fetchAllUsers(schoolId: String?, offset: Int = 0, limit: Int = 50) async throws -> [ProfileDTO] {
         if let schoolId, let tenantUUID = UUID(uuidString: schoolId) {
             let memberships: [TenantMembershipDTO] = try await supabaseClient
@@ -1460,12 +1477,14 @@ struct DataService: Sendable {
         }
     }
 
+    /// Permanently deletes a user and all associated data via server-side RPC.
     func deleteUser(userId: UUID) async throws {
         try await supabaseClient.rpc("delete_user_complete", params: ["target_user_id": userId.uuidString]).execute()
     }
 
     // MARK: - Admin: School Metrics
 
+    /// Computes aggregate school metrics (student/teacher counts, course count, average GPA).
     func fetchSchoolMetrics(schoolId: String?) async throws -> SchoolMetrics {
         // Use count-only queries instead of loading full arrays into memory.
         let studentCount: Int
@@ -1589,6 +1608,7 @@ struct DataService: Sendable {
 
     // MARK: - Parent: Children
 
+    /// Fetches linked children for a parent, including each child's grades and assignments.
     func fetchChildren(for parentId: UUID) async throws -> [ChildInfo] {
         let links: [StudentParentDTO] = try await supabaseClient
             .from("student_parents")
@@ -1800,6 +1820,7 @@ struct DataService: Sendable {
 
     // MARK: - Profile
 
+    /// Updates a student's XP record (level, streak, coins, etc.).
     func updateProfile(userId: UUID, update: UpdateStudentXpDTO) async throws {
         try await supabaseClient
             .from("student_xp")
@@ -1808,12 +1829,14 @@ struct DataService: Sendable {
             .execute()
     }
 
+    /// Sends a password reset email to the specified address.
     func resetPassword(email: String) async throws {
         try await supabaseClient.auth.resetPasswordForEmail(email)
     }
 
     // MARK: - Grades (Create)
 
+    /// Records a grade for a student's assignment submission.
     func gradeSubmission(studentId: UUID, courseId: UUID, assignmentId: UUID, score: Double, maxScore: Double, letterGrade: String, feedback: String) async throws {
         let percentage = maxScore > 0 ? (score / maxScore * 100) : 0
         let dto = InsertGradeDTO(
@@ -1837,6 +1860,7 @@ struct DataService: Sendable {
 
     // MARK: - Quizzes (Create)
 
+    /// Creates a new quiz with the given settings and returns the inserted row.
     func createQuiz(courseId: UUID, title: String, timeLimit: Int, dueDate: String, xpReward: Int) async throws -> QuizDTO {
         let dto = InsertQuizDTO(
             tenantId: nil,
@@ -2009,6 +2033,7 @@ struct DataService: Sendable {
 
     // MARK: - Lessons (Create)
 
+    /// Creates a new lesson within a module and returns the inserted row.
     func createLesson(moduleId: UUID, title: String, content: String, duration: Int, type: String, xpReward: Int, orderIndex: Int) async throws -> LessonDTO {
         let dto = InsertLessonDTO(
             tenantId: nil,
@@ -2033,6 +2058,7 @@ struct DataService: Sendable {
 
     // MARK: - Modules (Create)
 
+    /// Creates a new module within a course and returns the inserted row.
     func createModule(courseId: UUID, title: String, orderIndex: Int) async throws -> ModuleDTO {
         let dto = InsertModuleDTO(
             tenantId: nil,
@@ -2057,6 +2083,7 @@ struct DataService: Sendable {
 
     private static let enrollmentRateLimiter = EnrollmentRateLimiter()
 
+    /// Enrolls a student in a course by inserting a course_enrollments row.
     func enrollStudent(studentId: UUID, courseId: UUID) async throws {
         let dto = InsertEnrollmentDTO(
             tenantId: nil,
@@ -2072,6 +2099,7 @@ struct DataService: Sendable {
             .execute()
     }
 
+    /// Enrolls a student using a class invite code; returns the course title on success.
     func enrollByClassCode(studentId: UUID, classCode: String) async throws -> String {
         guard await DataService.enrollmentRateLimiter.canEnroll(userId: studentId) else {
             throw NSError(domain: "RateLimit", code: 429, userInfo: [NSLocalizedDescriptionKey: "Too many enrollment attempts. Please wait a minute."])
@@ -2181,6 +2209,7 @@ struct DataService: Sendable {
 
     // MARK: - Courses (Update / Delete)
 
+    /// Updates editable fields on a course and invalidates the course cache.
     func updateCourse(courseId: UUID, title: String?, description: String?, colorName: String? = nil, iconSystemName: String? = nil) async throws {
         let dto = UpdateCourseDTO(name: title, description: description, subject: nil, gradeLevel: nil, semester: nil, startDate: nil, endDate: nil, syllabusUrl: nil, credits: nil, status: nil, colorName: colorName, iconSystemName: iconSystemName)
         try await supabaseClient
@@ -2191,6 +2220,7 @@ struct DataService: Sendable {
         await CacheService.shared.invalidateByPrefix("courses_")
     }
 
+    /// Deletes a course by ID and invalidates the course cache.
     func deleteCourse(courseId: UUID) async throws {
         try await supabaseClient
             .from("courses")
@@ -2202,6 +2232,7 @@ struct DataService: Sendable {
 
     // MARK: - Assignments (Update / Delete)
 
+    /// Updates editable fields on an assignment and invalidates the assignment cache.
     func updateAssignment(assignmentId: UUID, title: String?, instructions: String?, dueDate: String?, points: Int?) async throws {
         let dto = UpdateAssignmentDTO(title: title, description: nil, instructions: instructions, type: nil, dueDate: dueDate, availableDate: nil, maxPoints: points, submissionType: nil, allowLateSubmission: nil, lateSubmissionDays: nil, status: nil)
         try await supabaseClient
@@ -2212,6 +2243,7 @@ struct DataService: Sendable {
         await CacheService.shared.invalidateByPrefix("assignments_")
     }
 
+    /// Deletes an assignment by ID and invalidates the assignment cache.
     func deleteAssignment(assignmentId: UUID) async throws {
         try await supabaseClient
             .from("assignments")
@@ -2223,6 +2255,7 @@ struct DataService: Sendable {
 
     // MARK: - Announcements (Delete)
 
+    /// Deletes an announcement by ID and invalidates the announcement cache.
     func deleteAnnouncement(announcementId: UUID) async throws {
         try await supabaseClient
             .from("announcements")
@@ -2234,6 +2267,7 @@ struct DataService: Sendable {
 
     // MARK: - Conversations (Create)
 
+    /// Creates a new conversation and adds the specified participants.
     func createConversation(title: String, participantIds: [(userId: UUID, userName: String)]) async throws -> ConversationDTO {
         let convDTO = InsertConversationDTO(tenantId: nil, type: "direct", subject: title, createdBy: nil, courseId: nil)
         let conversation: ConversationDTO = try await supabaseClient
@@ -2261,6 +2295,7 @@ struct DataService: Sendable {
 
     // MARK: - Students in Course
 
+    /// Fetches profile data for all students enrolled in a specific course.
     func fetchStudentsInCourse(courseId: UUID) async throws -> [ProfileDTO] {
         let enrollments: [EnrollmentDTO] = try await supabaseClient
             .from("course_enrollments")
@@ -2283,6 +2318,7 @@ struct DataService: Sendable {
 
     // MARK: - Module/Lesson Deletion
 
+    /// Deletes a module and all its child lessons.
     func deleteModule(moduleId: UUID) async throws {
         try await supabaseClient
             .from("lessons")
@@ -2296,6 +2332,7 @@ struct DataService: Sendable {
             .execute()
     }
 
+    /// Deletes a single lesson by ID.
     func deleteLesson(lessonId: UUID) async throws {
         try await supabaseClient
             .from("lessons")
@@ -2315,6 +2352,7 @@ struct DataService: Sendable {
 
     // MARK: - Paginated Fetches
 
+    /// Fetches a paginated page of assignments for the given user and courses.
     func fetchAssignmentsPaginated(for userId: UUID, role: UserRole, courseIds: [UUID], offset: Int, limit: Int) async throws -> [Assignment] {
         if courseIds.isEmpty { return [] }
 
@@ -2468,6 +2506,7 @@ struct DataService: Sendable {
         }
     }
 
+    /// Fetches a paginated page of attendance records for a student.
     func fetchAttendancePaginated(for studentId: UUID, offset: Int, limit: Int) async throws -> [AttendanceRecord] {
         let dtos: [AttendanceDTO] = try await supabaseClient
             .from("attendance_records")
@@ -2489,6 +2528,7 @@ struct DataService: Sendable {
         }
     }
 
+    /// Fetches a paginated page of announcements, optionally filtered by tenant.
     func fetchAnnouncementsPaginated(tenantId: UUID? = nil, offset: Int, limit: Int) async throws -> [Announcement] {
         let dtos: [AnnouncementDTO]
         if let tenantId {
@@ -2545,6 +2585,7 @@ struct DataService: Sendable {
         }
     }
 
+    /// Fetches a paginated page of user profiles, optionally scoped to a school tenant.
     func fetchAllUsersPaginated(schoolId: String?, offset: Int, limit: Int) async throws -> [ProfileDTO] {
         if let schoolId, let tenantUUID = UUID(uuidString: schoolId) {
             let memberships: [TenantMembershipDTO] = try await supabaseClient

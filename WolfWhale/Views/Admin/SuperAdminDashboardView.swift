@@ -73,7 +73,7 @@ struct SuperAdminDashboardView: View {
                     updateLimitError = nil
                 }
             } message: {
-                Text(updateLimitError ?? "An unknown error occurred.")
+                Text(updateLimitError ?? "Unable to update the limit. Please try again later.")
             }
         }
         .requireRole(.superAdmin, currentRole: viewModel.currentUser?.role)

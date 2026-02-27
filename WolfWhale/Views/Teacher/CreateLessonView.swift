@@ -234,6 +234,7 @@ struct CreateLessonView: View {
                                 .foregroundStyle(.secondary)
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel("Remove resource")
                     }
                     .padding(10)
                     .background(Color(.tertiarySystemFill), in: .rect(cornerRadius: 10))

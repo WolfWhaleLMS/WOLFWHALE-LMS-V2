@@ -43,6 +43,7 @@ struct ParentDashboardView: View {
                                             .font(.caption)
                                             .foregroundStyle(.white)
                                     }
+                                    .accessibilityLabel("Retry loading data")
                                     Button {
                                         viewModel.dataError = nil
                                     } label: {
@@ -50,6 +51,7 @@ struct ParentDashboardView: View {
                                             .foregroundStyle(.secondary)
                                     }
                                     .buttonStyle(.plain)
+                                    .accessibilityLabel("Dismiss error")
                                 }
                                 .padding(12)
                                 .background(Color.orange.opacity(0.12))
@@ -152,6 +154,7 @@ struct ParentDashboardView: View {
                         Label("Recent Alerts", systemImage: "bell.fill")
                             .font(.headline)
                             .foregroundStyle(Color(.label))
+                            .accessibilityAddTraits(.isHeader)
 
                         Spacer()
 
@@ -209,6 +212,7 @@ struct ParentDashboardView: View {
                         Circle()
                             .fill(.red)
                             .frame(width: 8, height: 8)
+                            .accessibilityHidden(true)
                     }
                 }
                 Text(alert.message)
@@ -298,6 +302,7 @@ struct ParentDashboardView: View {
                 Text("Course Grades")
                     .font(.subheadline.bold())
                     .foregroundStyle(Color(.label))
+                    .accessibilityAddTraits(.isHeader)
 
                 ForEach(child.courses) { grade in
                     HStack(spacing: 12) {
@@ -323,6 +328,7 @@ struct ParentDashboardView: View {
                     Text("Upcoming Work")
                         .font(.subheadline.bold())
                         .foregroundStyle(Color(.label))
+                        .accessibilityAddTraits(.isHeader)
 
                     ForEach(child.recentAssignments) { assignment in
                         HStack {
@@ -449,6 +455,7 @@ struct ParentDashboardView: View {
         VStack(alignment: .leading, spacing: 12) {
             Text("School Announcements")
                 .font(.headline)
+                .accessibilityAddTraits(.isHeader)
 
             if viewModel.announcements.isEmpty {
                 HStack {

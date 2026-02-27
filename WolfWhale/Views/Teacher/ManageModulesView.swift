@@ -168,6 +168,7 @@ struct ManageModulesView: View {
                             .foregroundStyle(.green)
                     }
                     .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                    .accessibilityLabel("Save module title")
 
                     Button {
                         hapticTrigger.toggle()
@@ -177,6 +178,7 @@ struct ManageModulesView: View {
                             .foregroundStyle(.secondary)
                     }
                     .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .accessibilityLabel("Cancel editing")
                 } else {
                     Text(module.title)
                         .font(.subheadline.bold())
@@ -199,6 +201,7 @@ struct ManageModulesView: View {
                             .foregroundStyle(.secondary)
                     }
                     .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .accessibilityLabel(expandedModuleId == module.id ? "Collapse module" : "Expand module")
 
                     // Edit button
                     Button {
@@ -211,6 +214,7 @@ struct ManageModulesView: View {
                             .foregroundStyle(.orange)
                     }
                     .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                    .accessibilityLabel("Edit module title")
 
                     // Delete button
                     Button {
@@ -222,6 +226,7 @@ struct ManageModulesView: View {
                             .foregroundStyle(.red)
                     }
                     .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
+                    .accessibilityLabel("Delete module")
                 }
             }
             .padding(.horizontal, 12)
@@ -283,6 +288,7 @@ struct ManageModulesView: View {
                         .foregroundStyle(.green)
                 }
                 .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
+                .accessibilityLabel("Save lesson title")
 
                 Button {
                     hapticTrigger.toggle()
@@ -293,6 +299,7 @@ struct ManageModulesView: View {
                         .foregroundStyle(.secondary)
                 }
                 .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .accessibilityLabel("Cancel editing")
             } else {
                 Text(lesson.title)
                     .font(.caption)
@@ -314,6 +321,7 @@ struct ManageModulesView: View {
                         .foregroundStyle(.orange)
                 }
                 .sensoryFeedback(.impact(weight: .light), trigger: hapticTrigger)
+                .accessibilityLabel("Edit lesson title")
 
                 Button {
                     hapticTrigger.toggle()
@@ -324,6 +332,7 @@ struct ManageModulesView: View {
                         .foregroundStyle(.red)
                 }
                 .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
+                .accessibilityLabel("Delete lesson")
             }
         }
         .padding(.horizontal, 12)

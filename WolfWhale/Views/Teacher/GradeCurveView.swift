@@ -161,7 +161,7 @@ struct GradeCurveView: View {
             )) {
                 Button("OK", role: .cancel) { }
             } message: {
-                Text(curveError ?? "An unknown error occurred while applying the grade curve. No grades were saved.")
+                Text(curveError ?? "The grade curve could not be applied. No grades were changed. Please try again.")
             }
         }
     }

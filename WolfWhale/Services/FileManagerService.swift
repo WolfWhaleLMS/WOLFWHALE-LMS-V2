@@ -42,12 +42,13 @@ final class FileManagerService {
         error = nil
 
         do {
-            // Fetch all submissions by this student
+            // Fetch recent submissions by this student (capped to prevent unbounded memory use)
             let submissions: [SubmissionDTO] = try await supabaseClient
                 .from("submissions")
                 .select()
                 .eq("student_id", value: userId.uuidString)
                 .order("submitted_at", ascending: false)
+                .limit(100)
                 .execute()
                 .value
 
@@ -143,6 +144,7 @@ final class FileManagerService {
                 .select()
                 .eq("assignment_id", value: assignmentId.uuidString)
                 .order("submitted_at", ascending: false)
+                .limit(100)
                 .execute()
                 .value
 

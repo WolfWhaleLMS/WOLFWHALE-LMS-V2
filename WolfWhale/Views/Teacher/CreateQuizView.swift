@@ -115,6 +115,7 @@ struct CreateQuizView: View {
                             .foregroundStyle(.red)
                     }
                     .sensoryFeedback(.impact(weight: .heavy), trigger: hapticTrigger)
+                    .accessibilityLabel("Delete question")
                 }
             }
 
