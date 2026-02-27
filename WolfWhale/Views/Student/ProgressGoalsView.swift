@@ -105,7 +105,7 @@ struct ProgressGoalsView: View {
             Image(systemName: "chart.bar.doc.horizontal")
                 .font(.largeTitle)
                 .foregroundStyle(.secondary)
-                .symbolEffect(.bounce)
+                .symbolEffect(.bounce, value: 1)
             Text("No Graded Courses")
                 .font(.headline)
                 .foregroundStyle(Color(.label))

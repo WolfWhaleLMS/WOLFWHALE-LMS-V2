@@ -320,7 +320,7 @@ struct WeeklyDigestView: View {
             Image(systemName: "doc.text.magnifyingglass")
                 .font(.system(size: 48))
                 .foregroundStyle(.secondary)
-                .symbolEffect(.bounce)
+                .symbolEffect(.bounce, value: 1)
             Text("No Digest Available")
                 .font(.headline)
                 .foregroundStyle(Color(.label))

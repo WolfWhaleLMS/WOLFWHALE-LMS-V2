@@ -461,7 +461,7 @@ struct ParentDashboardView: View {
                 HStack {
                     Image(systemName: "megaphone")
                         .foregroundStyle(.secondary)
-                        .symbolEffect(.bounce)
+                        .symbolEffect(.bounce, value: 1)
                     Text("No announcements at this time")
                         .foregroundStyle(.secondary)
                 }

@@ -156,7 +156,7 @@ struct LoginView: View {
                 HStack(spacing: 4) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .font(.caption2)
-                        .symbolEffect(.bounce, options: .repeat(2))
+                        .symbolEffect(.bounce, value: 1)
                     Text(error)
                         .font(.caption2)
                 }

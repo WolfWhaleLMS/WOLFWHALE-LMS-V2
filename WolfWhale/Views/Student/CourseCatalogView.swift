@@ -249,7 +249,7 @@ struct CourseCatalogView: View {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.title3)
                         .foregroundStyle(.green)
-                        .symbolEffect(.bounce)
+                        .symbolEffect(.bounce, value: 1)
                         .accessibilityLabel("Enrolled")
                 } else {
                     statusBadge(for: course)

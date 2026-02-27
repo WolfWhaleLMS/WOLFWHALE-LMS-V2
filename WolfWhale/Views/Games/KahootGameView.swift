@@ -90,7 +90,7 @@ struct KahootGameView: View {
                     Image(systemName: "gamecontroller.fill")
                         .font(.system(size: 48))
                         .foregroundStyle(Theme.brandGradient)
-                        .symbolEffect(.bounce, options: .repeating.speed(0.5))
+                        .symbolEffect(.wiggle, options: .repeating.speed(0.5))
 
                     Text("Quiz Game")
                         .font(.system(size: 34, weight: .black, design: .rounded))
@@ -639,7 +639,7 @@ struct KahootGameView: View {
                 Image(systemName: "chart.bar.fill")
                     .font(.system(size: 40))
                     .foregroundStyle(.yellow)
-                    .symbolEffect(.bounce)
+                    .symbolEffect(.bounce, value: 1)
 
                 Text("Scoreboard")
                     .font(.system(size: 32, weight: .black, design: .rounded))
@@ -730,7 +730,7 @@ struct KahootGameView: View {
                     Image(systemName: "trophy.fill")
                         .font(.system(size: 64))
                         .foregroundStyle(.yellow)
-                        .symbolEffect(.bounce, options: .repeating.speed(0.3))
+                        .symbolEffect(.pulse, options: .repeating.speed(0.3))
 
                     Text("Quiz Complete!")
                         .font(.system(size: 32, weight: .black, design: .rounded))

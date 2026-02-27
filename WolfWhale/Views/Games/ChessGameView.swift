@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: - Data Models
 
-enum PieceColor: Equatable {
+enum PieceColor: Equatable, Sendable {
     case white, black
 
     var opposite: PieceColor {
@@ -10,11 +10,11 @@ enum PieceColor: Equatable {
     }
 }
 
-enum PieceType: Equatable {
+enum PieceType: Equatable, Sendable {
     case king, queen, rook, bishop, knight, pawn
 }
 
-struct ChessPiece: Equatable {
+struct ChessPiece: Equatable, Sendable {
     let type: PieceType
     let color: PieceColor
     var hasMoved: Bool = false
@@ -37,7 +37,7 @@ struct ChessPiece: Equatable {
     }
 }
 
-struct ChessPosition: Equatable, Hashable {
+struct ChessPosition: Equatable, Hashable, Sendable {
     let row: Int
     let col: Int
 }
@@ -606,7 +606,7 @@ class ChessGame {
 
     // MARK: - Bot AI
 
-    private func pieceValue(_ type: PieceType) -> Int {
+    private nonisolated func pieceValue(_ type: PieceType) -> Int {
         switch type {
         case .pawn: return 100
         case .knight: return 320

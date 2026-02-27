@@ -181,7 +181,7 @@ struct CourseDetailView: View {
             if lesson.isCompleted {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundStyle(.green)
-                    .symbolEffect(.bounce)
+                    .symbolEffect(.bounce, value: 1)
             } else {
                 Image(systemName: "chevron.right")
                     .font(.caption)

@@ -226,7 +226,7 @@ struct StudyGroupView: View {
 
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundStyle(.green)
-                            .symbolEffect(.bounce)
+                            .symbolEffect(.bounce, value: 1)
                     }
                     .padding(12)
                     .background(.ultraThinMaterial, in: .rect(cornerRadius: 16))
@@ -334,7 +334,7 @@ struct StudyGroupView: View {
                 Image(systemName: "doc.text.fill")
                     .font(.system(size: 48))
                     .foregroundStyle(.teal)
-                    .symbolEffect(.bounce)
+                    .symbolEffect(.bounce, value: 1)
 
                 Text("Share Study Notes")
                     .font(.title3.bold())

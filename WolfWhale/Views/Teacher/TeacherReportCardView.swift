@@ -222,7 +222,7 @@ struct TeacherReportCardView: View {
                     HStack(spacing: 4) {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundStyle(.green)
-                            .symbolEffect(.bounce)
+                            .symbolEffect(.bounce, value: 1)
                         Text("Saved \(savedCount)")
                             .font(.caption.bold())
                             .foregroundStyle(.green)

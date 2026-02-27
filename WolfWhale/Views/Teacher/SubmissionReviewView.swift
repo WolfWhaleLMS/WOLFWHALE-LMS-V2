@@ -395,7 +395,7 @@ struct SubmissionReviewView: View {
                 Image(systemName: "person.crop.circle.fill")
                     .font(.largeTitle)
                     .foregroundStyle(.indigo)
-                    .symbolEffect(.bounce)
+                    .symbolEffect(.bounce, value: 1)
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(sub.studentName)
@@ -427,7 +427,7 @@ struct SubmissionReviewView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "checkmark.seal.fill")
                         .foregroundStyle(.green)
-                        .symbolEffect(.bounce)
+                        .symbolEffect(.bounce, value: 1)
                     Text("Graded: \(Int(grade))%")
                         .font(.subheadline.bold())
                         .foregroundStyle(Theme.gradeColor(grade))

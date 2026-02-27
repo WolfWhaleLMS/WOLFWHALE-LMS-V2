@@ -93,7 +93,7 @@ struct CoursesListView: View {
                     Image(systemName: "rectangle.and.pencil.and.ellipsis")
                         .font(.largeTitle)
                         .foregroundStyle(.indigo)
-                        .symbolEffect(.bounce)
+                        .symbolEffect(.bounce, value: 1)
                     Text("Join a Course")
                         .font(.title2.bold())
                     Text("Enter the class code provided by your teacher.")

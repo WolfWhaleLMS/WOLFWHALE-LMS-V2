@@ -165,13 +165,13 @@ extension View {
 
     // MARK: - Non-breathe periodic/continuous helpers
 
-    /// Applies `.symbolEffect(effect, options: .repeat(.periodic(delay:)))` on iOS 18+, falls back to `.symbolEffect(effect, options: .repeating)`.
+    /// Applies `.symbolEffect(.pulse, options: .repeat(.periodic(delay:)))` on iOS 18+, falls back to `.symbolEffect(.pulse, options: .repeating)`.
     @ViewBuilder
     func compatBouncePeriodic(delay: Double) -> some View {
         if #available(iOS 18, *) {
-            self.symbolEffect(.bounce, options: .repeat(.periodic(delay: delay)))
+            self.symbolEffect(.pulse, options: .repeat(.periodic(delay: delay)))
         } else {
-            self.symbolEffect(.bounce, options: .repeating)
+            self.symbolEffect(.pulse, options: .repeating)
         }
     }
 
@@ -205,13 +205,13 @@ extension View {
         }
     }
 
-    /// Applies `.symbolEffect(.bounce, options: .repeat(.periodic(delay:)), isActive:)` on iOS 18+, falls back to `.symbolEffect(.bounce, options: .repeating, isActive:)`.
+    /// Applies `.symbolEffect(.pulse, options: .repeat(.periodic(delay:)), isActive:)` on iOS 18+, falls back to `.symbolEffect(.pulse, options: .repeating, isActive:)`.
     @ViewBuilder
     func compatBouncePeriodicActive(delay: Double, isActive: Bool) -> some View {
         if #available(iOS 18, *) {
-            self.symbolEffect(.bounce, options: .repeat(.periodic(delay: delay)), isActive: isActive)
+            self.symbolEffect(.pulse, options: .repeat(.periodic(delay: delay)), isActive: isActive)
         } else {
-            self.symbolEffect(.bounce, options: .repeating, isActive: isActive)
+            self.symbolEffect(.pulse, options: .repeating, isActive: isActive)
         }
     }
 

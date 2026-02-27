@@ -226,7 +226,7 @@ struct StudentInsightsView: View {
             Image(systemName: showAtRiskOnly ? "checkmark.shield.fill" : "person.3.fill")
                 .font(.largeTitle)
                 .foregroundStyle(showAtRiskOnly ? .green : Color(.secondaryLabel))
-                .symbolEffect(.bounce)
+                .symbolEffect(.bounce, value: 1)
 
             Text(showAtRiskOnly ? "No At-Risk Students" : "No Student Data")
                 .font(.headline)

@@ -533,7 +533,7 @@ struct RecommendationsView: View {
             Image(systemName: "line.3.horizontal.decrease.circle")
                 .font(.title)
                 .foregroundStyle(.secondary)
-                .symbolEffect(.bounce)
+                .symbolEffect(.bounce, value: 1)
             Text("No \(selectedFilter.rawValue.lowercased()) recommendations")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)

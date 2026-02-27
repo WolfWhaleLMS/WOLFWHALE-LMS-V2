@@ -326,7 +326,7 @@ struct TranscriptExportView: View {
             HStack(spacing: 8) {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundStyle(.green)
-                    .symbolEffect(.bounce)
+                    .symbolEffect(.bounce, value: 1)
                 Text("Transcript info copied to clipboard")
                     .font(.subheadline.bold())
             }

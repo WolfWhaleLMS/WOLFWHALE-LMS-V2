@@ -306,7 +306,7 @@ struct ReportCardView: View {
             Image(systemName: icon)
                 .font(.title3)
                 .foregroundStyle(color)
-                .symbolEffect(.bounce)
+                .symbolEffect(.bounce, value: 1)
             Text("\(count)")
                 .font(.headline)
             Text(label)

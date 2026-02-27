@@ -83,14 +83,15 @@ struct CachedAsyncImage<Placeholder: View>: View {
             // Perform CPU-heavy downsampling off the main thread to avoid hitches.
             let maxDim = maxDimension
             let cachedURL = url
+            let cacheService = ImageCacheService.shared
             let result: Image? = await Task.detached(priority: .userInitiated) {
-                if let downsampledImage = ImageCacheService.shared.setDownsampledImage(
+                if let downsampledImage = cacheService.setDownsampledImage(
                     data: data, for: cachedURL, maxDimension: maxDim
                 ) {
                     return downsampledImage
                 } else if let uiImage = UIImage(data: data) {
                     let swiftUIImage = Image(uiImage: uiImage)
-                    ImageCacheService.shared.setImage(swiftUIImage, data: data, for: cachedURL)
+                    cacheService.setImage(swiftUIImage, data: data, for: cachedURL)
                     return swiftUIImage
                 }
                 return nil

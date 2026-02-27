@@ -56,7 +56,7 @@ struct StudyPetWidget: View {
                 Image(systemName: petMood.petImage)
                     .font(.system(size: 36))
                     .foregroundStyle(.white)
-                    .symbolEffect(.bounce, options: .repeating.speed(0.5))
+                    .symbolEffect(.wiggle, options: .repeating.speed(0.5))
             }
 
             // Pet name and level

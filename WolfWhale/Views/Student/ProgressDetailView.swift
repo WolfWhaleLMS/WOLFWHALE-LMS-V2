@@ -147,7 +147,7 @@ struct ProgressDetailView: View {
             HStack(spacing: 8) {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundStyle(.green)
-                    .symbolEffect(.bounce)
+                    .symbolEffect(.bounce, value: 1)
                 VStack(alignment: .leading, spacing: 1) {
                     let totalCompleted = allProgress.reduce(0) { $0 + $1.lessonsCompleted }
                     let totalLessons = allProgress.reduce(0) { $0 + $1.lessonsTotal }

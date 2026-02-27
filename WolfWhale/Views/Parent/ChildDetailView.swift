@@ -397,7 +397,7 @@ struct ChildDetailView: View {
             Image(systemName: icon)
                 .font(.title2)
                 .foregroundStyle(color)
-                .symbolEffect(.bounce)
+                .symbolEffect(.bounce, value: 1)
 
             Text(title)
                 .font(.subheadline.bold())

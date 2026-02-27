@@ -47,7 +47,7 @@ final class ChatRealtimeService {
     private var currentConversationId: UUID?
 
     /// The message handler of the most recent single-conversation subscription.
-    private var currentMessageHandler: ((ChatMessage) -> Void)?
+    private var currentMessageHandler: (@Sendable (ChatMessage) -> Void)?
 
     // MARK: - Date Parsing
 

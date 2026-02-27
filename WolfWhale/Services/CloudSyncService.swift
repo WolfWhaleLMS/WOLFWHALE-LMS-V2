@@ -77,9 +77,7 @@ final class CloudSyncService {
     // MARK: - Notification Observer
 
     /// Holds the observer token so it can be removed in `deinit`.
-    /// `nonisolated(unsafe)` because deinit is nonisolated and must remove the observer.
-    /// Safe because init (MainActor) is the only writer and deinit is the only other accessor.
-    nonisolated(unsafe) private var accountChangeObserver: NSObjectProtocol?
+    private var accountChangeObserver: NSObjectProtocol?
 
     // MARK: - Init
 

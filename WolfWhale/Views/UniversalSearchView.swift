@@ -298,7 +298,7 @@ struct UniversalSearchView: View {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 44))
                 .foregroundStyle(.secondary.opacity(0.5))
-                .symbolEffect(.bounce)
+                .symbolEffect(.bounce, value: 1)
             Text("No results for '\(searchText)'")
                 .font(.headline)
                 .foregroundStyle(.secondary)
