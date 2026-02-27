@@ -1,6 +1,18 @@
 import Foundation
 import CloudKit
 
+// MARK: - Notification Observer Token
+
+/// Non-actor-isolated holder for NotificationCenter observer tokens.
+/// Automatically removes the observer on deallocation, avoiding
+/// MainActor-isolation issues in `deinit`.
+private final class NotificationToken: @unchecked Sendable {
+    var observer: NSObjectProtocol?
+    deinit {
+        if let observer { NotificationCenter.default.removeObserver(observer) }
+    }
+}
+
 // MARK: - Lightweight Codable types for iCloud key-value sync
 
 private struct CloudUserPreferences: Codable {
@@ -76,9 +88,8 @@ final class CloudSyncService {
 
     // MARK: - Notification Observer
 
-    /// Holds the observer token so it can be removed in `deinit`.
-    /// `nonisolated` because deinit is nonisolated and must remove the observer.
-    nonisolated private var accountChangeObserver: NSObjectProtocol?
+    /// Separate holder so deinit can clean up without crossing actor boundaries.
+    private let observerToken = NotificationToken()
 
     // MARK: - Init
 
@@ -86,7 +97,7 @@ final class CloudSyncService {
         // Always observe iCloud account changes so we detect when the user
         // signs in/out of iCloud while the app is running -- even if iCloud
         // is initially unavailable.
-        accountChangeObserver = NotificationCenter.default.addObserver(
+        observerToken.observer = NotificationCenter.default.addObserver(
             forName: Notification.Name.CKAccountChanged,
             object: nil,
             queue: .main
@@ -107,12 +118,6 @@ final class CloudSyncService {
 
         Task {
             iCloudAvailable = await checkiCloudAvailability()
-        }
-    }
-
-    deinit {
-        if let observer = accountChangeObserver {
-            NotificationCenter.default.removeObserver(observer)
         }
     }
 
