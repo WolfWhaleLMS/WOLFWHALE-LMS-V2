@@ -63,12 +63,12 @@ struct FileUploadService: Sendable {
         // Perform file-system I/O off the main actor to avoid blocking the UI.
         var (fileData, contentType) = try await Task.detached(priority: .userInitiated) {
             // Verify the file exists
-            guard FileManager.default.fileExists(atPath: fileURL.path) else {
+            guard FileManager.default.fileExists(atPath: fileURL.path(percentEncoded: false)) else {
                 throw FileUploadError.fileNotFound
             }
 
             // Check file size
-            let attributes = try FileManager.default.attributesOfItem(atPath: fileURL.path)
+            let attributes = try FileManager.default.attributesOfItem(atPath: fileURL.path(percentEncoded: false))
             let fileSize = attributes[.size] as? Int64 ?? 0
             guard fileSize <= maxSize else {
                 throw FileUploadError.fileTooLarge(maxMB: maxSizeMB)

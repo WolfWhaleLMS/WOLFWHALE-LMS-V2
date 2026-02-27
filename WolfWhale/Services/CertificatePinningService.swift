@@ -20,27 +20,31 @@ final class CertificatePinningService: NSObject, URLSessionDelegate {
     /// certificate. Include both the leaf and at least one intermediate/backup
     /// pin so that certificate rotation does not cause an outage.
     ///
-    /// To generate a pin from a PEM certificate:
-    ///   openssl x509 -in cert.pem -pubkey -noout | \
+    /// SSL pinning is disabled by default. To enable, add SHA-256 SPKI hashes
+    /// of your server's certificate chain. Generate with:
+    ///
+    ///   openssl s_client -connect yourserver.com:443 | \
+    ///     openssl x509 -pubkey | \
     ///     openssl pkey -pubin -outform der | \
     ///     openssl dgst -sha256 -binary | base64
     ///
-    /// IMPORTANT: Update these pins when Supabase rotates their certificates.
-    /// Include at least one backup pin (e.g. the intermediate CA) to avoid
-    /// bricking the app if the leaf certificate is rotated.
+    /// IMPORTANT: When enabling pinning, include at least one backup pin
+    /// (e.g. the intermediate CA) to avoid bricking the app if the leaf
+    /// certificate is rotated. Update pins before certificate expiration.
     private static let pinnedPublicKeyHashes: Set<String> = [
-        // Supabase leaf certificate public key hash (primary)
-        // Amazon RSA 2048 M02 intermediate (backup)
-        // These are placeholder values -- replace with real pins extracted
-        // from the production certificate chain before shipping to production.
-        // The service will fall back to standard TLS validation if no pins
-        // are configured, but will log a warning in DEBUG builds.
+        // Add your SPKI hashes here to enable certificate pinning.
+        // Example (do NOT use these values — they are illustrative only):
+        //   "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",   // leaf
+        //   "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB=",   // intermediate (backup)
     ]
 
-    /// Set to `true` to enforce pinning even in release builds. When `false`
-    /// (or when `pinnedPublicKeyHashes` is empty), the service performs
-    /// standard TLS validation only and logs a warning in DEBUG.
-    private static let enforcePinning: Bool = !pinnedPublicKeyHashes.isEmpty
+    /// Controls whether certificate pinning is enforced.
+    ///
+    /// Defaults to `false` (standard TLS validation only). Set to `true` **and**
+    /// populate ``pinnedPublicKeyHashes`` to activate pinning. When `false` or
+    /// when the hash set is empty, the service gracefully falls back to standard
+    /// system TLS validation — it will never crash or block connections.
+    static var enforcePinning: Bool = false
 
     static let shared = CertificatePinningService()
 
@@ -71,11 +75,12 @@ final class CertificatePinningService: NSObject, URLSessionDelegate {
             return
         }
 
-        // Step 2: If pin hashes are configured, validate the server certificate's
-        // public key against the pinned set.
-        guard Self.enforcePinning else {
+        // Step 2: If pinning is not enabled or no hashes are configured, fall
+        // back to standard TLS validation (the system trust evaluation above
+        // already passed). This path is safe — no crash, no blocked connections.
+        guard Self.enforcePinning, !Self.pinnedPublicKeyHashes.isEmpty else {
             #if DEBUG
-            print("[CertificatePinning] WARNING: No pins configured -- falling back to standard TLS validation for \(challenge.protectionSpace.host). Add SPKI hashes before shipping to production.")
+            print("[CertificatePinning] Pinning is disabled or no hashes configured — using standard TLS validation for \(challenge.protectionSpace.host).")
             #endif
             let credential = URLCredential(trust: serverTrust)
             completionHandler(.useCredential, credential)
@@ -89,9 +94,12 @@ final class CertificatePinningService: NSObject, URLSessionDelegate {
         var matched = false
 
         for index in 0..<certificateCount {
-            guard let certificate = SecTrustCopyCertificateChain(serverTrust).map({ ($0 as! [SecCertificate])[index] }) else {
+            guard let chain = SecTrustCopyCertificateChain(serverTrust),
+                  let certificates = chain as? [SecCertificate],
+                  index < certificates.count else {
                 continue
             }
+            let certificate = certificates[index]
 
             if let publicKeyHash = Self.sha256HashOfPublicKey(for: certificate),
                Self.pinnedPublicKeyHashes.contains(publicKeyHash) {

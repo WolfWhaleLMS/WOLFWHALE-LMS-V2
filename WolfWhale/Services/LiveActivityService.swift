@@ -42,7 +42,6 @@ class LiveActivityService {
     /// Safely check whether Live Activities are enabled. Returns false if ActivityKit
     /// is unavailable (e.g. missing entitlement or unsigned build).
     private var areActivitiesEnabled: Bool {
-        guard #available(iOS 16.1, *) else { return false }
         // ActivityAuthorizationInfo() can crash without proper app-group / entitlement signing.
         // Wrap in a do block for resilience; ObjC exceptions will still crash but this
         // protects against Swift-level failures.

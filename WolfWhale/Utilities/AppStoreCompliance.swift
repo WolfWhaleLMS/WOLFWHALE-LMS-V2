@@ -1,9 +1,12 @@
 import Foundation
+import os
 import Supabase
 
 /// Centralized App Store compliance utilities for COPPA, terms acceptance,
 /// export compliance, and version information.
 nonisolated enum AppStoreCompliance {
+
+    private static let logger = Logger(subsystem: "com.wolfwhale.lms", category: "AppStoreCompliance")
 
     // MARK: - COPPA Age Verification
 
@@ -40,8 +43,23 @@ nonisolated enum AppStoreCompliance {
 
     // MARK: - Server-Synced Consent
 
+    // MARK: - Consent Sync Retry Flag
+
+    /// Key used to persist the retry flag when consent sync fails.
+    private static func consentSyncPendingKey(for userId: UUID) -> String {
+        "wolfwhale_coppa_consent_sync_pending_\(userId.uuidString)"
+    }
+
+    /// Returns `true` if a previous consent sync failed and needs to be retried.
+    static func isConsentSyncPending(for userId: UUID) -> Bool {
+        UserDefaults.standard.bool(forKey: consentSyncPendingKey(for: userId))
+    }
+
     /// Syncs the COPPA consent status to the server (Supabase) so that
     /// server-side data is the source of truth, not local UserDefaults.
+    ///
+    /// On failure the error is logged and a retry flag is persisted so the app
+    /// can call this again on next launch or connectivity change.
     static func syncConsentToServer(
         userId: UUID,
         hasParentalConsent: Bool,
@@ -61,16 +79,30 @@ nonisolated enum AppStoreCompliance {
         }
         params["consent_recorded_at"] = ISO8601DateFormatter().string(from: Date())
 
-        // Update server -- this is the source of truth
-        _ = try? await supabaseClient
-            .from("profiles")
-            .update([
-                "coppa_consent": hasParentalConsent ? "granted" : "pending",
-                "coppa_parent_email": parentEmail ?? "",
-                "coppa_consent_date": ISO8601DateFormatter().string(from: Date())
-            ])
-            .eq("id", value: userId.uuidString)
-            .execute()
+        // Update server -- this is the source of truth.
+        // COPPA consent MUST reach the server for legal compliance, so failures
+        // are logged and a retry flag is set.
+        do {
+            _ = try await supabaseClient
+                .from("profiles")
+                .update([
+                    "coppa_consent": hasParentalConsent ? "granted" : "pending",
+                    "coppa_parent_email": parentEmail ?? "",
+                    "coppa_consent_date": ISO8601DateFormatter().string(from: Date())
+                ])
+                .eq("id", value: userId.uuidString)
+                .execute()
+
+            // Sync succeeded — clear any pending retry flag
+            UserDefaults.standard.set(false, forKey: consentSyncPendingKey(for: userId))
+        } catch {
+            // Sync failed — set retry flag so the app can attempt again later
+            UserDefaults.standard.set(true, forKey: consentSyncPendingKey(for: userId))
+            logger.error("[AppStoreCompliance] COPPA consent sync failed for user \(userId.uuidString, privacy: .public): \(error.localizedDescription, privacy: .public)")
+            #if DEBUG
+            print("[AppStoreCompliance] COPPA consent sync failed: \(error)")
+            #endif
+        }
 
         // Cache locally for offline access
         UserDefaults.standard.set(hasParentalConsent, forKey: "wolfwhale_coppa_consent_\(userId.uuidString)")

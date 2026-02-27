@@ -53,9 +53,11 @@ struct ConferenceSchedulingView: View {
             BookConferenceSheet(viewModel: viewModel)
         }
         .task {
+            #if DEBUG
             if viewModel.conferences.isEmpty {
                 viewModel.loadDemoConferenceData()
             }
+            #endif
         }
     }
 

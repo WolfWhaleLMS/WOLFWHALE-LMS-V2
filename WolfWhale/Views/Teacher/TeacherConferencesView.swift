@@ -35,9 +35,11 @@ struct TeacherConferencesView: View {
             AddTimeSlotSheet(viewModel: viewModel)
         }
         .task {
+            #if DEBUG
             if viewModel.conferences.isEmpty {
                 viewModel.loadDemoConferenceData()
             }
+            #endif
         }
     }
 

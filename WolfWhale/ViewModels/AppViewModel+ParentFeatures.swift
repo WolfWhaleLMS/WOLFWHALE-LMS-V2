@@ -133,6 +133,7 @@ extension AppViewModel {
         parentAlerts = parentFeaturesVM.parentAlerts
     }
 
+    #if DEBUG
     // MARK: - Demo Data Loaders (delegates to sub-VM)
 
     func loadDemoConferenceData() {
@@ -144,4 +145,5 @@ extension AppViewModel {
         conferences = parentFeaturesVM.conferences
         teacherAvailableSlots = parentFeaturesVM.teacherAvailableSlots
     }
+    #endif
 }

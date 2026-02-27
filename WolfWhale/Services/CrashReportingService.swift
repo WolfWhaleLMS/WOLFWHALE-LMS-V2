@@ -1,4 +1,5 @@
 import Foundation
+import os
 import Supabase
 
 /// DTO for inserting crash/error reports into the audit_logs table.
@@ -18,6 +19,11 @@ private nonisolated struct CrashLogInsertDTO: Encodable, Sendable {
 final class CrashReportingService {
 
     static let shared = CrashReportingService()
+
+    private static let logger = Logger(subsystem: "com.wolfwhale.lms", category: "CrashReporting")
+
+    /// Key for persisting failed crash reports to disk so they survive app restarts.
+    private static let failedReportsKey = "com.wolfwhale.failedCrashReports"
 
     private var errorBuffer: [(date: Date, error: String, context: String)] = []
     private let maxBufferSize = 50
@@ -97,16 +103,84 @@ final class CrashReportingService {
         flushTask = nil
 
         Task.detached(priority: .utility) {
+            var failedEntries: [[String: String]] = []
+
             for entry in errors {
                 let dto = CrashLogInsertDTO(
                     action: "error_report",
                     details: "[\(entry.context)] \(entry.error)",
                     timestamp: ISO8601DateFormatter().string(from: entry.date)
                 )
-                try? await supabaseClient
-                    .from("audit_logs")
-                    .insert(dto)
-                    .execute()
+                do {
+                    try await supabaseClient
+                        .from("audit_logs")
+                        .insert(dto)
+                        .execute()
+                } catch {
+                    Self.logger.error("[CrashReporting] Failed to upload crash report: \(error.localizedDescription, privacy: .public)")
+                    #if DEBUG
+                    print("[CrashReporting] Failed to upload crash report: \(error)")
+                    #endif
+                    // Persist failed entry for later retry
+                    failedEntries.append([
+                        "context": entry.context,
+                        "error": entry.error,
+                        "timestamp": ISO8601DateFormatter().string(from: entry.date)
+                    ])
+                }
+            }
+
+            // Persist any failed reports to disk so they can be retried later
+            if !failedEntries.isEmpty {
+                Self.persistFailedReports(failedEntries)
+            }
+        }
+    }
+
+    // MARK: - Failed Report Persistence
+
+    /// Persists failed crash report entries to UserDefaults for retry on next flush.
+    private nonisolated static func persistFailedReports(_ newEntries: [[String: String]]) {
+        var existing = UserDefaults.standard.array(forKey: failedReportsKey) as? [[String: String]] ?? []
+        existing.append(contentsOf: newEntries)
+        // Cap stored reports at 200 to prevent unbounded growth
+        if existing.count > 200 {
+            existing = Array(existing.suffix(200))
+        }
+        UserDefaults.standard.set(existing, forKey: failedReportsKey)
+    }
+
+    /// Retries uploading any previously failed crash reports.
+    /// Call this on app launch or when connectivity is restored.
+    func retryFailedReports() {
+        let stored = UserDefaults.standard.array(forKey: Self.failedReportsKey) as? [[String: String]] ?? []
+        guard !stored.isEmpty else { return }
+
+        // Clear the stored reports immediately to avoid duplicate retries
+        UserDefaults.standard.removeObject(forKey: Self.failedReportsKey)
+
+        Task.detached(priority: .utility) {
+            var stillFailed: [[String: String]] = []
+
+            for entry in stored {
+                let dto = CrashLogInsertDTO(
+                    action: "error_report",
+                    details: "[\(entry["context"] ?? "unknown")] \(entry["error"] ?? "")",
+                    timestamp: entry["timestamp"] ?? ISO8601DateFormatter().string(from: Date())
+                )
+                do {
+                    try await supabaseClient
+                        .from("audit_logs")
+                        .insert(dto)
+                        .execute()
+                } catch {
+                    Self.logger.error("[CrashReporting] Retry upload failed: \(error.localizedDescription, privacy: .public)")
+                    stillFailed.append(entry)
+                }
+            }
+
+            if !stillFailed.isEmpty {
+                Self.persistFailedReports(stillFailed)
             }
         }
     }

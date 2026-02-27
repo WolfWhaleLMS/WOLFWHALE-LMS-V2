@@ -1,14 +1,10 @@
 import SwiftUI
-import PassKit
 
 struct SchoolIDView: View {
     let user: User
     let walletService: WalletPassService
-    @State private var showWalletAlert = false
-    @State private var alertMessage = ""
     @State private var cardRotation: Double = 0
     @State private var appeared = false
-    @State private var hapticTrigger = false
 
     private var pass: WalletPassService.SchoolIDPass {
         walletService.generatePassData(for: user, schoolName: "WolfWhale Academy")
@@ -27,11 +23,6 @@ struct SchoolIDView: View {
         .background(Color(.systemGroupedBackground))
         .navigationTitle("School ID")
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Apple Wallet", isPresented: $showWalletAlert) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(alertMessage)
-        }
         .onAppear {
             withAnimation(.smooth(duration: 0.6)) {
                 appeared = true
@@ -172,29 +163,25 @@ struct SchoolIDView: View {
 
     private var actionButtons: some View {
         VStack(spacing: 12) {
-            // Add to Apple Wallet button
-            Button {
-                hapticTrigger.toggle()
-                walletService.addToWallet(pass: pass)
-                if let error = walletService.error {
-                    alertMessage = error
-                    showWalletAlert = true
-                }
-            } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: "wallet.pass.fill")
-                        .font(.title3)
-                    Text("Add to Apple Wallet")
+            // Apple Wallet notice
+            HStack(spacing: 10) {
+                Image(systemName: "wallet.pass.fill")
+                    .font(.title3)
+                    .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Apple Wallet")
                         .font(.subheadline.bold())
+                        .foregroundStyle(.secondary)
+                    Text("Wallet passes require school administrator setup.")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
                 }
-                .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .frame(height: 50)
-                .background(.black, in: .rect(cornerRadius: 14))
             }
-            .sensoryFeedback(.impact(weight: .medium), trigger: hapticTrigger)
-            .accessibilityLabel("Add school ID to Apple Wallet")
-            .accessibilityHint("Double tap to add your school ID pass to Apple Wallet")
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(14)
+            .background(.ultraThinMaterial, in: .rect(cornerRadius: 14))
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel("Apple Wallet passes require school administrator setup")
 
             // NFC indicator
             HStack(spacing: 8) {

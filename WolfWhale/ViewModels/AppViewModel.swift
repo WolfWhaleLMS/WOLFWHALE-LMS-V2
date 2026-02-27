@@ -131,11 +131,18 @@ class AppViewModel {
     // MARK: - Search Debouncing
     private var searchTask: Task<Void, Never>?
 
+    #if DEBUG
     var isDemoMode = false
     private let mockService = MockDataService.shared
+    #else
+    let isDemoMode = false
+    #endif
     let dataService = DataService.shared
     private var refreshTask: Task<Void, Never>?
     private var autoRefreshTask: Task<Void, Never>?
+    /// Task running the network-observer loop; stored so it can be cancelled
+    /// when the app backgrounds or the user logs out, preventing accumulation.
+    private var networkObserverTask: Task<Void, Never>?
     /// Auto-refresh interval in seconds (5 minutes).
     private let autoRefreshInterval: TimeInterval = 300
     let networkMonitor = NetworkMonitor()
@@ -154,6 +161,8 @@ class AppViewModel {
         refreshTask = nil
         autoRefreshTask?.cancel()
         autoRefreshTask = nil
+        networkObserverTask?.cancel()
+        networkObserverTask = nil
 
         for (_, task) in activeTasks {
             task.cancel()
@@ -497,6 +506,7 @@ class AppViewModel {
         Task {
             defer { isCheckingSession = false }
 
+            #if DEBUG
             // If we were in demo mode and there's no real Supabase session,
             // clear all state so the user lands back on the login screen.
             if isDemoMode {
@@ -510,6 +520,7 @@ class AppViewModel {
                     return
                 }
             }
+            #endif
 
             // If a previous session was saved and biometrics are available,
             // require Face ID / Touch ID before restoring the session.
@@ -536,8 +547,13 @@ class AppViewModel {
                 }
                 try await fetchProfile(userId: session.user.id)
 
-                // Cache role/tenant in PostgreSQL session vars for faster RLS checks
-                try? await supabaseClient.rpc("set_user_session_vars").execute()
+                // Cache role/tenant in PostgreSQL session vars for faster RLS checks.
+                // This is critical — if it fails, RLS policies may return wrong data.
+                do {
+                    try await supabaseClient.rpc("set_user_session_vars").execute()
+                } catch {
+                    log("set_user_session_vars RPC failed during session restore: \(error)", level: .error)
+                }
 
                 await loadData()
                 isAuthenticated = true
@@ -581,8 +597,13 @@ class AppViewModel {
                 }
                 try await fetchProfile(userId: session.user.id)
 
-                // Cache role/tenant in PostgreSQL session vars for faster RLS checks
-                try? await supabaseClient.rpc("set_user_session_vars").execute()
+                // Cache role/tenant in PostgreSQL session vars for faster RLS checks.
+                // This is critical — if it fails, RLS policies may return wrong data.
+                do {
+                    try await supabaseClient.rpc("set_user_session_vars").execute()
+                } catch {
+                    log("set_user_session_vars RPC failed during biometric auth: \(error)", level: .error)
+                }
 
                 await loadData()
                 isAuthenticated = true
@@ -627,8 +648,13 @@ class AppViewModel {
                 let session = try await supabaseClient.auth.session
                 try await fetchProfile(userId: session.user.id)
 
-                // Cache role/tenant in PostgreSQL session vars for faster RLS checks
-                try? await supabaseClient.rpc("set_user_session_vars").execute()
+                // Cache role/tenant in PostgreSQL session vars for faster RLS checks.
+                // This is critical — if it fails, RLS policies may return wrong data.
+                do {
+                    try await supabaseClient.rpc("set_user_session_vars").execute()
+                } catch {
+                    log("set_user_session_vars RPC failed during login: \(error)", level: .error)
+                }
 
                 await loadData()
                 isAuthenticated = true
@@ -755,6 +781,7 @@ class AppViewModel {
         }
     }
 
+    #if DEBUG
     func loginAsDemo(role: UserRole) {
         isDemoMode = true
         currentUser = mockService.sampleUser(role: role)
@@ -763,6 +790,7 @@ class AppViewModel {
             isAuthenticated = true
         }
     }
+    #endif
 
     // MARK: - Cleanup
 
@@ -876,7 +904,9 @@ class AppViewModel {
         Task { await spotlightService.deindexAllContent() }
         _spotlightService = nil
 
+        #if DEBUG
         isDemoMode = false
+        #endif
 
         // 8. Reset pagination state so the next session starts fresh
         coursePagination.reset()
@@ -1162,10 +1192,12 @@ class AppViewModel {
 
     func loadData() async {
         guard let user = currentUser else { return }
+        #if DEBUG
         if isDemoMode {
             loadMockData()
             return
         }
+        #endif
 
         // Scope offline storage to the current user to prevent cross-user data leakage
         offlineStorage.setCurrentUser(user.id)
@@ -1175,8 +1207,7 @@ class AppViewModel {
                 dataError = "No internet connection. Using offline data."
                 await loadOfflineData()
             } else {
-                dataError = "No internet connection. Using offline mode."
-                loadMockData()
+                dataError = "No internet connection. No data available."
             }
             return
         }
@@ -1311,8 +1342,7 @@ class AppViewModel {
                 dataError = "Could not load data. Using offline data."
                 await loadOfflineData()
             } else {
-                dataError = "Could not load data. Using offline mode."
-                loadMockData()
+                dataError = "Could not load data. No data available."
             }
         }
     }
@@ -1506,9 +1536,9 @@ class AppViewModel {
             coursePagination.offset += newCourses.count
             coursePagination.hasMore = newCourses.count >= coursePagination.pageSize
         } catch {
-            #if DEBUG
-            print("[AppViewModel] Failed to load more courses: \(error)")
-            #endif
+            log("Failed to load more courses: \(error)", level: .error)
+            dataError = "Unable to load more courses. Pull to refresh or try again."
+            handlePotentialAuthError(error)
         }
     }
 
@@ -1531,9 +1561,9 @@ class AppViewModel {
             assignmentPagination.hasMore = newAssignments.count >= assignmentPagination.pageSize
             refreshDerivedProperties()
         } catch {
-            #if DEBUG
-            print("[AppViewModel] Failed to load more assignments: \(error)")
-            #endif
+            log("Failed to load more assignments: \(error)", level: .error)
+            dataError = "Unable to load more assignments. Pull to refresh or try again."
+            handlePotentialAuthError(error)
         }
     }
 
@@ -1553,9 +1583,9 @@ class AppViewModel {
             conversationPagination.hasMore = newConversations.count >= conversationPagination.pageSize
             refreshDerivedProperties()
         } catch {
-            #if DEBUG
-            print("[AppViewModel] Failed to load more conversations: \(error)")
-            #endif
+            log("Failed to load more conversations: \(error)", level: .error)
+            dataError = "Unable to load more messages. Pull to refresh or try again."
+            handlePotentialAuthError(error)
         }
     }
 
@@ -1574,9 +1604,9 @@ class AppViewModel {
             userPagination.offset += newUsers.count
             userPagination.hasMore = newUsers.count >= userPagination.pageSize
         } catch {
-            #if DEBUG
-            print("[AppViewModel] Failed to load more users: \(error)")
-            #endif
+            log("Failed to load more users: \(error)", level: .error)
+            dataError = "Unable to load more users. Pull to refresh or try again."
+            handlePotentialAuthError(error)
         }
     }
 
@@ -1630,6 +1660,7 @@ class AppViewModel {
 
     // Leaderboard removed — XP system disabled
 
+    #if DEBUG
     private func loadMockData() {
         courses = mockService.sampleCourses()
         assignments = mockService.sampleAssignments()
@@ -1711,6 +1742,7 @@ class AppViewModel {
 
         return schedules
     }
+    #endif
 
     // MARK: - Offline Storage Helpers
 
@@ -1941,8 +1973,11 @@ class AppViewModel {
     }
 
     /// Observes network connectivity changes and triggers a data refresh when coming back online.
+    /// Cancels any previously running observer to prevent Task accumulation on repeated
+    /// foreground transitions.
     func startNetworkObserver() {
-        Task { [weak self] in
+        networkObserverTask?.cancel()
+        networkObserverTask = Task { [weak self] in
             var wasOffline = false
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(3))
@@ -1960,10 +1995,12 @@ class AppViewModel {
         }
     }
 
-    /// Stops the auto-refresh timer. Call when the app backgrounds or the user logs out.
+    /// Stops the auto-refresh timer and network observer. Call when the app backgrounds or the user logs out.
     func stopAutoRefresh() {
         autoRefreshTask?.cancel()
         autoRefreshTask = nil
+        networkObserverTask?.cancel()
+        networkObserverTask = nil
     }
 
     /// Called when the app returns to the foreground. Refreshes data if the last

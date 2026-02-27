@@ -59,8 +59,8 @@ final class OfflineStorageService {
         } else {
             subpath = "OfflineCache"
         }
-        let dir = docs.appendingPathComponent(subpath, isDirectory: true)
-        if !FileManager.default.fileExists(atPath: dir.path) {
+        let dir = docs.appending(path: subpath, directoryHint: .isDirectory)
+        if !FileManager.default.fileExists(atPath: dir.path(percentEncoded: false)) {
             try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         }
         return dir
@@ -156,7 +156,7 @@ final class OfflineStorageService {
 
     private func save<T: Encodable>(_ data: T, filename: String) {
         // Capture the URL and userId on the main actor, then perform file I/O off the main thread
-        let url = cacheDirectory.appendingPathComponent(filename)
+        let url = cacheDirectory.appending(path: filename)
         let userId = currentUserId.flatMap { UUID(uuidString: $0) }
         Task.detached(priority: .utility) {
             do {
@@ -183,11 +183,11 @@ final class OfflineStorageService {
 
     private func load<T: Decodable>(filename: String) async -> T? {
         // Capture the file URL and userId on the MainActor, then perform file I/O off the main thread
-        let url = cacheDirectory.appendingPathComponent(filename)
+        let url = cacheDirectory.appending(path: filename)
         let userId = currentUserId.flatMap { UUID(uuidString: $0) }
         return await Task.detached(priority: .utility) {
             let fm = FileManager.default
-            guard fm.fileExists(atPath: url.path) else { return nil as T? }
+            guard fm.fileExists(atPath: url.path(percentEncoded: false)) else { return nil as T? }
             do {
                 let rawData = try Data(contentsOf: url)
 
@@ -332,8 +332,8 @@ final class OfflineStorageService {
     var hasOfflineData: Bool {
         guard currentUserId != nil else { return false }
         let fm = FileManager.default
-        return fm.fileExists(atPath: cacheDirectory.appendingPathComponent(Self.coursesFile).path)
-            || fm.fileExists(atPath: cacheDirectory.appendingPathComponent(Self.assignmentsFile).path)
+        return fm.fileExists(atPath: cacheDirectory.appending(path: Self.coursesFile).path(percentEncoded: false))
+            || fm.fileExists(atPath: cacheDirectory.appending(path: Self.assignmentsFile).path(percentEncoded: false))
     }
 
     // MARK: - Cache Size
@@ -343,7 +343,7 @@ final class OfflineStorageService {
         var total: Int64 = 0
         if let contents = try? fm.contentsOfDirectory(at: cacheDirectory, includingPropertiesForKeys: [.fileSizeKey]) {
             for file in contents {
-                if let attrs = try? fm.attributesOfItem(atPath: file.path),
+                if let attrs = try? fm.attributesOfItem(atPath: file.path(percentEncoded: false)),
                    let size = attrs[.size] as? Int64 {
                     total += size
                 }
@@ -369,8 +369,8 @@ final class OfflineStorageService {
         ]
         let fm = FileManager.default
         return files.compactMap { label, filename in
-            let url = cacheDirectory.appendingPathComponent(filename)
-            guard let attrs = try? fm.attributesOfItem(atPath: url.path),
+            let url = cacheDirectory.appending(path: filename)
+            guard let attrs = try? fm.attributesOfItem(atPath: url.path(percentEncoded: false)),
                   let size = attrs[.size] as? Int64 else {
                 return nil
             }

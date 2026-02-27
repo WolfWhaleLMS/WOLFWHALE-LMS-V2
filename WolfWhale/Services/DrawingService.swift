@@ -158,11 +158,11 @@ final class DrawingService {
 
             // Ensure the drawings directory exists
             let directory = fileURL.deletingLastPathComponent()
-            if !fileManager.fileExists(atPath: directory.path) {
+            if !fileManager.fileExists(atPath: directory.path(percentEncoded: false)) {
                 try fileManager.createDirectory(at: directory, withIntermediateDirectories: true)
             }
 
-            try data.write(to: fileURL, options: .atomic)
+            try data.write(to: fileURL, options: [.atomic, .completeFileProtection])
             currentAssignmentId = assignmentId
 
             // Generate and persist a thumbnail alongside the drawing
@@ -183,7 +183,7 @@ final class DrawingService {
         error = nil
         let fileURL = drawingFileURL(for: assignmentId)
 
-        guard fileManager.fileExists(atPath: fileURL.path) else {
+        guard fileManager.fileExists(atPath: fileURL.path(percentEncoded: false)) else {
             currentDrawing = PKDrawing()
             currentAssignmentId = assignmentId
             undoCount = 0
@@ -242,7 +242,7 @@ final class DrawingService {
 
     /// Checks whether a saved drawing file exists for the given assignment.
     func hasSavedDrawing(for assignmentId: UUID) -> Bool {
-        fileManager.fileExists(atPath: drawingFileURL(for: assignmentId).path)
+        fileManager.fileExists(atPath: drawingFileURL(for: assignmentId).path(percentEncoded: false))
     }
 
     // MARK: - Load All Saved Drawings
@@ -419,17 +419,20 @@ final class DrawingService {
 
     private func drawingsDirectory() -> URL {
         guard let docs = fileManager.urls(for: .documentDirectory, in: .userDomainMask).first else {
-            fatalError("Unable to locate document directory")
+            // Fallback to temporary directory instead of crashing.
+            // Operations will still work but data won't persist across app launches.
+            print("[DrawingService] ERROR: Unable to locate document directory, falling back to temporary directory.")
+            return URL(fileURLWithPath: NSTemporaryDirectory()).appending(path: "Drawings", directoryHint: .isDirectory)
         }
-        return docs.appendingPathComponent("Drawings", isDirectory: true)
+        return docs.appending(path: "Drawings", directoryHint: .isDirectory)
     }
 
     private func drawingFileURL(for assignmentId: UUID) -> URL {
-        drawingsDirectory().appendingPathComponent("\(assignmentId.uuidString).pkdrawing")
+        drawingsDirectory().appending(path: "\(assignmentId.uuidString).pkdrawing")
     }
 
     private func thumbnailFileURL(for assignmentId: UUID) -> URL {
-        drawingsDirectory().appendingPathComponent("\(assignmentId.uuidString)_thumb.png")
+        drawingsDirectory().appending(path: "\(assignmentId.uuidString)_thumb.png")
     }
 
     // MARK: - Thumbnail Generation
@@ -454,7 +457,7 @@ final class DrawingService {
 
         if let pngData = thumbImage.pngData() {
             let thumbURL = thumbnailFileURL(for: assignmentId)
-            try? pngData.write(to: thumbURL, options: .atomic)
+            try? pngData.write(to: thumbURL, options: [.atomic, .completeFileProtection])
         }
     }
 

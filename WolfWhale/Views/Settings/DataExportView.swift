@@ -219,7 +219,7 @@ struct DataExportView: View {
 
             // Write to a temporary file
             let fileName = "WolfWhale_DataExport_\(user.fullName.replacingOccurrences(of: " ", with: "_"))_\(formattedDate()).json"
-            let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+            let tempURL = FileManager.default.temporaryDirectory.appending(path: fileName)
             try jsonData.write(to: tempURL)
 
             exportedFileURL = tempURL

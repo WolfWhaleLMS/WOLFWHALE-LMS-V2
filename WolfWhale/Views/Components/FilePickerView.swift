@@ -117,7 +117,7 @@ struct FilePickerView: UIViewControllerRepresentable {
             let name = url.lastPathComponent
             var fileSize: Int64 = 0
 
-            if let attributes = try? FileManager.default.attributesOfItem(atPath: url.path),
+            if let attributes = try? FileManager.default.attributesOfItem(atPath: url.path(percentEncoded: false)),
                let size = attributes[.size] as? Int64 {
                 fileSize = size
             }

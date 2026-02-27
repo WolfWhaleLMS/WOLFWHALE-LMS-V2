@@ -302,7 +302,7 @@ struct StudyGroupView: View {
     }
 
     private func messageBubble(_ message: PeerMessage) -> some View {
-        let isMe = message.sender == (UIDevice.current.name)
+        let isMe = message.sender == displayName
         return HStack {
             if isMe { Spacer(minLength: 40) }
             VStack(alignment: isMe ? .trailing : .leading, spacing: 4) {

@@ -780,7 +780,7 @@ enum ReportCardPDFGenerator {
 
         let name = cards.count == 1 ? cards[0].studentName.replacingOccurrences(of: " ", with: "_") : "All_Students"
         let fileName = "ReportCard_\(name)_\(Date().formatted(.iso8601.year().month().day())).pdf"
-        let fileURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+        let fileURL = FileManager.default.temporaryDirectory.appending(path: fileName)
 
         do {
             try data.write(to: fileURL)

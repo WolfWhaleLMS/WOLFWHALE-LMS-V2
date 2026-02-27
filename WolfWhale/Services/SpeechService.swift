@@ -138,15 +138,7 @@ final class SpeechService {
         // Request microphone permission
         let micGranted: Bool
         #if os(iOS)
-        if #available(iOS 17.0, *) {
-            micGranted = await AVAudioApplication.requestRecordPermission()
-        } else {
-            micGranted = await withCheckedContinuation { continuation in
-                AVAudioSession.sharedInstance().requestRecordPermission { granted in
-                    continuation.resume(returning: granted)
-                }
-            }
-        }
+        micGranted = await AVAudioApplication.requestRecordPermission()
         #else
         micGranted = true
         #endif
@@ -234,10 +226,8 @@ final class SpeechService {
         recognitionRequest.shouldReportPartialResults = true
         recognitionRequest.addsPunctuation = true
 
-        if #available(iOS 16.0, *) {
-            if speechRecognizer.supportsOnDeviceRecognition {
-                recognitionRequest.requiresOnDeviceRecognition = false
-            }
+        if speechRecognizer.supportsOnDeviceRecognition {
+            recognitionRequest.requiresOnDeviceRecognition = false
         }
 
         // Start recognition task
@@ -274,10 +264,14 @@ final class SpeechService {
         let inputNode = audioEngine.inputNode
         let recordingFormat = inputNode.outputFormat(forBus: 0)
 
+        // Capture the request locally so the audio-thread closure does not need
+        // to access the @MainActor-isolated `self.recognitionRequest` property.
+        // SFSpeechAudioBufferRecognitionRequest.append(_:) is thread-safe.
+        let request = recognitionRequest
         inputNode.installTap(onBus: 0, bufferSize: 1024, format: recordingFormat) { [weak self] buffer, _ in
-            self?.recognitionRequest?.append(buffer)
+            request.append(buffer)
 
-            // Calculate audio level from buffer
+            // Calculate audio level from buffer (nonisolated, pure computation)
             let level = self?.calculateAudioLevel(buffer: buffer) ?? 0
             Task { @MainActor [weak self] in
                 self?.audioLevel = level

@@ -65,7 +65,8 @@ class PeerService: NSObject {
 
     func startBrowsing() {
         guard let existingPeer = peerID, let _ = session else {
-            let newPeer = MCPeerID(displayName: UIDevice.current.name)
+            let shortID = String(UUID().uuidString.prefix(6))
+            let newPeer = MCPeerID(displayName: "\(UIDevice.current.name)-\(shortID)")
             peerID = newPeer
             let newSession = MCSession(peer: newPeer, securityIdentity: nil, encryptionPreference: .required)
             newSession.delegate = self
@@ -154,16 +155,16 @@ class PeerService: NSObject {
     private nonisolated static let tempSubdirectory = "PeerShared"
 
     private nonisolated func saveTemporaryFile(data: Data, name: String) -> URL {
-        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(Self.tempSubdirectory, isDirectory: true)
+        let dir = FileManager.default.temporaryDirectory.appending(path: Self.tempSubdirectory, directoryHint: .isDirectory)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        let url = dir.appendingPathComponent(name)
+        let url = dir.appending(path: name)
         try? data.write(to: url)
         return url
     }
 
     /// Remove all files in the "PeerShared" temporary subdirectory.
     func cleanupTempFiles() {
-        let dir = FileManager.default.temporaryDirectory.appendingPathComponent(Self.tempSubdirectory, isDirectory: true)
+        let dir = FileManager.default.temporaryDirectory.appending(path: Self.tempSubdirectory, directoryHint: .isDirectory)
         try? FileManager.default.removeItem(at: dir)
     }
 }

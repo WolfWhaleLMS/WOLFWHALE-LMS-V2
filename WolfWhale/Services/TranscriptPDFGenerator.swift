@@ -389,7 +389,7 @@ final class TranscriptPDFGenerator {
         let safeName = data.studentName.replacingOccurrences(of: " ", with: "_")
         let dateStamp = Date().formatted(.iso8601.year().month().day())
         let fileName = "Transcript_\(safeName)_\(dateStamp).pdf"
-        let fileURL = tempDir.appendingPathComponent(fileName)
+        let fileURL = tempDir.appending(path: fileName)
 
         do {
             try pdfData.write(to: fileURL)

@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 #if canImport(UIKit)
 import UIKit
 #endif
@@ -256,7 +257,10 @@ struct SpeechToTextView: View {
                 if !speechService.transcribedText.isEmpty {
                     Button {
                         hapticTrigger.toggle()
-                        UIPasteboard.general.string = speechService.transcribedText
+                        UIPasteboard.general.setItems(
+                            [[UTType.plainText.identifier: speechService.transcribedText as NSString]],
+                            options: [.expirationDate: Date().addingTimeInterval(120), .localOnly: true]
+                        )
                         withAnimation(.snappy) {
                             showCopiedToast = true
                         }

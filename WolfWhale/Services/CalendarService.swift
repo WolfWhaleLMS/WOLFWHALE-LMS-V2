@@ -1,5 +1,6 @@
 import EventKit
 import Foundation
+import os
 
 // MARK: - ScheduleEntry
 
@@ -22,10 +23,14 @@ nonisolated struct ScheduleEntry: Identifiable, Hashable, Sendable {
 @MainActor
 final class CalendarService {
 
+    private static let logger = Logger(subsystem: "com.wolfwhale.lms", category: "CalendarService")
+
     // MARK: Public state
 
     var isAuthorized = false
     var selectedCalendar: EKCalendar?
+    /// User-facing error message set when a calendar sync operation fails.
+    var syncError: String?
     var syncedEventCount: Int { syncedIdentifiers.count }
     var lastSyncDate: Date? {
         get { UserDefaults.standard.object(forKey: Self.lastSyncKey) as? Date }
@@ -79,12 +84,7 @@ final class CalendarService {
             return false
         }
         do {
-            let granted: Bool
-            if #available(iOS 17.0, *) {
-                granted = try await eventStore.requestFullAccessToEvents()
-            } else {
-                granted = try await eventStore.requestAccess(to: .event)
-            }
+            let granted = try await eventStore.requestFullAccessToEvents()
             isAuthorized = granted
             return granted
         } catch {
@@ -145,7 +145,8 @@ final class CalendarService {
 
     /// Create a calendar event for a single assignment's due date.
     /// Skips assignments whose due date is already in the past.
-    func syncAssignmentToCalendar(assignment: Assignment) {
+    /// Throws if the event cannot be saved to the calendar.
+    func syncAssignmentToCalendar(assignment: Assignment) throws {
         guard isAuthorized, let eventStore else { return }
         // Do not create calendar events for assignments that are already past due
         guard assignment.dueDate > Date() else { return }
@@ -174,21 +175,35 @@ final class CalendarService {
             var ids = syncedIdentifiers
             ids[key] = event.eventIdentifier
             syncedIdentifiers = ids
+            syncError = nil
         } catch {
-            #if DEBUG
-            print("[CalendarService] Failed to save assignment event: \(error)")
-            #endif
+            Self.logger.error("[CalendarService] Failed to save assignment event '\(assignment.title, privacy: .public)': \(error.localizedDescription, privacy: .public)")
+            syncError = "Failed to sync assignment to calendar: \(error.localizedDescription)"
+            throw error
         }
     }
 
     // MARK: - Bulk Sync Assignments
 
     /// Sync all upcoming (non-submitted) assignments to the calendar.
+    /// Individual failures are logged but do not prevent other assignments from syncing.
     func syncAllAssignments(assignments: [Assignment]) {
         guard isAuthorized else { return }
         let upcoming = assignments.filter { !$0.isSubmitted && $0.dueDate > Date() }
+        var failureCount = 0
         for assignment in upcoming {
-            syncAssignmentToCalendar(assignment: assignment)
+            do {
+                try syncAssignmentToCalendar(assignment: assignment)
+            } catch {
+                failureCount += 1
+                // Error already logged in syncAssignmentToCalendar
+            }
+        }
+        if failureCount > 0 {
+            syncError = "Failed to sync \(failureCount) of \(upcoming.count) assignments to calendar."
+            Self.logger.error("[CalendarService] Bulk sync completed with \(failureCount) failures out of \(upcoming.count) assignments")
+        } else {
+            syncError = nil
         }
         lastSyncDate = Date()
     }
@@ -196,10 +211,12 @@ final class CalendarService {
     // MARK: - Sync Schedule
 
     /// Sync class schedule entries as recurring weekly events.
+    /// Individual failures are logged but do not prevent other entries from syncing.
     func syncScheduleToCalendar(schedule: [ScheduleEntry]) {
         guard isAuthorized, let eventStore else { return }
         guard let calendar = selectedCalendar ?? getOrCreateWolfWhaleCalendar() else { return }
 
+        var failureCount = 0
         for entry in schedule {
             let key = "schedule-\(entry.id.uuidString)"
 
@@ -251,10 +268,16 @@ final class CalendarService {
                 ids[key] = event.eventIdentifier
                 syncedIdentifiers = ids
             } catch {
-                #if DEBUG
-                print("[CalendarService] Failed to save schedule event: \(error)")
-                #endif
+                failureCount += 1
+                Self.logger.error("[CalendarService] Failed to save schedule event '\(entry.courseName, privacy: .public)': \(error.localizedDescription, privacy: .public)")
             }
+        }
+
+        if failureCount > 0 {
+            syncError = "Failed to sync \(failureCount) of \(schedule.count) schedule entries to calendar."
+            Self.logger.error("[CalendarService] Schedule sync completed with \(failureCount) failures out of \(schedule.count) entries")
+        } else {
+            syncError = nil
         }
         lastSyncDate = Date()
     }
@@ -286,7 +309,11 @@ final class CalendarService {
         let ids = syncedIdentifiers
         for (_, eventId) in ids {
             if let event = eventStore.event(withIdentifier: eventId) {
-                try? eventStore.remove(event, span: .futureEvents, commit: true)
+                do {
+                    try eventStore.remove(event, span: .futureEvents, commit: true)
+                } catch {
+                    Self.logger.error("[CalendarService] Failed to remove event \(eventId, privacy: .public): \(error.localizedDescription, privacy: .public)")
+                }
             }
         }
         syncedIdentifiers = [:]

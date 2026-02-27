@@ -37,6 +37,9 @@ final class ChatRealtimeService {
     /// Typing indicator debounce tasks keyed by conversation ID string.
     private var typingDebounce: [String: Task<Void, Never>] = [:]
 
+    /// Task running the infinite network-observer loop so it can be cancelled on cleanup.
+    private var networkObserverTask: Task<Void, Never>?
+
     /// Network monitor used for auto-reconnection after connectivity loss.
     private let networkMonitor = NetworkMonitor()
 
@@ -417,6 +420,9 @@ final class ChatRealtimeService {
 
     /// Tears down all active subscriptions.
     func unsubscribeFromAll() async {
+        networkObserverTask?.cancel()
+        networkObserverTask = nil
+
         for (_, task) in listenTasks {
             task.cancel()
         }
@@ -451,8 +457,10 @@ final class ChatRealtimeService {
     }
 
     /// Starts observing network connectivity changes for auto-reconnection.
+    /// Cancels any previously running observer to prevent accumulation.
     func startNetworkObserver() {
-        Task {
+        networkObserverTask?.cancel()
+        networkObserverTask = Task {
             var wasOffline = false
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(3))

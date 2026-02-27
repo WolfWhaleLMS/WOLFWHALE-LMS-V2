@@ -1,11 +1,25 @@
 import Foundation
 import Supabase
 
+/// `true` when the Supabase URL in Config is invalid. The app should show a
+/// configuration-error screen instead of attempting network requests.
+let supabaseConfigInvalid: Bool = {
+    let urlString = Config.SUPABASE_URL
+    return urlString.isEmpty || URL(string: urlString) == nil
+}()
+
+/// Global Supabase client. When `supabaseConfigInvalid` is `true` this client
+/// is initialised with a placeholder URL so the app can still launch (and show
+/// an appropriate error) instead of crashing via `fatalError()`.
 let supabaseClient: SupabaseClient = {
     let urlString = Config.SUPABASE_URL
     let anonKey = Config.SUPABASE_ANON_KEY
-    guard let url = URL(string: urlString) else {
-        fatalError("[SupabaseService] Invalid SUPABASE_URL: '\(urlString)'. Check Config.swift.")
+    guard let url = URL(string: urlString), !urlString.isEmpty else {
+        print("[SupabaseService] ERROR: Invalid SUPABASE_URL: '\(urlString)'. Check Config.swift. The app will launch but all network requests will fail.")
+        // Use a syntactically-valid placeholder so the client can be constructed
+        // without crashing. All network calls will fail with connection errors.
+        // swiftlint:disable:next force_unwrapping
+        return SupabaseClient(supabaseURL: URL(string: "https://invalid.placeholder.local")!, supabaseKey: anonKey)
     }
     return SupabaseClient(supabaseURL: url, supabaseKey: anonKey)
 }()

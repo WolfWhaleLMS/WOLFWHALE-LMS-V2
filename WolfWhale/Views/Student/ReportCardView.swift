@@ -623,7 +623,7 @@ struct ReportCardView: View {
             // Save to temp file
             let tempDir = FileManager.default.temporaryDirectory
             let fileName = "ReportCard_\(capturedStudentName.replacingOccurrences(of: " ", with: "_"))_\(Date().formatted(.iso8601.year().month().day())).pdf"
-            let fileURL = tempDir.appendingPathComponent(fileName)
+            let fileURL = tempDir.appending(path: fileName)
 
             try? data.write(to: fileURL)
 

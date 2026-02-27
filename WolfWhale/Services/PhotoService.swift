@@ -263,7 +263,7 @@ final class PhotoService {
             in: .userDomainMask
         ).first
 
-        guard let directoryURL = documentsURL?.appendingPathComponent("ProfilePhotos") else {
+        guard let directoryURL = documentsURL?.appending(path: "ProfilePhotos") else {
             return nil
         }
 
@@ -273,10 +273,10 @@ final class PhotoService {
             withIntermediateDirectories: true
         )
 
-        let fileURL = directoryURL.appendingPathComponent(fileName)
+        let fileURL = directoryURL.appending(path: fileName)
 
         do {
-            try data.write(to: fileURL)
+            try data.write(to: fileURL, options: [.atomic, .completeFileProtection])
             return fileURL
         } catch {
             #if DEBUG

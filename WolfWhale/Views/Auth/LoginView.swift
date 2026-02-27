@@ -4,7 +4,9 @@ struct LoginView: View {
     @Bindable var viewModel: AppViewModel
     @Environment(\.colorScheme) private var colorScheme
     @State private var appeared = false
+    #if DEBUG
     @State private var showDemoSection = false
+    #endif
     @State private var showForgotPassword = false
     @State private var hapticTrigger = false
     @State private var glowPulse = false
@@ -21,6 +23,7 @@ struct LoginView: View {
 
                 loginSection
 
+                #if DEBUG
                 Spacer().frame(height: 24)
 
                 dividerSection
@@ -28,6 +31,7 @@ struct LoginView: View {
                 Spacer().frame(height: 20)
 
                 demoSection
+                #endif
 
                 Spacer().frame(height: 32)
             }
@@ -43,7 +47,9 @@ struct LoginView: View {
         .offset(y: appeared ? 0 : 20)
         .onAppear {
             withAnimation(.spring(duration: 0.7)) { appeared = true }
+            #if DEBUG
             withAnimation(.spring(duration: 0.6).delay(0.3)) { showDemoSection = true }
+            #endif
         }
     }
 
@@ -215,6 +221,7 @@ struct LoginView: View {
         .glassEffect(in: .rect(cornerRadius: 18))
     }
 
+    #if DEBUG
     private var dividerSection: some View {
         HStack(spacing: 16) {
             Rectangle()
@@ -247,8 +254,10 @@ struct LoginView: View {
         .opacity(showDemoSection ? 1 : 0)
         .offset(y: showDemoSection ? 0 : 16)
     }
+    #endif
 }
 
+#if DEBUG
 struct DemoRoleButton: View {
     let role: UserRole
     let action: () -> Void
@@ -323,3 +332,4 @@ struct DemoRoleButton: View {
         .accessibilityHint("Double tap to sign in as a demo \(role.rawValue.lowercased())")
     }
 }
+#endif

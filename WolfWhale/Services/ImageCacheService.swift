@@ -52,10 +52,14 @@ final class ImageCacheService: @unchecked Sendable {
         memoryCache.totalCostLimit = 50 * 1024 * 1024 // 50 MB
 
         // Disk cache directory
-        guard let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first else {
-            fatalError("Unable to locate caches directory")
+        if let caches = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first {
+            diskCacheURL = caches.appending(path: "ImageCache", directoryHint: .isDirectory)
+        } else {
+            // Fallback to temporary directory instead of crashing.
+            // Cache will not persist across app launches but the app remains functional.
+            print("[ImageCacheService] ERROR: Unable to locate caches directory, falling back to temporary directory.")
+            diskCacheURL = URL(fileURLWithPath: NSTemporaryDirectory()).appending(path: "ImageCache", directoryHint: .isDirectory)
         }
-        diskCacheURL = caches.appendingPathComponent("ImageCache", isDirectory: true)
         do {
             try FileManager.default.createDirectory(at: diskCacheURL, withIntermediateDirectories: true)
         } catch {
@@ -82,7 +86,7 @@ final class ImageCacheService: @unchecked Sendable {
 
         // 2. Check disk cache
         let path = diskPath(for: key)
-        guard FileManager.default.fileExists(atPath: path.path) else { return nil }
+        guard FileManager.default.fileExists(atPath: path.path(percentEncoded: false)) else { return nil }
 
         #if canImport(UIKit)
         guard let data = try? Data(contentsOf: path),
@@ -99,7 +103,7 @@ final class ImageCacheService: @unchecked Sendable {
         // Touch the file so LRU eviction works correctly
         try? FileManager.default.setAttributes(
             [.modificationDate: Date()],
-            ofItemAtPath: path.path
+            ofItemAtPath: path.path(percentEncoded: false)
         )
 
         return image
@@ -219,7 +223,7 @@ final class ImageCacheService: @unchecked Sendable {
 
     /// Returns the file URL on disk for a given cache key.
     private func diskPath(for key: String) -> URL {
-        diskCacheURL.appendingPathComponent(key)
+        diskCacheURL.appending(path: key)
     }
 
     /// Evicts the oldest files when the disk cache exceeds `maxDiskSize`.

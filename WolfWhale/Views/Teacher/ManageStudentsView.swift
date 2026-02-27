@@ -1,5 +1,6 @@
 import SwiftUI
 import Supabase
+import UniformTypeIdentifiers
 
 struct ManageStudentsView: View {
     let course: Course
@@ -77,7 +78,10 @@ struct ManageStudentsView: View {
 
                 Button {
                     hapticTrigger.toggle()
-                    UIPasteboard.general.string = course.classCode
+                    UIPasteboard.general.setItems(
+                        [[UTType.plainText.identifier: course.classCode as NSString]],
+                        options: [.expirationDate: Date().addingTimeInterval(120), .localOnly: true]
+                    )
                     withAnimation(.snappy) {
                         copiedCode = true
                     }

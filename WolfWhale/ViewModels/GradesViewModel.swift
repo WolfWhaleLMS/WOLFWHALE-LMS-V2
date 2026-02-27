@@ -222,7 +222,7 @@ class GradesViewModel {
 
         let sanitizedName = courseName.replacingOccurrences(of: " ", with: "_")
         let fileName = "Grades_\(sanitizedName)_\(dateFormatter.string(from: Date()).replacingOccurrences(of: " ", with: "_")).csv"
-        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(fileName)
+        let tempURL = FileManager.default.temporaryDirectory.appending(path: fileName)
 
         do {
             try csv.write(to: tempURL, atomically: true, encoding: .utf8)

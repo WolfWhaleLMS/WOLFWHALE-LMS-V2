@@ -78,6 +78,16 @@ struct GradeCurveView: View {
             .filter { $0.courseId == courseId && $0.title == title && $0.isSubmitted && $0.grade != nil }
             .compactMap(\.grade)
 
+        guard !matchingScores.isEmpty else {
+            return GradeStatistics(scores: [])
+        }
+
+        // Pre-compute bell curve statistics once (outside the map) to avoid
+        // redundant work and to guard against division by zero.
+        let bellMean = matchingScores.reduce(0, +) / Double(matchingScores.count)
+        let bellVariance = matchingScores.reduce(0.0) { $0 + pow($1 - bellMean, 2) } / Double(matchingScores.count)
+        let bellStdDev = sqrt(bellVariance)
+
         let transformedScores = matchingScores.map { score -> Double in
             switch curveType {
             case .flat:
@@ -87,11 +97,8 @@ struct GradeCurveView: View {
             case .squareRoot:
                 return min(sqrt(score) * 10.0, 100)
             case .bell:
-                let mean = matchingScores.reduce(0, +) / Double(matchingScores.count)
-                let variance = matchingScores.reduce(0.0) { $0 + pow($1 - mean, 2) } / Double(matchingScores.count)
-                let stdDev = sqrt(variance)
-                guard stdDev > 0 else { return score }
-                let z = (score - mean) / stdDev
+                guard bellStdDev > 0 else { return score }
+                let z = (score - bellMean) / bellStdDev
                 return min(max(bellTargetMean + (z * bellTargetStdDev), 0), 100)
             }
         }
