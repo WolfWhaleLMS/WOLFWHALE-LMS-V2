@@ -593,6 +593,7 @@ private struct SetGoalSheet: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     NavigationStack {
         ProgressGoalsView(viewModel: {
@@ -602,3 +603,4 @@ private struct SetGoalSheet: View {
         }())
     }
 }
+#endif

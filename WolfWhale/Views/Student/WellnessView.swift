@@ -817,6 +817,7 @@ struct WellnessView: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     WellnessView(viewModel: {
         let vm = AppViewModel()
@@ -824,3 +825,4 @@ struct WellnessView: View {
         return vm
     }())
 }
+#endif

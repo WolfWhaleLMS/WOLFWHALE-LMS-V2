@@ -637,6 +637,7 @@ private struct RecommendationsFlowLayout: Layout {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     NavigationStack {
         RecommendationsView(viewModel: {
@@ -646,3 +647,4 @@ private struct RecommendationsFlowLayout: Layout {
         }())
     }
 }
+#endif

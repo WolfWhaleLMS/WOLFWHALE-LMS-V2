@@ -480,6 +480,7 @@ private struct CalendarDayView: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
     CalendarView(viewModel: {
         let vm = AppViewModel()
@@ -487,3 +488,4 @@ private struct CalendarDayView: View {
         return vm
     }())
 }
+#endif
