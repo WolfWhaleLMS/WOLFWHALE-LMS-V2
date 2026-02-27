@@ -9,7 +9,7 @@ import UIKit
 // MARK: - Cache Entry
 
 /// Wrapper class for NSCache storage (NSCache requires class-type values).
-final class CacheEntry: @unchecked Sendable {
+nonisolated final class CacheEntry: @unchecked Sendable {
     let image: Image
     let cost: Int
 
