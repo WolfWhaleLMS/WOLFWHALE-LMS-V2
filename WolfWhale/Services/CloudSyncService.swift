@@ -77,7 +77,8 @@ final class CloudSyncService {
     // MARK: - Notification Observer
 
     /// Holds the observer token so it can be removed in `deinit`.
-    private var accountChangeObserver: NSObjectProtocol?
+    /// `nonisolated` because deinit is nonisolated and must remove the observer.
+    nonisolated private var accountChangeObserver: NSObjectProtocol?
 
     // MARK: - Init
 

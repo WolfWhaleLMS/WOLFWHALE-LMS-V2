@@ -464,7 +464,7 @@ private struct BodySystemDetailSheet: View {
                                     startPoint: .topLeading, endPoint: .bottomTrailing
                                 )
                             )
-                            .symbolEffect(.bounce, options: .nonRepeating)
+                            .symbolEffect(.bounce, value: 1)
                         Text("\(system.name) System")
                             .font(.title.bold())
                     }

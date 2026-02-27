@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: - Data Models
 
-enum PieceColor: Equatable, Sendable {
+nonisolated enum PieceColor: Equatable, Sendable {
     case white, black
 
     var opposite: PieceColor {
@@ -10,11 +10,11 @@ enum PieceColor: Equatable, Sendable {
     }
 }
 
-enum PieceType: Equatable, Sendable {
+nonisolated enum PieceType: Equatable, Sendable {
     case king, queen, rook, bishop, knight, pawn
 }
 
-struct ChessPiece: Equatable, Sendable {
+nonisolated struct ChessPiece: Equatable, Sendable {
     let type: PieceType
     let color: PieceColor
     var hasMoved: Bool = false
@@ -37,14 +37,14 @@ struct ChessPiece: Equatable, Sendable {
     }
 }
 
-struct ChessPosition: Equatable, Hashable, Sendable {
+nonisolated struct ChessPosition: Equatable, Hashable, Sendable {
     let row: Int
     let col: Int
 }
 
 // MARK: - Bot Difficulty
 
-enum BotDifficulty: String, CaseIterable {
+nonisolated enum BotDifficulty: String, CaseIterable, Sendable {
     case easy = "Easy"
     case medium = "Medium"
     case hard = "Hard"
@@ -60,7 +60,7 @@ enum BotDifficulty: String, CaseIterable {
 
 // MARK: - Move Undo Info
 
-struct MoveUndoInfo {
+nonisolated struct MoveUndoInfo {
     let from: ChessPosition
     let to: ChessPosition
     let movedPiece: ChessPiece
