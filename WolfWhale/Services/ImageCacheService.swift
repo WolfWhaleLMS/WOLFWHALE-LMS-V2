@@ -32,7 +32,7 @@ final class CacheEntry: @unchecked Sendable {
 /// if let cached = ImageCacheService.shared.getImage(for: url) { ... }
 /// ImageCacheService.shared.setImage(image, data: data, for: url)
 /// ```
-final class ImageCacheService: @unchecked Sendable {
+nonisolated final class ImageCacheService: @unchecked Sendable {
     static let shared = ImageCacheService()
 
     // MARK: - Properties
